@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Tempus.Core.Models;
 
 namespace Tempus.Infrastructure.Data;
 
-public class TempusDbContext : DbContext
+public class TempusDbContext : IdentityDbContext<ApplicationUser>
 {
     public TempusDbContext(DbContextOptions<TempusDbContext> options) : base(options)
     {
@@ -24,10 +25,16 @@ public class TempusDbContext : DbContext
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(2000);
             entity.Property(e => e.Location).HasMaxLength(500);
-            
+            entity.Property(e => e.UserId).IsRequired();
+
             entity.HasMany(e => e.Attendees)
                   .WithOne()
                   .HasForeignKey(a => a.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany(u => u.Events)
+                  .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -51,6 +58,12 @@ public class TempusDbContext : DbContext
             entity.Property(r => r.Name).IsRequired().HasMaxLength(100);
             entity.Property(r => r.DaysCount).IsRequired();
             entity.Property(r => r.ShowWeekends).IsRequired();
+            entity.Property(r => r.UserId).IsRequired();
+
+            entity.HasOne(r => r.User)
+                  .WithMany(u => u.CustomCalendarRanges)
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

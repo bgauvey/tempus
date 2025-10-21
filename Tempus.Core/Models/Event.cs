@@ -18,9 +18,13 @@ public class Event
     public string? ExternalCalendarId { get; set; }
     public string? ExternalCalendarProvider { get; set; }
     public string? Color { get; set; }
-    public List<Attendee> Attendees { get; set; } = new();
+    public List<Attendee> Attendees { get; set} = new();
     public List<string> Tags { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
+
+    // User ownership
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser? User { get; set; }
 }

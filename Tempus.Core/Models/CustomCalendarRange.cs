@@ -7,4 +7,8 @@ public class CustomCalendarRange
     public int DaysCount { get; set; }
     public bool ShowWeekends { get; set; } = true;
     public DateTime CreatedAt { get; set; }
+
+    // User ownership
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser? User { get; set; }
 }
