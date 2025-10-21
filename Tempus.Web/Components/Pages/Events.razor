@@ -1,0 +1,188 @@
+@page "/events"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Web.Components.Dialogs
+@inject IEventRepository EventRepository
+@inject DialogService DialogService
+
+<PageTitle>Events - Tempus</PageTitle>
+
+<RadzenText TextStyle="TextStyle.H3" class="rz-mb-4">Events</RadzenText>
+
+<RadzenCard class="rz-mb-4">
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenTextBox @bind-Value="_searchTerm" Placeholder="Search events"
+                         Style="width: 100%;" />
+            <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Primary"
+                        Click="SearchEvents" class="rz-mt-2">Search</RadzenButton>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
+                        Click="CreateEvent">
+                Create New Event
+            </RadzenButton>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+<RadzenDataGrid Data="@_events" TItem="Event" AllowPaging="true" PageSize="10"
+                AllowSorting="true" AllowFiltering="false" IsLoading="@_loading">
+    <Columns>
+        <RadzenDataGridColumn TItem="Event" Title="Title" Width="250px">
+            <Template Context="evt">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Body1">@evt.Title</RadzenText>
+                    @if (!string.IsNullOrEmpty(evt.Location))
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="location_on" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">@evt.Location</RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Event" Property="StartTime" Title="Start Time" Width="180px">
+            <Template Context="evt">
+                @evt.StartTime.ToString("MMM dd, yyyy hh:mm tt")
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Event" Property="EndTime" Title="End Time" Width="180px">
+            <Template Context="evt">
+                @evt.EndTime.ToString("MMM dd, yyyy hh:mm tt")
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Event" Property="EventType" Title="Type" Width="120px">
+            <Template Context="evt">
+                <RadzenBadge BadgeStyle="@GetEventTypeBadgeStyle(evt.EventType)" Text="@evt.EventType.ToString()" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Event" Property="Priority" Title="Priority" Width="120px">
+            <Template Context="evt">
+                <RadzenBadge BadgeStyle="@GetPriorityBadgeStyle(evt.Priority)" Text="@evt.Priority.ToString()" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Event" Title="Actions" Width="120px" Sortable="false">
+            <Template Context="evt">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                            Click="@(() => EditEvent(evt.Id))" />
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                            Click="@(() => DeleteEvent(evt.Id))" class="rz-ml-2" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<Event> _events = new();
+    private bool _loading = true;
+    private string _searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+    }
+
+    private async Task LoadEvents()
+    {
+        _loading = true;
+        StateHasChanged();
+        _events = await EventRepository.GetAllAsync();
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task SearchEvents()
+    {
+        if (string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            await LoadEvents();
+        }
+        else
+        {
+            _loading = true;
+            _events = await EventRepository.SearchAsync(_searchTerm);
+            _loading = false;
+        }
+    }
+
+    private async Task CreateEvent()
+    {
+        await OpenEventDialogAsync(null);
+    }
+
+    private async Task EditEvent(Guid id)
+    {
+        await OpenEventDialogAsync(id);
+    }
+
+    private async Task OpenEventDialogAsync(Guid? eventId)
+    {
+        var parameters = new Dictionary<string, object>();
+
+        if (eventId.HasValue)
+        {
+            parameters.Add("EventId", eventId.Value);
+        }
+
+        var result = await DialogService.OpenAsync<EventFormDialog>(
+            eventId.HasValue ? "Edit Event" : "Create Event",
+            parameters,
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "auto",
+                Resizable = true,
+                Draggable = true
+            });
+
+        // If the dialog was saved (result == true), reload events
+        if (result is bool saved && saved)
+        {
+            await LoadEvents();
+        }
+    }
+
+    private async Task DeleteEvent(Guid id)
+    {
+        var result = await DialogService.Confirm(
+            "Are you sure you want to delete this event?",
+            "Delete Event",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            await EventRepository.DeleteAsync(id);
+            await LoadEvents();
+        }
+    }
+
+    private BadgeStyle GetEventTypeBadgeStyle(EventType type)
+    {
+        return type switch
+        {
+            EventType.Meeting => BadgeStyle.Primary,
+            EventType.Appointment => BadgeStyle.Info,
+            EventType.Task => BadgeStyle.Warning,
+            EventType.TimeBlock => BadgeStyle.Success,
+            EventType.Reminder => BadgeStyle.Secondary,
+            EventType.Deadline => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private BadgeStyle GetPriorityBadgeStyle(Priority priority)
+    {
+        return priority switch
+        {
+            Priority.Low => BadgeStyle.Success,
+            Priority.Medium => BadgeStyle.Info,
+            Priority.High => BadgeStyle.Warning,
+            Priority.Urgent => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+}

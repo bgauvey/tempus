@@ -1,0 +1,52 @@
+@using Tempus.Core.Models
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6">Create Custom Calendar Range</RadzenText>
+
+    <RadzenFormField Text="Range Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_range.Name" Style="width: 100%;" Placeholder="e.g., Two Weeks, Sprint, Quarter" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Number of Days" Variant="Variant.Outlined">
+        <RadzenNumeric @bind-Value="@_range.DaysCount" Min="1" Max="365" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Show Weekends" Variant="Variant.Outlined">
+        <RadzenCheckBox @bind-Value="@_range.ShowWeekends" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="Create" ButtonStyle="ButtonStyle.Primary"
+                    Click="Save" Disabled="@(!IsValid())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    private CustomCalendarRange _range = new CustomCalendarRange
+    {
+        Name = string.Empty,
+        DaysCount = 14,
+        ShowWeekends = true
+    };
+
+    private bool IsValid()
+    {
+        return !string.IsNullOrWhiteSpace(_range.Name)
+            && _range.DaysCount > 0
+            && _range.DaysCount <= 365;
+    }
+
+    private void Save()
+    {
+        _range.Id = Guid.NewGuid();
+        _range.CreatedAt = DateTime.UtcNow;
+        DialogService.Close(_range);
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}

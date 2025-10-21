@@ -1,0 +1,292 @@
+@page "/"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IEventRepository EventRepository
+@inject NavigationManager NavigationManager
+
+<PageTitle>Tempus - Master Your Time, Transform Your Business</PageTitle>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="hero-content">
+        <h1 class="hero-title">Master Your Time<br/>Transform Your Business</h1>
+        <p class="hero-subtitle">The Ultimate Intelligent Time Management Platform</p>
+        <p class="hero-description">
+            Tempus combines powerful calendar management, smart scheduling, and seamless integrations
+            to help you take control of your time and boost productivity by up to 40%.
+        </p>
+        <div class="hero-cta">
+            <button class="btn-premium btn-primary" @onclick="@(() => NavigateToPage("/calendar"))">
+                Get Started Free
+            </button>
+            <button class="btn-premium btn-outline" @onclick="@(() => NavigateToPage("/features"))">
+                See How It Works
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="stats-section">
+    <div class="stats-grid">
+        <div>
+            <span class="stat-number">50K+</span>
+            <span class="stat-label">Active Users</span>
+        </div>
+        <div>
+            <span class="stat-number">1M+</span>
+            <span class="stat-label">Events Managed</span>
+        </div>
+        <div>
+            <span class="stat-number">99.9%</span>
+            <span class="stat-label">Uptime</span>
+        </div>
+        <div>
+            <span class="stat-number">40%</span>
+            <span class="stat-label">Time Saved</span>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+    <h2 class="section-title">Powerful Features for Modern Teams</h2>
+    <p class="section-subtitle">Everything you need to manage time effectively, all in one place</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="calendar_month" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Smart Calendar</h3>
+            <p class="feature-description">
+                Advanced calendar views with drag-and-drop scheduling, recurring events,
+                and intelligent time slot suggestions powered by AI.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="sync" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Seamless Integration</h3>
+            <p class="feature-description">
+                Connect with Google Calendar, Outlook, and import ICS files.
+                Your data syncs automatically across all platforms.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="analytics" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Analytics & Insights</h3>
+            <p class="feature-description">
+                Understand how you spend your time with detailed analytics,
+                productivity reports, and actionable insights.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="group" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Team Collaboration</h3>
+            <p class="feature-description">
+                Share calendars, schedule team meetings, and coordinate effortlessly
+                with built-in collaboration tools.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="notifications" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Smart Reminders</h3>
+            <p class="feature-description">
+                Never miss an important event with customizable notifications,
+                email reminders, and mobile alerts.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <RadzenIcon Icon="security" Style="font-size: 2.5rem;" />
+            </div>
+            <h3 class="feature-title">Enterprise Security</h3>
+            <p class="feature-description">
+                Bank-level encryption, GDPR compliance, and advanced security features
+                to keep your data safe and private.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Preview Section -->
+<div class="features-section" style="background: white;">
+    <h2 class="section-title">Your Dashboard at a Glance</h2>
+    <p class="section-subtitle">Real-time insights into your schedule and productivity</p>
+
+    <div class="container-max">
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card">
+                    <div class="metric-value">@_todayEvents</div>
+                    <div class="metric-label">Today's Events</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="metric-value">@_upcomingEvents</div>
+                    <div class="metric-label">This Week</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="metric-value">@_totalEvents</div>
+                    <div class="metric-label">Total Events</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="metric-value">@_pendingTasks</div>
+                    <div class="metric-label">Pending Tasks</div>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="1.5rem" class="rz-mt-4">
+            <RadzenColumn Size="12" SizeLG="8">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Upcoming Events</RadzenText>
+                        @if (_recentEvents.Any())
+                        {
+                            <RadzenStack Gap="0.75rem">
+                                @foreach (var evt in _recentEvents)
+                                {
+                                    <div class="dashboard-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); padding: 1.25rem;">
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                                <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
+                                                </div>
+                                                <RadzenStack Gap="0.25rem">
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@evt.Title</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                                        @evt.StartTime.ToString("MMM dd, yyyy • hh:mm tt")
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@evt.EventType.ToString()" />
+                                        </RadzenStack>
+                                    </div>
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <div class="text-center" style="padding: 3rem;">
+                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: #e0e0e0; margin-bottom: 1rem;" />
+                                <RadzenText Style="color: #718096;">No upcoming events. Start by creating your first event!</RadzenText>
+                            </div>
+                        }
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeLG="4">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;">
+                                Create Event
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="upload"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;">
+                                Import ICS File
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="calendar_month"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;">
+                                View Calendar
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;">
+                                Integrations
+                            </RadzenButton>
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="hero-section" style="min-height: 60vh;">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="hero-content">
+        <h2 class="hero-title" style="font-size: clamp(2rem, 6vw, 3.5rem);">Ready to Transform Your Productivity?</h2>
+        <p class="hero-description">
+            Join thousands of professionals who have already mastered their time with Tempus.
+        </p>
+        <div class="hero-cta">
+            <button class="btn-premium btn-primary animate-pulse" @onclick="@(() => NavigateToPage("/calendar"))">
+                Start Your Free Trial
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _todayEvents;
+    private int _upcomingEvents;
+    private int _totalEvents;
+    private int _pendingTasks;
+    private List<Event> _recentEvents = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var today = DateTime.Today;
+        var endOfWeek = today.AddDays(7);
+
+        var allEvents = await EventRepository.GetAllAsync();
+        _totalEvents = allEvents.Count;
+
+        _todayEvents = allEvents.Count(e => e.StartTime.Date == today);
+        _upcomingEvents = allEvents.Count(e => e.StartTime >= today && e.StartTime <= endOfWeek);
+        _pendingTasks = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task && !e.IsCompleted);
+
+        _recentEvents = allEvents
+            .Where(e => e.StartTime >= DateTime.Now)
+            .OrderBy(e => e.StartTime)
+            .Take(5)
+            .ToList();
+    }
+
+    private void NavigateToPage(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+}

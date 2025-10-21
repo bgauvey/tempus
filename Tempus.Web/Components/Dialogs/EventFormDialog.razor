@@ -1,0 +1,145 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@inject IEventRepository EventRepository
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6">@(EventId.HasValue ? "Edit Event" : "Create Event")</RadzenText>
+
+    <RadzenFormField Text="Title" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
+    </RadzenFormField>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Start Date/Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@_event.StartTime" ShowTime="true"
+                                DateFormat="MM/dd/yyyy hh:mm tt" Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="End Date/Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@_event.EndTime" ShowTime="true"
+                                DateFormat="MM/dd/yyyy hh:mm tt" Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Location" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
+                              Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
+                              Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="All Day Event" Variant="Variant.Outlined">
+        <RadzenCheckBox @bind-Value="@_event.IsAllDay" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Color" Variant="Variant.Outlined">
+        <RadzenColorPicker @bind-Value="@_event.Color" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="@(EventId.HasValue ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary"
+                    Click="Save" Disabled="@(!IsValid())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? EventId { get; set; }
+
+    [Parameter]
+    public DateTime? PrefilledDate { get; set; }
+
+    private Event _event = new Event
+    {
+        Title = string.Empty,
+        StartTime = DateTime.Now,
+        EndTime = DateTime.Now.AddHours(1),
+        EventType = EventType.Meeting,
+        Priority = Priority.Medium,
+        Color = "#1E88E5", // Default blue for meetings
+        Attendees = new List<Attendee>(),
+        Tags = new List<string>()
+    };
+
+    private readonly EventType[] _eventTypes = Enum.GetValues<EventType>();
+    private readonly Priority[] _priorities = Enum.GetValues<Priority>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EventId.HasValue)
+        {
+            // Load existing event
+            var existingEvent = await EventRepository.GetByIdAsync(EventId.Value);
+            if (existingEvent != null)
+            {
+                _event = existingEvent;
+            }
+        }
+        else if (PrefilledDate.HasValue)
+        {
+            // Set start and end times based on prefilled date
+            _event.StartTime = PrefilledDate.Value.Date.AddHours(9); // 9 AM
+            _event.EndTime = PrefilledDate.Value.Date.AddHours(10); // 10 AM
+        }
+    }
+
+    private bool IsValid()
+    {
+        return !string.IsNullOrWhiteSpace(_event.Title)
+            && _event.EndTime > _event.StartTime;
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (EventId.HasValue)
+            {
+                // Update existing event
+                _event.UpdatedAt = DateTime.UtcNow;
+                await EventRepository.UpdateAsync(_event);
+            }
+            else
+            {
+                // Create new event
+                _event.Id = Guid.NewGuid();
+                _event.CreatedAt = DateTime.UtcNow;
+                await EventRepository.CreateAsync(_event);
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a notification here
+            Console.WriteLine($"Error saving event: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

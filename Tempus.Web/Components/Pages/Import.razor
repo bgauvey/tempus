@@ -1,0 +1,224 @@
+@page "/import"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IIcsImportService IcsImportService
+@inject IEventRepository EventRepository
+@inject NotificationService NotificationService
+
+<PageTitle>Import ICS - Tempus</PageTitle>
+
+<RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Import ICS File</RadzenText>
+<RadzenText class="rz-mb-4">Upload an ICS calendar file to import events into Tempus</RadzenText>
+
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12" SizeMD="8">
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <div style="border: 2px dashed var(--rz-border-color); border-radius: 4px; padding: 3rem; text-align: center; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <InputFile OnChange="HandleFileSelected" accept=".ics" id="fileUpload" style="display: none;" />
+                    <label for="fileUpload" style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                        <RadzenIcon Icon="cloud_upload" IconStyle="IconStyle.Primary" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-mt-2">Click to upload ICS file</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">or drag and drop</RadzenText>
+                    </label>
+                </div>
+
+                @if (_selectedFile != null)
+                {
+                    <RadzenCard Variant="Variant.Outlined" class="rz-mt-2">
+                        <RadzenText TextStyle="TextStyle.Body1">Selected file: <strong>@_selectedFile.Name</strong></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">Size: @FormatFileSize(_selectedFile.Size)</RadzenText>
+                    </RadzenCard>
+
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                Style="width: 100%;"
+                                Click="ImportFile"
+                                Disabled="@_importing">
+                        @if (_importing)
+                        {
+                            <RadzenProgressBarCircular class="rz-mr-2" ProgressBarStyle="ProgressBarStyle.Light" Mode="ProgressBarMode.Indeterminate"
+                                                     Style="width: 20px; height: 20px;" />
+                            <span>Importing...</span>
+                        }
+                        else
+                        {
+                            <span>Import Events</span>
+                        }
+                    </RadzenButton>
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (_importedEvents.Any())
+        {
+            <RadzenCard class="rz-mt-4">
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6">Import Preview</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-2">
+                        <strong>@_importedEvents.Count</strong> events ready to import
+                    </RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        @foreach (var evt in _importedEvents.Take(10))
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="event" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    <strong>@evt.Title</strong> - @evt.StartTime.ToString("MMM dd, yyyy hh:mm tt")
+                                </RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                    @if (_importedEvents.Count > 10)
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);" class="rz-mt-2">
+                            ...and @(_importedEvents.Count - 10) more events
+                        </RadzenText>
+                    }
+
+                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                Style="width: 100%;"
+                                Click="SaveImportedEvents"
+                                Disabled="@_saving">
+                        @if (_saving)
+                        {
+                            <RadzenProgressBarCircular class="rz-mr-2" ProgressBarStyle="ProgressBarStyle.Light" Mode="ProgressBarMode.Indeterminate"
+                                                     Style="width: 20px; height: 20px;" />
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>Save All Events</span>
+                        }
+                    </RadzenButton>
+                </RadzenStack>
+            </RadzenCard>
+        }
+    </RadzenColumn>
+
+    <RadzenColumn Size="12" SizeMD="4">
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6">About ICS Import</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
+                    ICS (iCalendar) is a universal calendar format supported by:
+                </RadzenText>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="check" />
+                        <RadzenText>Google Calendar</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="check" />
+                        <RadzenText>Microsoft Outlook</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="check" />
+                        <RadzenText>Apple Calendar</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="check" />
+                        <RadzenText>Mozilla Thunderbird</RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mt-4">
+                    You can export your calendar from these applications and import them into Tempus.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    private IBrowserFile? _selectedFile;
+    private bool _importing;
+    private bool _saving;
+    private List<Event> _importedEvents = new();
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _importedEvents.Clear();
+    }
+
+    private async Task ImportFile()
+    {
+        if (_selectedFile == null) return;
+
+        _importing = true;
+        try
+        {
+            using var stream = _selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB limit
+            _importedEvents = await IcsImportService.ImportFromStreamAsync(stream);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Successfully parsed {_importedEvents.Count} events from ICS file",
+                Duration = 4000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error importing file: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
+    private async Task SaveImportedEvents()
+    {
+        _saving = true;
+        try
+        {
+            foreach (var evt in _importedEvents)
+            {
+                await EventRepository.CreateAsync(evt);
+            }
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Successfully imported {_importedEvents.Count} events",
+                Duration = 4000
+            });
+            _importedEvents.Clear();
+            _selectedFile = null;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error saving events: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}

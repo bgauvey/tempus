@@ -1,0 +1,212 @@
+@page "/features"
+@inject NavigationManager NavigationManager
+
+<PageTitle>Features - Tempus</PageTitle>
+
+<!-- Hero Section -->
+<div class="hero-section" style="min-height: 50vh;">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+
+    <div class="hero-content">
+        <h1 class="hero-title" style="font-size: clamp(2.5rem, 7vw, 4rem);">Powerful Features</h1>
+        <p class="hero-subtitle">Everything you need to master your time</p>
+    </div>
+</div>
+
+<!-- Main Features -->
+<div class="features-section">
+    <div class="container-max">
+        <div class="features-grid">
+            <!-- Smart Calendar -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <RadzenIcon Icon="calendar_month" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Smart Calendar Management</h3>
+                <p class="feature-description">
+                    Experience the power of intelligent scheduling with our advanced calendar system.
+                    Features include:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>Multiple calendar views (Day, Week, Month, Year)</li>
+                    <li>Drag-and-drop event scheduling</li>
+                    <li>Recurring events with custom patterns</li>
+                    <li>Color-coded categories</li>
+                    <li>Custom calendar ranges</li>
+                </ul>
+            </div>
+
+            <!-- Integration -->
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <RadzenIcon Icon="sync" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Seamless Integrations</h3>
+                <p class="feature-description">
+                    Connect all your calendars in one place. Tempus integrates with:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>Google Calendar sync</li>
+                    <li>Microsoft Outlook integration</li>
+                    <li>ICS file import/export</li>
+                    <li>Third-party API support</li>
+                    <li>Real-time synchronization</li>
+                </ul>
+            </div>
+
+            <!-- Analytics -->
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <RadzenIcon Icon="analytics" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Advanced Analytics</h3>
+                <p class="feature-description">
+                    Gain insights into how you spend your time with powerful analytics:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>Time tracking and reporting</li>
+                    <li>Productivity metrics</li>
+                    <li>Event distribution analysis</li>
+                    <li>Custom reports and exports</li>
+                    <li>Visual dashboards</li>
+                </ul>
+            </div>
+
+            <!-- Collaboration -->
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <RadzenIcon Icon="group" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Team Collaboration</h3>
+                <p class="feature-description">
+                    Work together seamlessly with powerful collaboration tools:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>Shared calendars</li>
+                    <li>Team event scheduling</li>
+                    <li>Meeting coordination</li>
+                    <li>Attendee management</li>
+                    <li>Permission controls</li>
+                </ul>
+            </div>
+
+            <!-- Notifications -->
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <RadzenIcon Icon="notifications" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Smart Notifications</h3>
+                <p class="feature-description">
+                    Never miss an important moment with intelligent reminders:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>Customizable notification timing</li>
+                    <li>Email reminders</li>
+                    <li>Browser notifications</li>
+                    <li>Mobile push alerts</li>
+                    <li>Smart notification grouping</li>
+                </ul>
+            </div>
+
+            <!-- Security -->
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <RadzenIcon Icon="security" Style="font-size: 2.5rem;" />
+                </div>
+                <h3 class="feature-title">Enterprise-Grade Security</h3>
+                <p class="feature-description">
+                    Your data is protected with industry-leading security:
+                </p>
+                <ul style="color: #718096; line-height: 1.8;">
+                    <li>End-to-end encryption</li>
+                    <li>GDPR compliance</li>
+                    <li>SOC 2 certified</li>
+                    <li>Regular security audits</li>
+                    <li>Data backup and recovery</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Features Section -->
+<div class="stats-section">
+    <div class="container-max">
+        <h2 class="section-title" style="color: white; margin-bottom: 3rem;">More Amazing Features</h2>
+
+        <RadzenRow Gap="2rem">
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="mobile_friendly" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Mobile Responsive</h3>
+                    <p style="opacity: 0.9;">Access your calendar anywhere, on any device. Fully optimized for mobile and tablet.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="schedule" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Time Zone Support</h3>
+                    <p style="opacity: 0.9;">Automatically handles multiple time zones for global teams and international meetings.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="search" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Powerful Search</h3>
+                    <p style="opacity: 0.9;">Find any event instantly with advanced search and filtering capabilities.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="palette" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Customizable Themes</h3>
+                    <p style="opacity: 0.9;">Personalize your experience with custom colors, layouts, and themes.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="cloud_upload" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Cloud Sync</h3>
+                    <p style="opacity: 0.9;">Your data automatically syncs across all devices in real-time.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <div class="glass-card">
+                    <RadzenIcon Icon="support_agent" Style="font-size: 3rem; margin-bottom: 1rem;" />
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">24/7 Support</h3>
+                    <p style="opacity: 0.9;">Get help whenever you need it with our dedicated support team.</p>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="features-section" style="padding: 6rem 2rem; background: white; text-align: center;">
+    <div class="container-max">
+        <h2 class="section-title">Ready to Experience These Features?</h2>
+        <p class="section-subtitle">Start your free trial today and discover the power of Tempus</p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large"
+                          Icon="arrow_forward" IconPosition="IconPosition.Right"
+                          Style="padding: 1rem 3rem; font-size: 1.2rem; border-radius: 50px; font-weight: 600;"
+                          Click="@(() => NavigationManager.NavigateTo("/calendar"))">
+                Get Started Free
+            </RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Large"
+                          Icon="info"
+                          Style="padding: 1rem 3rem; font-size: 1.2rem; border-radius: 50px;"
+                          Click="@(() => NavigationManager.NavigateTo("/about"))">
+                Learn More
+            </RadzenButton>
+        </div>
+    </div>
+</div>

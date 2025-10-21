@@ -1,0 +1,221 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IEventRepository EventRepository
+@inject NavigationManager NavigationManager
+
+<PageTitle>Dashboard - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Dashboard</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                Welcome back! Here's your overview for today.
+            </RadzenText>
+        </RadzenStack>
+
+        <!-- Metrics Cards -->
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card">
+                    <div class="metric-value">@_todayEvents</div>
+                    <div class="metric-label">Today's Events</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="metric-value">@_upcomingEvents</div>
+                    <div class="metric-label">This Week</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="metric-value">@_totalEvents</div>
+                    <div class="metric-label">Total Events</div>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="metric-value">@_pendingTasks</div>
+                    <div class="metric-label">Pending Tasks</div>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Main Content -->
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeLG="8">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Upcoming Events</RadzenText>
+                        @if (_recentEvents.Any())
+                        {
+                            <RadzenStack Gap="0.75rem">
+                                @foreach (var evt in _recentEvents)
+                                {
+                                    <div class="dashboard-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); padding: 1.25rem;">
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                                <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
+                                                </div>
+                                                <RadzenStack Gap="0.25rem">
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@evt.Title</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                                        @evt.StartTime.ToString("MMM dd, yyyy • hh:mm tt")
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@evt.EventType.ToString()" />
+                                        </RadzenStack>
+                                    </div>
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <div class="text-center" style="padding: 3rem;">
+                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: #e0e0e0; margin-bottom: 1rem;" />
+                                <RadzenText Style="color: #718096;">No upcoming events. Start by creating your first event!</RadzenText>
+                            </div>
+                        }
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeLG="4">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/events"))">
+                                Create Event
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="upload"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/import"))">
+                                Import ICS File
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="calendar_month"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/calendar"))">
+                                View Calendar
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/integrations"))">
+                                Integrations
+                            </RadzenButton>
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Additional Stats Section -->
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Event Distribution</RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Meetings</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@_meetingCount.ToString()" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Tasks</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@_taskCount.ToString()" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Appointments</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@_appointmentCount.ToString()" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Recent Activity</RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @if (_totalEvents > 0)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="check_circle" Style="color: #43e97b; margin-top: 2px;" />
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Events Created</RadzenText>
+                                        <RadzenText Style="font-size: 0.85rem; color: #718096;">@_totalEvents total events in the system</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="schedule" Style="color: #4facfe; margin-top: 2px;" />
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Upcoming This Week</RadzenText>
+                                        <RadzenText Style="font-size: 0.85rem; color: #718096;">@_upcomingEvents events scheduled</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenText Style="color: #718096; text-align: center; padding: 1rem;">
+                                    No activity yet. Start creating events!
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+</div>
+
+@code {
+    private int _todayEvents;
+    private int _upcomingEvents;
+    private int _totalEvents;
+    private int _pendingTasks;
+    private int _meetingCount;
+    private int _taskCount;
+    private int _appointmentCount;
+    private List<Event> _recentEvents = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var today = DateTime.Today;
+        var endOfWeek = today.AddDays(7);
+
+        var allEvents = await EventRepository.GetAllAsync();
+        _totalEvents = allEvents.Count;
+
+        _todayEvents = allEvents.Count(e => e.StartTime.Date == today);
+        _upcomingEvents = allEvents.Count(e => e.StartTime >= today && e.StartTime <= endOfWeek);
+        _pendingTasks = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task && !e.IsCompleted);
+
+        // Event type distribution
+        _meetingCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Meeting);
+        _taskCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task);
+        _appointmentCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Appointment);
+
+        _recentEvents = allEvents
+            .Where(e => e.StartTime >= DateTime.Now)
+            .OrderBy(e => e.StartTime)
+            .Take(5)
+            .ToList();
+    }
+}

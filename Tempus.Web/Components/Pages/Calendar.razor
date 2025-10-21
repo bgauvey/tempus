@@ -1,0 +1,657 @@
+@page "/calendar"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Web.Components.Dialogs
+@using Microsoft.AspNetCore.Components.Rendering
+@inject IEventRepository EventRepository
+@inject ICustomRangeRepository CustomRangeRepository
+@inject ContextMenuService ContextMenuService
+@inject DialogService DialogService
+
+<PageTitle>Calendar - Tempus</PageTitle>
+
+<style>
+    .event-badge:hover {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+
+    .event-detail-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-4">
+    <RadzenText TextStyle="TextStyle.H3">Calendar View</RadzenText>
+    <RadzenButton Icon="add" Text="Create Event" ButtonStyle="ButtonStyle.Primary"
+                Click="@(() => OpenEventDialogAsync(null, DateTime.Today))" />
+</RadzenStack>
+
+<RadzenCard class="rz-mb-4">
+    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light"
+                            Click="NavigatePrevious" Size="ButtonSize.Small" />
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                            Click="GoToToday">Today</RadzenButton>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light"
+                            Click="NavigateNext" Size="ButtonSize.Small" />
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenText TextStyle="TextStyle.H6">@GetCurrentViewTitle()</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenDropDown @bind-Value="_currentView" Data="@_availableViews"
+                          Change="@OnViewChanged" Style="width: 100%;"
+                          TextProperty="Text" ValueProperty="Value" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="date_range" ButtonStyle="ButtonStyle.Light"
+                            Click="OpenCustomRangeDialog" Size="ButtonSize.Small"
+                            Text="Custom Range" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+<RadzenCard>
+    @if (_loading)
+    {
+        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        @RenderCurrentView()
+    }
+</RadzenCard>
+
+<RadzenCard class="rz-mt-4">
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Events on @_selectedDate.ToString("MMMM dd, yyyy")</RadzenText>
+    @if (GetEventsForDay(_selectedDate).Any())
+    {
+        <RadzenStack Gap="0.5rem">
+            @foreach (var evt in GetEventsForDay(_selectedDate))
+            {
+                <div style="cursor: pointer;"
+                     @oncontextmenu="@(args => ShowEventContextMenu(args, evt))"
+                     @oncontextmenu:preventDefault="true"
+                     @onclick="@(() => OpenEventDialogAsync(evt.Id))">
+                    <RadzenCard Variant="Variant.Outlined"
+                              Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)}; transition: box-shadow 0.2s;")"
+                              class="event-detail-card">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
+                            <RadzenIcon Icon="event" Style="@($"color: {GetEventBackgroundColor(evt)};")" />
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Body1"><strong>@evt.Title</strong></RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
+                                </RadzenText>
+                                @if (!string.IsNullOrEmpty(evt.Location))
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="location_on" Style="font-size: 1rem;" />
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">@evt.Location</RadzenText>
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </div>
+            }
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenText Style="color: var(--rz-text-secondary-color);">No events on this date</RadzenText>
+    }
+</RadzenCard>
+
+@code {
+    private DateTime _selectedDate = DateTime.Today;
+    private List<Event> _events = new();
+    private bool _loading = true;
+    private Event? _contextMenuEvent;
+    private DateTime? _contextMenuDate;
+    private string _currentView = "Month";
+    private List<CustomCalendarRange> _customRanges = new();
+    private CustomCalendarRange? _selectedCustomRange;
+
+    private class ViewOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private List<ViewOption> _availableViews = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomRanges();
+        LoadAvailableViews();
+        await LoadEvents();
+    }
+
+    private async Task LoadCustomRanges()
+    {
+        _customRanges = await CustomRangeRepository.GetAllAsync();
+    }
+
+    private async Task LoadEvents()
+    {
+        _loading = true;
+        StateHasChanged();
+        var startOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+        _events = await EventRepository.GetEventsByDateRangeAsync(
+            startOfMonth.AddDays(-7),
+            endOfMonth.AddDays(7));
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnDateChanged()
+    {
+        await LoadEvents();
+    }
+
+    private void LoadAvailableViews()
+    {
+        _availableViews = new List<ViewOption>
+        {
+            new ViewOption { Value = "Day", Text = "Day" },
+            new ViewOption { Value = "WorkWeek", Text = "Work Week" },
+            new ViewOption { Value = "Week", Text = "Week" },
+            new ViewOption { Value = "Month", Text = "Month" }
+        };
+
+        // Add custom ranges
+        foreach (var range in _customRanges)
+        {
+            _availableViews.Add(new ViewOption
+            {
+                Value = $"Custom_{range.Id}",
+                Text = range.Name
+            });
+        }
+    }
+
+    private async Task OnViewChanged()
+    {
+        if (_currentView.StartsWith("Custom_"))
+        {
+            var rangeId = Guid.Parse(_currentView.Replace("Custom_", ""));
+            _selectedCustomRange = _customRanges.FirstOrDefault(r => r.Id == rangeId);
+        }
+        else
+        {
+            _selectedCustomRange = null;
+        }
+        await LoadEvents();
+        StateHasChanged();
+    }
+
+    private async Task NavigatePrevious()
+    {
+        _selectedDate = _currentView switch
+        {
+            "Day" => _selectedDate.AddDays(-1),
+            "WorkWeek" => _selectedDate.AddDays(-7),
+            "Week" => _selectedDate.AddDays(-7),
+            "Month" => _selectedDate.AddMonths(-1),
+            _ when _selectedCustomRange != null => _selectedDate.AddDays(-_selectedCustomRange.DaysCount),
+            _ => _selectedDate.AddMonths(-1)
+        };
+        await LoadEvents();
+    }
+
+    private async Task NavigateNext()
+    {
+        _selectedDate = _currentView switch
+        {
+            "Day" => _selectedDate.AddDays(1),
+            "WorkWeek" => _selectedDate.AddDays(7),
+            "Week" => _selectedDate.AddDays(7),
+            "Month" => _selectedDate.AddMonths(1),
+            _ when _selectedCustomRange != null => _selectedDate.AddDays(_selectedCustomRange.DaysCount),
+            _ => _selectedDate.AddMonths(1)
+        };
+        await LoadEvents();
+    }
+
+    private async Task GoToToday()
+    {
+        _selectedDate = DateTime.Today;
+        await LoadEvents();
+    }
+
+    private string GetCurrentViewTitle()
+    {
+        return _currentView switch
+        {
+            "Day" => _selectedDate.ToString("MMMM dd, yyyy"),
+            "WorkWeek" or "Week" => $"{GetWeekStart().ToString("MMM dd")} - {GetWeekEnd().ToString("MMM dd, yyyy")}",
+            "Month" => _selectedDate.ToString("MMMM yyyy"),
+            _ when _selectedCustomRange != null => $"{GetCustomRangeStart().ToString("MMM dd")} - {GetCustomRangeEnd().ToString("MMM dd, yyyy")}",
+            _ => _selectedDate.ToString("MMMM yyyy")
+        };
+    }
+
+    private async Task OpenCustomRangeDialog()
+    {
+        var result = await DialogService.OpenAsync<CustomRangeDialog>(
+            "Create Custom Calendar Range",
+            null,
+            new DialogOptions
+            {
+                Width = "500px",
+                Height = "auto",
+                Resizable = false,
+                Draggable = true
+            });
+
+        if (result is CustomCalendarRange newRange)
+        {
+            // Save to database
+            var savedRange = await CustomRangeRepository.CreateAsync(newRange);
+            _customRanges.Add(savedRange);
+            LoadAvailableViews();
+            _currentView = $"Custom_{savedRange.Id}";
+            _selectedCustomRange = savedRange;
+            await LoadEvents();
+            StateHasChanged();
+        }
+    }
+
+    private List<List<DateTime>> GetCalendarWeeks()
+    {
+        var firstDayOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        
+        var startDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+        var endDate = lastDayOfMonth.AddDays(6 - (int)lastDayOfMonth.DayOfWeek);
+        
+        var weeks = new List<List<DateTime>>();
+        var currentWeek = new List<DateTime>();
+        
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            currentWeek.Add(date);
+            if (currentWeek.Count == 7)
+            {
+                weeks.Add(currentWeek);
+                currentWeek = new List<DateTime>();
+            }
+        }
+        
+        return weeks;
+    }
+
+    private List<Event> GetEventsForDay(DateTime date)
+    {
+        return _events
+            .Where(e => e.StartTime.Date == date.Date)
+            .OrderBy(e => e.StartTime)
+            .ToList();
+    }
+
+    private DateTime GetWeekStart()
+    {
+        var diff = _selectedDate.DayOfWeek - DayOfWeek.Sunday;
+        return _selectedDate.AddDays(-diff).Date;
+    }
+
+    private DateTime GetWeekEnd()
+    {
+        return GetWeekStart().AddDays(6);
+    }
+
+    private DateTime GetWorkWeekStart()
+    {
+        var diff = _selectedDate.DayOfWeek - DayOfWeek.Monday;
+        if (diff < 0) diff += 7;
+        return _selectedDate.AddDays(-diff).Date;
+    }
+
+    private DateTime GetWorkWeekEnd()
+    {
+        return GetWorkWeekStart().AddDays(4); // Monday to Friday
+    }
+
+    private DateTime GetCustomRangeStart()
+    {
+        return _selectedDate.Date;
+    }
+
+    private DateTime GetCustomRangeEnd()
+    {
+        if (_selectedCustomRange == null) return _selectedDate;
+        return _selectedDate.AddDays(_selectedCustomRange.DaysCount - 1);
+    }
+
+    private List<DateTime> GetDaysForCurrentView()
+    {
+        return _currentView switch
+        {
+            "Day" => new List<DateTime> { _selectedDate.Date },
+            "WorkWeek" => GetWorkWeekDays(),
+            "Week" => GetWeekDays(),
+            "Month" => GetMonthDays(),
+            _ when _selectedCustomRange != null => GetCustomRangeDays(),
+            _ => GetMonthDays()
+        };
+    }
+
+    private List<DateTime> GetWorkWeekDays()
+    {
+        var days = new List<DateTime>();
+        var start = GetWorkWeekStart();
+        for (int i = 0; i < 5; i++)
+        {
+            days.Add(start.AddDays(i));
+        }
+        return days;
+    }
+
+    private List<DateTime> GetWeekDays()
+    {
+        var days = new List<DateTime>();
+        var start = GetWeekStart();
+        for (int i = 0; i < 7; i++)
+        {
+            days.Add(start.AddDays(i));
+        }
+        return days;
+    }
+
+    private List<DateTime> GetMonthDays()
+    {
+        var days = new List<DateTime>();
+        foreach (var week in GetCalendarWeeks())
+        {
+            days.AddRange(week);
+        }
+        return days;
+    }
+
+    private List<DateTime> GetCustomRangeDays()
+    {
+        if (_selectedCustomRange == null) return new List<DateTime>();
+
+        var days = new List<DateTime>();
+        var start = GetCustomRangeStart();
+
+        for (int i = 0; i < _selectedCustomRange.DaysCount; i++)
+        {
+            var day = start.AddDays(i);
+            if (_selectedCustomRange.ShowWeekends || (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday))
+            {
+                days.Add(day);
+            }
+        }
+        return days;
+    }
+
+    private RenderFragment RenderCurrentView() => builder =>
+    {
+        if (_currentView == "Month")
+        {
+            RenderMonthView(builder);
+        }
+        else
+        {
+            RenderLinearView(builder);
+        }
+    };
+
+    private void RenderMonthView(RenderTreeBuilder builder)
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "style", "overflow-x: auto;");
+
+        builder.OpenElement(2, "table");
+        builder.AddAttribute(3, "style", "width: 100%; border-collapse: collapse;");
+
+        // Header
+        builder.OpenElement(4, "thead");
+        builder.OpenElement(5, "tr");
+
+        string[] dayNames = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+        foreach (var dayName in dayNames)
+        {
+            builder.OpenElement(6, "th");
+            builder.AddAttribute(7, "style", "padding: 8px; text-align: center; border: 1px solid #e0e0e0;");
+            builder.AddContent(8, dayName);
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // tr
+        builder.CloseElement(); // thead
+
+        // Body
+        builder.OpenElement(9, "tbody");
+
+        foreach (var week in GetCalendarWeeks())
+        {
+            builder.OpenElement(10, "tr");
+
+            foreach (var day in week)
+            {
+                RenderDayCell(builder, day, "120px");
+            }
+
+            builder.CloseElement(); // tr
+        }
+
+        builder.CloseElement(); // tbody
+        builder.CloseElement(); // table
+        builder.CloseElement(); // div
+    }
+
+    private void RenderLinearView(RenderTreeBuilder builder)
+    {
+        var days = GetDaysForCurrentView();
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "style", "overflow-x: auto;");
+
+        builder.OpenElement(2, "table");
+        builder.AddAttribute(3, "style", "width: 100%; border-collapse: collapse;");
+
+        // Header
+        builder.OpenElement(4, "thead");
+        builder.OpenElement(5, "tr");
+
+        foreach (var day in days)
+        {
+            builder.OpenElement(6, "th");
+            builder.AddAttribute(7, "style", "padding: 8px; text-align: center; border: 1px solid #e0e0e0; min-width: 150px;");
+            builder.OpenComponent<RadzenText>(8);
+            builder.AddAttribute(9, "TextStyle", TextStyle.Body1);
+            builder.AddAttribute(10, "ChildContent", (RenderFragment)(b =>
+            {
+                b.AddContent(0, day.ToString("ddd"));
+                b.OpenElement(1, "br");
+                b.CloseElement();
+                b.AddContent(2, day.ToString("MMM dd"));
+            }));
+            builder.CloseComponent();
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // tr
+        builder.CloseElement(); // thead
+
+        // Body
+        builder.OpenElement(11, "tbody");
+        builder.OpenElement(12, "tr");
+
+        foreach (var day in days)
+        {
+            RenderDayCell(builder, day, "150px");
+        }
+
+        builder.CloseElement(); // tr
+        builder.CloseElement(); // tbody
+        builder.CloseElement(); // table
+        builder.CloseElement(); // div
+    }
+
+    private void RenderDayCell(RenderTreeBuilder builder, DateTime day, string minWidth)
+    {
+        builder.OpenElement(0, "td");
+        builder.AddAttribute(1, "style", $"vertical-align: top; min-width: {minWidth}; height: 120px; border: 1px solid #e0e0e0; padding: 8px; cursor: context-menu;");
+        builder.AddAttribute(2, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, day)));
+        builder.AddAttribute(3, "oncontextmenu:preventDefault", true);
+
+        // Day number
+        builder.OpenComponent<RadzenText>(4);
+        builder.AddAttribute(5, "TextStyle", TextStyle.Body2);
+        builder.AddAttribute(6, "Style", day.Date == DateTime.Today ? "color: var(--rz-primary);" :
+            (_currentView == "Month" && day.Month != _selectedDate.Month ? "color: var(--rz-text-secondary-color);" : ""));
+        builder.AddAttribute(7, "ChildContent", (RenderFragment)(b => b.AddContent(0, day.Day)));
+        builder.CloseComponent();
+
+        // Events
+        var events = GetEventsForDay(day);
+        foreach (var evt in events)
+        {
+            builder.OpenElement(8, "div");
+            builder.AddAttribute(9, "style", "cursor: pointer; margin-top: 4px;");
+            builder.AddAttribute(10, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
+            builder.AddAttribute(11, "oncontextmenu:preventDefault", true);
+            builder.AddAttribute(12, "oncontextmenu:stopPropagation", true);
+            builder.AddAttribute(13, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+            builder.AddAttribute(14, "onclick:stopPropagation", true);
+
+            builder.OpenComponent<RadzenBadge>(15);
+            builder.AddAttribute(16, "BadgeStyle", BadgeStyle.Primary);
+            builder.AddAttribute(17, "Text", evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
+            builder.AddAttribute(18, "Style", $"display: block; font-size: 0.7rem; background-color: {GetEventBackgroundColor(evt)}; transition: opacity 0.2s, transform 0.1s;");
+            builder.AddAttribute(19, "class", "event-badge");
+            builder.CloseComponent();
+
+            builder.CloseElement(); // div
+        }
+
+        builder.CloseElement(); // td
+    }
+
+    private string GetEventBackgroundColor(Event evt)
+    {
+        // If the event has a custom color, use it
+        if (!string.IsNullOrEmpty(evt.Color))
+        {
+            return evt.Color;
+        }
+
+        // Otherwise, use color based on event type
+        return evt.EventType switch
+        {
+            Core.Enums.EventType.Meeting => "#1E88E5",      // Blue
+            Core.Enums.EventType.Appointment => "#43A047",  // Green
+            Core.Enums.EventType.Task => "#FB8C00",         // Orange
+            Core.Enums.EventType.TimeBlock => "#8E24AA",    // Purple
+            Core.Enums.EventType.Reminder => "#FDD835",     // Yellow
+            Core.Enums.EventType.Deadline => "#E53935",     // Red
+            _ => "#757575"                                   // Gray
+        };
+    }
+
+    private void ShowEventContextMenu(MouseEventArgs args, Event evt)
+    {
+        _contextMenuEvent = evt;
+        ContextMenuService.Open(args, new List<ContextMenuItem>
+        {
+            new ContextMenuItem { Text = "Edit", Icon = "edit", Value = "edit" },
+            new ContextMenuItem { Text = "Delete", Icon = "delete", Value = "delete" }
+        }, OnEventContextMenuClick);
+    }
+
+    private void ShowAddEventContextMenu(MouseEventArgs args, DateTime date)
+    {
+        _contextMenuDate = date;
+        ContextMenuService.Open(args, new List<ContextMenuItem>
+        {
+            new ContextMenuItem { Text = "Add Event", Icon = "add", Value = "add" }
+        }, OnAddEventContextMenuClick);
+    }
+
+    private void OnEventContextMenuClick(MenuItemEventArgs args)
+    {
+        if (_contextMenuEvent == null) return;
+
+        var action = args.Value?.ToString();
+        switch (action)
+        {
+            case "edit":
+                _ = OpenEventDialogAsync(_contextMenuEvent.Id);
+                break;
+            case "delete":
+                _ = DeleteEventAsync(_contextMenuEvent.Id);
+                break;
+        }
+        ContextMenuService.Close();
+        _contextMenuEvent = null;
+    }
+
+    private void OnAddEventContextMenuClick(MenuItemEventArgs args)
+    {
+        if (_contextMenuDate.HasValue)
+        {
+            _ = OpenEventDialogAsync(null, _contextMenuDate.Value);
+        }
+        ContextMenuService.Close();
+        _contextMenuDate = null;
+    }
+
+    private async Task OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
+    {
+        var parameters = new Dictionary<string, object>();
+
+        if (eventId.HasValue)
+        {
+            parameters.Add("EventId", eventId.Value);
+        }
+
+        if (prefilledDate.HasValue)
+        {
+            parameters.Add("PrefilledDate", prefilledDate.Value);
+        }
+
+        var result = await DialogService.OpenAsync<EventFormDialog>(
+            eventId.HasValue ? "Edit Event" : "Create Event",
+            parameters,
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "auto",
+                Resizable = true,
+                Draggable = true
+            });
+
+        // If the dialog was saved (result == true), reload events
+        if (result is bool saved && saved)
+        {
+            await LoadEvents();
+        }
+    }
+
+    private async Task DeleteEventAsync(Guid id)
+    {
+        var result = await DialogService.Confirm(
+            "Are you sure you want to delete this event?",
+            "Delete Event",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            await EventRepository.DeleteAsync(id);
+            await LoadEvents();
+        }
+    }
+}
