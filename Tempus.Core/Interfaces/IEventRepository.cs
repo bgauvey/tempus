@@ -4,11 +4,11 @@ namespace Tempus.Core.Interfaces;
 
 public interface IEventRepository
 {
-    Task<Event?> GetByIdAsync(Guid id);
-    Task<List<Event>> GetAllAsync();
-    Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<Event?> GetByIdAsync(Guid id, string userId);
+    Task<List<Event>> GetAllAsync(string userId);
+    Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId);
     Task<Event> CreateAsync(Event @event);
     Task<Event> UpdateAsync(Event @event);
-    Task DeleteAsync(Guid id);
-    Task<List<Event>> SearchAsync(string searchTerm);
+    Task DeleteAsync(Guid id, string userId);
+    Task<List<Event>> SearchAsync(string searchTerm, string userId);
 }

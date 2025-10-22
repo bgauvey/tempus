@@ -1,9 +1,13 @@
 @page "/"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @inject IEventRepository EventRepository
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Tempus - Master Your Time, Transform Your Business</PageTitle>
 
@@ -129,12 +133,14 @@
     </div>
 </div>
 
-<!-- Dashboard Preview Section -->
-<div class="features-section" style="background: white;">
-    <h2 class="section-title">Your Dashboard at a Glance</h2>
-    <p class="section-subtitle">Real-time insights into your schedule and productivity</p>
+<!-- Dashboard Preview Section - Only for Authenticated Users -->
+@if (!string.IsNullOrEmpty(_userId))
+{
+    <div class="features-section" style="background: white;">
+        <h2 class="section-title">Your Dashboard at a Glance</h2>
+        <p class="section-subtitle">Real-time insights into your schedule and productivity</p>
 
-    <div class="container-max">
+        <div class="container-max">
         <RadzenRow Gap="1.5rem">
             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                 <div class="metric-card">
@@ -232,7 +238,8 @@
             </RadzenColumn>
         </RadzenRow>
     </div>
-</div>
+    </div>
+}
 
 <!-- Call to Action -->
 <div class="hero-section" style="min-height: 60vh;">
@@ -247,7 +254,7 @@
             Join thousands of professionals who have already mastered their time with Tempus.
         </p>
         <div class="hero-cta">
-            <button class="btn-premium btn-primary animate-pulse" @onclick="@(() => NavigateToPage("/calendar"))">
+            <button class="btn-premium btn-primary animate-pulse" @onclick="@(() => NavigateToPage(string.IsNullOrEmpty(_userId) ? "/Account/Register" : "/calendar"))">
                 Start Your Free Trial
             </button>
         </div>
@@ -261,17 +268,32 @@
     private int _pendingTasks;
     private List<Event> _recentEvents = new();
 
+    private string? _userId;
+
     protected override async Task OnInitializedAsync()
     {
-        await LoadDashboardData();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                await LoadDashboardData();
+            }
+        }
     }
 
     private async Task LoadDashboardData()
     {
+        if (string.IsNullOrEmpty(_userId))
+            return;
+
         var today = DateTime.Today;
         var endOfWeek = today.AddDays(7);
 
-        var allEvents = await EventRepository.GetAllAsync();
+        var allEvents = await EventRepository.GetAllAsync(_userId);
         _totalEvents = allEvents.Count;
 
         _todayEvents = allEvents.Count(e => e.StartTime.Date == today);

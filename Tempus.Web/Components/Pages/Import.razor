@@ -1,7 +1,9 @@
 @page "/import"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@attribute [Authorize]
 @inject IIcsImportService IcsImportService
 @inject IEventRepository EventRepository
 @inject NotificationService NotificationService

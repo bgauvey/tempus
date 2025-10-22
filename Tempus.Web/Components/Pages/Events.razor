@@ -1,11 +1,18 @@
 @page "/events"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
+@attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Events - Tempus</PageTitle>
 
@@ -80,9 +87,20 @@
     private List<Event> _events = new();
     private bool _loading = true;
     private string _searchTerm = string.Empty;
+    private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
         await LoadEvents();
     }
 
@@ -90,7 +108,7 @@
     {
         _loading = true;
         StateHasChanged();
-        _events = await EventRepository.GetAllAsync();
+        _events = await EventRepository.GetAllAsync(_userId);
         _loading = false;
         StateHasChanged();
     }
@@ -104,7 +122,7 @@
         else
         {
             _loading = true;
-            _events = await EventRepository.SearchAsync(_searchTerm);
+            _events = await EventRepository.SearchAsync(_searchTerm, _userId);
             _loading = false;
         }
     }
@@ -155,7 +173,7 @@
 
         if (result == true)
         {
-            await EventRepository.DeleteAsync(id);
+            await EventRepository.DeleteAsync(id, _userId);
             await LoadEvents();
         }
     }

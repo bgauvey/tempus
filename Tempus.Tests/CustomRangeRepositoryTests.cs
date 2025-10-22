@@ -9,6 +9,7 @@ public class CustomRangeRepositoryTests : IDisposable
 {
     private readonly TempusDbContext _context;
     private readonly CustomRangeRepository _repository;
+    private const string TestUserId = "test-user-123";
 
     public CustomRangeRepositoryTests()
     {
@@ -37,6 +38,7 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Test Range",
             DaysCount = 30,
             ShowWeekends = true,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -66,12 +68,13 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Find Me",
             DaysCount = 60,
             ShowWeekends = false,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         };
         await _repository.CreateAsync(range);
 
         // Act
-        var result = await _repository.GetByIdAsync(range.Id);
+        var result = await _repository.GetByIdAsync(range.Id, TestUserId);
 
         // Assert
         Assert.NotNull(result);
@@ -88,7 +91,7 @@ public class CustomRangeRepositoryTests : IDisposable
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _repository.GetByIdAsync(nonExistentId);
+        var result = await _repository.GetByIdAsync(nonExistentId, TestUserId);
 
         // Assert
         Assert.Null(result);
@@ -106,6 +109,7 @@ public class CustomRangeRepositoryTests : IDisposable
                 Name = "Z Range",
                 DaysCount = 10,
                 ShowWeekends = true,
+                UserId = TestUserId,
                 CreatedAt = DateTime.UtcNow
             },
             new CustomCalendarRange
@@ -114,6 +118,7 @@ public class CustomRangeRepositoryTests : IDisposable
                 Name = "A Range",
                 DaysCount = 20,
                 ShowWeekends = false,
+                UserId = TestUserId,
                 CreatedAt = DateTime.UtcNow
             },
             new CustomCalendarRange
@@ -122,6 +127,7 @@ public class CustomRangeRepositoryTests : IDisposable
                 Name = "M Range",
                 DaysCount = 30,
                 ShowWeekends = true,
+                UserId = TestUserId,
                 CreatedAt = DateTime.UtcNow
             }
         };
@@ -132,7 +138,7 @@ public class CustomRangeRepositoryTests : IDisposable
         }
 
         // Act
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(TestUserId);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -145,7 +151,7 @@ public class CustomRangeRepositoryTests : IDisposable
     public async Task GetAllAsync_ShouldReturnEmptyListWhenNoRanges()
     {
         // Act
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(TestUserId);
 
         // Assert
         Assert.NotNull(result);
@@ -162,6 +168,7 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Original Name",
             DaysCount = 40,
             ShowWeekends = true,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         };
         await _repository.CreateAsync(range);
@@ -179,7 +186,7 @@ public class CustomRangeRepositoryTests : IDisposable
         Assert.False(result.ShowWeekends);
 
         // Verify the change persisted
-        var updatedRange = await _repository.GetByIdAsync(range.Id);
+        var updatedRange = await _repository.GetByIdAsync(range.Id, TestUserId);
         Assert.NotNull(updatedRange);
         Assert.Equal("Updated Name", updatedRange.Name);
         Assert.Equal(50, updatedRange.DaysCount);
@@ -196,19 +203,20 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "To Be Deleted",
             DaysCount = 15,
             ShowWeekends = true,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         };
         await _repository.CreateAsync(range);
 
         // Verify it exists
-        var existingRange = await _repository.GetByIdAsync(range.Id);
+        var existingRange = await _repository.GetByIdAsync(range.Id, TestUserId);
         Assert.NotNull(existingRange);
 
         // Act
-        await _repository.DeleteAsync(range.Id);
+        await _repository.DeleteAsync(range.Id, TestUserId);
 
         // Assert
-        var deletedRange = await _repository.GetByIdAsync(range.Id);
+        var deletedRange = await _repository.GetByIdAsync(range.Id, TestUserId);
         Assert.Null(deletedRange);
 
         // Verify it's not in the database
@@ -223,7 +231,7 @@ public class CustomRangeRepositoryTests : IDisposable
         var nonExistentId = Guid.NewGuid();
 
         // Act - should not throw
-        await _repository.DeleteAsync(nonExistentId);
+        await _repository.DeleteAsync(nonExistentId, TestUserId);
 
         // Assert - no exception thrown
         Assert.True(true);
@@ -239,6 +247,7 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Range 1",
             DaysCount = 10,
             ShowWeekends = true,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         });
 
@@ -248,11 +257,12 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Range 2",
             DaysCount = 20,
             ShowWeekends = false,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         });
 
         // Assert
-        var allRanges = await _repository.GetAllAsync();
+        var allRanges = await _repository.GetAllAsync(TestUserId);
         Assert.Equal(2, allRanges.Count);
         Assert.Contains(allRanges, r => r.Name == "Range 1");
         Assert.Contains(allRanges, r => r.Name == "Range 2");
@@ -268,6 +278,7 @@ public class CustomRangeRepositoryTests : IDisposable
             Name = "Lifecycle Test",
             DaysCount = 25,
             ShowWeekends = true,
+            UserId = TestUserId,
             CreatedAt = DateTime.UtcNow
         };
         var created = await _repository.CreateAsync(range);
@@ -282,13 +293,13 @@ public class CustomRangeRepositoryTests : IDisposable
         Assert.Equal(35, updated.DaysCount);
 
         // Verify update persisted
-        var retrieved = await _repository.GetByIdAsync(created.Id);
+        var retrieved = await _repository.GetByIdAsync(created.Id, TestUserId);
         Assert.NotNull(retrieved);
         Assert.Equal("Updated Lifecycle", retrieved.Name);
 
         // Delete
-        await _repository.DeleteAsync(created.Id);
-        var deleted = await _repository.GetByIdAsync(created.Id);
+        await _repository.DeleteAsync(created.Id, TestUserId);
+        var deleted = await _repository.GetByIdAsync(created.Id, TestUserId);
         Assert.Null(deleted);
     }
 }

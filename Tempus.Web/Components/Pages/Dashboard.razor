@@ -1,9 +1,15 @@
 @page "/dashboard"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Dashboard - Tempus</PageTitle>
 
@@ -190,8 +196,20 @@
     private int _appointmentCount;
     private List<Event> _recentEvents = new();
 
+    private string _userId = string.Empty;
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
         await LoadDashboardData();
     }
 
@@ -200,7 +218,7 @@
         var today = DateTime.Today;
         var endOfWeek = today.AddDays(7);
 
-        var allEvents = await EventRepository.GetAllAsync();
+        var allEvents = await EventRepository.GetAllAsync(_userId);
         _totalEvents = allEvents.Count;
 
         _todayEvents = allEvents.Count(e => e.StartTime.Date == today);

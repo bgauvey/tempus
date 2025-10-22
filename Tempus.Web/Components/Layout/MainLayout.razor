@@ -1,4 +1,10 @@
 @inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
 
 <RadzenComponents @rendermode="InteractiveServer" />
 
@@ -16,12 +22,7 @@
                     </RadzenText>
                 </RadzenStack>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenButton Icon="notifications" ButtonStyle="ButtonStyle.Light"
-                              Style="border-radius: 10px;" />
-                <RadzenButton Icon="account_circle" ButtonStyle="ButtonStyle.Light"
-                              Style="border-radius: 10px;" />
-            </RadzenStack>
+            <NavMenu />
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar @bind-Expanded="_drawerOpen" Style="width: 280px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);">
@@ -48,56 +49,47 @@
                         <span style="color: white;">About</span>
                     </Template>
                 </RadzenPanelMenuItem>
-                <div style="height: 1px; background: rgba(255, 255, 255, 0.2); margin: 1rem 0;"></div>
-                <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="dashboard" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Dashboard</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Calendar" Path="/calendar"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="calendar_month" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Calendar</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Events" Path="/events"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="event" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Events</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Import ICS" Path="/import"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="upload" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Import ICS</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Integrations" Path="/integrations"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="link" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Integrations</span>
-                    </Template>
-                </RadzenPanelMenuItem>
+                <AuthorizeView>
+                    <Authorized>
+                        <div style="height: 1px; background: rgba(255, 255, 255, 0.2); margin: 1rem 0;"></div>
+                        <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard"
+                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
+                            <Template>
+                                <RadzenIcon Icon="dashboard" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
+                                <span style="color: white;">Dashboard</span>
+                            </Template>
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Calendar" Path="/calendar"
+                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
+                            <Template>
+                                <RadzenIcon Icon="calendar_month" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
+                                <span style="color: white;">Calendar</span>
+                            </Template>
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Events" Path="/events"
+                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
+                            <Template>
+                                <RadzenIcon Icon="event" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
+                                <span style="color: white;">Events</span>
+                            </Template>
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Import ICS" Path="/import"
+                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
+                            <Template>
+                                <RadzenIcon Icon="upload" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
+                                <span style="color: white;">Import ICS</span>
+                            </Template>
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Integrations" Path="/integrations"
+                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
+                            <Template>
+                                <RadzenIcon Icon="link" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
+                                <span style="color: white;">Integrations</span>
+                            </Template>
+                        </RadzenPanelMenuItem>
+                    </Authorized>
+                </AuthorizeView>
             </RadzenPanelMenu>
-        </div>
-
-        <!-- Sidebar Footer -->
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem; background: rgba(0, 0, 0, 0.1); color: white;">
-            <RadzenStack Gap="0.5rem">
-                <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">
-                    <RadzenIcon Icon="verified" Style="font-size: 0.9rem; vertical-align: middle;" /> Premium Plan
-                </RadzenText>
-                <RadzenProgressBar Value="75" ShowValue="false" Style="height: 6px;" />
-                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
-                    75% of storage used
-                </RadzenText>
-            </RadzenStack>
         </div>
     </RadzenSidebar>
     <RadzenBody>

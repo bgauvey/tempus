@@ -1,14 +1,20 @@
 @page "/calendar"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
 @using Microsoft.AspNetCore.Components.Rendering
+@attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ICustomRangeRepository CustomRangeRepository
 @inject ContextMenuService ContextMenuService
 @inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -128,9 +134,20 @@
     }
 
     private List<ViewOption> _availableViews = new();
+    private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
         await LoadCustomRanges();
         LoadAvailableViews();
         await LoadEvents();
@@ -138,7 +155,7 @@
 
     private async Task LoadCustomRanges()
     {
-        _customRanges = await CustomRangeRepository.GetAllAsync();
+        _customRanges = await CustomRangeRepository.GetAllAsync(_userId);
     }
 
     private async Task LoadEvents()
@@ -149,7 +166,8 @@
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
         _events = await EventRepository.GetEventsByDateRangeAsync(
             startOfMonth.AddDays(-7),
-            endOfMonth.AddDays(7));
+            endOfMonth.AddDays(7),
+            _userId);
         _loading = false;
         StateHasChanged();
     }
@@ -650,7 +668,7 @@
 
         if (result == true)
         {
-            await EventRepository.DeleteAsync(id);
+            await EventRepository.DeleteAsync(id, _userId);
             await LoadEvents();
         }
     }

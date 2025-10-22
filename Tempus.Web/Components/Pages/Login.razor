@@ -1,0 +1,96 @@
+@page "/Account/Login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Models
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login - Tempus</PageTitle>
+
+<div class="hero-section" style="min-height: 100vh;">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+
+    <div class="hero-content" style="max-width: 500px;">
+        <div class="dashboard-card" style="padding: 3rem;">
+            <RadzenStack Gap="2rem">
+                <div style="text-align: center;">
+                    <div style="width: 60px; height: 60px; background: var(--primary-gradient); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <RadzenIcon Icon="lock" Style="color: white; font-size: 2rem;" />
+                    </div>
+                    <RadzenText TextStyle="TextStyle.H4" Style="font-weight: 700; margin-bottom: 0.5rem;">Welcome Back</RadzenText>
+                    <RadzenText Style="color: #718096;">Sign in to access your account</RadzenText>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        @errorMessage
+                    </RadzenAlert>
+                }
+
+                <form method="post" action="/Account/PerformLogin">
+                    <AntiforgeryToken />
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Email" />
+                            <input type="email" name="email" required placeholder="your@email.com"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" />
+                        </RadzenStack>
+
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Password" />
+                            <input type="password" name="password" required placeholder="Enter your password"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" />
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="rememberMe" value="true" />
+                                <span>Remember me</span>
+                            </label>
+                        </RadzenStack>
+
+                        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+                        <button type="submit" style="width: 100%; height: 50px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer;">
+                            Sign In
+                        </button>
+
+                        <div style="text-align: center;">
+                            <RadzenText Style="color: #718096;">
+                                Don't have an account?
+                                <RadzenLink Path="/Account/Register" Style="color: #667eea; font-weight: 600;">Sign up</RadzenLink>
+                            </RadzenText>
+                        </div>
+                    </RadzenStack>
+                </form>
+            </RadzenStack>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(Error))
+        {
+            errorMessage = Error switch
+            {
+                "locked" => "Account locked out.",
+                "invalid" => "Invalid email or password.",
+                _ => "An error occurred during login."
+            };
+        }
+    }
+}

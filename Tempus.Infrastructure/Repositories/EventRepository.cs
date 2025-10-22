@@ -14,26 +14,27 @@ public class EventRepository : IEventRepository
         _context = context;
     }
 
-    public async Task<Event?> GetByIdAsync(Guid id)
+    public async Task<Event?> GetByIdAsync(Guid id, string userId)
     {
         return await _context.Events
             .Include(e => e.Attendees)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
     }
 
-    public async Task<List<Event>> GetAllAsync()
+    public async Task<List<Event>> GetAllAsync(string userId)
     {
         return await _context.Events
             .Include(e => e.Attendees)
+            .Where(e => e.UserId == userId)
             .OrderBy(e => e.StartTime)
             .ToListAsync();
     }
 
-    public async Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
     {
         return await _context.Events
             .Include(e => e.Attendees)
-            .Where(e => e.StartTime >= startDate && e.StartTime <= endDate)
+            .Where(e => e.UserId == userId && e.StartTime >= startDate && e.StartTime <= endDate)
             .OrderBy(e => e.StartTime)
             .ToListAsync();
     }
@@ -53,9 +54,9 @@ public class EventRepository : IEventRepository
         return @event;
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, string userId)
     {
-        var @event = await _context.Events.FindAsync(id);
+        var @event = await GetByIdAsync(id, userId);
         if (@event != null)
         {
             _context.Events.Remove(@event);
@@ -63,13 +64,14 @@ public class EventRepository : IEventRepository
         }
     }
 
-    public async Task<List<Event>> SearchAsync(string searchTerm)
+    public async Task<List<Event>> SearchAsync(string searchTerm, string userId)
     {
         return await _context.Events
             .Include(e => e.Attendees)
-            .Where(e => e.Title.Contains(searchTerm) || 
+            .Where(e => e.UserId == userId &&
+                       (e.Title.Contains(searchTerm) ||
                        (e.Description != null && e.Description.Contains(searchTerm)) ||
-                       (e.Location != null && e.Location.Contains(searchTerm)))
+                       (e.Location != null && e.Location.Contains(searchTerm))))
             .OrderBy(e => e.StartTime)
             .ToListAsync();
     }

@@ -1,8 +1,12 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @inject IEventRepository EventRepository
 @inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <RadzenStack Gap="1rem">
     <RadzenText TextStyle="TextStyle.H6">@(EventId.HasValue ? "Edit Event" : "Create Event")</RadzenText>
@@ -85,23 +89,41 @@
 
     private readonly EventType[] _eventTypes = Enum.GetValues<EventType>();
     private readonly Priority[] _priorities = Enum.GetValues<Priority>();
+    private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
+
         if (EventId.HasValue)
         {
             // Load existing event
-            var existingEvent = await EventRepository.GetByIdAsync(EventId.Value);
+            var existingEvent = await EventRepository.GetByIdAsync(EventId.Value, _userId);
             if (existingEvent != null)
             {
                 _event = existingEvent;
             }
         }
-        else if (PrefilledDate.HasValue)
+        else
         {
-            // Set start and end times based on prefilled date
-            _event.StartTime = PrefilledDate.Value.Date.AddHours(9); // 9 AM
-            _event.EndTime = PrefilledDate.Value.Date.AddHours(10); // 10 AM
+            // Set userId for new event
+            _event.UserId = _userId;
+
+            if (PrefilledDate.HasValue)
+            {
+                // Set start and end times based on prefilled date
+                _event.StartTime = PrefilledDate.Value.Date.AddHours(9); // 9 AM
+                _event.EndTime = PrefilledDate.Value.Date.AddHours(10); // 10 AM
+            }
         }
     }
 
