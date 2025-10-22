@@ -1,0 +1,87 @@
+@page "/contact"
+@using System.ComponentModel.DataAnnotations
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Contact Us - Tempus</PageTitle>
+
+<div style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+    <RadzenCard Style="padding: 1.5rem;">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H4" Style="font-weight: 800;">Contact Us</RadzenText>
+            <RadzenText Style="color: #718096;">Have a question or need support? Send us a message and we'll get back to you.</RadzenText>
+
+            <EditForm Model="_model" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <RadzenFieldset>
+                    <RadzenLabel Text="Name" />
+                    <InputText @bind-Value="_model.Name" class="rz-input" />
+                    <ValidationMessage For="() => _model.Name" />
+
+                    <RadzenLabel Text="Email" Style="margin-top: 0.5rem;" />
+                    <InputText @bind-Value="_model.Email" class="rz-input" />
+                    <ValidationMessage For="() => _model.Email" />
+
+                    <RadzenLabel Text="Subject" Style="margin-top: 0.5rem;" />
+                    <InputText @bind-Value="_model.Subject" class="rz-input" />
+                    <ValidationMessage For="() => _model.Subject" />
+
+                    <RadzenLabel Text="Message" Style="margin-top: 0.5rem;" />
+                    <InputTextArea @bind-Value="_model.Message" Rows="6" class="rz-input" />
+                    <ValidationMessage For="() => _model.Message" />
+                </RadzenFieldset>
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Send Message" ButtonStyle="ButtonStyle.Primary" />
+                    <RadzenButton Text="Reset" ButtonStyle="ButtonStyle.Light" Click="@(()=> Reset())" />
+                </RadzenStack>
+
+                @if (_submitted)
+                {
+                    <RadzenNotification Position="NotificationPosition.TopRight" />
+                    <RadzenText Style="color: green; margin-top: 1rem;">Thanks — your message has been recorded. We'll get back to you shortly.</RadzenText>
+                }
+            </EditForm>
+        </RadzenStack>
+    </RadzenCard>
+</div>
+
+@code {
+    private ContactModel _model = new();
+    private bool _submitted = false;
+
+    private void Reset()
+    {
+        _model = new ContactModel();
+        _submitted = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // For now, we simply set submitted. Replace with email or ticketing integration as needed.
+        _submitted = true;
+        await Task.CompletedTask;
+    }
+
+    private class ContactModel
+    {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Subject { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(10)]
+        public string Message { get; set; } = string.Empty;
+    }
+}

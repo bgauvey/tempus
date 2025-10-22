@@ -1,0 +1,82 @@
+@page "/privacy"
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Privacy Policy - Tempus</PageTitle>
+
+<div style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 800;">Privacy Policy</RadzenText>
+        <RadzenText Style="color: #718096;">Last updated: October 22, 2025</RadzenText>
+
+        <RadzenCard Style="padding: 1.5rem;">
+            <RadzenText>
+                Tempus (“we”, “our”, or “us”) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our web application (the “Service"). Please read this policy carefully. By using the Service, you consent to the practices described in this policy.
+            </RadzenText>
+
+            <h3>Information We Collect</h3>
+            <RadzenText>
+                We collect information you provide directly to us when you create an account, log in, upload or import calendar data (for example, ICS files), or otherwise interact with the Service. This may include:
+            </RadzenText>
+            <ul>
+                <li>Account information (name, email, profile data)</li>
+                <li>Calendar and event data you create or import</li>
+                <li>Authentication data (password hashes stored securely by Identity provider)</li>
+                <li>Usage data (pages visited, actions taken within the app)</li>
+            </ul>
+
+            <h3>How We Use Your Information</h3>
+            <RadzenText>
+                We use the information we collect to:
+            </RadzenText>
+            <ul>
+                <li>Provide, maintain, and improve the Service</li>
+                <li>Personalize your experience and show relevant events or reminders</li>
+                <li>Process and import calendar files and integrate with third-party services when you authorize them</li>
+                <li>Communicate with you about updates, security alerts, or account activity</li>
+            </ul>
+
+            <h3>Data Sharing and Disclosure</h3>
+            <RadzenText>
+                We do not sell your personal information. We may share information with:
+            </RadzenText>
+            <ul>
+                <li>Service providers who perform services on our behalf (e.g., hosting, analytics)</li>
+                <li>Third-party integrations you connect (only with your authorization)</li>
+                <li>As required by law, or to protect our rights and safety</li>
+            </ul>
+
+            <h3>Data Retention</h3>
+            <RadzenText>
+                We retain your data for as long as necessary to provide the Service and comply with our legal obligations. You can request deletion of your account and associated data via your account settings or by contacting us.
+            </RadzenText>
+
+            <h3>Security</h3>
+            <RadzenText>
+                We take reasonable steps to protect your information. However, no system can be completely secure. Please use strong, unique passwords and enable any available account security features.
+            </RadzenText>
+
+            <h3>Your Choices</h3>
+            <RadzenText>
+                You can access, update, or delete your account information from your profile settings. You may also opt out of non-essential communications.
+            </RadzenText>
+
+            <h3>Children</h3>
+            <RadzenText>
+                The Service is not intended for children under 13. We do not knowingly collect information from children under 13.
+            </RadzenText>
+
+            <h3>Changes to this Policy</h3>
+            <RadzenText>
+                We may update this Privacy Policy from time to time. We will post the updated policy and the date it was revised.
+            </RadzenText>
+
+            <h3>Contact Us</h3>
+            <RadzenText>
+                If you have questions about this Privacy Policy, contact us at privacy@tempus.com.
+            </RadzenText>
+        </RadzenCard>
+    </RadzenStack>
+</div>

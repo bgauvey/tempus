@@ -1,0 +1,114 @@
+@page "/gdpr"
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+
+<PageTitle>GDPR Privacy Notice - Tempus</PageTitle>
+
+<div style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 800;">GDPR Privacy Notice (EU)</RadzenText>
+        <RadzenText Style="color: #718096;">Last updated: October 22, 2025</RadzenText>
+
+        <RadzenCard Style="padding: 1.5rem;">
+            <RadzenText>
+                This GDPR Privacy Notice applies to residents of the European Economic Area (EEA) and explains how Tempus ("we", "us", "our") collects, uses, discloses, and protects personal data in accordance with the General Data Protection Regulation (EU) 2016/679 ("GDPR").
+            </RadzenText>
+
+            <h3>1. Data Controller</h3>
+            <RadzenText>
+                The data controller for the personal data you provide through the Tempus service is: Tempus. If you need to contact us regarding data protection matters, please email privacy@tempus.com.
+            </RadzenText>
+
+            <h3>2. Categories of Personal Data We Process</h3>
+            <RadzenText>
+                We may collect and process the following categories of personal data:
+            </RadzenText>
+            <ul>
+                <li>Identity and contact data: name, email address, profile information.</li>
+                <li>Account data: registration details, authentication credentials (handled by Identity provider).</li>
+                <li>Calendar and event data: events you create or import, attendee data you add.</li>
+                <li>Usage data: logins, feature usage, IP address and device information for security and analytics.</li>
+                <li>Support and communication: messages you send to our support team.</li>
+            </ul>
+
+            <h3>3. Legal Bases for Processing</h3>
+            <RadzenText>
+                We rely on the following legal bases to process your personal data:
+            </RadzenText>
+            <ul>
+                <li>Performance of a contract: to provide the Service you have requested (account management, calendar services).</li>
+                <li>Consent: where we ask for your consent (for example, optional marketing communications) we will rely on your consent.</li>
+                <li>Legitimate interests: for security, fraud prevention, product improvement and analytics. We balance our interests against your rights and freedoms.</li>
+                <li>Legal obligation: to comply with applicable laws or respond to lawful requests (e.g., court orders).</li>
+            </ul>
+
+            <h3>4. Purposes of Processing</h3>
+            <RadzenText>
+                We process personal data to:
+            </RadzenText>
+            <ul>
+                <li>Operate, provide, and improve the Service.</li>
+                <li>Authenticate users and secure accounts.</li>
+                <li>Process calendar imports and synchronize event data with third-party integrations when authorized by you.</li>
+                <li>Provide customer support and respond to inquiries.</li>
+            </ul>
+
+            <h3>5. Data Recipients and International Transfers</h3>
+            <RadzenText>
+                We may share personal data with service providers (hosting, email, analytics) and with third-party integrations you connect. Where personal data is transferred outside the EEA, we rely on appropriate safeguards such as Standard Contractual Clauses (SCCs) or transfers to countries with an adequacy decision.
+            </RadzenText>
+
+            <h3>6. Data Retention</h3>
+            <RadzenText>
+                We retain personal data only as long as necessary for the purposes set out in this notice, unless a longer retention period is required by law. When determining retention periods, we consider the nature of the data, our legal obligations, and legitimate business needs.
+            </RadzenText>
+
+            <h3>7. Your Rights under the GDPR</h3>
+            <RadzenText>
+                Where applicable, you have the following rights: 
+            </RadzenText>
+            <ul>
+                <li>Right to access: request a copy of the personal data we hold about you.</li>
+                <li>Right to rectification: correct inaccurate or incomplete data.</li>
+                <li>Right to erasure: request deletion of your personal data (subject to legal limits).</li>
+                <li>Right to restriction of processing: request limitation of processing in certain circumstances.</li>
+                <li>Right to data portability: receive your personal data in a structured, commonly used format.</li>
+                <li>Right to object: object to processing based on legitimate interests or for direct marketing.</li>
+                <li>Right to withdraw consent: where processing is based on consent, you may withdraw it at any time.</li>
+            </ul>
+
+            <h3>8. How to Exercise Your Rights</h3>
+            <RadzenText>
+                To exercise any of the rights above, please contact us at privacy@tempus.com. We will respond to verified requests within one month, or longer where complexity or volume requires it, and in accordance with applicable law.
+            </RadzenText>
+
+            <h3>9. Security Measures</h3>
+            <RadzenText>
+                We implement reasonable technical and organizational measures to protect personal data, including encryption in transit, access controls, and monitoring. Access to personal data is limited to employees and processors who need it to perform their job functions.
+            </RadzenText>
+
+            <h3>10. Automated Decision Making</h3>
+            <RadzenText>
+                We do not make decisions about you based solely on automated processing, including profiling, which produce legal effects concerning you or similarly significantly affect you.
+            </RadzenText>
+
+            <h3>11. Complaints to a Supervisory Authority</h3>
+            <RadzenText>
+                If you are not satisfied with our response to a data protection request, you have the right to lodge a complaint with a supervisory authority in your EU member state.
+            </RadzenText>
+
+            <h3>12. Changes to this Notice</h3>
+            <RadzenText>
+                We may update this notice periodically. We will post the updated notice with the date it was last revised.
+            </RadzenText>
+
+            <h3>13. Contact</h3>
+            <RadzenText>
+                For privacy-related inquiries, contact: privacy@tempus.com
+            </RadzenText>
+        </RadzenCard>
+    </RadzenStack>
+</div>
