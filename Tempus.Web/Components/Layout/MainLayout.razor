@@ -10,49 +10,54 @@
 <ScrollToTopHandler />
 
 <RadzenLayout>
-    <RadzenHeader Style="background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%; padding: 0 1rem;">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
-                    </div>
-                    <RadzenText TextStyle="TextStyle.H5" Style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; margin: 0;">
-                        Tempus
-                    </RadzenText>
+    <!-- Public Header for Unauthenticated Users -->
+    <AuthorizeView>
+        <NotAuthorized>
+            <RadzenHeader Style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); position: sticky; top: 0; z-index: 1000;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%; padding: 0 2rem; max-width: 1400px; margin: 0 auto;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
+                        </div>
+                        <RadzenText TextStyle="TextStyle.H5" Style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; margin: 0;">
+                            Tempus
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
+                        <RadzenLink Path="/" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">Home</RadzenLink>
+                        <RadzenLink Path="/features" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">Features</RadzenLink>
+                        <RadzenLink Path="/about" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">About</RadzenLink>
+                        <RadzenLink Path="/Account/Login" Style="padding: 0.5rem 1.5rem; background: var(--primary-gradient); color: white; font-weight: 600; text-decoration: none; border-radius: 8px; transition: var(--transition-smooth);">Login</RadzenLink>
+                    </RadzenStack>
                 </RadzenStack>
-            </RadzenStack>
-            <NavMenu />
-        </RadzenStack>
-    </RadzenHeader>
-    <RadzenSidebar @bind-Expanded="_drawerOpen" Style="width: 280px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);">
-        <div style="padding: 2rem 1rem;">
-            <RadzenPanelMenu Style="background: transparent;">
-                <RadzenPanelMenuItem Text="Home" Path="/"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="home" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Home</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Features" Path="/features"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="star" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">Features</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="About" Path="/about"
-                                     Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                    <Template>
-                        <RadzenIcon Icon="info" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                        <span style="color: white;">About</span>
-                    </Template>
-                </RadzenPanelMenuItem>
-                <AuthorizeView>
-                    <Authorized>
-                        <div style="height: 1px; background: rgba(255, 255, 255, 0.2); margin: 1rem 0;"></div>
+            </RadzenHeader>
+        </NotAuthorized>
+        <Authorized>
+            <RadzenHeader Style="background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%; padding: 0 1rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
+                            </div>
+                            <RadzenText TextStyle="TextStyle.H5" Style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; margin: 0;">
+                                Tempus
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                    <NavMenu />
+                </RadzenStack>
+            </RadzenHeader>
+        </Authorized>
+    </AuthorizeView>
+
+    <!-- Sidebar only for Authenticated Users -->
+    <AuthorizeView>
+        <Authorized>
+            <RadzenSidebar @bind-Expanded="_drawerOpen" Style="width: 280px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);">
+                <div style="padding: 2rem 1rem;">
+                    <RadzenPanelMenu Style="background: transparent;">
                         <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard"
                                              Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
                             <Template>
@@ -88,11 +93,11 @@
                                 <span style="color: white;">Integrations</span>
                             </Template>
                         </RadzenPanelMenuItem>
-                    </Authorized>
-                </AuthorizeView>
-            </RadzenPanelMenu>
-        </div>
-    </RadzenSidebar>
+                    </RadzenPanelMenu>
+                </div>
+            </RadzenSidebar>
+        </Authorized>
+    </AuthorizeView>
     <RadzenBody>
         <main id="main-content" tabindex="-1" style="min-height: calc(100vh - 60px); outline: none;">
             @Body
@@ -129,8 +134,8 @@
                                 <RadzenStack Gap="0.75rem">
                                     <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; color: white; margin-bottom: 0.5rem;">Legal</RadzenText>
                                     <RadzenLink Path="/privacy" Style="color: rgba(255, 255, 255, 0.8);">Privacy Policy</RadzenLink>
-                                    <RadzenLink Path="#" Style="color: rgba(255, 255, 255, 0.8);">Terms of Service</RadzenLink>
-                                    <RadzenLink Path="#" Style="color: rgba(255, 255, 255, 0.8);">Security</RadzenLink>
+                                    <RadzenLink Path="/terms" Style="color: rgba(255, 255, 255, 0.8);">Terms of Service</RadzenLink>
+                                    <RadzenLink Path="/security" Style="color: rgba(255, 255, 255, 0.8);">Security</RadzenLink>
                                     <RadzenLink Path="/gdpr" Style="color: rgba(255, 255, 255, 0.8);">GDPR</RadzenLink>
                                 </RadzenStack>
                             </RadzenColumn>
