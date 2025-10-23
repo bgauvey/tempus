@@ -19,89 +19,257 @@
 <PageTitle>Calendar - Tempus</PageTitle>
 
 <style>
+    /* Premium Calendar Styling */
+    .calendar-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .calendar-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .calendar-controls {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.6s ease-out 0.1s backwards;
+    }
+
+    .calendar-nav-btn {
+        border-radius: 10px !important;
+        transition: var(--transition-smooth) !important;
+    }
+
+    .calendar-nav-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .calendar-view-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .calendar-main {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+
+    .calendar-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 8px;
+    }
+
+    .calendar-header-cell {
+        padding: 1rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #667eea;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .calendar-day-cell {
+        vertical-align: top;
+        min-width: 120px;
+        height: 120px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 12px;
+        cursor: context-menu;
+        background: white;
+        transition: var(--transition-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .calendar-day-cell:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-color: #667eea;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .calendar-day-cell.today {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba220 100%);
+        border: 2px solid #667eea;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .calendar-day-cell.other-month {
+        opacity: 0.4;
+    }
+
+    .calendar-day-number {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .calendar-day-number.today {
+        color: #667eea;
+        font-size: 1.3rem;
+    }
+
+    .event-badge {
+        display: block;
+        font-size: 0.7rem;
+        margin-top: 4px;
+        padding: 4px 8px;
+        border-radius: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: var(--transition-smooth);
+        cursor: pointer;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
     .event-badge:hover {
-        opacity: 0.8;
-        transform: scale(1.02);
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        z-index: 10;
+    }
+
+    .event-detail-card {
+        border-radius: 12px;
+        transition: var(--transition-smooth);
+        border: 1px solid #e9ecef;
     }
 
     .event-detail-card:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        border-color: #667eea;
+    }
+
+    .events-sidebar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.3s backwards;
+    }
+
+    .events-sidebar-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #2d3748;
+    }
+
+    .no-events-message {
+        text-align: center;
+        padding: 2rem;
+        color: #718096;
+        font-style: italic;
+    }
+
+    .create-event-btn {
+        background: var(--primary-gradient) !important;
+        border: none !important;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        transition: var(--transition-smooth) !important;
+    }
+
+    .create-event-btn:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
     }
 </style>
 
-<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-4">
-    <RadzenText TextStyle="TextStyle.H3">Calendar View</RadzenText>
-    <RadzenButton Icon="add" Text="Create Event" ButtonStyle="ButtonStyle.Primary"
-                Click="@(() => OpenEventDialogAsync(null, DateTime.Today))" />
-</RadzenStack>
+<div class="calendar-header">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+        <h1 class="calendar-title">📅 Calendar</h1>
+        <RadzenButton Icon="add" Text="Create Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Today))" class="create-event-btn" />
+    </RadzenStack>
+</div>
 
-<RadzenCard class="rz-mb-4">
+<div class="calendar-controls">
     <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
         <RadzenColumn Size="12" SizeMD="3">
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light"
-                            Click="NavigatePrevious" Size="ButtonSize.Small" />
-                <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                            Click="GoToToday">Today</RadzenButton>
-                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light"
-                            Click="NavigateNext" Size="ButtonSize.Small" />
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="NavigatePrevious" Size="ButtonSize.Medium" class="calendar-nav-btn" />
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" Click="GoToToday" class="calendar-nav-btn">Today</RadzenButton>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="NavigateNext" Size="ButtonSize.Medium" class="calendar-nav-btn" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
-            <RadzenText TextStyle="TextStyle.H6">@GetCurrentViewTitle()</RadzenText>
+            <div class="calendar-view-title">@GetCurrentViewTitle()</div>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
-            <RadzenDropDown @bind-Value="_currentView" Data="@_availableViews"
-                          Change="@OnViewChanged" Style="width: 100%;"
-                          TextProperty="Text" ValueProperty="Value" />
+            <RadzenDropDown @bind-Value="_currentView" Data="@_availableViews" Change="@OnViewChanged" Style="width: 100%; border-radius: 10px;" TextProperty="Text" ValueProperty="Value" />
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="3">
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                <RadzenButton Icon="date_range" ButtonStyle="ButtonStyle.Light"
-                            Click="OpenCustomRangeDialog" Size="ButtonSize.Small"
-                            Text="Custom Range" />
-            </RadzenStack>
+            <RadzenButton Icon="date_range" ButtonStyle="ButtonStyle.Light" Click="OpenCustomRangeDialog" Size="ButtonSize.Medium" Text="Custom Range" class="calendar-nav-btn" Style="width: 100%;" />
         </RadzenColumn>
     </RadzenRow>
-</RadzenCard>
+</div>
 
-<RadzenCard>
+<div class="calendar-main">
     @if (_loading)
     {
-        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
+        <div class="loading-container">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        </div>
     }
     else
     {
         @RenderCurrentView()
     }
-</RadzenCard>
+</div>
 
-<RadzenCard class="rz-mt-4">
-    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Events on @_selectedDate.ToString("MMMM dd, yyyy")</RadzenText>
+<div class="events-sidebar rz-mt-4">
+    <div class="events-sidebar-title">📌 Events on @_selectedDate.ToString("MMMM dd, yyyy")</div>
     @if (GetEventsForDay(_selectedDate).Any())
     {
-        <RadzenStack Gap="0.5rem">
+        <RadzenStack Gap="0.75rem">
             @foreach (var evt in GetEventsForDay(_selectedDate))
             {
-                <div style="cursor: pointer;"
-                     @oncontextmenu="@(args => ShowEventContextMenu(args, evt))"
-                     @oncontextmenu:preventDefault="true"
-                     @onclick="@(() => OpenEventDialogAsync(evt.Id))">
-                    <RadzenCard Variant="Variant.Outlined"
-                              Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)}; transition: box-shadow 0.2s;")"
-                              class="event-detail-card">
+                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault="true" @onclick="@(() => OpenEventDialogAsync(evt.Id))">
+                    <RadzenCard Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)};")" class="event-detail-card">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
-                            <RadzenIcon Icon="event" Style="@($"color: {GetEventBackgroundColor(evt)};")" />
-                            <RadzenStack Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body1"><strong>@evt.Title</strong></RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                                    @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
+                            <div style="@($"width: 48px; height: 48px; border-radius: 12px; background: {GetEventBackgroundColor(evt)}15; display: flex; align-items: center; justify-content: center;")">
+                                <RadzenIcon Icon="event" Style="@($"color: {GetEventBackgroundColor(evt)}; font-size: 1.5rem;")" />
+                            </div>
+                            <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 700; color: #2d3748;">@evt.Title</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                    🕐 @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
                                 </RadzenText>
                                 @if (!string.IsNullOrEmpty(evt.Location))
                                 {
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
-                                        <RadzenIcon Icon="location_on" Style="font-size: 1rem;" />
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">@evt.Location</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">📍 @evt.Location</RadzenText>
                                     </RadzenStack>
                                 }
                             </RadzenStack>
@@ -113,9 +281,9 @@
     }
     else
     {
-        <RadzenText Style="color: var(--rz-text-secondary-color);">No events on this date</RadzenText>
+        <div class="no-events-message">No events scheduled for this date</div>
     }
-</RadzenCard>
+</div>
 
 @code {
     private DateTime _selectedDate = DateTime.Today;
@@ -432,7 +600,7 @@
         builder.AddAttribute(1, "style", "overflow-x: auto;");
 
         builder.OpenElement(2, "table");
-        builder.AddAttribute(3, "style", "width: 100%; border-collapse: collapse;");
+        builder.AddAttribute(3, "class", "calendar-table");
 
         // Header
         builder.OpenElement(4, "thead");
@@ -442,7 +610,7 @@
         foreach (var dayName in dayNames)
         {
             builder.OpenElement(6, "th");
-            builder.AddAttribute(7, "style", "padding: 8px; text-align: center; border: 1px solid #e0e0e0;");
+            builder.AddAttribute(7, "class", "calendar-header-cell");
             builder.AddContent(8, dayName);
             builder.CloseElement();
         }
@@ -478,7 +646,7 @@
         builder.AddAttribute(1, "style", "overflow-x: auto;");
 
         builder.OpenElement(2, "table");
-        builder.AddAttribute(3, "style", "width: 100%; border-collapse: collapse;");
+        builder.AddAttribute(3, "class", "calendar-table");
 
         // Header
         builder.OpenElement(4, "thead");
@@ -487,10 +655,11 @@
         foreach (var day in days)
         {
             builder.OpenElement(6, "th");
-            builder.AddAttribute(7, "style", "padding: 8px; text-align: center; border: 1px solid #e0e0e0; min-width: 150px;");
-            builder.OpenComponent<RadzenText>(8);
-            builder.AddAttribute(9, "TextStyle", TextStyle.Body1);
-            builder.AddAttribute(10, "ChildContent", (RenderFragment)(b =>
+            builder.AddAttribute(7, "class", "calendar-header-cell");
+            builder.AddAttribute(8, "style", "min-width: 150px;");
+            builder.OpenComponent<RadzenText>(9);
+            builder.AddAttribute(10, "TextStyle", TextStyle.Body1);
+            builder.AddAttribute(11, "ChildContent", (RenderFragment)(b =>
             {
                 b.AddContent(0, day.ToString("ddd"));
                 b.OpenElement(1, "br");
@@ -505,8 +674,8 @@
         builder.CloseElement(); // thead
 
         // Body
-        builder.OpenElement(11, "tbody");
-        builder.OpenElement(12, "tr");
+        builder.OpenElement(12, "tbody");
+        builder.OpenElement(13, "tr");
 
         foreach (var day in days)
         {
@@ -521,37 +690,38 @@
 
     private void RenderDayCell(RenderTreeBuilder builder, DateTime day, string minWidth)
     {
+        var isToday = day.Date == DateTime.Today;
+        var isOtherMonth = _currentView == "Month" && day.Month != _selectedDate.Month;
+        var cellClass = "calendar-day-cell" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "");
+
         builder.OpenElement(0, "td");
-        builder.AddAttribute(1, "style", $"vertical-align: top; min-width: {minWidth}; height: 120px; border: 1px solid #e0e0e0; padding: 8px; cursor: context-menu;");
-        builder.AddAttribute(2, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, day)));
-        builder.AddAttribute(3, "oncontextmenu:preventDefault", true);
+        builder.AddAttribute(1, "class", cellClass);
+        builder.AddAttribute(2, "style", $"min-width: {minWidth};");
+        builder.AddAttribute(3, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, day)));
+        builder.AddAttribute(4, "oncontextmenu:preventDefault", true);
 
         // Day number
-        builder.OpenComponent<RadzenText>(4);
-        builder.AddAttribute(5, "TextStyle", TextStyle.Body2);
-        builder.AddAttribute(6, "Style", day.Date == DateTime.Today ? "color: var(--rz-primary);" :
-            (_currentView == "Month" && day.Month != _selectedDate.Month ? "color: var(--rz-text-secondary-color);" : ""));
-        builder.AddAttribute(7, "ChildContent", (RenderFragment)(b => b.AddContent(0, day.Day)));
-        builder.CloseComponent();
+        builder.OpenElement(5, "div");
+        builder.AddAttribute(6, "class", "calendar-day-number" + (isToday ? " today" : ""));
+        builder.AddContent(7, day.Day);
+        builder.CloseElement();
 
         // Events
         var events = GetEventsForDay(day);
         foreach (var evt in events)
         {
             builder.OpenElement(8, "div");
-            builder.AddAttribute(9, "style", "cursor: pointer; margin-top: 4px;");
-            builder.AddAttribute(10, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
-            builder.AddAttribute(11, "oncontextmenu:preventDefault", true);
-            builder.AddAttribute(12, "oncontextmenu:stopPropagation", true);
-            builder.AddAttribute(13, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
-            builder.AddAttribute(14, "onclick:stopPropagation", true);
+            builder.AddAttribute(9, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
+            builder.AddAttribute(10, "oncontextmenu:preventDefault", true);
+            builder.AddAttribute(11, "oncontextmenu:stopPropagation", true);
+            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+            builder.AddAttribute(13, "onclick:stopPropagation", true);
 
-            builder.OpenComponent<RadzenBadge>(15);
-            builder.AddAttribute(16, "BadgeStyle", BadgeStyle.Primary);
-            builder.AddAttribute(17, "Text", evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
-            builder.AddAttribute(18, "Style", $"display: block; font-size: 0.7rem; background-color: {GetEventBackgroundColor(evt)}; transition: opacity 0.2s, transform 0.1s;");
-            builder.AddAttribute(19, "class", "event-badge");
-            builder.CloseComponent();
+            builder.OpenElement(14, "div");
+            builder.AddAttribute(15, "class", "event-badge");
+            builder.AddAttribute(16, "style", $"background-color: {GetEventBackgroundColor(evt)}; color: white;");
+            builder.AddContent(17, evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
+            builder.CloseElement();
 
             builder.CloseElement(); // div
         }
