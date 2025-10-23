@@ -56,9 +56,10 @@
         <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
     </RadzenStack>
 
-    <RadzenFormField Text="Color" Variant="Variant.Outlined">
-        <RadzenColorPicker @bind-Value="@_event.Color" Style="width: 100%;" />
-    </RadzenFormField>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+        <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
+        <RadzenColorPicker @bind-Value="@_event.Color" />
+    </RadzenStack>
 
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
