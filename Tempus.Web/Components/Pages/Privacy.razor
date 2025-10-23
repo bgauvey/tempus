@@ -1,82 +1,168 @@
 @page "/privacy"
-@using Microsoft.AspNetCore.Components
-@using Radzen
-@using Radzen.Blazor
-@using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Privacy Policy - Tempus</PageTitle>
 
-<div style="padding: 2rem; max-width: 900px; margin: 0 auto;">
-    <RadzenStack Gap="1rem">
-        <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 800;">Privacy Policy</RadzenText>
-        <RadzenText Style="color: #718096;">Last updated: October 22, 2025</RadzenText>
+<div class="legal-page-container">
+    <div class="legal-page-content">
+        <div class="legal-page-header">
+            <div class="legal-icon-wrapper">
+                <RadzenIcon Icon="security" Style="color: white; font-size: 2.5rem;" />
+            </div>
+            <h1 class="legal-page-title">Privacy Policy</h1>
+            <p class="legal-page-subtitle">Last updated: @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+        </div>
 
-        <RadzenCard Style="padding: 1.5rem;">
-            <RadzenText>
-                Tempus (“we”, “our”, or “us”) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our web application (the “Service"). Please read this policy carefully. By using the Service, you consent to the practices described in this policy.
-            </RadzenText>
+        <div class="legal-page-section">
+            <p class="legal-section-text">
+                Tempus ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our web application (the "Service"). Please read this policy carefully. By using the Service, you consent to the practices described in this policy.
+            </p>
+        </div>
 
-            <h3>Information We Collect</h3>
-            <RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">1. Information We Collect</h2>
+            <p class="legal-section-text">
                 We collect information you provide directly to us when you create an account, log in, upload or import calendar data (for example, ICS files), or otherwise interact with the Service. This may include:
-            </RadzenText>
-            <ul>
+            </p>
+            <ul class="legal-list">
                 <li>Account information (name, email, profile data)</li>
                 <li>Calendar and event data you create or import</li>
                 <li>Authentication data (password hashes stored securely by Identity provider)</li>
                 <li>Usage data (pages visited, actions taken within the app)</li>
+                <li>Device and browser information</li>
+                <li>IP address and location data</li>
             </ul>
+        </div>
 
-            <h3>How We Use Your Information</h3>
-            <RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">2. How We Use Your Information</h2>
+            <p class="legal-section-text">
                 We use the information we collect to:
-            </RadzenText>
-            <ul>
+            </p>
+            <ul class="legal-list">
                 <li>Provide, maintain, and improve the Service</li>
                 <li>Personalize your experience and show relevant events or reminders</li>
                 <li>Process and import calendar files and integrate with third-party services when you authorize them</li>
                 <li>Communicate with you about updates, security alerts, or account activity</li>
+                <li>Respond to your comments, questions, and customer service requests</li>
+                <li>Monitor and analyze trends, usage, and activities in connection with our Service</li>
+                <li>Detect, prevent, and address technical issues and security vulnerabilities</li>
+                <li>Comply with legal obligations and enforce our Terms of Service</li>
             </ul>
+        </div>
 
-            <h3>Data Sharing and Disclosure</h3>
-            <RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">3. Data Sharing and Disclosure</h2>
+            <p class="legal-section-text">
                 We do not sell your personal information. We may share information with:
-            </RadzenText>
-            <ul>
-                <li>Service providers who perform services on our behalf (e.g., hosting, analytics)</li>
-                <li>Third-party integrations you connect (only with your authorization)</li>
-                <li>As required by law, or to protect our rights and safety</li>
+            </p>
+            <ul class="legal-list">
+                <li><strong>Service providers:</strong> Companies who perform services on our behalf (e.g., hosting, analytics, email delivery)</li>
+                <li><strong>Third-party integrations:</strong> Services you connect such as Google Calendar, Outlook, or Apple Calendar (only with your authorization)</li>
+                <li><strong>Business transfers:</strong> In connection with any merger, sale of company assets, financing, or acquisition of all or a portion of our business</li>
+                <li><strong>Legal requirements:</strong> When required by law, or to protect our rights, safety, and property</li>
+                <li><strong>With your consent:</strong> When you give us explicit consent to share your information for a specific purpose</li>
             </ul>
+        </div>
 
-            <h3>Data Retention</h3>
-            <RadzenText>
-                We retain your data for as long as necessary to provide the Service and comply with our legal obligations. You can request deletion of your account and associated data via your account settings or by contacting us.
-            </RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">4. Cookies and Tracking Technologies</h2>
+            <p class="legal-section-text">
+                We use cookies and similar tracking technologies to track activity on our Service and hold certain information. Cookies are files with a small amount of data which may include an anonymous unique identifier. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our Service.
+            </p>
+        </div>
 
-            <h3>Security</h3>
-            <RadzenText>
-                We take reasonable steps to protect your information. However, no system can be completely secure. Please use strong, unique passwords and enable any available account security features.
-            </RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">5. Data Retention</h2>
+            <p class="legal-section-text">
+                We retain your data for as long as necessary to provide the Service and comply with our legal obligations. When you delete your account, we will delete or anonymize your personal information within 30 days, unless we are required to retain it for legal or regulatory purposes. You can request deletion of your account and associated data via your account settings or by contacting us at privacy@tempus.com.
+            </p>
+        </div>
 
-            <h3>Your Choices</h3>
-            <RadzenText>
-                You can access, update, or delete your account information from your profile settings. You may also opt out of non-essential communications.
-            </RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">6. Data Security</h2>
+            <p class="legal-section-text">
+                We take reasonable steps to protect your information using industry-standard security measures, including:
+            </p>
+            <ul class="legal-list">
+                <li>Encryption of data in transit using SSL/TLS</li>
+                <li>Secure password hashing using ASP.NET Core Identity</li>
+                <li>Regular security assessments and monitoring</li>
+                <li>Access controls and authentication requirements</li>
+                <li>Regular backups and disaster recovery procedures</li>
+            </ul>
+            <p class="legal-section-text">
+                However, no system can be completely secure. Please use strong, unique passwords and enable any available account security features.
+            </p>
+        </div>
 
-            <h3>Children</h3>
-            <RadzenText>
-                The Service is not intended for children under 13. We do not knowingly collect information from children under 13.
-            </RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">7. Your Rights and Choices</h2>
+            <p class="legal-section-text">
+                You have the following rights regarding your personal information:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Access:</strong> You can access and review your account information from your profile settings</li>
+                <li><strong>Update:</strong> You can update or correct your account information at any time</li>
+                <li><strong>Delete:</strong> You can request deletion of your account and personal data</li>
+                <li><strong>Export:</strong> You can request a copy of your data in a portable format</li>
+                <li><strong>Opt-out:</strong> You may opt out of non-essential communications and marketing emails</li>
+                <li><strong>Withdraw consent:</strong> Where we rely on consent, you can withdraw it at any time</li>
+            </ul>
+            <p class="legal-section-text">
+                To exercise these rights, please contact us at privacy@tempus.com or use the settings in your account.
+            </p>
+        </div>
 
-            <h3>Changes to this Policy</h3>
-            <RadzenText>
-                We may update this Privacy Policy from time to time. We will post the updated policy and the date it was revised.
-            </RadzenText>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">8. Children's Privacy</h2>
+            <p class="legal-section-text">
+                The Service is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us. If we become aware that we have collected personal information from children without verification of parental consent, we will take steps to remove that information from our servers.
+            </p>
+        </div>
 
-            <h3>Contact Us</h3>
-            <RadzenText>
-                If you have questions about this Privacy Policy, contact us at privacy@tempus.com.
-            </RadzenText>
-        </RadzenCard>
-    </RadzenStack>
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">9. International Data Transfers</h2>
+            <p class="legal-section-text">
+                Your information may be transferred to and maintained on computers located outside of your state, province, country, or other governmental jurisdiction where data protection laws may differ. By using our Service, you consent to the transfer of your information to our facilities and to those third parties with whom we share it as described in this policy.
+            </p>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">10. Third-Party Links</h2>
+            <p class="legal-section-text">
+                Our Service may contain links to third-party websites or services that are not operated by us. If you click on a third-party link, you will be directed to that third party's site. We strongly advise you to review the privacy policy of every site you visit. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
+            </p>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">11. California Privacy Rights</h2>
+            <p class="legal-section-text">
+                If you are a California resident, you have specific rights regarding access to your personal information under the California Consumer Privacy Act (CCPA). This includes the right to know what personal information we collect, the right to delete personal information, and the right to opt-out of the sale of personal information (note: we do not sell personal information).
+            </p>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">12. Changes to This Privacy Policy</h2>
+            <p class="legal-section-text">
+                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date. We will also notify you via email or through a prominent notice on our Service prior to the change becoming effective. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
+            </p>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">13. Contact Us</h2>
+            <p class="legal-section-text">
+                If you have questions about this Privacy Policy or our privacy practices, please contact us:
+            </p>
+            <ul class="legal-list">
+                <li>By email: privacy@tempus.com</li>
+                <li>By visiting our contact page: <RadzenLink Path="/contact" Style="color: #667eea; font-weight: 600;">Contact Us</RadzenLink></li>
+            </ul>
+        </div>
+
+        <div class="legal-page-footer">
+            <p>
+                By using Tempus, you acknowledge that you have read and understood this Privacy Policy.
+            </p>
+        </div>
+    </div>
 </div>
