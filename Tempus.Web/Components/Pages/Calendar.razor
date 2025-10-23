@@ -418,7 +418,7 @@
         <RadzenStack Gap="0.75rem">
             @foreach (var evt in GetEventsForDay(_selectedDate))
             {
-                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault="true" @onclick="@(() => OpenEventDialogAsync(evt.Id))">
+                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault="true" @onclick="@(() => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id))">
                     <RadzenCard Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)};")" class="event-detail-card">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
                             <div style="@($"width: 48px; height: 48px; border-radius: 12px; background: {GetEventBackgroundColor(evt)}15; display: flex; align-items: center; justify-content: center;")">
@@ -930,7 +930,7 @@
             builder.OpenElement(13, "div");
             builder.AddAttribute(14, "class", "timed-event");
             builder.AddAttribute(15, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)};");
-            builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+            builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
             builder.AddAttribute(17, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
             builder.AddAttribute(18, "oncontextmenu:preventDefault", true);
 
@@ -1057,7 +1057,7 @@
                 builder.OpenElement(26, "div");
                 builder.AddAttribute(27, "class", "timed-event");
                 builder.AddAttribute(28, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)}; left: 2px; right: 2px;");
-                builder.AddAttribute(29, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+                builder.AddAttribute(29, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
                 builder.AddAttribute(30, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
                 builder.AddAttribute(31, "oncontextmenu:preventDefault", true);
 
@@ -1176,7 +1176,7 @@
             builder.AddAttribute(9, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
             builder.AddAttribute(10, "oncontextmenu:preventDefault", true);
             builder.AddAttribute(11, "oncontextmenu:stopPropagation", true);
-            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
             builder.AddAttribute(13, "onclick:stopPropagation", true);
 
             builder.OpenElement(14, "div");
@@ -1239,10 +1239,10 @@
         switch (action)
         {
             case "edit":
-                _ = OpenEventDialogAsync(_contextMenuEvent.Id);
+                _ = OpenEventDialogAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
                 break;
             case "delete":
-                _ = DeleteEventAsync(_contextMenuEvent.Id);
+                _ = DeleteEventAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
                 break;
         }
         ContextMenuService.Close();
