@@ -12,7 +12,10 @@ public class IcsImportService : IIcsImportService
 {
     public async Task<List<Event>> ImportFromStreamAsync(Stream fileStream)
     {
-        var calendar = Calendar.Load(fileStream);
+        // Read stream asynchronously to avoid "Synchronous reads are not supported" error
+        using var reader = new StreamReader(fileStream);
+        var icsContent = await reader.ReadToEndAsync();
+        var calendar = Calendar.Load(icsContent);
         var events = new List<Event>();
 
         foreach (var calendarEvent in calendar.Events)
