@@ -1,12 +1,16 @@
 @page "/import"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @attribute [Authorize]
 @inject IIcsImportService IcsImportService
 @inject IEventRepository EventRepository
 @inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Import ICS - Tempus</PageTitle>
 
@@ -136,6 +140,21 @@
     private bool _importing;
     private bool _saving;
     private List<Event> _importedEvents = new();
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
+    }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -183,6 +202,7 @@
         {
             foreach (var evt in _importedEvents)
             {
+                evt.UserId = _userId; // Set the current user ID before saving
                 await EventRepository.CreateAsync(evt);
             }
             NotificationService.Notify(new NotificationMessage

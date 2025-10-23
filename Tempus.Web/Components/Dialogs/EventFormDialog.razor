@@ -9,8 +9,6 @@
 @inject UserManager<ApplicationUser> UserManager
 
 <RadzenStack Gap="1rem">
-    <RadzenText TextStyle="TextStyle.H6">@(EventId.HasValue ? "Edit Event" : "Create Event")</RadzenText>
-
     <RadzenFormField Text="Title" Variant="Variant.Outlined">
         <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
     </RadzenFormField>
@@ -53,9 +51,10 @@
         </RadzenColumn>
     </RadzenRow>
 
-    <RadzenFormField Text="All Day Event" Variant="Variant.Outlined">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
         <RadzenCheckBox @bind-Value="@_event.IsAllDay" />
-    </RadzenFormField>
+        <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
+    </RadzenStack>
 
     <RadzenFormField Text="Color" Variant="Variant.Outlined">
         <RadzenColorPicker @bind-Value="@_event.Color" Style="width: 100%;" />

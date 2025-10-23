@@ -15,18 +15,65 @@ public class IcsImportService : IIcsImportService
         // Read stream asynchronously to avoid "Synchronous reads are not supported" error
         using var reader = new StreamReader(fileStream);
         var icsContent = await reader.ReadToEndAsync();
+
+        if (string.IsNullOrWhiteSpace(icsContent))
+        {
+            throw new InvalidOperationException("ICS file is empty or could not be read.");
+        }
+
         var calendar = Calendar.Load(icsContent);
+        if (calendar == null)
+        {
+            throw new InvalidOperationException("Failed to parse ICS file.");
+        }
+
         var events = new List<Event>();
+
+        if (calendar.Events == null || calendar.Events.Count == 0)
+        {
+            return events; // Return empty list if no events
+        }
 
         foreach (var calendarEvent in calendar.Events)
         {
+            // Skip events without start/end times
+            if (calendarEvent.Start == null || calendarEvent.End == null)
+            {
+                continue;
+            }
+
+            // Extract start and end times with null checks
+            DateTime startTime;
+            DateTime endTime;
+
+            try
+            {
+                // Try to get the DateTime value, falling back to UTC if needed
+                startTime = calendarEvent.Start.AsDateTimeOffset.DateTime;
+                endTime = calendarEvent.End.AsDateTimeOffset.DateTime;
+            }
+            catch
+            {
+                try
+                {
+                    // Fallback to AsUtc if AsDateTimeOffset fails
+                    startTime = calendarEvent.Start.AsUtc;
+                    endTime = calendarEvent.End.AsUtc;
+                }
+                catch
+                {
+                    // Skip events with invalid date/time formats
+                    continue;
+                }
+            }
+
             var tempusEvent = new Event
             {
                 Id = Guid.NewGuid(),
                 Title = calendarEvent.Summary ?? "Untitled Event",
                 Description = calendarEvent.Description,
-                StartTime = calendarEvent.Start.AsDateTimeOffset.DateTime,
-                EndTime = calendarEvent.End.AsDateTimeOffset.DateTime,
+                StartTime = startTime,
+                EndTime = endTime,
                 Location = calendarEvent.Location,
                 IsAllDay = calendarEvent.IsAllDay,
                 EventType = EventType.Appointment,
@@ -35,15 +82,20 @@ public class IcsImportService : IIcsImportService
             };
 
             // Import attendees if present
-            if (calendarEvent.Attendees != null)
+            if (calendarEvent.Attendees != null && calendarEvent.Attendees.Count > 0)
             {
                 foreach (var attendee in calendarEvent.Attendees)
                 {
+                    if (attendee?.Value == null) continue;
+
+                    var email = attendee.Value.ToString().Replace("mailto:", "");
+                    if (string.IsNullOrWhiteSpace(email)) continue;
+
                     tempusEvent.Attendees.Add(new Tempus.Core.Models.Attendee
                     {
                         Id = Guid.NewGuid(),
-                        Name = attendee.CommonName ?? attendee.Value.ToString(),
-                        Email = attendee.Value.ToString().Replace("mailto:", ""),
+                        Name = attendee.CommonName ?? email,
+                        Email = email,
                         EventId = tempusEvent.Id
                     });
                 }
