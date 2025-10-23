@@ -1,0 +1,251 @@
+@page "/security"
+
+<PageTitle>Security - Tempus</PageTitle>
+
+<div class="legal-page-container">
+    <div class="legal-page-content">
+        <div class="legal-page-header">
+            <div class="legal-icon-wrapper">
+                <RadzenIcon Icon="verified_user" Style="color: white; font-size: 2.5rem;" />
+            </div>
+            <h1 class="legal-page-title">Security</h1>
+            <p class="legal-page-subtitle">Enterprise-grade security protecting your data 24/7</p>
+        </div>
+
+        <div class="legal-page-section">
+            <p class="legal-section-text">
+                At Tempus, security is not an afterthought—it's the foundation of everything we build. We employ state-of-the-art security measures to protect your data, ensure system integrity, and maintain the trust you place in us. This page outlines our comprehensive security practices and commitments.
+            </p>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">1. Data Encryption</h2>
+            <p class="legal-section-text">
+                We use industry-leading encryption to protect your data at every stage:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Encryption in Transit:</strong> All data transmitted between your device and our servers is protected using TLS 1.3 (Transport Layer Security) with 256-bit encryption, ensuring your information cannot be intercepted or tampered with during transmission</li>
+                <li><strong>Encryption at Rest:</strong> Your data is encrypted when stored on our servers using AES-256 encryption, the same standard used by governments and financial institutions worldwide</li>
+                <li><strong>Database Encryption:</strong> All database connections use encrypted protocols, and sensitive fields are encrypted at the column level for additional protection</li>
+                <li><strong>Backup Encryption:</strong> All backup files are encrypted using the same AES-256 standard before being stored in secure, geographically distributed locations</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">2. Authentication & Access Control</h2>
+            <p class="legal-section-text">
+                We implement robust authentication mechanisms to ensure only authorized users can access your account:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Secure Password Storage:</strong> Passwords are never stored in plain text. We use ASP.NET Core Identity with PBKDF2 (Password-Based Key Derivation Function 2) with SHA-256 hashing and individual salts for each password</li>
+                <li><strong>Strong Password Requirements:</strong> Passwords must meet complexity requirements including minimum length, uppercase and lowercase letters, numbers, and special characters</li>
+                <li><strong>Multi-Factor Authentication (MFA):</strong> Optional MFA adds an extra layer of security by requiring a second form of verification beyond your password</li>
+                <li><strong>Session Management:</strong> Secure session tokens with automatic expiration and the ability to remotely log out of all devices</li>
+                <li><strong>Account Lockout Protection:</strong> Automatic account lockout after multiple failed login attempts to prevent brute-force attacks</li>
+                <li><strong>Role-Based Access Control (RBAC):</strong> Internal systems use principle of least privilege, ensuring employees only have access to data necessary for their role</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">3. Infrastructure Security</h2>
+            <p class="legal-section-text">
+                Our infrastructure is built on industry-leading cloud platforms with multiple layers of security:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Secure Hosting:</strong> Applications are hosted on enterprise-grade cloud infrastructure with 99.9% uptime SLA and built-in DDoS protection</li>
+                <li><strong>Network Isolation:</strong> Databases and backend services run in isolated virtual private networks (VPNs) that are not directly accessible from the internet</li>
+                <li><strong>Firewall Protection:</strong> Advanced firewall rules and network security groups restrict traffic to only authorized sources and ports</li>
+                <li><strong>Intrusion Detection:</strong> Real-time monitoring systems detect and alert on suspicious network activity and potential security threats</li>
+                <li><strong>Geographic Redundancy:</strong> Data is replicated across multiple geographically distributed data centers to ensure availability and disaster recovery</li>
+                <li><strong>Load Balancing:</strong> Distributed architecture with automatic failover ensures high availability and prevents service disruptions</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">4. Application Security</h2>
+            <p class="legal-section-text">
+                We follow secure development practices and implement multiple security controls at the application level:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Input Validation:</strong> All user input is validated and sanitized to prevent injection attacks (SQL injection, XSS, CSRF)</li>
+                <li><strong>Anti-Forgery Tokens:</strong> All forms use anti-forgery tokens to prevent Cross-Site Request Forgery (CSRF) attacks</li>
+                <li><strong>Content Security Policy:</strong> Strict CSP headers prevent malicious script execution and data exfiltration</li>
+                <li><strong>SQL Injection Prevention:</strong> Parameterized queries and Entity Framework Core prevent SQL injection vulnerabilities</li>
+                <li><strong>XSS Protection:</strong> Output encoding and Content Security Policy headers protect against Cross-Site Scripting attacks</li>
+                <li><strong>Security Headers:</strong> HSTS, X-Frame-Options, X-Content-Type-Options, and other security headers are configured to protect against common attacks</li>
+                <li><strong>Rate Limiting:</strong> API rate limiting prevents abuse and protects against denial-of-service attempts</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">5. Monitoring & Incident Response</h2>
+            <p class="legal-section-text">
+                We maintain 24/7 monitoring and have established incident response procedures:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Real-Time Monitoring:</strong> Automated systems monitor application health, security events, and anomalous behavior around the clock</li>
+                <li><strong>Security Logging:</strong> Comprehensive logging of authentication attempts, data access, and system changes for audit and forensic purposes</li>
+                <li><strong>Automated Alerts:</strong> Immediate notification of security events, failed login attempts, and suspicious activity</li>
+                <li><strong>Incident Response Plan:</strong> Documented procedures for identifying, containing, and remediating security incidents</li>
+                <li><strong>Security Team:</strong> Dedicated security professionals available to respond to incidents and maintain security posture</li>
+                <li><strong>Breach Notification:</strong> Commitment to notify affected users within 72 hours in the event of a data breach, as required by GDPR</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">6. Vulnerability Management</h2>
+            <p class="legal-section-text">
+                We proactively identify and address security vulnerabilities:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Regular Security Audits:</strong> Quarterly security assessments by internal teams and annual third-party penetration testing</li>
+                <li><strong>Automated Vulnerability Scanning:</strong> Continuous scanning for known vulnerabilities in dependencies and infrastructure</li>
+                <li><strong>Dependency Management:</strong> Automated monitoring and updates of third-party libraries and frameworks to patch known vulnerabilities</li>
+                <li><strong>Security Patch Management:</strong> Rapid deployment of security patches and updates with prioritized remediation timelines</li>
+                <li><strong>Bug Bounty Program:</strong> Responsible disclosure program encouraging security researchers to report vulnerabilities</li>
+                <li><strong>Code Reviews:</strong> Mandatory security-focused code reviews before deployment of new features</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">7. Compliance & Certifications</h2>
+            <p class="legal-section-text">
+                We maintain compliance with industry standards and regulations:
+            </p>
+            <ul class="legal-list">
+                <li><strong>GDPR Compliance:</strong> Full compliance with the General Data Protection Regulation for EU data protection</li>
+                <li><strong>SOC 2 Type II:</strong> Annual SOC 2 audits verify our security, availability, and confidentiality controls</li>
+                <li><strong>ISO 27001:</strong> Information security management system aligned with ISO 27001 standards</li>
+                <li><strong>OWASP Top 10:</strong> Protection against all OWASP Top 10 web application security risks</li>
+                <li><strong>PCI DSS:</strong> Payment Card Industry Data Security Standard compliance for payment processing</li>
+                <li><strong>Regular Compliance Audits:</strong> Internal and external audits to ensure ongoing compliance with security standards</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">8. Data Protection & Privacy</h2>
+            <p class="legal-section-text">
+                Your data privacy is paramount to our security strategy:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Data Minimization:</strong> We collect only the data necessary to provide our services</li>
+                <li><strong>Access Controls:</strong> Strict internal controls limit employee access to user data on a need-to-know basis</li>
+                <li><strong>Data Retention:</strong> Automated deletion of data according to our retention policies and user preferences</li>
+                <li><strong>Privacy by Design:</strong> Security and privacy considerations are built into every feature from the ground up</li>
+                <li><strong>Data Portability:</strong> Easy export of your data in standard formats</li>
+                <li><strong>Right to Deletion:</strong> Complete account and data deletion available at any time</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">9. Third-Party Security</h2>
+            <p class="legal-section-text">
+                We carefully vet all third-party services and integrations:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Vendor Security Assessment:</strong> Thorough security review of all third-party vendors and service providers</li>
+                <li><strong>Data Processing Agreements:</strong> Contractual guarantees that third parties meet our security standards</li>
+                <li><strong>Limited Data Sharing:</strong> Share only the minimum data necessary with third-party integrations</li>
+                <li><strong>OAuth 2.0:</strong> Secure authorization for third-party calendar integrations (Google, Outlook, Apple) without storing credentials</li>
+                <li><strong>Regular Vendor Reviews:</strong> Ongoing assessment of third-party security practices and compliance</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">10. Employee Security</h2>
+            <p class="legal-section-text">
+                Our team is trained to maintain the highest security standards:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Security Training:</strong> Mandatory security awareness training for all employees upon hire and annually thereafter</li>
+                <li><strong>Background Checks:</strong> Comprehensive background checks for all employees with access to production systems</li>
+                <li><strong>Confidentiality Agreements:</strong> All employees sign strict confidentiality and data protection agreements</li>
+                <li><strong>Secure Development Practices:</strong> Engineers are trained in secure coding practices and OWASP guidelines</li>
+                <li><strong>Device Security:</strong> Company devices with full-disk encryption, endpoint protection, and automatic updates</li>
+                <li><strong>Offboarding Procedures:</strong> Immediate revocation of all access when employees leave the company</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">11. Disaster Recovery & Business Continuity</h2>
+            <p class="legal-section-text">
+                We maintain comprehensive plans to ensure service availability:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Automated Backups:</strong> Continuous, encrypted backups with point-in-time recovery capabilities</li>
+                <li><strong>Geographic Redundancy:</strong> Data replicated across multiple regions to protect against regional outages</li>
+                <li><strong>Disaster Recovery Plan:</strong> Documented procedures for rapid recovery in case of catastrophic events</li>
+                <li><strong>Recovery Time Objective (RTO):</strong> Target recovery time of less than 4 hours for critical systems</li>
+                <li><strong>Recovery Point Objective (RPO):</strong> Maximum data loss limited to 1 hour through continuous backups</li>
+                <li><strong>Regular DR Testing:</strong> Quarterly disaster recovery drills to validate backup and recovery procedures</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">12. Physical Security</h2>
+            <p class="legal-section-text">
+                Our infrastructure providers maintain world-class physical security:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Secure Data Centers:</strong> Infrastructure hosted in SOC 2 and ISO 27001 certified data centers</li>
+                <li><strong>24/7 Surveillance:</strong> Continuous video monitoring and security personnel at all data center locations</li>
+                <li><strong>Biometric Access Control:</strong> Multi-factor authentication and biometric scanning for physical access</li>
+                <li><strong>Environmental Controls:</strong> Redundant power, cooling, and fire suppression systems</li>
+                <li><strong>Visitor Logging:</strong> Strict visitor policies with mandatory escorts and access logging</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">13. Transparency & Communication</h2>
+            <p class="legal-section-text">
+                We believe in transparent security practices:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Security Updates:</strong> Regular updates about our security posture and improvements</li>
+                <li><strong>Status Page:</strong> Real-time service status and incident notifications</li>
+                <li><strong>Security Documentation:</strong> Publicly available security policies and best practices</li>
+                <li><strong>Responsible Disclosure:</strong> Clear process for security researchers to report vulnerabilities</li>
+                <li><strong>Transparency Reports:</strong> Regular reporting on security incidents and government requests</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">14. Continuous Improvement</h2>
+            <p class="legal-section-text">
+                Security is an ongoing commitment, not a one-time achievement:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Security Roadmap:</strong> Continuous investment in new security technologies and practices</li>
+                <li><strong>Threat Intelligence:</strong> Active monitoring of emerging threats and vulnerabilities in the security landscape</li>
+                <li><strong>Industry Participation:</strong> Active participation in security communities and information sharing groups</li>
+                <li><strong>Regular Reviews:</strong> Quarterly security policy reviews and annual comprehensive security assessments</li>
+                <li><strong>Innovation:</strong> Adoption of new security technologies like zero-trust architecture and advanced threat detection</li>
+            </ul>
+        </div>
+
+        <div class="legal-page-section">
+            <h2 class="legal-section-title">15. Report a Security Issue</h2>
+            <p class="legal-section-text">
+                If you discover a security vulnerability or have security concerns, please report them immediately:
+            </p>
+            <ul class="legal-list">
+                <li><strong>Security Email:</strong> security@tempus.com (monitored 24/7)</li>
+                <li><strong>Response Time:</strong> We aim to acknowledge security reports within 24 hours</li>
+                <li><strong>Responsible Disclosure:</strong> Please allow us reasonable time to address issues before public disclosure</li>
+                <li><strong>Recognition:</strong> We acknowledge and thank security researchers who responsibly disclose vulnerabilities</li>
+            </ul>
+            <p class="legal-section-text">
+                For general inquiries, visit our <RadzenLink Path="/contact" Style="color: #667eea; font-weight: 600;">contact page</RadzenLink>.
+            </p>
+        </div>
+
+        <div class="legal-page-footer">
+            <p>
+                <strong>Our Commitment:</strong> We are committed to maintaining the highest security standards and protecting your data with state-of-the-art technology and best practices. Security is a shared responsibility, and we encourage all users to follow best practices including using strong passwords, enabling MFA, and reporting suspicious activity.
+            </p>
+            <p style="margin-top: 1rem;">
+                Last updated: @DateTime.Now.ToString("MMMM dd, yyyy")
+            </p>
+        </div>
+    </div>
+</div>
