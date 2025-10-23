@@ -105,7 +105,7 @@ public class IcsImportService : IIcsImportService
             if (calendarEvent.RecurrenceRules != null && calendarEvent.RecurrenceRules.Count > 0)
             {
                 tempusEvent.IsRecurring = true;
-                tempusEvent.RecurrenceRule = calendarEvent.RecurrenceRules[0].ToString();
+                // TODO: Parse recurrence rules into structured RecurrencePattern properties
             }
 
             events.Add(tempusEvent);

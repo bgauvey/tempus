@@ -61,11 +61,11 @@ builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 
 var app = builder.Build();
 
-// Ensure database is created
+// Apply database migrations
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<TempusDbContext>();
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.

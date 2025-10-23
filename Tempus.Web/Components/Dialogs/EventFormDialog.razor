@@ -3,6 +3,7 @@
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
+@using Tempus.Core.Helpers
 @inject IEventRepository EventRepository
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -61,6 +62,66 @@
         <RadzenColorPicker @bind-Value="@_event.Color" />
     </RadzenStack>
 
+    <!-- Recurrence Section -->
+    <RadzenFieldset Text="Recurrence" Style="margin-top: 1rem;">
+        <RadzenStack Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
+                <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
+            </RadzenStack>
+
+            @if (_event.IsRecurring)
+            {
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Pattern" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@_event.RecurrencePattern" Data="@_recurrencePatterns"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Every" Variant="Variant.Outlined">
+                            <RadzenNumeric @bind-Value="@_event.RecurrenceInterval" Min="1" Max="99"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (_event.RecurrencePattern == RecurrencePattern.Weekly)
+                {
+                    <RadzenFormField Text="Repeat On" Variant="Variant.Outlined">
+                        <RadzenCheckBoxList @bind-Value="@_selectedDaysOfWeek" TValue="int"
+                                          Orientation="Orientation.Horizontal"
+                                          Data="@_daysOfWeek" TextProperty="Text" ValueProperty="Value" />
+                    </RadzenFormField>
+                }
+
+                <RadzenFormField Text="Ends" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@_event.RecurrenceEndType" Data="@_recurrenceEndTypes"
+                                  Style="width: 100%;" />
+                </RadzenFormField>
+
+                @if (_event.RecurrenceEndType == RecurrenceEndType.AfterOccurrences)
+                {
+                    <RadzenFormField Text="Number of Occurrences" Variant="Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@_event.RecurrenceCount" Min="1" Max="999"
+                                     Style="width: 100%;" />
+                    </RadzenFormField>
+                }
+                else if (_event.RecurrenceEndType == RecurrenceEndType.OnDate)
+                {
+                    <RadzenFormField Text="End Date" Variant="Variant.Outlined">
+                        <RadzenDatePicker @bind-Value="@_event.RecurrenceEndDate" Style="width: 100%;" />
+                    </RadzenFormField>
+                }
+
+                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                    <strong>Summary:</strong> @GetRecurrenceSummary()
+                </div>
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
         <RadzenButton Text="@(EventId.HasValue ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary"
@@ -89,7 +150,45 @@
 
     private readonly EventType[] _eventTypes = Enum.GetValues<EventType>();
     private readonly Priority[] _priorities = Enum.GetValues<Priority>();
+    private readonly RecurrencePattern[] _recurrencePatterns = Enum.GetValues<RecurrencePattern>();
+    private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
     private string _userId = string.Empty;
+
+    private IEnumerable<int> _selectedDaysOfWeek
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(_event.RecurrenceDaysOfWeek))
+                return new List<int>();
+
+            return _event.RecurrenceDaysOfWeek.Split(',')
+                .Select(d => int.TryParse(d.Trim(), out var day) ? day : -1)
+                .Where(d => d >= 0);
+        }
+        set
+        {
+            _event.RecurrenceDaysOfWeek = value != null && value.Any()
+                ? string.Join(",", value.OrderBy(d => d))
+                : null;
+        }
+    }
+
+    private readonly List<DayOfWeekOption> _daysOfWeek = new()
+    {
+        new DayOfWeekOption { Text = "Sun", Value = 0 },
+        new DayOfWeekOption { Text = "Mon", Value = 1 },
+        new DayOfWeekOption { Text = "Tue", Value = 2 },
+        new DayOfWeekOption { Text = "Wed", Value = 3 },
+        new DayOfWeekOption { Text = "Thu", Value = 4 },
+        new DayOfWeekOption { Text = "Fri", Value = 5 },
+        new DayOfWeekOption { Text = "Sat", Value = 6 }
+    };
+
+    private class DayOfWeekOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public int Value { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -158,6 +257,11 @@
             // Handle error - could show a notification here
             Console.WriteLine($"Error saving event: {ex.Message}");
         }
+    }
+
+    private string GetRecurrenceSummary()
+    {
+        return RecurrenceHelper.GetRecurrenceDescription(_event);
     }
 
     private void Cancel()

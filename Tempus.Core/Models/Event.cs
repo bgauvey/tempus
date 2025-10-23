@@ -13,8 +13,19 @@ public class Event
     public EventType EventType { get; set; }
     public Priority Priority { get; set; } = Priority.Medium;
     public bool IsAllDay { get; set; }
+
+    // Recurrence properties
     public bool IsRecurring { get; set; }
-    public string? RecurrenceRule { get; set; }
+    public RecurrencePattern RecurrencePattern { get; set; } = RecurrencePattern.None;
+    public int RecurrenceInterval { get; set; } = 1; // Every X days/weeks/months/years
+    public string? RecurrenceDaysOfWeek { get; set; } // Comma-separated: "0,1,2" for Sun,Mon,Tue
+    public RecurrenceEndType RecurrenceEndType { get; set; } = RecurrenceEndType.Never;
+    public int? RecurrenceCount { get; set; } // Number of occurrences
+    public DateTime? RecurrenceEndDate { get; set; }
+    public Guid? RecurrenceParentId { get; set; } // For instances: ID of the parent event
+    public bool IsRecurrenceException { get; set; } // True if this is a modified single instance
+    public DateTime? RecurrenceExceptionDate { get; set; } // Original date for exception instances
+
     public string? ExternalCalendarId { get; set; }
     public string? ExternalCalendarProvider { get; set; }
     public string? Color { get; set; }

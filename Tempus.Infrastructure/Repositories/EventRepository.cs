@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
+using Tempus.Core.Helpers;
 using Tempus.Infrastructure.Data;
 
 namespace Tempus.Infrastructure.Repositories;
@@ -32,11 +33,38 @@ public class EventRepository : IEventRepository
 
     public async Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
     {
-        return await _context.Events
+        // Get all non-recurring events in the date range
+        var nonRecurringEvents = await _context.Events
             .Include(e => e.Attendees)
-            .Where(e => e.UserId == userId && e.StartTime >= startDate && e.StartTime <= endDate)
-            .OrderBy(e => e.StartTime)
+            .Where(e => e.UserId == userId &&
+                       !e.IsRecurring &&
+                       e.StartTime >= startDate &&
+                       e.StartTime <= endDate)
             .ToListAsync();
+
+        // Get all recurring events that could have instances in this range
+        var recurringEvents = await _context.Events
+            .Include(e => e.Attendees)
+            .Where(e => e.UserId == userId &&
+                       e.IsRecurring &&
+                       e.RecurrenceParentId == null && // Only get parent events, not instances
+                       e.StartTime <= endDate) // Started before or during the range
+            .ToListAsync();
+
+        // Expand recurring events into instances
+        var recurringInstances = new List<Event>();
+        foreach (var recurringEvent in recurringEvents)
+        {
+            var instances = RecurrenceHelper.ExpandRecurringEvent(recurringEvent, startDate, endDate);
+            recurringInstances.AddRange(instances.Where(i => i.Id != recurringEvent.Id)); // Exclude the parent
+        }
+
+        // Combine and sort all events
+        var allEvents = nonRecurringEvents.Concat(recurringInstances)
+            .OrderBy(e => e.StartTime)
+            .ToList();
+
+        return allEvents;
     }
 
     public async Task<Event> CreateAsync(Event @event)
