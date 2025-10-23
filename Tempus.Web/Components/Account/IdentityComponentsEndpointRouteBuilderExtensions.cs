@@ -25,7 +25,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
             if (result.Succeeded)
             {
-                return TypedResults.LocalRedirect(returnUrl ?? "/dashboard");
+                return TypedResults.LocalRedirect(string.IsNullOrWhiteSpace(returnUrl) ? "/dashboard" : returnUrl);
             }
 
             return TypedResults.Redirect($"/Account/Login?error={(result.IsLockedOut ? "locked" : "invalid")}");
@@ -63,10 +63,11 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
         accountGroup.MapPost("/Logout", async (
             ClaimsPrincipal user,
             SignInManager<ApplicationUser> signInManager,
-            [FromForm] string returnUrl) =>
+            [FromForm] string? returnUrl) =>
         {
             await signInManager.SignOutAsync();
-            return TypedResults.LocalRedirect($"~/{returnUrl}");
+            var redirectUrl = string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl;
+            return TypedResults.LocalRedirect($"~/{redirectUrl}");
         });
 
         return accountGroup;
