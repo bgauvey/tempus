@@ -7,6 +7,7 @@
 @inject UserManager<ApplicationUser> UserManager
 
 <RadzenComponents @rendermode="InteractiveServer" />
+<ScrollToTopHandler />
 
 <RadzenLayout>
     <RadzenHeader Style="background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
@@ -93,9 +94,9 @@
         </div>
     </RadzenSidebar>
     <RadzenBody>
-        <div style="min-height: calc(100vh - 60px);">
+        <main id="main-content" tabindex="-1" style="min-height: calc(100vh - 60px); outline: none;">
             @Body
-        </div>
+        </main>
 
         <AuthorizeView>
             <NotAuthorized>

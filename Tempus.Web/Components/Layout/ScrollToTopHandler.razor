@@ -1,0 +1,105 @@
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@code {
+    private bool _jsInitialized = false;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsInitialized = true;
+            await JSRuntime.InvokeVoidAsync("console.log", "ScrollToTopHandler initialized - JS is now available");
+
+            // Give time for Radzen components to render
+            await Task.Delay(150);
+            await ScrollToTop();
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (!_jsInitialized)
+        {
+            System.Diagnostics.Debug.WriteLine("OnLocationChanged fired but JS not initialized yet");
+            return;
+        }
+
+        await JSRuntime.InvokeVoidAsync("console.log", $"OnLocationChanged fired! New URL: {e.Location}");
+
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Inside InvokeAsync, about to scroll");
+
+                // Wait for Radzen to render the new page content
+                await Task.Delay(150);
+                await ScrollToTop();
+                // Try again after a bit more time to ensure it worked
+                await Task.Delay(50);
+                await ScrollToTop();
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Navigation scroll error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Navigation scroll error: {ex.Message}");
+        }
+    }
+
+    private async Task ScrollToTop()
+    {
+        await JSRuntime.InvokeVoidAsync("console.log", "C# ScrollToTop method called");
+
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("ScrollToTop called");
+
+            // Try calling the function
+            await JSRuntime.InvokeVoidAsync("scrollToTop");
+
+            await JSRuntime.InvokeVoidAsync("console.log", "C# successfully invoked scrollToTop");
+            System.Diagnostics.Debug.WriteLine("ScrollToTop JS invoked successfully");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"ScrollToTop failed: {ex.Message}, trying fallback");
+            System.Diagnostics.Debug.WriteLine($"ScrollToTop error: {ex.Message}, trying direct approach");
+
+            // Fallback: use eval to execute the scroll directly
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    const rzBody = document.querySelector('.rz-body');
+                    if (rzBody) {
+                        rzBody.scrollTop = 0;
+                        console.log('Direct scroll - rz-body scrollTop set to 0');
+                    }
+                    document.documentElement.scrollTop = 0;
+                    window.scrollTo(0, 0);
+                ");
+                await JSRuntime.InvokeVoidAsync("console.log", "Fallback eval approach succeeded");
+                System.Diagnostics.Debug.WriteLine("Direct eval approach succeeded");
+            }
+            catch (Exception evalEx)
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", $"Eval also failed: {evalEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"Eval also failed: {evalEx.Message}");
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

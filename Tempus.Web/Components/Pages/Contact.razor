@@ -8,47 +8,56 @@
 
 <PageTitle>Contact Us - Tempus</PageTitle>
 
-<div style="padding: 2rem; max-width: 800px; margin: 0 auto;">
-    <RadzenCard Style="padding: 1.5rem;">
-        <RadzenStack Gap="1rem">
-            <RadzenText TextStyle="TextStyle.H4" Style="font-weight: 800;">Contact Us</RadzenText>
-            <RadzenText Style="color: #718096;">Have a question or need support? Send us a message and we'll get back to you.</RadzenText>
+<div class="contact-form-container">
+    <div class="contact-form-card">
+        <div class="contact-form-header">
+            <h1 class="contact-form-title">Contact Us</h1>
+            <p class="contact-form-subtitle">Have a question or need support? Send us a message and we'll get back to you as soon as possible.</p>
+        </div>
 
-            <EditForm Model="_model" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+        <EditForm Model="_model" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-                <RadzenFieldset>
-                    <RadzenLabel Text="Name" />
-                    <InputText @bind-Value="_model.Name" class="rz-input" />
-                    <ValidationMessage For="() => _model.Name" />
+            <div class="contact-form-fieldset">
+                <div class="contact-form-field">
+                    <label class="contact-form-label">Name</label>
+                    <InputText @bind-Value="_model.Name" class="contact-form-input" placeholder="Enter your full name" />
+                    <ValidationMessage For="() => _model.Name" class="contact-form-validation" />
+                </div>
 
-                    <RadzenLabel Text="Email" Style="margin-top: 0.5rem;" />
-                    <InputText @bind-Value="_model.Email" class="rz-input" />
-                    <ValidationMessage For="() => _model.Email" />
+                <div class="contact-form-field">
+                    <label class="contact-form-label">Email</label>
+                    <InputText @bind-Value="_model.Email" class="contact-form-input" placeholder="your.email@example.com" type="email" />
+                    <ValidationMessage For="() => _model.Email" class="contact-form-validation" />
+                </div>
 
-                    <RadzenLabel Text="Subject" Style="margin-top: 0.5rem;" />
-                    <InputText @bind-Value="_model.Subject" class="rz-input" />
-                    <ValidationMessage For="() => _model.Subject" />
+                <div class="contact-form-field">
+                    <label class="contact-form-label">Subject</label>
+                    <InputText @bind-Value="_model.Subject" class="contact-form-input" placeholder="What is this regarding?" />
+                    <ValidationMessage For="() => _model.Subject" class="contact-form-validation" />
+                </div>
 
-                    <RadzenLabel Text="Message" Style="margin-top: 0.5rem;" />
-                    <InputTextArea @bind-Value="_model.Message" Rows="6" class="rz-input" />
-                    <ValidationMessage For="() => _model.Message" />
-                </RadzenFieldset>
+                <div class="contact-form-field">
+                    <label class="contact-form-label">Message</label>
+                    <InputTextArea @bind-Value="_model.Message" Rows="6" class="contact-form-textarea" placeholder="Tell us how we can help you..." />
+                    <ValidationMessage For="() => _model.Message" class="contact-form-validation" />
+                </div>
+            </div>
 
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
-                    <RadzenButton ButtonType="ButtonType.Submit" Text="Send Message" ButtonStyle="ButtonStyle.Primary" />
-                    <RadzenButton Text="Reset" ButtonStyle="ButtonStyle.Light" Click="@(()=> Reset())" />
-                </RadzenStack>
+            <div class="contact-form-buttons">
+                <button type="submit" class="contact-form-button-submit">Send Message</button>
+                <button type="button" class="contact-form-button-reset" @onclick="Reset">Reset</button>
+            </div>
 
-                @if (_submitted)
-                {
-                    <RadzenNotification Position="NotificationPosition.TopRight" />
-                    <RadzenText Style="color: green; margin-top: 1rem;">Thanks — your message has been recorded. We'll get back to you shortly.</RadzenText>
-                }
-            </EditForm>
-        </RadzenStack>
-    </RadzenCard>
+            @if (_submitted)
+            {
+                <div class="contact-form-success">
+                    Thanks! Your message has been received. We'll get back to you shortly.
+                </div>
+            }
+        </EditForm>
+    </div>
 </div>
 
 @code {
