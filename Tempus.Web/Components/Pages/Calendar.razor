@@ -7,6 +7,7 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Rendering
 @attribute [Authorize]
 @inject IEventRepository EventRepository
@@ -310,6 +311,63 @@
         border-radius: 50%;
         background: #e53935;
     }
+
+    /* Multi-Day Hour View (Work Week & Week) */
+    .multi-day-hour-view {
+        display: flex;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .multi-day-columns {
+        display: flex;
+        flex: 1;
+        overflow-x: auto;
+    }
+
+    .day-hour-column {
+        flex: 1;
+        min-width: 150px;
+        border-right: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .day-hour-column:last-child {
+        border-right: none;
+    }
+
+    .day-hour-header {
+        position: sticky;
+        top: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #e9ecef;
+        z-index: 10;
+    }
+
+    .day-hour-header.today {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .day-hour-grid {
+        position: relative;
+        min-height: 1440px;
+    }
+
+    .day-hour-cell {
+        height: 60px;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .day-hour-cell:hover {
+        background: #f8f9fa;
+    }
 </style>
 
 <div class="calendar-header">
@@ -454,6 +512,7 @@
     {
         _availableViews = new List<ViewOption>
         {
+            new ViewOption { Value = "Grid", Text = "Grid" },
             new ViewOption { Value = "Day", Text = "Day" },
             new ViewOption { Value = "WorkWeek", Text = "Work Week" },
             new ViewOption { Value = "Week", Text = "Week" },
@@ -524,6 +583,7 @@
     {
         return _currentView switch
         {
+            "Grid" => "All Events",
             "Day" => _selectedDate.ToString("MMMM dd, yyyy"),
             "WorkWeek" or "Week" => $"{GetWeekStart().ToString("MMM dd")} - {GetWeekEnd().ToString("MMM dd, yyyy")}",
             "Month" => _selectedDate.ToString("MMMM yyyy"),
@@ -689,7 +749,11 @@
 
     private RenderFragment RenderCurrentView() => builder =>
     {
-        if (_currentView == "Month")
+        if (_currentView == "Grid")
+        {
+            RenderGridView(builder);
+        }
+        else if (_currentView == "Month")
         {
             RenderMonthView(builder);
         }
@@ -697,11 +761,70 @@
         {
             RenderDayViewWithHours(builder);
         }
+        else if (_currentView == "WorkWeek")
+        {
+            RenderWorkWeekViewWithHours(builder);
+        }
+        else if (_currentView == "Week")
+        {
+            RenderWeekViewWithHours(builder);
+        }
+        else if (_currentView.StartsWith("Custom_") && _selectedCustomRange != null)
+        {
+            // Auto-select view based on custom range duration
+            if (_selectedCustomRange.DaysCount <= 7)
+            {
+                // Use multi-day hourly view for shorter ranges
+                var customDays = GetCustomRangeDays();
+                RenderMultiDayHourView(builder, customDays);
+            }
+            else
+            {
+                // Use grid view for longer ranges
+                RenderGridView(builder);
+            }
+        }
         else
         {
             RenderLinearView(builder);
         }
     };
+
+    private void RenderGridView(RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<EventsGrid>(0);
+        builder.AddAttribute(1, "Events", _events);
+        builder.AddAttribute(2, "IsLoading", _loading);
+        builder.AddAttribute(3, "OnSearch", EventCallback.Factory.Create<string>(this, SearchEventsFromGrid));
+        builder.AddAttribute(4, "OnEditEvent", EventCallback.Factory.Create<Guid>(this, EditEventFromGrid));
+        builder.AddAttribute(5, "OnDeleteEvent", EventCallback.Factory.Create<Guid>(this, DeleteEventAsync));
+        builder.AddAttribute(6, "OnCreateEvent", EventCallback.Factory.Create(this, CreateEventFromGrid));
+        builder.CloseComponent();
+    }
+
+    private async Task SearchEventsFromGrid(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            await LoadEvents();
+        }
+        else
+        {
+            _loading = true;
+            _events = await EventRepository.SearchAsync(searchTerm, _userId);
+            _loading = false;
+        }
+    }
+
+    private async Task EditEventFromGrid(Guid eventId)
+    {
+        await OpenEventDialogAsync(eventId);
+    }
+
+    private async Task CreateEventFromGrid()
+    {
+        await OpenEventDialogAsync(null, DateTime.Today);
+    }
 
     private void RenderMonthView(RenderTreeBuilder builder)
     {
@@ -839,6 +962,142 @@
 
         builder.CloseElement(); // day-column
         builder.CloseElement(); // day-view-container
+    }
+
+    private void RenderWorkWeekViewWithHours(RenderTreeBuilder builder)
+    {
+        var workWeekDays = GetWorkWeekDays();
+        RenderMultiDayHourView(builder, workWeekDays);
+    }
+
+    private void RenderWeekViewWithHours(RenderTreeBuilder builder)
+    {
+        var weekDays = GetWeekDays();
+        RenderMultiDayHourView(builder, weekDays);
+    }
+
+    private void RenderMultiDayHourView(RenderTreeBuilder builder, List<DateTime> days)
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "multi-day-hour-view");
+        builder.AddAttribute(2, "style", "max-height: 800px; overflow-y: auto;");
+
+        // Time column (shared)
+        builder.OpenElement(3, "div");
+        builder.AddAttribute(4, "class", "time-column");
+
+        // Empty header cell for time column
+        builder.OpenElement(5, "div");
+        builder.AddAttribute(6, "style", "height: 41px; border-bottom: 2px solid #e9ecef;");
+        builder.CloseElement();
+
+        for (int hour = 0; hour < 24; hour++)
+        {
+            builder.OpenElement(7, "div");
+            builder.AddAttribute(8, "class", "time-slot");
+
+            var timeString = hour == 0 ? "12 AM" :
+                           hour < 12 ? $"{hour} AM" :
+                           hour == 12 ? "12 PM" :
+                           $"{hour - 12} PM";
+
+            builder.AddContent(9, timeString);
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // time-column
+
+        // Day columns container
+        builder.OpenElement(10, "div");
+        builder.AddAttribute(11, "class", "multi-day-columns");
+
+        foreach (var day in days)
+        {
+            var eventsForDay = GetEventsForDay(day);
+            var isToday = day.Date == DateTime.Today;
+
+            builder.OpenElement(12, "div");
+            builder.AddAttribute(13, "class", "day-hour-column");
+
+            // Day header
+            builder.OpenElement(14, "div");
+            builder.AddAttribute(15, "class", "day-hour-header" + (isToday ? " today" : ""));
+            builder.OpenElement(16, "div");
+            builder.AddContent(17, day.ToString("ddd"));
+            builder.CloseElement();
+            builder.OpenElement(18, "div");
+            builder.AddAttribute(19, "style", "font-size: 0.8rem; font-weight: 600;");
+            builder.AddContent(20, day.ToString("MMM dd"));
+            builder.CloseElement();
+            builder.CloseElement();
+
+            // Day grid with hours
+            builder.OpenElement(21, "div");
+            builder.AddAttribute(22, "class", "day-hour-grid");
+
+            // Hour cells (background grid)
+            for (int hour = 0; hour < 24; hour++)
+            {
+                builder.OpenElement(23, "div");
+                builder.AddAttribute(24, "class", "day-hour-cell");
+                builder.AddAttribute(25, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    args => OpenEventDialogAsync(null, day.Date.AddHours(hour))));
+                builder.CloseElement();
+            }
+
+            // Render events positioned absolutely
+            foreach (var evt in eventsForDay)
+            {
+                var startHour = evt.StartTime.Hour;
+                var startMinute = evt.StartTime.Minute;
+                var topPosition = (startHour * 60) + startMinute;
+                var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
+                var height = Math.Max(30, durationMinutes);
+
+                builder.OpenElement(26, "div");
+                builder.AddAttribute(27, "class", "timed-event");
+                builder.AddAttribute(28, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)}; left: 2px; right: 2px;");
+                builder.AddAttribute(29, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+                builder.AddAttribute(30, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
+                builder.AddAttribute(31, "oncontextmenu:preventDefault", true);
+
+                // Event content
+                builder.OpenElement(32, "div");
+                builder.AddAttribute(33, "class", "timed-event-title");
+                builder.AddAttribute(34, "style", "font-size: 0.75rem;");
+                builder.AddContent(35, evt.Title.Length > 15 ? evt.Title.Substring(0, 12) + "..." : evt.Title);
+                builder.CloseElement();
+
+                if (height > 40)
+                {
+                    builder.OpenElement(36, "div");
+                    builder.AddAttribute(37, "class", "timed-event-time");
+                    builder.AddAttribute(38, "style", "font-size: 0.65rem;");
+                    builder.AddContent(39, $"{evt.StartTime:h:mm tt}");
+                    builder.CloseElement();
+                }
+
+                builder.CloseElement(); // timed-event
+            }
+
+            // Current time indicator for today
+            if (isToday)
+            {
+                var now = DateTime.Now;
+                var currentPosition = (now.Hour * 60) + now.Minute;
+
+                builder.OpenElement(40, "div");
+                builder.AddAttribute(41, "class", "current-time-indicator");
+                builder.AddAttribute(42, "style", $"top: {currentPosition}px;");
+                builder.CloseElement();
+            }
+
+            builder.CloseElement(); // day-hour-grid
+            builder.CloseElement(); // day-hour-column
+        }
+
+        builder.CloseElement(); // multi-day-columns
+        builder.CloseElement(); // multi-day-hour-view
     }
 
     private void RenderLinearView(RenderTreeBuilder builder)

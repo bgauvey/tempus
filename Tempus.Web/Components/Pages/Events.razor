@@ -8,6 +8,7 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject DialogService DialogService
@@ -77,130 +78,12 @@
     </RadzenRow>
 </div>
 
-<!-- Search and Actions Section -->
-<div class="events-actions-card">
-    <RadzenRow Gap="1.5rem" AlignItems="AlignItems.Center">
-        <RadzenColumn Size="12" SizeMD="8">
-            <div class="events-search-container">
-                <div class="events-search-icon">
-                    <RadzenIcon Icon="search" />
-                </div>
-                <RadzenTextBox @bind-Value="_searchTerm"
-                             Placeholder="Search events by title, location, or description..."
-                             class="events-search-input"
-                             Style="width: 100%; padding-left: 3rem;" />
-                <RadzenButton Icon="search"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Click="SearchEvents"
-                            class="events-search-button">
-                    Search
-                </RadzenButton>
-            </div>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="4">
-            <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                        Icon="add"
-                        Click="CreateEvent"
-                        class="events-create-button"
-                        Style="width: 100%; height: 50px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);">
-                <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
-                Create New Event
-            </RadzenButton>
-        </RadzenColumn>
-    </RadzenRow>
-</div>
-
-<!-- Events Data Grid -->
-<div class="events-grid-container">
-    <RadzenDataGrid Data="@_events"
-                    TItem="Event"
-                    AllowPaging="true"
-                    PageSize="10"
-                    AllowSorting="true"
-                    AllowFiltering="false"
-                    IsLoading="@_loading"
-                    class="events-premium-grid">
-        <Columns>
-            <RadzenDataGridColumn TItem="Event" Title="Event Details" Width="300px">
-                <Template Context="evt">
-                    <div class="event-detail-cell">
-                        <div class="event-type-indicator" style="background: @GetEventTypeColor(evt.EventType);"></div>
-                        <div class="event-detail-content">
-                            <div class="event-title">@evt.Title</div>
-                            @if (!string.IsNullOrEmpty(evt.Location))
-                            {
-                                <div class="event-location">
-                                    <RadzenIcon Icon="location_on" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
-                                    <span>@evt.Location</span>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(evt.Description))
-                            {
-                                <div class="event-description">
-                                    @(evt.Description.Length > 50 ? evt.Description.Substring(0, 50) + "..." : evt.Description)
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Event" Property="StartTime" Title="Start Time" Width="200px">
-                <Template Context="evt">
-                    <div class="event-time-cell">
-                        <div class="event-date">@evt.StartTime.ToString("MMM dd, yyyy")</div>
-                        <div class="event-time">@evt.StartTime.ToString("hh:mm tt")</div>
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Event" Property="EndTime" Title="End Time" Width="200px">
-                <Template Context="evt">
-                    <div class="event-time-cell">
-                        <div class="event-date">@evt.EndTime.ToString("MMM dd, yyyy")</div>
-                        <div class="event-time">@evt.EndTime.ToString("hh:mm tt")</div>
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Event" Property="EventType" Title="Type" Width="150px">
-                <Template Context="evt">
-                    <div class="event-badge-wrapper">
-                        <div class="event-type-badge" style="background: @GetEventTypeColor(evt.EventType);">
-                            <RadzenIcon Icon="@GetEventTypeIcon(evt.EventType)" Style="font-size: 1rem; margin-right: 0.25rem;" />
-                            <span>@evt.EventType.ToString()</span>
-                        </div>
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Event" Property="Priority" Title="Priority" Width="150px">
-                <Template Context="evt">
-                    <div class="event-badge-wrapper">
-                        <div class="event-priority-badge" style="background: @GetPriorityColor(evt.Priority);">
-                            <RadzenIcon Icon="@GetPriorityIcon(evt.Priority)" Style="font-size: 1rem; margin-right: 0.25rem;" />
-                            <span>@evt.Priority.ToString()</span>
-                        </div>
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Event" Title="Actions" Width="150px" Sortable="false">
-                <Template Context="evt">
-                    <div class="event-actions">
-                        <RadzenButton Icon="edit"
-                                    ButtonStyle="ButtonStyle.Primary"
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => EditEvent(evt.Id))"
-                                    class="event-action-button event-action-edit"
-                                    title="Edit Event" />
-                        <RadzenButton Icon="delete"
-                                    ButtonStyle="ButtonStyle.Danger"
-                                    Size="ButtonSize.Small"
-                                    Click="@(() => DeleteEvent(evt.Id))"
-                                    class="event-action-button event-action-delete"
-                                    title="Delete Event" />
-                    </div>
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-</div>
+<EventsGrid Events="@_events"
+            IsLoading="@_loading"
+            OnSearch="@SearchEvents"
+            OnEditEvent="@EditEvent"
+            OnDeleteEvent="@DeleteEvent"
+            OnCreateEvent="@CreateEvent" />
 
 <style>
     /* Header Styling */
@@ -290,169 +173,6 @@
         letter-spacing: 0.5px;
     }
 
-    /* Search and Actions Card */
-    .events-actions-card {
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out 0.2s backwards;
-    }
-
-    .events-search-container {
-        position: relative;
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .events-search-icon {
-        position: absolute;
-        left: 1rem;
-        color: #718096;
-        font-size: 1.25rem;
-        pointer-events: none;
-        z-index: 1;
-    }
-
-    .events-search-input {
-        flex: 1;
-        height: 50px;
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .events-search-input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    .events-search-button {
-        height: 50px;
-        padding: 0 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-    }
-
-    /* Grid Container */
-    .events-grid-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        animation: fadeInUp 0.6s ease-out 0.3s backwards;
-    }
-
-    .events-premium-grid {
-        border: none;
-    }
-
-    /* Event Detail Cell */
-    .event-detail-cell {
-        display: flex;
-        gap: 1rem;
-        align-items: flex-start;
-        padding: 0.5rem 0;
-    }
-
-    .event-type-indicator {
-        width: 4px;
-        min-height: 100%;
-        border-radius: 2px;
-    }
-
-    .event-detail-content {
-        flex: 1;
-    }
-
-    .event-title {
-        font-weight: 600;
-        font-size: 1rem;
-        color: #2d3748;
-        margin-bottom: 0.25rem;
-    }
-
-    .event-location {
-        display: flex;
-        align-items: center;
-        color: #718096;
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .event-description {
-        color: #a0aec0;
-        font-size: 0.875rem;
-        font-style: italic;
-    }
-
-    /* Time Cell */
-    .event-time-cell {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .event-date {
-        font-weight: 600;
-        color: #2d3748;
-        font-size: 0.95rem;
-    }
-
-    .event-time {
-        color: #718096;
-        font-size: 0.875rem;
-    }
-
-    /* Badge Wrapper */
-    .event-badge-wrapper {
-        display: inline-block;
-    }
-
-    .event-type-badge,
-    .event-priority-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        color: white;
-        font-size: 0.875rem;
-        font-weight: 600;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-    }
-
-    .event-type-badge:hover,
-    .event-priority-badge:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Action Buttons */
-    .event-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .event-action-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .event-action-edit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .event-action-delete:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
-    }
 
     /* Animations */
     @@keyframes fadeInUp {
@@ -502,7 +222,6 @@
 @code {
     private List<Event> _events = new();
     private bool _loading = true;
-    private string _searchTerm = string.Empty;
     private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -529,16 +248,16 @@
         StateHasChanged();
     }
 
-    private async Task SearchEvents()
+    private async Task SearchEvents(string searchTerm)
     {
-        if (string.IsNullOrWhiteSpace(_searchTerm))
+        if (string.IsNullOrWhiteSpace(searchTerm))
         {
             await LoadEvents();
         }
         else
         {
             _loading = true;
-            _events = await EventRepository.SearchAsync(_searchTerm, _userId);
+            _events = await EventRepository.SearchAsync(searchTerm, _userId);
             _loading = false;
         }
     }
@@ -592,83 +311,5 @@
             await EventRepository.DeleteAsync(id, _userId);
             await LoadEvents();
         }
-    }
-
-    private string GetEventTypeColor(EventType type)
-    {
-        return type switch
-        {
-            EventType.Meeting => "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            EventType.Appointment => "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            EventType.Task => "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            EventType.TimeBlock => "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            EventType.Reminder => "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-            EventType.Deadline => "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)",
-            _ => "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
-        };
-    }
-
-    private string GetEventTypeIcon(EventType type)
-    {
-        return type switch
-        {
-            EventType.Meeting => "groups",
-            EventType.Appointment => "event_available",
-            EventType.Task => "task_alt",
-            EventType.TimeBlock => "schedule",
-            EventType.Reminder => "notifications",
-            EventType.Deadline => "flag",
-            _ => "event"
-        };
-    }
-
-    private string GetPriorityColor(Priority priority)
-    {
-        return priority switch
-        {
-            Priority.Low => "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            Priority.Medium => "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            Priority.High => "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            Priority.Urgent => "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)",
-            _ => "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
-        };
-    }
-
-    private string GetPriorityIcon(Priority priority)
-    {
-        return priority switch
-        {
-            Priority.Low => "arrow_downward",
-            Priority.Medium => "remove",
-            Priority.High => "arrow_upward",
-            Priority.Urgent => "priority_high",
-            _ => "remove"
-        };
-    }
-
-    private BadgeStyle GetEventTypeBadgeStyle(EventType type)
-    {
-        return type switch
-        {
-            EventType.Meeting => BadgeStyle.Primary,
-            EventType.Appointment => BadgeStyle.Info,
-            EventType.Task => BadgeStyle.Warning,
-            EventType.TimeBlock => BadgeStyle.Success,
-            EventType.Reminder => BadgeStyle.Secondary,
-            EventType.Deadline => BadgeStyle.Danger,
-            _ => BadgeStyle.Light
-        };
-    }
-
-    private BadgeStyle GetPriorityBadgeStyle(Priority priority)
-    {
-        return priority switch
-        {
-            Priority.Low => BadgeStyle.Success,
-            Priority.Medium => BadgeStyle.Info,
-            Priority.High => BadgeStyle.Warning,
-            Priority.Urgent => BadgeStyle.Danger,
-            _ => BadgeStyle.Light
-        };
     }
 }
