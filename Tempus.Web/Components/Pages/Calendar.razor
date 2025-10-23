@@ -205,6 +205,111 @@
         align-items: center;
         min-height: 400px;
     }
+
+    /* Day View with Hours Styling */
+    .day-view-container {
+        display: flex;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .time-column {
+        width: 80px;
+        background: #f8f9fa;
+        border-right: 2px solid #e9ecef;
+    }
+
+    .time-slot {
+        height: 60px;
+        padding: 8px;
+        text-align: right;
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 600;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .time-slot:first-child {
+        border-top: 1px solid #e9ecef;
+    }
+
+    .day-column {
+        flex: 1;
+        position: relative;
+        min-width: 200px;
+    }
+
+    .hour-row {
+        height: 60px;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .hour-row:first-child {
+        border-top: 1px solid #e9ecef;
+    }
+
+    .hour-row:hover {
+        background: #f8f9fa;
+    }
+
+    .timed-event {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        border-radius: 8px;
+        padding: 8px;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transition: var(--transition-smooth);
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .timed-event:hover {
+        transform: translateX(2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        z-index: 10;
+    }
+
+    .timed-event-title {
+        font-weight: 700;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .timed-event-time {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .current-time-indicator {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e53935;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .current-time-indicator::before {
+        content: '';
+        position: absolute;
+        left: -4px;
+        top: -3px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e53935;
+    }
 </style>
 
 <div class="calendar-header">
@@ -588,6 +693,10 @@
         {
             RenderMonthView(builder);
         }
+        else if (_currentView == "Day")
+        {
+            RenderDayViewWithHours(builder);
+        }
         else
         {
             RenderLinearView(builder);
@@ -636,6 +745,100 @@
         builder.CloseElement(); // tbody
         builder.CloseElement(); // table
         builder.CloseElement(); // div
+    }
+
+    private void RenderDayViewWithHours(RenderTreeBuilder builder)
+    {
+        var eventsForDay = GetEventsForDay(_selectedDate);
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "day-view-container");
+        builder.AddAttribute(2, "style", "max-height: 800px; overflow-y: auto;");
+
+        // Time column
+        builder.OpenElement(3, "div");
+        builder.AddAttribute(4, "class", "time-column");
+
+        for (int hour = 0; hour < 24; hour++)
+        {
+            builder.OpenElement(5, "div");
+            builder.AddAttribute(6, "class", "time-slot");
+
+            var timeString = hour == 0 ? "12 AM" :
+                           hour < 12 ? $"{hour} AM" :
+                           hour == 12 ? "12 PM" :
+                           $"{hour - 12} PM";
+
+            builder.AddContent(7, timeString);
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // time-column
+
+        // Day column
+        builder.OpenElement(8, "div");
+        builder.AddAttribute(9, "class", "day-column");
+
+        // Hour rows (background grid)
+        for (int hour = 0; hour < 24; hour++)
+        {
+            builder.OpenElement(10, "div");
+            builder.AddAttribute(11, "class", "hour-row");
+            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this,
+                args => OpenEventDialogAsync(null, _selectedDate.Date.AddHours(hour))));
+            builder.CloseElement();
+        }
+
+        // Render events positioned absolutely
+        foreach (var evt in eventsForDay)
+        {
+            var startHour = evt.StartTime.Hour;
+            var startMinute = evt.StartTime.Minute;
+            var endHour = evt.EndTime.Hour;
+            var endMinute = evt.EndTime.Minute;
+
+            // Calculate top position (in pixels from top)
+            var topPosition = (startHour * 60) + startMinute;
+
+            // Calculate height based on duration
+            var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
+            var height = Math.Max(30, durationMinutes); // Minimum height of 30px
+
+            builder.OpenElement(13, "div");
+            builder.AddAttribute(14, "class", "timed-event");
+            builder.AddAttribute(15, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)};");
+            builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.Id)));
+            builder.AddAttribute(17, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
+            builder.AddAttribute(18, "oncontextmenu:preventDefault", true);
+
+            // Event content
+            builder.OpenElement(19, "div");
+            builder.AddAttribute(20, "class", "timed-event-title");
+            builder.AddContent(21, evt.Title);
+            builder.CloseElement();
+
+            builder.OpenElement(22, "div");
+            builder.AddAttribute(23, "class", "timed-event-time");
+            builder.AddContent(24, $"{evt.StartTime:h:mm tt} - {evt.EndTime:h:mm tt}");
+            builder.CloseElement();
+
+            builder.CloseElement(); // timed-event
+        }
+
+        // Current time indicator (red line) if viewing today
+        if (_selectedDate.Date == DateTime.Today)
+        {
+            var now = DateTime.Now;
+            var currentPosition = (now.Hour * 60) + now.Minute;
+
+            builder.OpenElement(25, "div");
+            builder.AddAttribute(26, "class", "current-time-indicator");
+            builder.AddAttribute(27, "style", $"top: {currentPosition}px;");
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // day-column
+        builder.CloseElement(); // day-view-container
     }
 
     private void RenderLinearView(RenderTreeBuilder builder)
