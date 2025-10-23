@@ -31,6 +31,47 @@ html, body {
     outline: none;
 }
 
+/* Public Header Navigation Styles */
+.rz-header a[href="/"],
+.rz-header a[href="/features"],
+.rz-header a[href="/about"] {
+    position: relative;
+    color: #2d3748 !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease;
+}
+
+.rz-header a[href="/"]::after,
+.rz-header a[href="/features"]::after,
+.rz-header a[href="/about"]::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary-gradient);
+    transition: width 0.3s ease;
+}
+
+.rz-header a[href="/"]:hover,
+.rz-header a[href="/features"]:hover,
+.rz-header a[href="/about"]:hover {
+    color: #667eea !important;
+}
+
+.rz-header a[href="/"]:hover::after,
+.rz-header a[href="/features"]:hover::after,
+.rz-header a[href="/about"]:hover::after {
+    width: 100%;
+}
+
+.rz-header a[href="/Account/Login"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
 /* Hero Section */
 .hero-section {
     position: relative;
