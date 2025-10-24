@@ -14,6 +14,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Attendee> Attendees { get; set; }
     public DbSet<CalendarIntegration> CalendarIntegrations { get; set; }
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,25 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .WithMany(u => u.CustomCalendarRanges)
                   .HasForeignKey(r => r.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Contact>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.Phone).HasMaxLength(50);
+            entity.Property(c => c.Company).HasMaxLength(200);
+            entity.Property(c => c.JobTitle).HasMaxLength(200);
+            entity.Property(c => c.Notes).HasMaxLength(1000);
+            entity.Property(c => c.UserId).IsRequired();
+
+            entity.HasOne(c => c.User)
+                  .WithMany()
+                  .HasForeignKey(c => c.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(c => new { c.Email, c.UserId }).IsUnique();
         });
     }
 }

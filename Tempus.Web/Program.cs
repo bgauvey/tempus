@@ -57,6 +57,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 // Register repositories and services
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
+builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 
 var app = builder.Build();
