@@ -62,15 +62,17 @@
         <RadzenColorPicker @bind-Value="@_event.Color" />
     </RadzenStack>
 
-    <!-- Recurrence Section -->
-    <RadzenFieldset Text="Recurrence" Style="margin-top: 1rem;">
-        <RadzenStack Gap="1rem">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
-                <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
-            </RadzenStack>
+    <!-- Recurrence Section (hidden when editing single occurrence) -->
+    @if (!EditSingleOccurrence)
+    {
+        <RadzenFieldset Text="Recurrence" Style="margin-top: 1rem;">
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
+                    <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
+                </RadzenStack>
 
-            @if (_event.IsRecurring)
+                @if (_event.IsRecurring)
             {
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
@@ -115,16 +117,17 @@
                     </RadzenFormField>
                 }
 
-                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
-                    <strong>Summary:</strong> @GetRecurrenceSummary()
-                </div>
-            }
-        </RadzenStack>
-    </RadzenFieldset>
+                    <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                        <strong>Summary:</strong> @GetRecurrenceSummary()
+                    </div>
+                }
+            </RadzenStack>
+        </RadzenFieldset>
+    }
 
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
-        <RadzenButton Text="@(EventId.HasValue ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary"
+        <RadzenButton Text="@(GetSaveButtonText())" ButtonStyle="ButtonStyle.Primary"
                     Click="Save" Disabled="@(!IsValid())" />
     </RadzenStack>
 </RadzenStack>
@@ -135,6 +138,12 @@
 
     [Parameter]
     public DateTime? PrefilledDate { get; set; }
+
+    [Parameter]
+    public bool EditSingleOccurrence { get; set; }
+
+    [Parameter]
+    public Event? InstanceEvent { get; set; }
 
     private Event _event = new Event
     {
@@ -203,7 +212,32 @@
             }
         }
 
-        if (EventId.HasValue)
+        if (EditSingleOccurrence && InstanceEvent != null)
+        {
+            // Editing a single occurrence - use the instance data but don't save yet
+            _event = new Event
+            {
+                Id = Guid.NewGuid(),
+                Title = InstanceEvent.Title,
+                Description = InstanceEvent.Description,
+                StartTime = InstanceEvent.StartTime,
+                EndTime = InstanceEvent.EndTime,
+                Location = InstanceEvent.Location,
+                EventType = InstanceEvent.EventType,
+                Priority = InstanceEvent.Priority,
+                IsAllDay = InstanceEvent.IsAllDay,
+                Color = InstanceEvent.Color,
+                UserId = _userId,
+                IsRecurring = false,
+                IsRecurrenceException = true,
+                RecurrenceExceptionDate = InstanceEvent.StartTime.Date,
+                RecurrenceParentId = InstanceEvent.RecurrenceParentId ?? InstanceEvent.Id,
+                Tags = InstanceEvent.Tags.ToList(),
+                Attendees = new List<Attendee>(),
+                CreatedAt = DateTime.UtcNow
+            };
+        }
+        else if (EventId.HasValue)
         {
             // Load existing event
             var existingEvent = await EventRepository.GetByIdAsync(EventId.Value, _userId);
@@ -236,9 +270,16 @@
     {
         try
         {
-            if (EventId.HasValue)
+            if (EditSingleOccurrence)
             {
-                // Update existing event
+                // Create exception event for single occurrence edit
+                _event.Id = Guid.NewGuid();
+                _event.CreatedAt = DateTime.UtcNow;
+                await EventRepository.CreateAsync(_event);
+            }
+            else if (EventId.HasValue)
+            {
+                // Update existing event (could be a regular event or the parent of a series)
                 _event.UpdatedAt = DateTime.UtcNow;
                 await EventRepository.UpdateAsync(_event);
             }
@@ -262,6 +303,16 @@
     private string GetRecurrenceSummary()
     {
         return RecurrenceHelper.GetRecurrenceDescription(_event);
+    }
+
+    private string GetSaveButtonText()
+    {
+        if (EditSingleOccurrence)
+            return "Update This Occurrence";
+        else if (EventId.HasValue)
+            return "Update";
+        else
+            return "Create";
     }
 
     private void Cancel()

@@ -33,11 +33,12 @@ public class EventRepository : IEventRepository
 
     public async Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
     {
-        // Get all non-recurring events in the date range
+        // Get all non-recurring events in the date range (excluding exceptions)
         var nonRecurringEvents = await _context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId &&
                        !e.IsRecurring &&
+                       !e.IsRecurrenceException &&
                        e.StartTime >= startDate &&
                        e.StartTime <= endDate)
             .ToListAsync();
@@ -51,16 +52,48 @@ public class EventRepository : IEventRepository
                        e.StartTime <= endDate) // Started before or during the range
             .ToListAsync();
 
-        // Expand recurring events into instances
+        // Get all exception events (modified or deleted occurrences)
+        var exceptionEvents = await _context.Events
+            .Include(e => e.Attendees)
+            .Where(e => e.UserId == userId &&
+                       e.IsRecurrenceException &&
+                       e.RecurrenceExceptionDate.HasValue &&
+                       e.RecurrenceExceptionDate.Value >= startDate.Date &&
+                       e.RecurrenceExceptionDate.Value <= endDate.Date)
+            .ToListAsync();
+
+        // Build a set of exception dates for each recurring event
+        var exceptionDatesByParent = exceptionEvents
+            .Where(e => e.RecurrenceParentId.HasValue && e.RecurrenceExceptionDate.HasValue)
+            .Select(e => new { ParentId = e.RecurrenceParentId!.Value, Date = e.RecurrenceExceptionDate!.Value.Date })
+            .GroupBy(x => x.ParentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Date).ToHashSet()
+            );
+
+        // Expand recurring events into instances, excluding exception dates
         var recurringInstances = new List<Event>();
         foreach (var recurringEvent in recurringEvents)
         {
             var instances = RecurrenceHelper.ExpandRecurringEvent(recurringEvent, startDate, endDate);
+
+            // Filter out instances that have exceptions
+            if (exceptionDatesByParent.TryGetValue(recurringEvent.Id, out var exceptionDates))
+            {
+                instances = instances.Where(i => !exceptionDates.Contains(i.StartTime.Date)).ToList();
+            }
+
             recurringInstances.AddRange(instances.Where(i => i.Id != recurringEvent.Id)); // Exclude the parent
         }
 
+        // Add exception events that aren't deleted (have meaningful title)
+        var visibleExceptions = exceptionEvents.Where(e => e.Title != "(Deleted)").ToList();
+
         // Combine and sort all events
-        var allEvents = nonRecurringEvents.Concat(recurringInstances)
+        var allEvents = nonRecurringEvents
+            .Concat(recurringInstances)
+            .Concat(visibleExceptions)
             .OrderBy(e => e.StartTime)
             .ToList();
 

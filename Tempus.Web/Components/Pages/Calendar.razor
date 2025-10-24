@@ -398,7 +398,7 @@
     </RadzenRow>
 </div>
 
-<div class="calendar-main">
+<div class="calendar-main" @oncontextmenu:preventDefault>
     @if (_loading)
     {
         <div class="loading-container">
@@ -411,14 +411,14 @@
     }
 </div>
 
-<div class="events-sidebar rz-mt-4">
+<div class="events-sidebar rz-mt-4" @oncontextmenu:preventDefault>
     <div class="events-sidebar-title">📌 Events on @_selectedDate.ToString("MMMM dd, yyyy")</div>
     @if (GetEventsForDay(_selectedDate).Any())
     {
         <RadzenStack Gap="0.75rem">
             @foreach (var evt in GetEventsForDay(_selectedDate))
             {
-                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault="true" @onclick="@(() => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id))">
+                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault @oncontextmenu:stopPropagation @onclick="@(() => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id))">
                     <RadzenCard Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)};")" class="event-detail-card">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
                             <div style="@($"width: 48px; height: 48px; border-radius: 12px; background: {GetEventBackgroundColor(evt)}15; display: flex; align-items: center; justify-content: center;")">
@@ -933,16 +933,17 @@
             builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
             builder.AddAttribute(17, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
             builder.AddAttribute(18, "oncontextmenu:preventDefault", true);
+            builder.AddAttribute(19, "oncontextmenu:stopPropagation", true);
 
             // Event content
-            builder.OpenElement(19, "div");
-            builder.AddAttribute(20, "class", "timed-event-title");
-            builder.AddContent(21, evt.Title);
+            builder.OpenElement(20, "div");
+            builder.AddAttribute(21, "class", "timed-event-title");
+            builder.AddContent(22, evt.Title);
             builder.CloseElement();
 
-            builder.OpenElement(22, "div");
-            builder.AddAttribute(23, "class", "timed-event-time");
-            builder.AddContent(24, $"{evt.StartTime:h:mm tt} - {evt.EndTime:h:mm tt}");
+            builder.OpenElement(23, "div");
+            builder.AddAttribute(24, "class", "timed-event-time");
+            builder.AddContent(25, $"{evt.StartTime:h:mm tt} - {evt.EndTime:h:mm tt}");
             builder.CloseElement();
 
             builder.CloseElement(); // timed-event
@@ -954,9 +955,9 @@
             var now = DateTime.Now;
             var currentPosition = (now.Hour * 60) + now.Minute;
 
-            builder.OpenElement(25, "div");
-            builder.AddAttribute(26, "class", "current-time-indicator");
-            builder.AddAttribute(27, "style", $"top: {currentPosition}px;");
+            builder.OpenElement(26, "div");
+            builder.AddAttribute(27, "class", "current-time-indicator");
+            builder.AddAttribute(28, "style", $"top: {currentPosition}px;");
             builder.CloseElement();
         }
 
@@ -1060,20 +1061,21 @@
                 builder.AddAttribute(29, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
                 builder.AddAttribute(30, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
                 builder.AddAttribute(31, "oncontextmenu:preventDefault", true);
+                builder.AddAttribute(32, "oncontextmenu:stopPropagation", true);
 
                 // Event content
-                builder.OpenElement(32, "div");
-                builder.AddAttribute(33, "class", "timed-event-title");
-                builder.AddAttribute(34, "style", "font-size: 0.75rem;");
-                builder.AddContent(35, evt.Title.Length > 15 ? evt.Title.Substring(0, 12) + "..." : evt.Title);
+                builder.OpenElement(33, "div");
+                builder.AddAttribute(34, "class", "timed-event-title");
+                builder.AddAttribute(35, "style", "font-size: 0.75rem;");
+                builder.AddContent(36, evt.Title.Length > 15 ? evt.Title.Substring(0, 12) + "..." : evt.Title);
                 builder.CloseElement();
 
                 if (height > 40)
                 {
-                    builder.OpenElement(36, "div");
-                    builder.AddAttribute(37, "class", "timed-event-time");
-                    builder.AddAttribute(38, "style", "font-size: 0.65rem;");
-                    builder.AddContent(39, $"{evt.StartTime:h:mm tt}");
+                    builder.OpenElement(37, "div");
+                    builder.AddAttribute(38, "class", "timed-event-time");
+                    builder.AddAttribute(39, "style", "font-size: 0.65rem;");
+                    builder.AddContent(40, $"{evt.StartTime:h:mm tt}");
                     builder.CloseElement();
                 }
 
@@ -1086,9 +1088,9 @@
                 var now = DateTime.Now;
                 var currentPosition = (now.Hour * 60) + now.Minute;
 
-                builder.OpenElement(40, "div");
-                builder.AddAttribute(41, "class", "current-time-indicator");
-                builder.AddAttribute(42, "style", $"top: {currentPosition}px;");
+                builder.OpenElement(41, "div");
+                builder.AddAttribute(42, "class", "current-time-indicator");
+                builder.AddAttribute(43, "style", $"top: {currentPosition}px;");
                 builder.CloseElement();
             }
 
@@ -1155,34 +1157,36 @@
         var isToday = day.Date == DateTime.Today;
         var isOtherMonth = _currentView == "Month" && day.Month != _selectedDate.Month;
         var cellClass = "calendar-day-cell" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "");
+        var dayCellContextDate = day; // Capture for lambda
 
         builder.OpenElement(0, "td");
         builder.AddAttribute(1, "class", cellClass);
         builder.AddAttribute(2, "style", $"min-width: {minWidth};");
-        builder.AddAttribute(3, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, day)));
-        builder.AddAttribute(4, "oncontextmenu:preventDefault", true);
 
-        // Day number
-        builder.OpenElement(5, "div");
-        builder.AddAttribute(6, "class", "calendar-day-number" + (isToday ? " today" : ""));
-        builder.AddContent(7, day.Day);
+        // Day number (with context menu for adding events)
+        builder.OpenElement(3, "div");
+        builder.AddAttribute(4, "class", "calendar-day-number" + (isToday ? " today" : ""));
+        builder.AddAttribute(5, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, dayCellContextDate)));
+        builder.AddAttribute(6, "oncontextmenu:preventDefault", true);
+        builder.AddAttribute(7, "style", "cursor: context-menu;");
+        builder.AddContent(8, day.Day);
         builder.CloseElement();
 
         // Events
         var events = GetEventsForDay(day);
         foreach (var evt in events)
         {
-            builder.OpenElement(8, "div");
-            builder.AddAttribute(9, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
-            builder.AddAttribute(10, "oncontextmenu:preventDefault", true);
-            builder.AddAttribute(11, "oncontextmenu:stopPropagation", true);
-            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
-            builder.AddAttribute(13, "onclick:stopPropagation", true);
+            builder.OpenElement(9, "div");
+            builder.AddAttribute(10, "class", "event-container");
+            builder.AddAttribute(11, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
+            builder.AddAttribute(12, "oncontextmenu:preventDefault", true);
+            builder.AddAttribute(13, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
 
             builder.OpenElement(14, "div");
             builder.AddAttribute(15, "class", "event-badge");
             builder.AddAttribute(16, "style", $"background-color: {GetEventBackgroundColor(evt)}; color: white;");
-            builder.AddContent(17, evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
+            builder.AddAttribute(17, "title", evt.Title); // Full title on hover
+            builder.AddContent(18, evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
             builder.CloseElement();
 
             builder.CloseElement(); // div
@@ -1215,11 +1219,29 @@
     private void ShowEventContextMenu(MouseEventArgs args, Event evt)
     {
         _contextMenuEvent = evt;
-        ContextMenuService.Open(args, new List<ContextMenuItem>
+
+        // Check if this is a recurring event instance or parent
+        var isRecurringInstance = evt.RecurrenceParentId.HasValue;
+        var isRecurringParent = evt.IsRecurring && !evt.RecurrenceParentId.HasValue;
+
+        var menuItems = new List<ContextMenuItem>();
+
+        if (isRecurringInstance || isRecurringParent)
         {
-            new ContextMenuItem { Text = "Edit", Icon = "edit", Value = "edit" },
-            new ContextMenuItem { Text = "Delete", Icon = "delete", Value = "delete" }
-        }, OnEventContextMenuClick);
+            // Options for recurring event instance or parent
+            menuItems.Add(new ContextMenuItem { Text = "Edit This Occurrence", Icon = "edit", Value = "edit-single" });
+            menuItems.Add(new ContextMenuItem { Text = "Edit All Occurrences", Icon = "edit_note", Value = "edit-all" });
+            menuItems.Add(new ContextMenuItem { Text = "Delete This Occurrence", Icon = "delete", Value = "delete-single" });
+            menuItems.Add(new ContextMenuItem { Text = "Delete All Occurrences", Icon = "delete_forever", Value = "delete-all" });
+        }
+        else
+        {
+            // Options for regular event
+            menuItems.Add(new ContextMenuItem { Text = "Edit", Icon = "edit", Value = "edit" });
+            menuItems.Add(new ContextMenuItem { Text = "Delete", Icon = "delete", Value = "delete" });
+        }
+
+        ContextMenuService.Open(args, menuItems, OnEventContextMenuClick);
     }
 
     private void ShowAddEventContextMenu(MouseEventArgs args, DateTime date)
@@ -1239,9 +1261,21 @@
         switch (action)
         {
             case "edit":
+                _ = OpenEventDialogAsync(_contextMenuEvent.Id);
+                break;
+            case "edit-single":
+                _ = EditSingleOccurrenceAsync(_contextMenuEvent);
+                break;
+            case "edit-all":
                 _ = OpenEventDialogAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
                 break;
             case "delete":
+                _ = DeleteEventAsync(_contextMenuEvent.Id);
+                break;
+            case "delete-single":
+                _ = DeleteSingleOccurrenceAsync(_contextMenuEvent);
+                break;
+            case "delete-all":
                 _ = DeleteEventAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
                 break;
         }
@@ -1287,6 +1321,68 @@
         // If the dialog was saved (result == true), reload events
         if (result is bool saved && saved)
         {
+            await LoadEvents();
+        }
+    }
+
+    private async Task EditSingleOccurrenceAsync(Event instance)
+    {
+        if (!instance.RecurrenceParentId.HasValue) return;
+
+        // Open dialog with the instance data and EditSingleOccurrence flag
+        var parameters = new Dictionary<string, object>
+        {
+            { "EditSingleOccurrence", true },
+            { "InstanceEvent", instance }
+        };
+
+        var result = await DialogService.OpenAsync<EventFormDialog>(
+            "Edit This Occurrence",
+            parameters,
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "auto",
+                Resizable = true,
+                Draggable = true
+            });
+
+        // If the dialog was saved, reload events
+        if (result is bool saved && saved)
+        {
+            await LoadEvents();
+        }
+    }
+
+    private async Task DeleteSingleOccurrenceAsync(Event instance)
+    {
+        if (!instance.RecurrenceParentId.HasValue) return;
+
+        var result = await DialogService.Confirm(
+            "Are you sure you want to delete this occurrence?",
+            "Delete Occurrence",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            // Create a "tombstone" exception to mark this date as deleted
+            var exceptionEvent = new Event
+            {
+                Id = Guid.NewGuid(),
+                Title = "(Deleted)",
+                StartTime = instance.StartTime,
+                EndTime = instance.EndTime,
+                UserId = _userId,
+                IsRecurring = false,
+                IsRecurrenceException = true,
+                RecurrenceExceptionDate = instance.StartTime.Date,
+                RecurrenceParentId = instance.RecurrenceParentId.Value,
+                CreatedAt = DateTime.UtcNow,
+                Tags = new List<string>(),
+                Attendees = new List<Attendee>()
+            };
+
+            await EventRepository.CreateAsync(exceptionEvent);
             await LoadEvents();
         }
     }
