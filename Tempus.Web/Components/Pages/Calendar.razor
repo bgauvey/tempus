@@ -426,9 +426,18 @@
                             </div>
                             <RadzenStack Gap="0.25rem" Style="flex: 1;">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 700; color: #2d3748;">@evt.Title</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
-                                    🕐 @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
-                                </RadzenText>
+                                @if (!evt.IsAllDay)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                        🕐 @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
+                                    </RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                        📅 All Day
+                                    </RadzenText>
+                                }
                                 @if (!string.IsNullOrEmpty(evt.Location))
                                 {
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
