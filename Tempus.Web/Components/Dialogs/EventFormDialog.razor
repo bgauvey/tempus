@@ -62,6 +62,54 @@
         <RadzenColorPicker @bind-Value="@_event.Color" />
     </RadzenStack>
 
+    <!-- Attendees Section (only for Meeting type events) -->
+    @if (_event.EventType == EventType.Meeting)
+    {
+        <RadzenFieldset Text="Attendees" Style="margin-top: 1rem;">
+            <RadzenStack Gap="1rem">
+                @if (_event.Attendees.Any())
+                {
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        @foreach (var attendee in _event.Attendees)
+                        {
+                            <RadzenCard Style="padding: 0.75rem; margin-bottom: 0.5rem;">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@attendee.Name</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">@attendee.Email</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                Click="@(() => RemoveAttendee(attendee))" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No attendees added yet</RadzenText>
+                }
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="5">
+                        <RadzenFormField Text="Name" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@_newAttendeeName" Placeholder="Enter name" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="5">
+                        <RadzenFormField Text="Email" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@_newAttendeeEmail" Placeholder="Enter email" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="2" Style="display: flex; align-items: flex-end;">
+                        <RadzenButton Icon="add" Text="Add" ButtonStyle="ButtonStyle.Success"
+                                    Click="AddAttendee" Disabled="@(!CanAddAttendee())" Style="width: 100%;" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+
     <!-- Recurrence Section (hidden when editing single occurrence) -->
     @if (!EditSingleOccurrence)
     {
@@ -163,6 +211,10 @@
     private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
     private string _userId = string.Empty;
 
+    // Attendee management
+    private string _newAttendeeName = string.Empty;
+    private string _newAttendeeEmail = string.Empty;
+
     private IEnumerable<int> _selectedDaysOfWeek
     {
         get
@@ -233,7 +285,14 @@
                 RecurrenceExceptionDate = InstanceEvent.StartTime.Date,
                 RecurrenceParentId = InstanceEvent.RecurrenceParentId ?? InstanceEvent.Id,
                 Tags = InstanceEvent.Tags.ToList(),
-                Attendees = new List<Attendee>(),
+                Attendees = InstanceEvent.Attendees.Select(a => new Attendee
+                {
+                    Id = Guid.NewGuid(),
+                    Name = a.Name,
+                    Email = a.Email,
+                    IsOrganizer = a.IsOrganizer,
+                    Status = a.Status
+                }).ToList(),
                 CreatedAt = DateTime.UtcNow
             };
         }
@@ -318,5 +377,53 @@
     private void Cancel()
     {
         DialogService.Close(false);
+    }
+
+    // Attendee management methods
+    private bool CanAddAttendee()
+    {
+        return !string.IsNullOrWhiteSpace(_newAttendeeName)
+            && !string.IsNullOrWhiteSpace(_newAttendeeEmail)
+            && IsValidEmail(_newAttendeeEmail);
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void AddAttendee()
+    {
+        if (!CanAddAttendee())
+            return;
+
+        var attendee = new Attendee
+        {
+            Id = Guid.NewGuid(),
+            Name = _newAttendeeName,
+            Email = _newAttendeeEmail,
+            EventId = _event.Id,
+            Status = AttendeeStatus.Pending,
+            IsOrganizer = false
+        };
+
+        _event.Attendees.Add(attendee);
+
+        // Clear the input fields
+        _newAttendeeName = string.Empty;
+        _newAttendeeEmail = string.Empty;
+    }
+
+    private void RemoveAttendee(Attendee attendee)
+    {
+        _event.Attendees.Remove(attendee);
     }
 }

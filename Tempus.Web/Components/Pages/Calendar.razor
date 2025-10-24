@@ -435,6 +435,12 @@
                                         <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">📍 @evt.Location</RadzenText>
                                     </RadzenStack>
                                 }
+                                @if (evt.EventType == Core.Enums.EventType.Meeting && evt.Attendees.Any())
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">👥 @evt.Attendees.Count attendee@(evt.Attendees.Count == 1 ? "" : "s")</RadzenText>
+                                    </RadzenStack>
+                                }
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenCard>
