@@ -22,10 +22,10 @@ builder.Services.AddHttpContextAccessor();
 // Add Radzen services
 builder.Services.AddRadzenComponents();
 
-// Add database context
+// Add database context (use SQL Server)
 builder.Services.AddDbContext<TempusDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=tempus.db"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
 
 // Add Identity services
 builder.Services.AddCascadingAuthenticationState();

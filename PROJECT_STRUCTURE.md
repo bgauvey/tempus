@@ -74,7 +74,7 @@ Tempus.Infrastructure/
 - **TempusDbContext**: Entity Framework Core database context
   - Configures entity mappings
   - Manages database connections
-  - Currently uses SQLite (easily switchable)
+    - Currently uses SQL Server (default; easily switchable)
 
 - **EventRepository**: Implements IEventRepository
   - CRUD operations for events
@@ -88,7 +88,7 @@ Tempus.Infrastructure/
 
 **Dependencies**:
 - Microsoft.EntityFrameworkCore (9.0.0)
-- Microsoft.EntityFrameworkCore.Sqlite (9.0.0)
+- Microsoft.EntityFrameworkCore.SqlServer (9.0.0)
 - Ical.Net (4.2.0)
 
 ### 3. Tempus.Web (Presentation Layer)
@@ -165,7 +165,7 @@ TempusDbContext.Events.Add()
     ↓
 SaveChangesAsync()
     ↓
-SQLite Database
+SQL Server Database
 ```
 
 ### Importing ICS File
@@ -195,8 +195,8 @@ Database
 Configured in `appsettings.json`:
 ```json
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=tempus.db"
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=localhost;Database=TempusDb;User Id=sa;Password=Your_password123!;TrustServerCertificate=True"
   }
 }
 ```
@@ -204,7 +204,7 @@ Configured in `appsettings.json`:
 Registered in `Program.cs`:
 ```csharp
 builder.Services.AddDbContext<TempusDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlServer(connectionString));
 ```
 
 ### Dependency Injection

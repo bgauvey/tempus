@@ -1,0 +1,257 @@
+@page "/addresses"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Shared
+@attribute [Authorize]
+@inject IContactRepository ContactRepository
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Address Book - Tempus</PageTitle>
+
+<style>
+    /* Premium Address Book Styling */
+    .addresses-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .addresses-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .addresses-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    .addresses-main {
+        animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        color: #718096;
+        margin-bottom: 2rem;
+    }
+
+    /* Animations */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .addresses-header {
+            padding: 1.5rem;
+        }
+
+        .addresses-title {
+            font-size: 2rem;
+        }
+
+        .addresses-subtitle {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="addresses-header">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+        <div>
+            <h1 class="addresses-title">📇 Address Book</h1>
+            <p class="addresses-subtitle">Manage your contacts and connections</p>
+        </div>
+        <RadzenButton Icon="add" Text="Add Contact" Click="@(() => OpenContactDialogAsync(null))"
+                     Style="background: white; color: #667eea; font-weight: 600; border-radius: 12px; padding: 0.75rem 1.5rem; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);" />
+    </RadzenStack>
+</div>
+
+<div class="addresses-main">
+    @if (_loading)
+    {
+        <div class="loading-container">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        </div>
+    }
+    else if (!_contacts.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">📇</div>
+            <h2 class="empty-state-title">No Contacts Yet</h2>
+            <p class="empty-state-text">Start building your network by adding your first contact!</p>
+            <RadzenButton Icon="add" Text="Add Your First Contact" ButtonStyle="ButtonStyle.Primary"
+                        Click="@(() => OpenContactDialogAsync(null))"
+                        Style="font-size: 1.1rem; padding: 1rem 2rem; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);" />
+        </div>
+    }
+    else
+    {
+        <AddressesGrid Contacts="@_contacts"
+                      IsLoading="@_loading"
+                      OnSearch="@SearchContactsAsync"
+                      OnEditContact="@EditContactAsync"
+                      OnDeleteContact="@DeleteContactAsync"
+                      OnCreateContact="@(() => OpenContactDialogAsync(null))" />
+    }
+</div>
+
+@code {
+    private List<Tempus.Core.Models.Contact> _contacts = new();
+    private bool _loading = true;
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
+
+        await LoadContactsAsync();
+    }
+
+    private async Task LoadContactsAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        _contacts = await ContactRepository.GetAllAsync(_userId);
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task SearchContactsAsync(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            await LoadContactsAsync();
+        }
+        else
+        {
+            _loading = true;
+            _contacts = await ContactRepository.SearchAsync(searchTerm, _userId);
+            _loading = false;
+        }
+    }
+
+    private async Task OpenContactDialogAsync(Guid? contactId)
+    {
+        var parameters = new Dictionary<string, object>();
+
+        if (contactId.HasValue)
+        {
+            parameters.Add("ContactId", contactId.Value);
+        }
+
+        var result = await DialogService.OpenAsync<AddressFormDialog>(
+            contactId.HasValue ? "Edit Contact" : "Add Contact",
+            parameters,
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "auto",
+                Resizable = true,
+                Draggable = true
+            });
+
+        // If the dialog was saved (result == true), reload contacts
+        if (result is bool saved && saved)
+        {
+            await LoadContactsAsync();
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = contactId.HasValue ? "Contact updated successfully" : "Contact added successfully",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task EditContactAsync(Guid contactId)
+    {
+        await OpenContactDialogAsync(contactId);
+    }
+
+    private async Task DeleteContactAsync(Guid contactId)
+    {
+        var contact = _contacts.FirstOrDefault(c => c.Id == contactId);
+        if (contact == null) return;
+
+        var result = await DialogService.Confirm(
+            $"Are you sure you want to delete {contact.Name}?",
+            "Delete Contact",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            await ContactRepository.DeleteAsync(contactId, _userId);
+            await LoadContactsAsync();
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Contact deleted successfully",
+                Duration = 4000
+            });
+        }
+    }
+}
