@@ -1,0 +1,139 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IContactRepository ContactRepository
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.Name" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Email" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.Email" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Phone" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Phone" Style="width: 100%;" Placeholder="Optional" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Company" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Company" Style="width: 100%;" Placeholder="Optional" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Job Title" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.JobTitle" Style="width: 100%;" Placeholder="Optional" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_contact.Notes" Style="width: 100%;" Rows="4" Placeholder="Optional" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="@(ContactId.HasValue ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary"
+                    Click="Save" Disabled="@(!IsValid())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? ContactId { get; set; }
+
+    private Contact _contact = new Contact
+    {
+        Name = string.Empty,
+        Email = string.Empty
+    };
+
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
+
+        if (ContactId.HasValue)
+        {
+            // Load existing contact
+            var existingContact = await ContactRepository.GetByIdAsync(ContactId.Value, _userId);
+            if (existingContact != null)
+            {
+                _contact = existingContact;
+            }
+        }
+        else
+        {
+            // Set userId for new contact
+            _contact.UserId = _userId;
+        }
+    }
+
+    private bool IsValid()
+    {
+        return !string.IsNullOrWhiteSpace(_contact.Name)
+            && !string.IsNullOrWhiteSpace(_contact.Email)
+            && IsValidEmail(_contact.Email);
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (ContactId.HasValue)
+            {
+                // Update existing contact
+                _contact.UpdatedAt = DateTime.UtcNow;
+                await ContactRepository.UpdateAsync(_contact);
+            }
+            else
+            {
+                // Create new contact
+                _contact.Id = Guid.NewGuid();
+                _contact.CreatedAt = DateTime.UtcNow;
+                await ContactRepository.CreateAsync(_contact);
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a notification here
+            Console.WriteLine($"Error saving contact: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}
