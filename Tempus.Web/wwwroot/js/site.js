@@ -25,3 +25,33 @@ window.scrollToTop = function() {
 };
 
 console.log('window.scrollToTop function defined:', typeof window.scrollToTop);
+
+// Download file function for PDF generation
+window.downloadFile = function(filename, base64Data) {
+    console.log('downloadFile function called for:', filename);
+
+    // Convert base64 to blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    console.log('File download triggered successfully');
+};
+
+console.log('window.downloadFile function defined:', typeof window.downloadFile);

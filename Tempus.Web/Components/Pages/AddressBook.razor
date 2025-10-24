@@ -1,15 +1,16 @@
 @page "/addressbook"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Web.Components.Dialogs
+@attribute [Authorize]
 @inject IContactRepository ContactRepository
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
-@attribute [Authorize]
 
 <PageTitle>Address Book - Tempus</PageTitle>
 
@@ -39,11 +40,11 @@
     }
     else if (_contacts.Any())
     {
-        <RadzenDataGrid Data="@_filteredContacts" TItem="Contact" AllowFiltering="true" AllowSorting="true"
+        <RadzenDataGrid Data="@_filteredContacts" TItem="Tempus.Core.Models.Contact" AllowFiltering="true" AllowSorting="true"
                        AllowPaging="true" PageSize="20" PagerHorizontalAlign="HorizontalAlign.Center"
                        Style="box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;">
             <Columns>
-                <RadzenDataGridColumn TItem="Contact" Property="Name" Title="Name" Width="200px">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Name" Title="Name" Width="200px">
                     <Template Context="contact">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                             <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
@@ -54,13 +55,13 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Property="Email" Title="Email" Width="250px">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Email" Title="Email" Width="250px">
                     <Template Context="contact">
                         <a href="mailto:@contact.Email" style="color: #4299e1; text-decoration: none;">@contact.Email</a>
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Property="Phone" Title="Phone" Width="150px">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Phone" Title="Phone" Width="150px">
                     <Template Context="contact">
                         @if (!string.IsNullOrEmpty(contact.Phone))
                         {
@@ -73,7 +74,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Property="Company" Title="Company" Width="180px">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Company" Title="Company" Width="180px">
                     <Template Context="contact">
                         @if (!string.IsNullOrEmpty(contact.Company))
                         {
@@ -86,7 +87,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Property="JobTitle" Title="Job Title" Width="180px">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="JobTitle" Title="Job Title" Width="180px">
                     <Template Context="contact">
                         @if (!string.IsNullOrEmpty(contact.JobTitle))
                         {
@@ -99,7 +100,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Title="Source" Width="100px" Sortable="false" Filterable="false">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Source" Width="100px" Sortable="false" Filterable="false">
                     <Template Context="contact">
                         @if (contact.IsAutoCreated)
                         {
@@ -112,7 +113,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Contact" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Actions" Width="120px" Sortable="false" Filterable="false">
                     <Template Context="contact">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
@@ -138,8 +139,8 @@
 </RadzenStack>
 
 @code {
-    private List<Contact> _contacts = new();
-    private List<Contact> _filteredContacts = new();
+    private List<Tempus.Core.Models.Contact> _contacts = new();
+    private List<Tempus.Core.Models.Contact> _filteredContacts = new();
     private bool _loading = true;
     private string _userId = string.Empty;
     private string _searchTerm = string.Empty;

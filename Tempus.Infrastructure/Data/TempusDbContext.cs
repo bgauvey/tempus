@@ -24,7 +24,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Description).HasMaxLength(10000);
             entity.Property(e => e.Location).HasMaxLength(500);
             entity.Property(e => e.UserId).IsRequired();
 

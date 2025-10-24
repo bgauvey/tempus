@@ -9,6 +9,7 @@ using Tempus.Infrastructure.Services;
 using Radzen;
 using Tempus.Web.Components;
 using Tempus.Web.Components.Account;
+using Tempus.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
+builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
 
 var app = builder.Build();
 

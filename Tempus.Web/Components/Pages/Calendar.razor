@@ -9,6 +9,8 @@
 @using Tempus.Web.Components.Dialogs
 @using Tempus.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Rendering
+@using Tempus.Web.Services
+@using Microsoft.JSInterop
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ICustomRangeRepository CustomRangeRepository
@@ -16,6 +18,8 @@
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+@inject IPdfAgendaService PdfAgendaService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -389,11 +393,14 @@
         <RadzenColumn Size="12" SizeMD="3">
             <div class="calendar-view-title">@GetCurrentViewTitle()</div>
         </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
+        <RadzenColumn Size="12" SizeMD="2">
             <RadzenDropDown @bind-Value="_currentView" Data="@_availableViews" Change="@OnViewChanged" Style="width: 100%; border-radius: 10px;" TextProperty="Text" ValueProperty="Value" />
         </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
+        <RadzenColumn Size="12" SizeMD="2">
             <RadzenButton Icon="date_range" ButtonStyle="ButtonStyle.Light" Click="OpenCustomRangeDialog" Size="ButtonSize.Medium" Text="Custom Range" class="calendar-nav-btn" Style="width: 100%;" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="2">
+            <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" class="calendar-nav-btn" Style="width: 100%;" title="Download daily agenda as PDF" />
         </RadzenColumn>
     </RadzenRow>
 </div>
@@ -630,6 +637,63 @@
             _selectedCustomRange = savedRange;
             await LoadEvents();
             StateHasChanged();
+        }
+    }
+
+    private async Task DownloadDailyAgenda()
+    {
+        try
+        {
+            // Get events for the selected date
+            var eventsForDay = GetEventsForDay(_selectedDate);
+
+            // Get user name
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userName = "User";
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var appUser = await UserManager.GetUserAsync(user);
+                if (appUser != null)
+                {
+                    userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
+                    if (string.IsNullOrWhiteSpace(userName))
+                    {
+                        userName = appUser.Email ?? "User";
+                    }
+                }
+            }
+
+            // Generate PDF
+            var pdfBytes = PdfAgendaService.GenerateDailyAgenda(eventsForDay, _selectedDate, userName);
+
+            // Download file using inline JavaScript to avoid timing issues
+            var fileName = $"Daily-Agenda-{_selectedDate:yyyy-MM-dd}.pdf";
+            var base64 = Convert.ToBase64String(pdfBytes);
+
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    const byteCharacters = atob('{base64}');
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {{
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }}
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {{ type: 'application/pdf' }});
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = '{fileName}';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating PDF: {ex.Message}");
         }
     }
 

@@ -5,11 +5,15 @@
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@using Tempus.Web.Services
+@using Microsoft.JSInterop
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+@inject IPdfAgendaService PdfAgendaService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Dashboard - Tempus</PageTitle>
 
@@ -100,6 +104,11 @@
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
                         <RadzenStack Gap="0.75rem">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="picture_as_pdf"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
+                                          Click="DownloadTodayAgenda">
+                                Download Today's Agenda
+                            </RadzenButton>
                             <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
                                           Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
                                           Click="@(() => NavigationManager.NavigateTo("/events"))">
@@ -235,5 +244,68 @@
             .OrderBy(e => e.StartTime)
             .Take(5)
             .ToList();
+    }
+
+    private async Task DownloadTodayAgenda()
+    {
+        try
+        {
+            var today = DateTime.Today;
+
+            // Get all events for today
+            var allEvents = await EventRepository.GetAllAsync(_userId);
+            var todayEvents = allEvents
+                .Where(e => e.StartTime.Date == today)
+                .OrderBy(e => e.StartTime)
+                .ToList();
+
+            // Get user name
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userName = "User";
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var appUser = await UserManager.GetUserAsync(user);
+                if (appUser != null)
+                {
+                    userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
+                    if (string.IsNullOrWhiteSpace(userName))
+                    {
+                        userName = appUser.Email ?? "User";
+                    }
+                }
+            }
+
+            // Generate PDF
+            var pdfBytes = PdfAgendaService.GenerateDailyAgenda(todayEvents, today, userName);
+
+            // Download file using inline JavaScript to avoid timing issues
+            var fileName = $"Daily-Agenda-{today:yyyy-MM-dd}.pdf";
+            var base64 = Convert.ToBase64String(pdfBytes);
+
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    const byteCharacters = atob('{base64}');
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {{
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }}
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {{ type: 'application/pdf' }});
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = '{fileName}';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating PDF: {ex.Message}");
+        }
     }
 }
