@@ -19,7 +19,7 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **.NET 9**: Latest version of the .NET framework
 - **Blazor Server**: Interactive web UI framework
 - **Entity Framework Core 9**: ORM for database access
-- **SQLite**: Lightweight database (easily switchable to SQL Server or PostgreSQL)
+- **SQL Server**: Default database provider (easily switchable to PostgreSQL or SQLite)
 - **MudBlazor**: Material Design component library
 - **Ical.Net**: iCalendar format parsing and generation
 
@@ -46,7 +46,7 @@ Tempus/
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
 - Visual Studio 2022 (17.8+) or Visual Studio Code with C# extension
-- (Optional) SQL Server or PostgreSQL if not using SQLite
+- (Optional) PostgreSQL or SQLite if not using SQL Server
 
 ## Getting Started
 
@@ -91,30 +91,20 @@ The application will start and be available at:
 
 ## Database Configuration
 
-By default, Tempus uses SQLite with a database file named `tempus.db` in the application directory. The database is created automatically on first run.
+By default, Tempus uses SQL Server. The connection string is configured in `appsettings.json` and can be customized for your environment. The database is created automatically on first run if migrations are present.
 
 ### Switching to SQL Server
 
-1. Install the SQL Server package:
-```bash
-cd Tempus.Infrastructure
-dotnet add package Microsoft.EntityFrameworkCore.SqlServer
-```
+### SQL Server Setup
 
-2. Update `Tempus.Web/Program.cs`:
-```csharp
-builder.Services.AddDbContext<TempusDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-```
-
-3. Update connection string in `appsettings.json`:
+The default connection string in `appsettings.json` is:
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"
+  "DefaultConnection": "Server=localhost;Database=TempusDb;User Id=sa;Password=Your_password123!;TrustServerCertificate=True"
 }
 ```
 
-4. Create and apply migrations:
+To create and apply migrations:
 ```bash
 cd Tempus.Infrastructure
 dotnet ef migrations add InitialCreate --startup-project ../Tempus.Web
@@ -202,7 +192,7 @@ If ports 5000 or 7001 are in use, you can change them in `Tempus.Web/Properties/
 
 ### Database Issues
 
-Delete the `tempus.db` file and restart the application to recreate the database.
+If you encounter database issues, check your SQL Server connection string and ensure the server is running and accessible.
 
 ### Package Restore Issues
 

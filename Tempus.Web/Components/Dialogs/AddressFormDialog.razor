@@ -1,0 +1,166 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IContactRepository ContactRepository
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.Name" Style="width: 100%;" Placeholder="Enter full name" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Email" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.Email" Style="width: 100%;" Placeholder="email@example.com" />
+        @if (!string.IsNullOrEmpty(_contact.Email) && !IsValidEmail(_contact.Email))
+        {
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: #e53935; margin-top: 0.25rem;">
+                Please enter a valid email address
+            </RadzenText>
+        }
+    </RadzenFormField>
+
+    <RadzenFormField Text="Phone" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_contact.Phone" Style="width: 100%;" Placeholder="(123) 456-7890" />
+    </RadzenFormField>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Company" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Company" Style="width: 100%;" Placeholder="Company name" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Job Title" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.JobTitle" Style="width: 100%;" Placeholder="Position" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_contact.Notes" Style="width: 100%;" Rows="4"
+                       Placeholder="Add any additional notes about this contact..." />
+    </RadzenFormField>
+
+    @if (ContactId.HasValue && _contact.IsAutoCreated)
+    {
+        <RadzenCard Style="background: linear-gradient(135deg, #43e97b15 0%, #38f9d715 100%); border: 1px solid #43e97b; padding: 1rem;">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="auto_awesome" Style="color: #43e97b;" />
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: #2d3748;">
+                    This contact was automatically created from a meeting attendee.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="@(ContactId.HasValue ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary"
+                    Click="Save" Disabled="@(!IsValid())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? ContactId { get; set; }
+
+    private Tempus.Core.Models.Contact _contact = new Tempus.Core.Models.Contact
+    {
+        Name = string.Empty,
+        Email = string.Empty,
+        Phone = null,
+        Company = null,
+        JobTitle = null,
+        Notes = null,
+        IsAutoCreated = false
+    };
+
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+            }
+        }
+
+        if (ContactId.HasValue)
+        {
+            // Load existing contact
+            var existingContact = await ContactRepository.GetByIdAsync(ContactId.Value, _userId);
+            if (existingContact != null)
+            {
+                _contact = existingContact;
+            }
+        }
+        else
+        {
+            // Set userId for new contact
+            _contact.UserId = _userId;
+        }
+    }
+
+    private bool IsValid()
+    {
+        return !string.IsNullOrWhiteSpace(_contact.Name)
+            && !string.IsNullOrWhiteSpace(_contact.Email)
+            && IsValidEmail(_contact.Email);
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (ContactId.HasValue)
+            {
+                // Update existing contact
+                _contact.UpdatedAt = DateTime.UtcNow;
+                await ContactRepository.UpdateAsync(_contact);
+            }
+            else
+            {
+                // Create new contact
+                _contact.Id = Guid.NewGuid();
+                _contact.CreatedAt = DateTime.UtcNow;
+                await ContactRepository.CreateAsync(_contact);
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a notification here
+            Console.WriteLine($"Error saving contact: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

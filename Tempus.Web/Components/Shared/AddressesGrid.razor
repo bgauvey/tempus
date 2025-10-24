@@ -1,0 +1,384 @@
+@using Tempus.Core.Models
+
+<!-- Search and Actions Section -->
+<div class="addresses-actions-card">
+    <RadzenRow Gap="1.5rem" AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="8">
+            <div class="addresses-search-container">
+                <div class="addresses-search-icon">
+                    <RadzenIcon Icon="search" />
+                </div>
+                <RadzenTextBox @bind-Value="_searchTerm"
+                             Placeholder="Search contacts by name, email, company, or job title..."
+                             class="addresses-search-input"
+                             Style="width: 100%; padding-left: 3rem;" />
+                <RadzenButton Icon="search"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Click="HandleSearch"
+                            class="addresses-search-button">
+                    Search
+                </RadzenButton>
+            </div>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                        Icon="add"
+                        Click="HandleCreateContact"
+                        class="addresses-create-button"
+                        Style="width: 100%; height: 50px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);">
+                <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
+                Add New Contact
+            </RadzenButton>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+<!-- Contacts Data Grid -->
+<div class="addresses-grid-container">
+    <RadzenDataGrid Data="@Contacts"
+                    TItem="Tempus.Core.Models.Contact"
+                    AllowPaging="true"
+                    PageSize="10"
+                    AllowSorting="true"
+                    AllowFiltering="false"
+                    IsLoading="@IsLoading"
+                    class="addresses-premium-grid">
+        <Columns>
+            <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Contact Details" Width="300px">
+                <Template Context="contact">
+                    <div class="contact-detail-cell">
+                        <div class="contact-avatar">
+                            <RadzenIcon Icon="person" Style="font-size: 2rem; color: white;" />
+                        </div>
+                        <div class="contact-detail-content">
+                            <div class="contact-name">@contact.Name</div>
+                            @if (!string.IsNullOrEmpty(contact.Email))
+                            {
+                                <div class="contact-email">
+                                    <RadzenIcon Icon="email" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
+                                    <span>@contact.Email</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(contact.Phone))
+                            {
+                                <div class="contact-phone">
+                                    <RadzenIcon Icon="phone" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
+                                    <span>@contact.Phone</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Company" Title="Company" Width="200px">
+                <Template Context="contact">
+                    <div class="contact-company-cell">
+                        @if (!string.IsNullOrEmpty(contact.Company))
+                        {
+                            <div class="contact-company">@contact.Company</div>
+                            @if (!string.IsNullOrEmpty(contact.JobTitle))
+                            {
+                                <div class="contact-job-title">@contact.JobTitle</div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="CreatedAt" Title="Added" Width="150px">
+                <Template Context="contact">
+                    <div class="contact-date-cell">
+                        <div class="contact-date">@contact.CreatedAt.ToString("MMM dd, yyyy")</div>
+                        @if (contact.IsAutoCreated)
+                        {
+                            <div class="contact-auto-badge">
+                                <RadzenIcon Icon="auto_awesome" Style="font-size: 0.75rem; margin-right: 0.25rem;" />
+                                Auto-added
+                            </div>
+                        }
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Notes" Width="200px">
+                <Template Context="contact">
+                    @if (!string.IsNullOrEmpty(contact.Notes))
+                    {
+                        <div class="contact-notes">
+                            @(contact.Notes.Length > 50 ? contact.Notes.Substring(0, 50) + "..." : contact.Notes)
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No notes</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Actions" Width="150px" Sortable="false">
+                <Template Context="contact">
+                    <div class="contact-actions">
+                        <RadzenButton Icon="edit"
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => HandleEditContact(contact.Id))"
+                                    class="contact-action-button contact-action-edit"
+                                    title="Edit Contact" />
+                        <RadzenButton Icon="delete"
+                                    ButtonStyle="ButtonStyle.Danger"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => HandleDeleteContact(contact.Id))"
+                                    class="contact-action-button contact-action-delete"
+                                    title="Delete Contact" />
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+<style>
+    /* Search and Actions Card */
+    .addresses-actions-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+
+    .addresses-search-container {
+        position: relative;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .addresses-search-icon {
+        position: absolute;
+        left: 1rem;
+        color: #718096;
+        font-size: 1.25rem;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .addresses-search-input {
+        flex: 1;
+        height: 50px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .addresses-search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .addresses-search-button {
+        height: 50px;
+        padding: 0 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    /* Grid Container */
+    .addresses-grid-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.3s backwards;
+    }
+
+    .addresses-premium-grid {
+        border: none;
+    }
+
+    /* Contact Detail Cell */
+    .contact-detail-cell {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+
+    .contact-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .contact-detail-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .contact-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+
+    .contact-email,
+    .contact-phone {
+        display: flex;
+        align-items: center;
+        color: #718096;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Company Cell */
+    .contact-company-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .contact-company {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.95rem;
+    }
+
+    .contact-job-title {
+        color: #718096;
+        font-size: 0.875rem;
+    }
+
+    /* Date Cell */
+    .contact-date-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .contact-date {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.95rem;
+    }
+
+    .contact-auto-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        width: fit-content;
+    }
+
+    /* Notes */
+    .contact-notes {
+        color: #718096;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+
+    .text-muted {
+        color: #a0aec0;
+        font-style: italic;
+    }
+
+    /* Action Buttons */
+    .contact-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .contact-action-button {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .contact-action-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .contact-action-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+    }
+
+    /* Animations */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .addresses-actions-card {
+            padding: 1.5rem;
+        }
+
+        .addresses-grid-container {
+            padding: 1rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<Tempus.Core.Models.Contact> Contacts { get; set; } = new();
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnSearch { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnEditContact { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnDeleteContact { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreateContact { get; set; }
+
+    private string _searchTerm = string.Empty;
+
+    private async Task HandleSearch()
+    {
+        await OnSearch.InvokeAsync(_searchTerm);
+    }
+
+    private async Task HandleEditContact(Guid id)
+    {
+        await OnEditContact.InvokeAsync(id);
+    }
+
+    private async Task HandleDeleteContact(Guid id)
+    {
+        await OnDeleteContact.InvokeAsync(id);
+    }
+
+    private async Task HandleCreateContact()
+    {
+        await OnCreateContact.InvokeAsync();
+    }
+}
