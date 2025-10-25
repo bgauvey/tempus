@@ -14,6 +14,7 @@
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ICustomRangeRepository CustomRangeRepository
+@inject ISettingsService SettingsService
 @inject ContextMenuService ContextMenuService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -436,7 +437,7 @@
                                 @if (!evt.IsAllDay)
                                 {
                                     <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
-                                        🕐 @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")
+                                        🕐 @FormatTime(evt.StartTime) - @FormatTime(evt.EndTime)
                                     </RadzenText>
                                 }
                                 else
@@ -479,6 +480,7 @@
     private string _currentView = "Month";
     private List<CustomCalendarRange> _customRanges = new();
     private CustomCalendarRange? _selectedCustomRange;
+    private CalendarSettings? _settings;
 
     private class ViewOption
     {
@@ -499,6 +501,10 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
+
+                // Apply default calendar view from settings
+                _currentView = _settings.DefaultCalendarView.ToString();
             }
         }
         await LoadCustomRanges();
@@ -701,13 +707,20 @@
     {
         var firstDayOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
         var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-        
-        var startDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
-        var endDate = lastDayOfMonth.AddDays(6 - (int)lastDayOfMonth.DayOfWeek);
-        
+
+        // Use start of week from settings
+        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
+
+        // Calculate days to subtract to get to the start of week
+        var daysToSubtract = ((int)firstDayOfMonth.DayOfWeek - (int)startOfWeek + 7) % 7;
+        var startDate = firstDayOfMonth.AddDays(-daysToSubtract);
+
+        var daysToAdd = (6 - ((int)lastDayOfMonth.DayOfWeek - (int)startOfWeek + 7) % 7);
+        var endDate = lastDayOfMonth.AddDays(daysToAdd);
+
         var weeks = new List<List<DateTime>>();
         var currentWeek = new List<DateTime>();
-        
+
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
             currentWeek.Add(date);
@@ -717,7 +730,7 @@
                 currentWeek = new List<DateTime>();
             }
         }
-        
+
         return weeks;
     }
 
@@ -731,7 +744,8 @@
 
     private DateTime GetWeekStart()
     {
-        var diff = _selectedDate.DayOfWeek - DayOfWeek.Sunday;
+        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
+        var diff = ((int)_selectedDate.DayOfWeek - (int)startOfWeek + 7) % 7;
         return _selectedDate.AddDays(-diff).Date;
     }
 
@@ -791,9 +805,15 @@
     {
         var days = new List<DateTime>();
         var start = GetWeekStart();
+        var showWeekends = _settings?.ShowWeekendInWeekView ?? true;
+
         for (int i = 0; i < 7; i++)
         {
-            days.Add(start.AddDays(i));
+            var day = start.AddDays(i);
+            if (showWeekends || (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday))
+            {
+                days.Add(day);
+            }
         }
         return days;
     }
@@ -913,16 +933,36 @@
         builder.OpenElement(2, "table");
         builder.AddAttribute(3, "class", "calendar-table");
 
+        var showWeekNumbers = _settings?.ShowWeekNumbers ?? false;
+
         // Header
         builder.OpenElement(4, "thead");
         builder.OpenElement(5, "tr");
 
-        string[] dayNames = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-        foreach (var dayName in dayNames)
+        // Week number header column
+        if (showWeekNumbers)
         {
             builder.OpenElement(6, "th");
             builder.AddAttribute(7, "class", "calendar-header-cell");
-            builder.AddContent(8, dayName);
+            builder.AddAttribute(8, "style", "width: 50px;");
+            builder.AddContent(9, "Wk");
+            builder.CloseElement();
+        }
+
+        // Get day names starting from the configured start of week
+        string[] allDayNames = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
+        var dayNames = new List<string>();
+        for (int i = 0; i < 7; i++)
+        {
+            dayNames.Add(allDayNames[((int)startOfWeek + i) % 7]);
+        }
+
+        foreach (var dayName in dayNames)
+        {
+            builder.OpenElement(10, "th");
+            builder.AddAttribute(11, "class", "calendar-header-cell");
+            builder.AddContent(12, dayName);
             builder.CloseElement();
         }
 
@@ -930,11 +970,25 @@
         builder.CloseElement(); // thead
 
         // Body
-        builder.OpenElement(9, "tbody");
+        builder.OpenElement(13, "tbody");
 
         foreach (var week in GetCalendarWeeks())
         {
-            builder.OpenElement(10, "tr");
+            builder.OpenElement(14, "tr");
+
+            // Week number cell
+            if (showWeekNumbers)
+            {
+                var weekNumber = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                    week[0],
+                    System.Globalization.CalendarWeekRule.FirstDay,
+                    startOfWeek);
+
+                builder.OpenElement(15, "td");
+                builder.AddAttribute(16, "style", "text-align: center; font-weight: 600; color: #667eea; background: #f8f9fa; vertical-align: middle;");
+                builder.AddContent(17, weekNumber);
+                builder.CloseElement();
+            }
 
             foreach (var day in week)
             {
@@ -965,13 +1019,7 @@
         {
             builder.OpenElement(5, "div");
             builder.AddAttribute(6, "class", "time-slot");
-
-            var timeString = hour == 0 ? "12 AM" :
-                           hour < 12 ? $"{hour} AM" :
-                           hour == 12 ? "12 PM" :
-                           $"{hour - 12} PM";
-
-            builder.AddContent(7, timeString);
+            builder.AddContent(7, FormatHourLabel(hour));
             builder.CloseElement();
         }
 
@@ -1022,7 +1070,7 @@
 
             builder.OpenElement(23, "div");
             builder.AddAttribute(24, "class", "timed-event-time");
-            builder.AddContent(25, $"{evt.StartTime:h:mm tt} - {evt.EndTime:h:mm tt}");
+            builder.AddContent(25, $"{FormatTime(evt.StartTime)} - {FormatTime(evt.EndTime)}");
             builder.CloseElement();
 
             builder.CloseElement(); // timed-event
@@ -1075,13 +1123,7 @@
         {
             builder.OpenElement(7, "div");
             builder.AddAttribute(8, "class", "time-slot");
-
-            var timeString = hour == 0 ? "12 AM" :
-                           hour < 12 ? $"{hour} AM" :
-                           hour == 12 ? "12 PM" :
-                           $"{hour - 12} PM";
-
-            builder.AddContent(9, timeString);
+            builder.AddContent(9, FormatHourLabel(hour));
             builder.CloseElement();
         }
 
@@ -1154,7 +1196,7 @@
                     builder.OpenElement(37, "div");
                     builder.AddAttribute(38, "class", "timed-event-time");
                     builder.AddAttribute(39, "style", "font-size: 0.65rem;");
-                    builder.AddContent(40, $"{evt.StartTime:h:mm tt}");
+                    builder.AddContent(40, FormatTime(evt.StartTime));
                     builder.CloseElement();
                 }
 
@@ -1272,6 +1314,30 @@
         }
 
         builder.CloseElement(); // td
+    }
+
+    private string FormatTime(DateTime time)
+    {
+        var format = _settings?.TimeFormat ?? TimeFormat.TwelveHour;
+        return format == TimeFormat.TwelveHour
+            ? time.ToString("h:mm tt")
+            : time.ToString("HH:mm");
+    }
+
+    private string FormatHourLabel(int hour)
+    {
+        var format = _settings?.TimeFormat ?? TimeFormat.TwelveHour;
+        if (format == TimeFormat.TwelveHour)
+        {
+            return hour == 0 ? "12 AM" :
+                   hour < 12 ? $"{hour} AM" :
+                   hour == 12 ? "12 PM" :
+                   $"{hour - 12} PM";
+        }
+        else
+        {
+            return $"{hour:00}:00";
+        }
     }
 
     private string GetEventBackgroundColor(Event evt)
