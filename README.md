@@ -1,52 +1,73 @@
-# Tempus - Time Management Application
+# Tempus - Award-Winning Time Management Platform
 
-Tempus is a comprehensive time management application built with .NET 9 and Blazor. It goes beyond basic calendar functionality to provide intelligent scheduling, ICS file import/export, and integration capabilities with popular calendar services.
+Tempus is a comprehensive time management application built with .NET 9 and Blazor Server. It features an award-winning business interface with modern design, smooth animations, and intelligent scheduling capabilities. Beyond basic calendar functionality, Tempus provides ICS file import/export, custom calendar ranges, advanced calendar settings, and integration capabilities with popular calendar services.
 
 ## Features
 
+### Core Features
 - **Event Management**: Create, edit, and delete meetings, appointments, tasks, and time blocks
-- **Calendar View**: Visual calendar interface with monthly view and event overview
+- **Advanced Calendar Views**: Multiple calendar views (Monthly, Weekly, Work Week, Daily, Agenda) with customizable settings
+- **Calendar Settings**: Comprehensive configuration including time formats (12/24-hour), date formats, work hours, time slot duration, and event visibility
+- **Custom Calendar Ranges**: Define and manage custom date ranges for specialized scheduling
 - **ICS Import/Export**: Import events from ICS files (compatible with Google Calendar, Outlook, Apple Calendar)
-- **Dashboard**: Overview of upcoming events, tasks, and statistics
+- **Dashboard**: Real-time overview of upcoming events, tasks, statistics, and analytics
 - **Event Types**: Support for different event types (Meeting, Appointment, Task, Time Block, Reminder, Deadline)
 - **Priority System**: Assign priorities to events (Low, Medium, High, Urgent)
-- **Search**: Quick search functionality across all events
+- **Recurring Events**: Support for recurring event patterns with flexible recurrence rules
 - **Attendee Management**: Add and track attendees for events
-- **Recurring Events**: Support for recurring event patterns
+- **Address Book**: Contact management with integration into event attendees
+
+### User Experience
+- **Award-Winning UI**: Modern gradient designs with purple, blue, green, and pink color schemes
+- **Smooth Animations**: Professional transitions and glass morphism effects
+- **Responsive Design**: Optimized for all device sizes
+- **Authentication**: User registration and login with secure identity management
+- **GDPR Compliance**: Privacy controls, terms of service, and security features
 
 ## Technology Stack
 
 - **.NET 9**: Latest version of the .NET framework
-- **Blazor Server**: Interactive web UI framework
+- **Blazor Server**: Interactive web UI framework with SignalR
 - **Entity Framework Core 9**: ORM for database access
-- **SQL Server**: Default database provider (easily switchable to PostgreSQL or SQLite)
-- **MudBlazor**: Material Design component library
-- **Ical.Net**: iCalendar format parsing and generation
+- **SQLite**: Default database provider (with SQL Server support available)
+- **Radzen Blazor**: Modern UI component library (v5.9.0)
+- **Ical.Net**: iCalendar format parsing and generation (v4.2.0)
+- **QuestPDF**: PDF generation capabilities (v2025.7.3)
+- **ASP.NET Core Identity**: Authentication and authorization
 
 ## Project Structure
 
 ```
-Tempus/
-├── Tempus.Core/                    # Domain models and interfaces
-│   ├── Models/                     # Event, Attendee, CalendarIntegration
-│   ├── Enums/                      # EventType, Priority
-│   └── Interfaces/                 # Repository and service interfaces
-├── Tempus.Infrastructure/          # Data access and external services
-│   ├── Data/                       # DbContext
-│   ├── Repositories/               # Repository implementations
-│   └── Services/                   # ICS import/export service
-└── Tempus.Web/                     # Blazor web application
-    ├── Components/
-    │   ├── Layout/                 # MainLayout
-    │   └── Pages/                  # Razor pages/components
-    └── wwwroot/                    # Static files
+tempus/
+├── src/                            # Main source code
+│   ├── Tempus.Core/               # Domain models and interfaces
+│   │   ├── Models/                # Event, Attendee, CalendarSettings, Contact, etc.
+│   │   ├── Enums/                 # EventType, Priority, CalendarView, TimeFormat, etc.
+│   │   ├── Interfaces/            # Repository and service interfaces
+│   │   └── Helpers/               # Utility classes
+│   ├── Tempus.Infrastructure/     # Data access and external services
+│   │   ├── Data/                  # TempusDbContext with Identity support
+│   │   ├── Repositories/          # Repository implementations
+│   │   ├── Services/              # ICS import/export, Settings service
+│   │   └── Migrations/            # EF Core database migrations
+│   ├── Tempus.Web/                # Blazor Server web application
+│   │   ├── Components/
+│   │   │   ├── Layout/            # MainLayout, navigation
+│   │   │   └── Pages/             # Calendar, Dashboard, Settings, etc.
+│   │   ├── Services/              # Application services
+│   │   ├── wwwroot/               # Static files, CSS, JavaScript, favicons
+│   │   ├── Program.cs             # Application startup and DI configuration
+│   │   └── appsettings.json       # Configuration settings
+│   └── Tempus.Tests/              # Unit tests
+└── tests/                         # Integration tests
+    └── Tempus.Web.Tests/          # Web application tests
 ```
 
 ## Prerequisites
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
 - Visual Studio 2022 (17.8+) or Visual Studio Code with C# extension
-- (Optional) PostgreSQL or SQLite if not using SQL Server
+- No database installation required (uses SQLite by default)
 
 ## Getting Started
 
@@ -91,20 +112,35 @@ The application will start and be available at:
 
 ## Database Configuration
 
-By default, Tempus uses SQL Server. The connection string is configured in `appsettings.json` and can be customized for your environment. The database is created automatically on first run if migrations are present.
+By default, Tempus uses **SQLite** for easy setup and portability. The database file (`tempus.db`) is created automatically in the `Tempus.Web` directory on first run.
+
+### SQLite (Default)
+
+No configuration needed! The database is automatically created and managed. SQLite is perfect for:
+- Development and testing
+- Single-user deployments
+- Portable applications
+- Quick prototyping
 
 ### Switching to SQL Server
 
-### SQL Server Setup
+If you need SQL Server for production or multi-user scenarios:
 
-The default connection string in `appsettings.json` is:
+1. Update `appsettings.json` connection string:
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=TempusDb;User Id=sa;Password=Your_password123!;TrustServerCertificate=True"
+  "DefaultConnection": "Server=localhost;Database=TempusDb;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True"
 }
 ```
 
-To create and apply migrations:
+2. Update `Program.cs` to use SQL Server:
+```csharp
+// Change from UseSqlite to UseSqlServer
+builder.Services.AddDbContext<TempusDbContext>(options =>
+    options.UseSqlServer(connectionString));
+```
+
+3. Create and apply migrations:
 ```bash
 cd Tempus.Infrastructure
 dotnet ef migrations add InitialCreate --startup-project ../Tempus.Web
@@ -114,54 +150,114 @@ dotnet ef database update --startup-project ../Tempus.Web
 ## Features Roadmap
 
 ### Current Features
-- ✅ Event CRUD operations
-- ✅ Calendar view (monthly)
-- ✅ ICS file import
-- ✅ ICS file export
-- ✅ Event search
-- ✅ Dashboard with statistics
+- ✅ Event CRUD operations with full attendee management
+- ✅ Multiple calendar views (Monthly, Weekly, Work Week, Daily, Agenda)
+- ✅ Advanced calendar settings (time formats, work hours, time slots)
+- ✅ Custom calendar ranges for specialized scheduling
+- ✅ ICS file import and export
+- ✅ Dashboard with real-time statistics and analytics
 - ✅ Multiple event types and priorities
+- ✅ Recurring events with flexible patterns
+- ✅ User authentication and authorization
+- ✅ Contact management and address book
+- ✅ Award-winning UI with animations and modern design
+- ✅ GDPR compliance (Privacy, Terms of Service, Security)
+- ✅ Responsive design for all devices
+- ✅ PDF export capabilities (via QuestPDF)
 
 ### Planned Features
-- 🔄 Google Calendar integration (OAuth2)
+- 🔄 Google Calendar integration (OAuth2 sync)
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
-- 🔄 Weekly and daily calendar views
-- 🔄 Time blocking visualization
+- 🔄 Time blocking visualization enhancements
 - 🔄 Meeting cost calculator
-- 🔄 Smart scheduling suggestions
-- 🔄 Event reminders and notifications
-- 🔄 Calendar analytics and insights
-- 🔄 Export to multiple formats (PDF, Excel)
-- 🔄 Mobile responsive design improvements
-- 🔄 Dark mode support
-- 🔄 Multi-language support
+- 🔄 AI-powered smart scheduling suggestions
+- 🔄 Push notifications and email reminders
+- 🔄 Advanced calendar analytics and insights
+- 🔄 Export to additional formats (Excel, CSV)
+- 🔄 Dark mode theme
+- 🔄 Multi-language support (i18n)
+- 🔄 Mobile native app (MAUI)
+- 🔄 Team collaboration features
+- 🔄 Calendar sharing and permissions
 
 ## Using the Application
 
+### Navigation
+
+The application features a modern sidebar navigation with the following sections:
+- **Home**: Landing page with feature highlights
+- **Dashboard**: Your personalized command center with statistics and upcoming events
+- **Calendar**: Advanced calendar with multiple view options
+- **Settings**: Configure calendar preferences, time formats, and work hours
+- **Address Book**: Manage contacts for event attendees
+- **Import ICS**: Import events from other calendar applications
+
 ### Creating Events
 
-1. Navigate to the Dashboard or Events page
-2. Click "Create New Event" or "Create Event"
-3. Fill in event details (title, description, start/end time, location, etc.)
-4. Select event type and priority
-5. Add attendees if needed
-6. Save the event
+1. Navigate to the Calendar or Dashboard page
+2. Click "Create Event" or select a date/time slot
+3. Fill in event details:
+   - Title, description, location
+   - Start and end date/time
+   - Event type (Meeting, Appointment, Task, etc.)
+   - Priority level (Low, Medium, High, Urgent)
+   - Recurrence pattern (if recurring)
+4. Add attendees from your address book
+5. Save the event
+
+### Customizing Calendar Settings
+
+1. Navigate to **Settings** from the sidebar
+2. Configure your preferences:
+   - **Time Format**: Choose 12-hour or 24-hour format
+   - **Date Format**: Select your preferred date display
+   - **Work Hours**: Set your typical working hours
+   - **Time Slot Duration**: Choose 15, 30, or 60-minute increments
+   - **Default View**: Set your preferred calendar view
+   - **Event Visibility**: Control which event types are displayed
+
+### Using Calendar Views
+
+The Calendar page supports multiple viewing modes:
+- **Month View**: Overview of the entire month with event indicators
+- **Week View**: Detailed week schedule with time slots
+- **Work Week View**: Monday-Friday focus for work scheduling
+- **Day View**: Hour-by-hour breakdown of a single day
+- **Agenda View**: List-based view of upcoming events
+
+Navigate views using the toolbar buttons and customize settings in real-time.
 
 ### Importing ICS Files
 
 1. Navigate to "Import ICS" from the sidebar
 2. Click the upload area or drag and drop an ICS file
-3. Review the parsed events
+3. Review the parsed events in the preview
 4. Click "Save All Events" to import them into Tempus
+5. Events will be integrated with your existing calendar
 
-### Exporting Events
+### Managing Contacts
 
-Currently, the export functionality is available programmatically through the `IIcsImportService`. A UI for exporting will be added in a future update.
+1. Navigate to **Address Book**
+2. Add contacts with name, email, phone, and company details
+3. Use contacts when adding attendees to events
+4. Search and filter contacts easily
 
-### Calendar Integration Setup
+### Authentication
 
-Calendar integrations (Google, Outlook, Apple) will require OAuth2 authentication setup. This feature is planned for future releases.
+New users can register for an account:
+1. Click **Register** in the navigation
+2. Provide email and password
+3. Complete registration
+4. Log in to access your personalized calendar
+
+### GDPR & Privacy
+
+Tempus includes comprehensive privacy controls:
+- **Privacy Policy**: View data handling practices
+- **Terms of Service**: Understand usage terms
+- **Security**: Information about data protection
+- **GDPR Compliance**: Data rights and controls
 
 ## Development
 
@@ -192,7 +288,17 @@ If ports 5000 or 7001 are in use, you can change them in `Tempus.Web/Properties/
 
 ### Database Issues
 
-If you encounter database issues, check your SQL Server connection string and ensure the server is running and accessible.
+**SQLite database locked or corrupted:**
+1. Stop the application (Ctrl + C)
+2. Navigate to `Tempus.Web` directory
+3. Delete `tempus.db` file
+4. Restart the application (database will be recreated automatically)
+
+**SQL Server connection issues (if using SQL Server):**
+- Verify the connection string in `appsettings.json`
+- Ensure SQL Server is running and accessible
+- Check firewall settings allow connections
+- Verify credentials and database permissions
 
 ### Package Restore Issues
 
@@ -205,12 +311,14 @@ dotnet restore
 
 Contributions are welcome! Areas for improvement:
 
-- Calendar integration implementations
-- Additional calendar views (week, day, agenda)
-- Mobile app development
-- Performance optimizations
-- UI/UX enhancements
-- Test coverage
+- **Calendar Integrations**: Implement OAuth2 flows for Google, Outlook, Apple Calendar
+- **Analytics & Insights**: Advanced calendar analytics and productivity metrics
+- **Mobile Development**: .NET MAUI mobile application
+- **Performance**: Optimize calendar rendering for large event sets
+- **UI/UX**: Additional themes, animations, and accessibility improvements
+- **Testing**: Expand unit and integration test coverage
+- **Localization**: Multi-language support (i18n)
+- **Features**: Meeting cost calculator, smart scheduling, time blocking visualizations
 
 ## License
 
