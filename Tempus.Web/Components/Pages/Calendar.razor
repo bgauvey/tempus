@@ -236,6 +236,42 @@
         font-weight: 600;
         border-bottom: 1px solid #e9ecef;
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .density-indicator {
+        width: 6px;
+        height: 40px;
+        border-radius: 3px;
+        transition: var(--transition-smooth);
+        margin-right: 4px;
+    }
+
+    .density-none {
+        background: transparent;
+    }
+
+    .density-low {
+        background: linear-gradient(180deg, #48bb78 0%, #38a169 100%);
+        box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
+    }
+
+    .density-medium {
+        background: linear-gradient(180deg, #f6ad55 0%, #ed8936 100%);
+        box-shadow: 0 2px 4px rgba(237, 137, 54, 0.3);
+    }
+
+    .density-high {
+        background: linear-gradient(180deg, #fc8181 0%, #f56565 100%);
+        box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
+    }
+
+    .density-full {
+        background: linear-gradient(180deg, #e53935 0%, #c62828 100%);
+        box-shadow: 0 2px 6px rgba(229, 57, 53, 0.4);
     }
 
     .time-slot:first-child {
@@ -288,6 +324,46 @@
         transform: translateX(2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         z-index: 10;
+    }
+
+    .timed-event.timeblock {
+        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 50%, #4A148C 100%) !important;
+        border-left: 4px solid #CE93D8;
+        box-shadow: 0 4px 12px rgba(142, 36, 170, 0.3);
+    }
+
+    .timed-event.timeblock:hover {
+        box-shadow: 0 6px 16px rgba(142, 36, 170, 0.4);
+    }
+
+    .timed-event.has-conflict {
+        border: 2px solid #e53935;
+        box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4), 0 0 0 3px rgba(229, 57, 53, 0.1);
+    }
+
+    .event-icon {
+        display: inline-block;
+        margin-right: 4px;
+        font-size: 1rem;
+        vertical-align: middle;
+    }
+
+    .conflict-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: #e53935;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 2;
     }
 
     .timed-event-title {
@@ -382,6 +458,58 @@
     .day-hour-cell:hover {
         background: #f8f9fa;
     }
+
+    /* Time Block Templates */
+    .template-buttons-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.6s ease-out 0.15s backwards;
+    }
+
+    .template-buttons-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .template-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: var(--transition-smooth) !important;
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .template-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35) !important;
+    }
+
+    .template-btn.deep-work {
+        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%) !important;
+    }
+
+    .template-btn.meeting {
+        background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%) !important;
+    }
+
+    .template-btn.break {
+        background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%) !important;
+    }
+
+    .template-btn.focus {
+        background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%) !important;
+    }
 </style>
 
 <div class="calendar-header">
@@ -413,6 +541,32 @@
             <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" class="calendar-nav-btn" Style="width: 100%;" title="Download daily agenda as PDF" />
         </RadzenColumn>
     </RadzenRow>
+</div>
+
+<div class="template-buttons-container">
+    <div class="template-buttons-title">
+        ⚡ Quick Time Block Templates
+    </div>
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+        <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
+            🧠 Deep Work (2h)
+        </RadzenButton>
+        <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
+            👥 Meeting (30m)
+        </RadzenButton>
+        <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
+            🎯 Focus Block (1.5h)
+        </RadzenButton>
+        <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
+            ☕ Break (15m)
+        </RadzenButton>
+        <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
+            📋 Planning (1h)
+        </RadzenButton>
+        <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
+            ✅ Review (45m)
+        </RadzenButton>
+    </RadzenStack>
 </div>
 
 <div class="calendar-main" @oncontextmenu:preventDefault>
@@ -1077,9 +1231,20 @@
 
         for (int hour = 0; hour < 24; hour++)
         {
+            var density = CalculateHourDensity(eventsForDay, hour);
+            var densityClass = GetDensityClass(density);
+
             builder.OpenElement(5, "div");
             builder.AddAttribute(6, "class", "time-slot");
-            builder.AddContent(7, FormatHourLabel(hour));
+            builder.AddAttribute(7, "title", $"{density}% occupied");
+
+            // Density indicator bar
+            builder.OpenElement(8, "div");
+            builder.AddAttribute(9, "class", $"density-indicator {densityClass}");
+            builder.CloseElement();
+
+            // Time label
+            builder.AddContent(10, FormatHourLabel(hour));
             builder.CloseElement();
         }
 
@@ -1114,23 +1279,46 @@
             var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
             var height = Math.Max(30, durationMinutes); // Minimum height of 30px
 
+            // Check for conflicts
+            var conflictingEvents = GetConflictingEvents(evt, eventsForDay);
+            var hasConflict = conflictingEvents.Any();
+            var isTimeBlock = evt.EventType == Core.Enums.EventType.TimeBlock;
+
+            var cssClass = "timed-event";
+            if (isTimeBlock) cssClass += " timeblock";
+            if (hasConflict) cssClass += " has-conflict";
+
             builder.OpenElement(13, "div");
-            builder.AddAttribute(14, "class", "timed-event");
+            builder.AddAttribute(14, "class", cssClass);
             builder.AddAttribute(15, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)};");
             builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
             builder.AddAttribute(17, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
             builder.AddAttribute(18, "oncontextmenu:preventDefault", true);
             builder.AddAttribute(19, "oncontextmenu:stopPropagation", true);
 
-            // Event content
-            builder.OpenElement(20, "div");
-            builder.AddAttribute(21, "class", "timed-event-title");
-            builder.AddContent(22, evt.Title);
+            // Conflict badge
+            if (hasConflict)
+            {
+                builder.OpenElement(20, "div");
+                builder.AddAttribute(21, "class", "conflict-badge");
+                builder.AddAttribute(22, "title", $"Conflicts with {conflictingEvents.Count} event(s)");
+                builder.AddContent(23, "⚠");
+                builder.CloseElement();
+            }
+
+            // Event content with icon
+            builder.OpenElement(24, "div");
+            builder.AddAttribute(25, "class", "timed-event-title");
+            builder.OpenElement(26, "span");
+            builder.AddAttribute(27, "class", "event-icon");
+            builder.AddContent(28, GetEventIcon(evt.EventType));
+            builder.CloseElement();
+            builder.AddContent(29, evt.Title);
             builder.CloseElement();
 
-            builder.OpenElement(23, "div");
-            builder.AddAttribute(24, "class", "timed-event-time");
-            builder.AddContent(25, $"{FormatTime(evt.StartTime)} - {FormatTime(evt.EndTime)}");
+            builder.OpenElement(30, "div");
+            builder.AddAttribute(31, "class", "timed-event-time");
+            builder.AddContent(32, $"{FormatTime(evt.StartTime)} - {FormatTime(evt.EndTime)}");
             builder.CloseElement();
 
             builder.CloseElement(); // timed-event
@@ -1180,11 +1368,24 @@
         builder.AddAttribute(6, "class", "time-column-header");
         builder.CloseElement();
 
+        // Calculate average density across all days for each hour
         for (int hour = 0; hour < 24; hour++)
         {
+            var hourCopy = hour; // Capture for lambda
+            var avgDensity = days.Average(day => CalculateHourDensity(GetEventsForDay(day), hourCopy));
+            var densityClass = GetDensityClass((int)avgDensity);
+
             builder.OpenElement(7, "div");
             builder.AddAttribute(8, "class", "time-slot");
-            builder.AddContent(9, FormatHourLabel(hour));
+            builder.AddAttribute(9, "title", $"{avgDensity:F0}% avg occupied");
+
+            // Density indicator bar
+            builder.OpenElement(10, "div");
+            builder.AddAttribute(11, "class", $"density-indicator {densityClass}");
+            builder.CloseElement();
+
+            // Time label
+            builder.AddContent(12, FormatHourLabel(hourCopy));
             builder.CloseElement();
         }
 
@@ -1237,27 +1438,53 @@
                 var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
                 var height = Math.Max(30, durationMinutes);
 
+                // Check for conflicts
+                var conflictingEvents = GetConflictingEvents(evt, eventsForDay);
+                var hasConflict = conflictingEvents.Any();
+                var isTimeBlock = evt.EventType == Core.Enums.EventType.TimeBlock;
+
+                var cssClass = "timed-event";
+                if (isTimeBlock) cssClass += " timeblock";
+                if (hasConflict) cssClass += " has-conflict";
+
                 builder.OpenElement(26, "div");
-                builder.AddAttribute(27, "class", "timed-event");
+                builder.AddAttribute(27, "class", cssClass);
                 builder.AddAttribute(28, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)}; left: 2px; right: 2px;");
                 builder.AddAttribute(29, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
                 builder.AddAttribute(30, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
                 builder.AddAttribute(31, "oncontextmenu:preventDefault", true);
                 builder.AddAttribute(32, "oncontextmenu:stopPropagation", true);
 
-                // Event content
-                builder.OpenElement(33, "div");
-                builder.AddAttribute(34, "class", "timed-event-title");
-                builder.AddAttribute(35, "style", "font-size: 0.75rem;");
-                builder.AddContent(36, evt.Title.Length > 15 ? evt.Title.Substring(0, 12) + "..." : evt.Title);
+                // Conflict badge
+                if (hasConflict && height > 30)
+                {
+                    builder.OpenElement(33, "div");
+                    builder.AddAttribute(34, "class", "conflict-badge");
+                    builder.AddAttribute(35, "title", $"Conflicts with {conflictingEvents.Count} event(s)");
+                    builder.AddAttribute(36, "style", "width: 16px; height: 16px; font-size: 0.6rem;");
+                    builder.AddContent(37, "⚠");
+                    builder.CloseElement();
+                }
+
+                // Event content with icon
+                builder.OpenElement(38, "div");
+                builder.AddAttribute(39, "class", "timed-event-title");
+                builder.AddAttribute(40, "style", "font-size: 0.75rem;");
+                builder.OpenElement(41, "span");
+                builder.AddAttribute(42, "class", "event-icon");
+                builder.AddAttribute(43, "style", "font-size: 0.75rem;");
+                builder.AddContent(44, GetEventIcon(evt.EventType));
+                builder.CloseElement();
+                var displayTitle = evt.Title.Length > 12 ? evt.Title.Substring(0, 10) + "..." : evt.Title;
+                builder.AddContent(45, displayTitle);
                 builder.CloseElement();
 
                 if (height > 40)
                 {
-                    builder.OpenElement(37, "div");
-                    builder.AddAttribute(38, "class", "timed-event-time");
-                    builder.AddAttribute(39, "style", "font-size: 0.65rem;");
-                    builder.AddContent(40, FormatTime(evt.StartTime));
+                    builder.OpenElement(46, "div");
+                    builder.AddAttribute(47, "class", "timed-event-time");
+                    builder.AddAttribute(48, "style", "font-size: 0.65rem;");
+                    builder.AddContent(49, FormatTime(evt.StartTime));
                     builder.CloseElement();
                 }
 
@@ -1632,5 +1859,123 @@
         {
             Console.WriteLine($"Error scrolling to work hours: {ex.Message}");
         }
+    }
+
+    // Time Density Calculation
+    private int CalculateHourDensity(List<Event> events, int hour)
+    {
+        var hourStart = new TimeSpan(hour, 0, 0);
+        var hourEnd = new TimeSpan(hour, 59, 59);
+
+        var totalMinutesOccupied = 0;
+
+        foreach (var evt in events)
+        {
+            var eventStart = evt.StartTime.TimeOfDay;
+            var eventEnd = evt.EndTime.TimeOfDay;
+
+            // Check if event overlaps with this hour
+            if (eventStart < hourEnd && eventEnd > hourStart)
+            {
+                // Calculate overlap
+                var overlapStart = eventStart > hourStart ? eventStart : hourStart;
+                var overlapEnd = eventEnd < hourEnd ? eventEnd : hourEnd;
+                var overlapMinutes = (overlapEnd - overlapStart).TotalMinutes;
+
+                totalMinutesOccupied += (int)Math.Ceiling(overlapMinutes);
+            }
+        }
+
+        // Cap at 60 minutes and return percentage
+        totalMinutesOccupied = Math.Min(totalMinutesOccupied, 60);
+        return (int)Math.Round((totalMinutesOccupied / 60.0) * 100);
+    }
+
+    private string GetDensityClass(int densityPercentage)
+    {
+        return densityPercentage switch
+        {
+            0 => "density-none",
+            <= 33 => "density-low",
+            <= 66 => "density-medium",
+            < 100 => "density-high",
+            _ => "density-full"
+        };
+    }
+
+    // Conflict Detection
+    private List<Event> GetConflictingEvents(Event targetEvent, List<Event> allEvents)
+    {
+        return allEvents
+            .Where(e => e.Id != targetEvent.Id &&
+                       e.StartTime < targetEvent.EndTime &&
+                       e.EndTime > targetEvent.StartTime)
+            .ToList();
+    }
+
+    // Event Icon Mapping
+    private string GetEventIcon(Core.Enums.EventType eventType)
+    {
+        return eventType switch
+        {
+            Core.Enums.EventType.Meeting => "👥",
+            Core.Enums.EventType.Appointment => "📅",
+            Core.Enums.EventType.Task => "✓",
+            Core.Enums.EventType.TimeBlock => "🎯",
+            Core.Enums.EventType.Reminder => "🔔",
+            Core.Enums.EventType.Deadline => "⚡",
+            _ => "📌"
+        };
+    }
+
+    // Template Creation
+    private async Task CreateFromTemplate(string templateName, int durationMinutes)
+    {
+        // Find the next available time slot starting from current time or work hours
+        var now = DateTime.Now;
+        var startTime = now;
+
+        // If viewing a different day, use that day at work start time
+        if (_selectedDate.Date != DateTime.Today)
+        {
+            var workStartHour = _settings?.WorkHoursStart.Hours ?? 8;
+            startTime = _selectedDate.Date.AddHours(workStartHour);
+        }
+        else
+        {
+            // Round to next 15-minute interval
+            var minutes = startTime.Minute;
+            var roundedMinutes = ((minutes + 14) / 15) * 15;
+            startTime = startTime.Date.AddHours(startTime.Hour).AddMinutes(roundedMinutes);
+        }
+
+        var endTime = startTime.AddMinutes(durationMinutes);
+
+        // Determine event type based on template
+        var eventType = templateName.ToLower() switch
+        {
+            "meeting" => Core.Enums.EventType.Meeting,
+            "break" => Core.Enums.EventType.TimeBlock,
+            _ => Core.Enums.EventType.TimeBlock
+        };
+
+        // Create the event
+        var newEvent = new Event
+        {
+            Id = Guid.NewGuid(),
+            Title = templateName,
+            StartTime = startTime,
+            EndTime = endTime,
+            EventType = eventType,
+            Priority = Core.Enums.Priority.Medium,
+            UserId = _userId,
+            CreatedAt = DateTime.UtcNow,
+            Tags = new List<string>(),
+            Attendees = new List<Attendee>()
+        };
+
+        await EventRepository.CreateAsync(newEvent);
+        await LoadEvents();
+        StateHasChanged();
     }
 }
