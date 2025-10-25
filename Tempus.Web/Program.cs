@@ -62,6 +62,7 @@ builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 
 var app = builder.Build();
 
