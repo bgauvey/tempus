@@ -218,12 +218,13 @@
         border: 1px solid #e9ecef;
         border-radius: 12px;
         overflow: hidden;
+        position: relative;
     }
 
     .time-column {
-        width: 80px;
         background: #f8f9fa;
         border-right: 2px solid #e9ecef;
+        overflow-y: hidden;
     }
 
     .time-slot {
@@ -239,6 +240,12 @@
 
     .time-slot:first-child {
         border-top: 1px solid #e9ecef;
+    }
+
+    .time-column-header {
+        background: #f8f9fa;
+        height: 41px;
+        border-bottom: 2px solid #e9ecef;
     }
 
     .day-column {
@@ -319,16 +326,18 @@
 
     /* Multi-Day Hour View (Work Week & Week) */
     .multi-day-hour-view {
-        display: flex;
+        display: grid;
+        grid-template-columns: 80px 1fr;
         border: 1px solid #e9ecef;
         border-radius: 12px;
         overflow: hidden;
+        position: relative;
     }
 
     .multi-day-columns {
         display: flex;
-        flex: 1;
         overflow-x: auto;
+        min-width: 0;
     }
 
     .day-hour-column {
@@ -352,7 +361,7 @@
         font-weight: 700;
         font-size: 0.9rem;
         border-bottom: 2px solid #e9ecef;
-        z-index: 10;
+        z-index: 15;
     }
 
     .day-hour-header.today {
@@ -490,6 +499,7 @@
 
     private List<ViewOption> _availableViews = new();
     private string _userId = string.Empty;
+    private bool _shouldScrollToWorkHours = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -510,6 +520,23 @@
         await LoadCustomRanges();
         LoadAvailableViews();
         await LoadEvents();
+
+        // Trigger scroll to work hours for day/week views after content is loaded
+        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
+        {
+            _shouldScrollToWorkHours = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScrollToWorkHours && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
+        {
+            _shouldScrollToWorkHours = false;
+            // Small delay to ensure DOM is fully rendered
+            await Task.Delay(50);
+            await ScrollToWorkHours();
+        }
     }
 
     private async Task LoadCustomRanges()
@@ -569,7 +596,15 @@
         {
             _selectedCustomRange = null;
         }
+
         await LoadEvents();
+
+        // Trigger scroll to work hours for day/week views after content is loaded
+        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
+        {
+            _shouldScrollToWorkHours = true;
+        }
+
         StateHasChanged();
     }
 
@@ -584,7 +619,15 @@
             _ when _selectedCustomRange != null => _selectedDate.AddDays(-_selectedCustomRange.DaysCount),
             _ => _selectedDate.AddMonths(-1)
         };
+
         await LoadEvents();
+
+        // Trigger scroll to work hours for day/week views after content is loaded
+        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
+        {
+            _shouldScrollToWorkHours = true;
+            StateHasChanged();
+        }
     }
 
     private async Task NavigateNext()
@@ -598,13 +641,29 @@
             _ when _selectedCustomRange != null => _selectedDate.AddDays(_selectedCustomRange.DaysCount),
             _ => _selectedDate.AddMonths(1)
         };
+
         await LoadEvents();
+
+        // Trigger scroll to work hours for day/week views after content is loaded
+        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
+        {
+            _shouldScrollToWorkHours = true;
+            StateHasChanged();
+        }
     }
 
     private async Task GoToToday()
     {
         _selectedDate = DateTime.Today;
+
         await LoadEvents();
+
+        // Trigger scroll to work hours for day/week views after content is loaded
+        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
+        {
+            _shouldScrollToWorkHours = true;
+            StateHasChanged();
+        }
     }
 
     private string GetCurrentViewTitle()
@@ -1009,7 +1068,8 @@
 
         builder.OpenElement(0, "div");
         builder.AddAttribute(1, "class", "day-view-container");
-        builder.AddAttribute(2, "style", "max-height: 800px; overflow-y: auto;");
+        builder.AddAttribute(2, "id", "day-view-container");
+        builder.AddAttribute(3, "style", "max-height: 800px; overflow-y: auto;");
 
         // Time column
         builder.OpenElement(3, "div");
@@ -1108,7 +1168,8 @@
     {
         builder.OpenElement(0, "div");
         builder.AddAttribute(1, "class", "multi-day-hour-view");
-        builder.AddAttribute(2, "style", "max-height: 800px; overflow-y: auto;");
+        builder.AddAttribute(2, "id", "multi-day-view-container");
+        builder.AddAttribute(3, "style", "max-height: 800px; overflow-y: auto;");
 
         // Time column (shared)
         builder.OpenElement(3, "div");
@@ -1116,7 +1177,7 @@
 
         // Empty header cell for time column
         builder.OpenElement(5, "div");
-        builder.AddAttribute(6, "style", "height: 41px; border-bottom: 2px solid #e9ecef;");
+        builder.AddAttribute(6, "class", "time-column-header");
         builder.CloseElement();
 
         for (int hour = 0; hour < 24; hour++)
@@ -1543,6 +1604,33 @@
         {
             await EventRepository.DeleteAsync(id, _userId);
             await LoadEvents();
+        }
+    }
+
+    private async Task ScrollToWorkHours()
+    {
+        try
+        {
+            var workStartHour = _settings?.WorkHoursStart.Hours ?? 8;
+            var workStartMinute = _settings?.WorkHoursStart.Minutes ?? 0;
+
+            // Each hour is 60px tall, calculate exact pixel position
+            var scrollPosition = (workStartHour * 60) + workStartMinute;
+
+            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
+
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    var container = document.getElementById('{containerId}');
+                    if (container) {{
+                        container.scrollTop = {scrollPosition};
+                    }}
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error scrolling to work hours: {ex.Message}");
         }
     }
 }
