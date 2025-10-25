@@ -15,6 +15,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CalendarIntegration> CalendarIntegrations { get; set; }
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
     public DbSet<Contact> Contacts { get; set; }
+    public DbSet<CalendarSettings> CalendarSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +85,26 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(c => new { c.Email, c.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<CalendarSettings>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.UserId).IsRequired();
+            entity.Property(s => s.TimeZone).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.WeekendDays).IsRequired().HasMaxLength(50);
+            entity.Property(s => s.WorkingDays).IsRequired().HasMaxLength(50);
+            entity.Property(s => s.DefaultEventColor).HasMaxLength(50);
+            entity.Property(s => s.DefaultLocation).HasMaxLength(500);
+            entity.Property(s => s.DefaultReminderTimes).IsRequired().HasMaxLength(100);
+
+            entity.HasOne(s => s.User)
+                  .WithMany()
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // One settings record per user
+            entity.HasIndex(s => s.UserId).IsUnique();
         });
     }
 }

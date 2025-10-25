@@ -1,0 +1,359 @@
+@page "/settings"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@attribute [Authorize]
+@inject ISettingsService SettingsService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NotificationService NotificationService
+
+<PageTitle>Settings - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Calendar Settings</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                Customize your calendar experience and preferences.
+            </RadzenText>
+        </RadzenStack>
+
+        @if (_settings != null)
+        {
+            <RadzenTabs Change="@OnTabChange" RenderMode="TabRenderMode.Client">
+                <Tabs>
+                    <!-- General Settings Tab -->
+                    <RadzenTabsItem Text="General">
+                        <div class="dashboard-card" style="margin-top: 1rem;">
+                            <RadzenStack Gap="1.5rem">
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">General Settings</RadzenText>
+
+                                <RadzenRow Gap="1.5rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Start of Week" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.StartOfWeek"
+                                                            Data="@(Enum.GetValues<DayOfWeek>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Default Calendar View" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.DefaultCalendarView"
+                                                            Data="@(Enum.GetValues<CalendarView>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Time Format" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.TimeFormat"
+                                                            Data="@(Enum.GetValues<TimeFormat>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Date Format" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.DateFormat"
+                                                            Data="@(Enum.GetValues<DateFormat>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Time Zone" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.TimeZone"
+                                                            Data="@_timeZones"
+                                                            TextProperty="DisplayName"
+                                                            ValueProperty="Id"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            AllowFiltering="true"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenCheckBox @bind-Value="_settings.ShowWeekNumbers" Name="showWeekNumbers" />
+                                            <RadzenLabel Text="Show Week Numbers" Component="showWeekNumbers" />
+                                        </RadzenStack>
+                                        <RadzenStack Gap="0.5rem" Style="margin-top: 1rem;">
+                                            <RadzenCheckBox @bind-Value="_settings.ShowWeekendInWeekView" Name="showWeekend" />
+                                            <RadzenLabel Text="Show Weekends in Week View" Component="showWeekend" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </div>
+                    </RadzenTabsItem>
+
+                    <!-- Work Hours Tab -->
+                    <RadzenTabsItem Text="Work Hours">
+                        <div class="dashboard-card" style="margin-top: 1rem;">
+                            <RadzenStack Gap="1.5rem">
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Working Hours & Availability</RadzenText>
+
+                                <RadzenRow Gap="1.5rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Work Start Time" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDatePicker @bind-Value="_workStartDateTime"
+                                                              ShowTime="true"
+                                                              TimeOnly="true"
+                                                              DateFormat="@TimeFormatString"
+                                                              Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Work End Time" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDatePicker @bind-Value="_workEndDateTime"
+                                                              ShowTime="true"
+                                                              TimeOnly="true"
+                                                              DateFormat="@TimeFormatString"
+                                                              Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Lunch Break Start (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDatePicker @bind-Value="_lunchStartDateTime"
+                                                              ShowTime="true"
+                                                              TimeOnly="true"
+                                                              DateFormat="@TimeFormatString"
+                                                              AllowClear="true"
+                                                              Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Lunch Break End (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDatePicker @bind-Value="_lunchEndDateTime"
+                                                              ShowTime="true"
+                                                              TimeOnly="true"
+                                                              DateFormat="@TimeFormatString"
+                                                              AllowClear="true"
+                                                              Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Time Slot Duration" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.TimeSlotDuration"
+                                                            Data="@(Enum.GetValues<TimeSlotDuration>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Buffer Between Events (minutes)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenNumeric @bind-Value="_settings.BufferTimeBetweenEvents"
+                                                           Min="0"
+                                                           Max="60"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </div>
+                    </RadzenTabsItem>
+
+                    <!-- Event Defaults Tab -->
+                    <RadzenTabsItem Text="Event Defaults">
+                        <div class="dashboard-card" style="margin-top: 1rem;">
+                            <RadzenStack Gap="1.5rem">
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Default Event Settings</RadzenText>
+
+                                <RadzenRow Gap="1.5rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Default Meeting Duration (minutes)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenNumeric @bind-Value="_settings.DefaultMeetingDuration"
+                                                           Min="15"
+                                                           Max="480"
+                                                           Step="15"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Default Event Visibility" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.DefaultEventVisibility"
+                                                            Data="@(Enum.GetValues<EventVisibility>())"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Default Event Color" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextBox @bind-Value="_settings.DefaultEventColor"
+                                                           Placeholder="#667eea"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Default Location" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextBox @bind-Value="_settings.DefaultLocation"
+                                                           Placeholder="e.g., Office, Remote"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </div>
+                    </RadzenTabsItem>
+
+                    <!-- Notifications Tab -->
+                    <RadzenTabsItem Text="Notifications">
+                        <div class="dashboard-card" style="margin-top: 1rem;">
+                            <RadzenStack Gap="1.5rem">
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Notification Settings</RadzenText>
+
+                                <RadzenRow Gap="1.5rem">
+                                    <RadzenColumn Size="12">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenCheckBox @bind-Value="_settings.EmailNotificationsEnabled" Name="emailNotif" />
+                                                <RadzenLabel Text="Enable Email Notifications" Component="emailNotif" />
+                                            </RadzenStack>
+
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenCheckBox @bind-Value="_settings.DesktopNotificationsEnabled" Name="desktopNotif" />
+                                                <RadzenLabel Text="Enable Desktop Notifications" Component="desktopNotif" />
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Default Reminder Times (comma-separated minutes before event)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextBox @bind-Value="_settings.DefaultReminderTimes"
+                                                           Placeholder="15,60"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
+                                            Example: "15,60" for reminders 15 minutes and 1 hour before events
+                                        </RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </div>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+
+            <!-- Save Button -->
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" Style="margin-top: 2rem;">
+                <RadzenButton Text="Save Settings"
+                              Icon="save"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@SaveSettings"
+                              Style="padding: 0.75rem 2rem; border-radius: 10px;" />
+            </RadzenStack>
+        }
+        else
+        {
+            <div class="text-center" style="padding: 3rem;">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText Style="color: #718096; margin-top: 1rem;">Loading settings...</RadzenText>
+            </div>
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .dashboard-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .rz-tabview-nav-content {
+        background: white;
+        border-radius: 12px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .rz-tabview-nav li {
+        border-radius: 8px;
+    }
+</style>
+
+@code {
+    private CalendarSettings? _settings;
+    private DateTime _workStartDateTime;
+    private DateTime _workEndDateTime;
+    private DateTime? _lunchStartDateTime;
+    private DateTime? _lunchEndDateTime;
+    private List<TimeZoneInfo> _timeZones = new();
+
+    private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwelveHour ? "hh:mm tt" : "HH:mm";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                // Load or create settings
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(appUser.Id);
+
+                // Convert TimeSpan to DateTime for the time pickers
+                _workStartDateTime = DateTime.Today.Add(_settings.WorkHoursStart);
+                _workEndDateTime = DateTime.Today.Add(_settings.WorkHoursEnd);
+
+                if (_settings.LunchBreakStart.HasValue)
+                    _lunchStartDateTime = DateTime.Today.Add(_settings.LunchBreakStart.Value);
+
+                if (_settings.LunchBreakEnd.HasValue)
+                    _lunchEndDateTime = DateTime.Today.Add(_settings.LunchBreakEnd.Value);
+
+                // Load time zones
+                _timeZones = TimeZoneInfo.GetSystemTimeZones().ToList();
+            }
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        if (_settings == null) return;
+
+        // Convert DateTime back to TimeSpan
+        _settings.WorkHoursStart = _workStartDateTime.TimeOfDay;
+        _settings.WorkHoursEnd = _workEndDateTime.TimeOfDay;
+        _settings.LunchBreakStart = _lunchStartDateTime?.TimeOfDay;
+        _settings.LunchBreakEnd = _lunchEndDateTime?.TimeOfDay;
+
+        await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Settings Saved",
+            Detail = "Your calendar settings have been updated successfully.",
+            Duration = 4000
+        });
+    }
+
+    private void OnTabChange(int index)
+    {
+        // Handle tab change if needed
+    }
+}
