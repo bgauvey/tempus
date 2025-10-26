@@ -2019,6 +2019,9 @@
     {
         try
         {
+            // Save scroll position before making changes
+            var scrollPosition = await SaveScrollPosition();
+
             var evt = _events.FirstOrDefault(e => e.Id.ToString() == eventId);
             if (evt == null) return;
 
@@ -2047,7 +2050,12 @@
                 // Ask user if they want to reschedule all occurrences or just this one
                 var result = await ShowRescheduleConfirmationDialog(evt, newStartTime, newEndTime);
 
-                if (result == null) return; // User cancelled
+                if (result == null)
+                {
+                    // User cancelled - restore scroll position
+                    await RestoreScrollPosition(scrollPosition);
+                    return;
+                }
 
                 if (result.Value) // Reschedule all occurrences
                 {
@@ -2066,6 +2074,9 @@
 
             await LoadEvents();
             StateHasChanged();
+
+            // Restore scroll position after the update
+            await RestoreScrollPosition(scrollPosition);
         }
         catch (Exception ex)
         {
@@ -2252,6 +2263,50 @@
     private string FormatDateTime(DateTime dt)
     {
         return dt.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt");
+    }
+
+    // Scroll Position Management
+    private async Task<int> SaveScrollPosition()
+    {
+        try
+        {
+            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
+            var scrollTop = await JSRuntime.InvokeAsync<int>("eval", $@"
+                (function() {{
+                    var container = document.getElementById('{containerId}');
+                    return container ? container.scrollTop : 0;
+                }})();
+            ");
+            return scrollTop;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private async Task RestoreScrollPosition(int scrollPosition)
+    {
+        try
+        {
+            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
+
+            // Small delay to ensure DOM is fully rendered
+            await Task.Delay(50);
+
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    var container = document.getElementById('{containerId}');
+                    if (container) {{
+                        container.scrollTop = {scrollPosition};
+                    }}
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error restoring scroll position: {ex.Message}");
+        }
     }
 
     // Cleanup
