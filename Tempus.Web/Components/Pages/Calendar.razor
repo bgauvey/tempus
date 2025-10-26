@@ -521,14 +521,42 @@
     .template-btn.focus {
         background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%) !important;
     }
+
+    /* Full Page Mode */
+    .full-page-mode .calendar-main {
+        height: calc(100vh - 180px);
+        overflow: hidden;
+    }
+
+    .full-page-mode .day-view-container,
+    .full-page-mode .multi-day-hour-view {
+        max-height: calc(100vh - 200px);
+    }
+
+    .fullscreen-toggle-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: var(--transition-smooth) !important;
+    }
+
+    .fullscreen-toggle-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35) !important;
+    }
 </style>
 
-<div class="calendar-header">
+@if (!_isFullPageMode)
+{
+    <div class="calendar-header">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
         <h1 class="calendar-title">📅 Calendar</h1>
         <RadzenButton Icon="add" Text="Create Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Today))" class="create-event-btn" />
     </RadzenStack>
 </div>
+}
 
 <div class="calendar-controls">
     <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
@@ -551,10 +579,21 @@
         <RadzenColumn Size="12" SizeMD="2">
             <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" class="calendar-nav-btn" Style="width: 100%;" title="Download daily agenda as PDF" />
         </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="2">
+            <RadzenButton Icon="@(_isFullPageMode ? "fullscreen_exit" : "fullscreen")"
+                          Click="ToggleFullPageMode"
+                          Size="ButtonSize.Medium"
+                          Text="@(_isFullPageMode ? "Exit Full Page" : "Full Page")"
+                          class="fullscreen-toggle-btn"
+                          Style="width: 100%;"
+                          title="Toggle full page view" />
+        </RadzenColumn>
     </RadzenRow>
 </div>
 
-<div class="template-buttons-container">
+@if (!_isFullPageMode)
+{
+    <div class="template-buttons-container">
     <div class="template-buttons-title">
         ⚡ Quick Time Block Templates
     </div>
@@ -579,8 +618,9 @@
         </RadzenButton>
     </RadzenStack>
 </div>
+}
 
-<div class="calendar-main" @oncontextmenu:preventDefault>
+<div class="calendar-main @(_isFullPageMode ? "full-page-mode" : "")" @oncontextmenu:preventDefault>
     @if (_loading)
     {
         <div class="loading-container">
@@ -593,6 +633,8 @@
     }
 </div>
 
+@if (!_isFullPageMode)
+{
 <div class="events-sidebar rz-mt-4" @oncontextmenu:preventDefault>
     <div class="events-sidebar-title">📌 Events on @_selectedDate.ToString("MMMM dd, yyyy")</div>
     @if (GetEventsForDay(_selectedDate).Any())
@@ -644,6 +686,7 @@
         <div class="no-events-message">No events scheduled for this date</div>
     }
 </div>
+}
 
 @code {
     private DateTime _selectedDate = DateTime.Today;
@@ -669,6 +712,7 @@
     private bool _dragDropInitialized = false;
     private bool _isDragDropOperation = false;
     private bool _hasRenderedOnce = false;
+    private bool _isFullPageMode = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -2347,6 +2391,13 @@
         {
             Console.WriteLine($"Error restoring scroll position: {ex.Message}");
         }
+    }
+
+    // Toggle Full Page Mode
+    private void ToggleFullPageMode()
+    {
+        _isFullPageMode = !_isFullPageMode;
+        StateHasChanged();
     }
 
     // Cleanup
