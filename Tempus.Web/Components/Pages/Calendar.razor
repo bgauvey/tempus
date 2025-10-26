@@ -705,7 +705,6 @@
             _dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("TempusCalendar.initializeDragDrop", _dotNetHelper);
             _dragDropInitialized = true;
-            _hasRenderedOnce = true;
         }
 
         // Don't do any auto-scrolling or re-initialization during drag-drop operations
@@ -714,7 +713,7 @@
             return;
         }
 
-        // Only setup drag-drop on the first render after initialization, not on every render
+        // Setup drag-drop when needed (after content changes or view changes)
         if (_dragDropInitialized && !_hasRenderedOnce && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
         {
             // Small delay to ensure DOM is fully rendered

@@ -42,6 +42,8 @@ window.TempusCalendar = window.TempusCalendar || {};
     // Make all events in a container draggable
     TempusCalendar.makeAllEventsDraggable = function () {
         const events = document.querySelectorAll('[data-event-id]');
+        console.log(`Making ${events.length} events draggable`);
+
         events.forEach(element => {
             const eventId = element.getAttribute('data-event-id');
             const duration = parseInt(element.getAttribute('data-duration') || '60');
@@ -49,13 +51,17 @@ window.TempusCalendar = window.TempusCalendar || {};
             element.setAttribute('draggable', 'true');
             element.style.cursor = 'grab';
 
-            element.ondragstart = function (e) {
-                handleDragStart(e, eventId, duration, element);
-            };
+            // Remove old listeners to prevent duplicates
+            element.ondragstart = null;
+            element.ondragend = null;
 
-            element.ondragend = function (e) {
+            element.addEventListener('dragstart', function (e) {
+                handleDragStart(e, eventId, duration, element);
+            }, false);
+
+            element.addEventListener('dragend', function (e) {
                 handleDragEnd(e);
-            };
+            }, false);
         });
     };
 
@@ -63,25 +69,33 @@ window.TempusCalendar = window.TempusCalendar || {};
     TempusCalendar.setupDropZones = function () {
         // Day view hour rows
         const hourRows = document.querySelectorAll('.hour-row, .day-hour-cell');
+        console.log(`Setting up ${hourRows.length} drop zones`);
+
         hourRows.forEach(row => {
-            row.ondragover = function (e) {
+            // Remove old listeners
+            row.ondragover = null;
+            row.ondragleave = null;
+            row.ondrop = null;
+
+            row.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)';
-            };
+            }, false);
 
-            row.ondragleave = function (e) {
+            row.addEventListener('dragleave', function (e) {
                 e.currentTarget.style.background = '';
-            };
+            }, false);
 
-            row.ondrop = function (e) {
+            row.addEventListener('drop', function (e) {
                 e.preventDefault();
                 e.currentTarget.style.background = '';
                 handleDrop(e);
-            };
+            }, false);
         });
     };
 
     function handleDragStart(e, eventId, durationMinutes, element) {
+        console.log(`Drag started for event: ${eventId}`);
         draggedElement = element;
         draggedEventId = eventId;
         draggedEventDuration = durationMinutes;
@@ -123,7 +137,13 @@ window.TempusCalendar = window.TempusCalendar || {};
     }
 
     function handleDrop(e) {
-        if (!draggedEventId) return;
+        console.log('Drop event triggered');
+        if (!draggedEventId) {
+            console.log('No dragged event ID - returning');
+            return;
+        }
+
+        console.log(`Dropping event ${draggedEventId}`);
 
         // Calculate the new time based on drop position
         const dropTarget = e.currentTarget;
