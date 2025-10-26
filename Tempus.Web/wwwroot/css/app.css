@@ -743,3 +743,16 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* RadzenProfileMenu - Remove background from dropdown */
+.rz-profile-menu,
+ul.rz-profile-menu,
+.rz-dropdown-menu,
+.rz-menu,
+.rz-context-menu,
+.rz-popup,
+.rz-overlaypanel {
+    background-color: transparent !important;
+    background: none !important;
+    box-shadow: none !important;
+}

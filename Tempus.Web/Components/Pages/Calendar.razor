@@ -546,242 +546,9 @@
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35) !important;
     }
-
-    /* Dark Mode Styles */
-    .dark-mode {
-        background: #0f1419;
-        color: #e4e6eb;
-    }
-
-    .dark-mode .calendar-header {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        box-shadow: 0 10px 30px rgba(90, 103, 216, 0.4);
-    }
-
-    .dark-mode .calendar-controls {
-        background: #1a1f2e;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        border: 1px solid #2d3748;
-    }
-
-    .dark-mode .calendar-main {
-        background: #1a1f2e;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        border: 1px solid #2d3748;
-    }
-
-    .dark-mode .calendar-day-cell {
-        background: #1a1f2e;
-        border-color: #2d3748;
-        color: #e4e6eb;
-    }
-
-    .dark-mode .calendar-day-cell:hover {
-        background: linear-gradient(135deg, #252d3d 0%, #1a1f2e 100%);
-        border-color: #5a67d8;
-        box-shadow: 0 8px 20px rgba(90, 103, 216, 0.25);
-    }
-
-    .dark-mode .calendar-day-cell.today {
-        background: linear-gradient(135deg, #5a67d840 0%, #6b46c140 100%);
-        border-color: #5a67d8;
-        box-shadow: 0 4px 15px rgba(90, 103, 216, 0.3);
-    }
-
-    .dark-mode .calendar-day-cell.other-month {
-        opacity: 0.3;
-    }
-
-    .dark-mode .event-badge {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-
-    .dark-mode .event-badge:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-    }
-
-    .dark-mode .time-column {
-        background: #141921;
-        border-right-color: #2d3748;
-    }
-
-    .dark-mode .time-slot {
-        color: #a0aec0;
-        border-bottom-color: #2d3748;
-    }
-
-    .dark-mode .time-column-header {
-        background: #141921;
-        border-bottom-color: #2d3748;
-    }
-
-    .dark-mode .hour-row {
-        border-bottom-color: #2d3748;
-    }
-
-    .dark-mode .hour-row:hover {
-        background: #252d3d;
-    }
-
-    .dark-mode .day-hour-cell {
-        border-bottom-color: #2d3748;
-    }
-
-    .dark-mode .day-hour-cell:hover {
-        background: #252d3d;
-    }
-
-    .dark-mode .timed-event {
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-    }
-
-    .dark-mode .timed-event:hover {
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
-    }
-
-    .dark-mode .timed-event.timeblock {
-        background: linear-gradient(135deg, #9f7aea 0%, #7c3aed 50%, #5b21b6 100%) !important;
-        border-left-color: #c4b5fd;
-        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-    }
-
-    .dark-mode .timed-event.timeblock:hover {
-        box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
-    }
-
-    .dark-mode .template-buttons-container {
-        background: #1a1f2e;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        border: 1px solid #2d3748;
-    }
-
-    .dark-mode .template-buttons-title {
-        color: #e4e6eb;
-    }
-
-    .dark-mode .events-sidebar {
-        background: linear-gradient(135deg, #1a1f2e 0%, #141921 100%);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        border: 1px solid #2d3748;
-    }
-
-    .dark-mode .events-sidebar-title {
-        color: #e4e6eb;
-    }
-
-    .dark-mode .event-detail-card {
-        background: #1a1f2e;
-        border-color: #2d3748;
-    }
-
-    .dark-mode .event-detail-card:hover {
-        background: #252d3d;
-        border-color: #5a67d8;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    .dark-mode .no-events-message {
-        color: #a0aec0;
-    }
-
-    .dark-mode .multi-day-hour-view {
-        border-color: #2d3748;
-    }
-
-    .dark-mode .day-hour-column {
-        border-right-color: #2d3748;
-    }
-
-    .dark-mode .day-hour-header {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        border-bottom-color: #2d3748;
-    }
-
-    .dark-mode .day-hour-header.today {
-        background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%);
-    }
-
-    .dark-mode .calendar-view-title {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .dark-mode .day-view-container {
-        border-color: #2d3748;
-    }
-
-    .dark-mode .current-time-indicator {
-        background: #f56565;
-    }
-
-    .dark-mode .current-time-indicator::before {
-        background: #f56565;
-    }
-
-    /* Dark mode density indicators - adjust colors for dark background */
-    .dark-mode .density-low {
-        background: linear-gradient(180deg, #68d391 0%, #48bb78 100%);
-        box-shadow: 0 2px 4px rgba(104, 211, 145, 0.4);
-    }
-
-    .dark-mode .density-medium {
-        background: linear-gradient(180deg, #f6ad55 0%, #ed8936 100%);
-        box-shadow: 0 2px 4px rgba(246, 173, 85, 0.4);
-    }
-
-    .dark-mode .density-high {
-        background: linear-gradient(180deg, #fc8181 0%, #f56565 100%);
-        box-shadow: 0 2px 4px rgba(252, 129, 129, 0.4);
-    }
-
-    .dark-mode .density-full {
-        background: linear-gradient(180deg, #f56565 0%, #e53e3e 100%);
-        box-shadow: 0 2px 6px rgba(245, 101, 101, 0.5);
-    }
-
-    /* Dark mode conflict badge */
-    .dark-mode .conflict-badge {
-        background: #fc8181;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .dark-mode .timed-event.has-conflict {
-        border-color: #fc8181;
-        box-shadow: 0 2px 8px rgba(252, 129, 129, 0.5), 0 0 0 3px rgba(252, 129, 129, 0.2);
-    }
-
-    .dark-mode-toggle-btn {
-        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
-        border: 1px solid #4a5568 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: var(--transition-smooth) !important;
-        color: #e4e6eb !important;
-    }
-
-    .dark-mode-toggle-btn:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
-        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
-    }
-
-    .dark-mode .dark-mode-toggle-btn {
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-        border: 1px solid #fbbf24 !important;
-        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3) !important;
-        color: #1a202c !important;
-    }
-
-    .dark-mode .dark-mode-toggle-btn:hover {
-        background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%) !important;
-        box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4) !important;
-    }
 </style>
 
-<div class="@(_isDarkMode ? "dark-mode" : "")">
+<div>
 
 @if (!_isFullPageMode)
 {
@@ -822,15 +589,6 @@
                           class="fullscreen-toggle-btn"
                           Style="width: 100%;"
                           title="Toggle full page view" />
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="2">
-            <RadzenButton Icon="@(_isDarkMode ? "light_mode" : "dark_mode")"
-                          Click="ToggleDarkMode"
-                          Size="ButtonSize.Medium"
-                          Text="@(_isDarkMode ? "Light" : "Dark")"
-                          class="dark-mode-toggle-btn"
-                          Style="width: 100%;"
-                          title="Toggle dark mode" />
         </RadzenColumn>
     </RadzenRow>
 </div>
@@ -959,7 +717,6 @@
     private bool _isDragDropOperation = false;
     private bool _hasRenderedOnce = false;
     private bool _isFullPageMode = false;
-    private bool _isDarkMode = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -980,9 +737,6 @@
         await LoadCustomRanges();
         LoadAvailableViews();
         await LoadEvents();
-
-        // Load dark mode preference from localStorage
-        await LoadDarkModePreference();
 
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
@@ -2647,27 +2401,6 @@
     private void ToggleFullPageMode()
     {
         _isFullPageMode = !_isFullPageMode;
-        StateHasChanged();
-    }
-
-    // Dark Mode Management
-    private async Task LoadDarkModePreference()
-    {
-        try
-        {
-            var darkMode = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tempusDarkMode");
-            _isDarkMode = darkMode == "true";
-        }
-        catch
-        {
-            _isDarkMode = false;
-        }
-    }
-
-    private async Task ToggleDarkMode()
-    {
-        _isDarkMode = !_isDarkMode;
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tempusDarkMode", _isDarkMode.ToString().ToLower());
         StateHasChanged();
     }
 

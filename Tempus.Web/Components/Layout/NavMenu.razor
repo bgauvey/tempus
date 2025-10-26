@@ -1,49 +1,7 @@
-@using Microsoft.AspNetCore.Components.Authorization
-@using Tempus.Core.Models
-@inject NavigationManager NavigationManager
-@rendermode InteractiveServer
+@using Tempus.Web.Components.Shared
 
-<AuthorizeView>
-    <Authorized>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <RadzenButton Icon="notifications" ButtonStyle="ButtonStyle.Light"
-                          Style="border-radius: 10px;" />
-            <RadzenText Style="margin: 0;">Hello, @GetUserDisplayName(context)</RadzenText>
-            <form action="/Account/Logout" method="post">
-                <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
-                <RadzenButton ButtonType="ButtonType.Submit" Text="Logout" ButtonStyle="ButtonStyle.Light"
-                              Style="border-radius: 10px;" />
-            </form>
-        </RadzenStack>
-    </Authorized>
-    <NotAuthorized>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <RadzenButton Text="Login" Click="@(() => NavigationManager.NavigateTo("/Account/Login"))"
-                          ButtonStyle="ButtonStyle.Light" Style="border-radius: 10px;" />
-            <RadzenButton Text="Register" Click="@(() => NavigationManager.NavigateTo("/Account/Register"))"
-                          ButtonStyle="ButtonStyle.Primary" Style="border-radius: 10px;" />
-        </RadzenStack>
-    </NotAuthorized>
-</AuthorizeView>
-
-@code {
-    private string GetUserDisplayName(AuthenticationState authState)
-    {
-        var user = authState.User;
-        if (user?.Identity?.IsAuthenticated == true)
-        {
-            // Try to get the user's name from claims
-            var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-            if (!string.IsNullOrEmpty(name))
-            {
-                // If it's an email, just show the part before @
-                if (name.Contains("@"))
-                {
-                    return name.Split('@')[0];
-                }
-                return name;
-            }
-        }
-        return "User";
-    }
-}
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+    <RadzenButton Icon="notifications" ButtonStyle="ButtonStyle.Light"
+                  Style="border-radius: 10px;" />
+    <UserAvatar />
+</RadzenStack>

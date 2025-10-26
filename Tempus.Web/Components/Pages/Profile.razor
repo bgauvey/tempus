@@ -1,0 +1,374 @@
+@page "/profile"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Models
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NotificationService NotificationService
+
+<PageTitle>Profile - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">My Profile</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                Manage your account information and preferences.
+            </RadzenText>
+        </RadzenStack>
+
+        @if (_user != null)
+        {
+            <!-- Profile Card -->
+            <div class="dashboard-card">
+                <RadzenStack Gap="2rem">
+                    <!-- Avatar and Basic Info -->
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
+                        <div class="profile-avatar">
+                            <span class="avatar-initials">@_initials</span>
+                        </div>
+                        <RadzenStack Gap="0.25rem">
+                            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@_fullName</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: #718096;">@_user.Email</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+
+                    <div style="height: 1px; background: #e2e8f0;"></div>
+
+                    <!-- Profile Form -->
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Account Information</RadzenText>
+
+                        <RadzenRow Gap="1.5rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Full Name" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_fullName"
+                                                   Placeholder="Enter your full name"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Email Address" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox Value="@_user.Email"
+                                                   Disabled="true"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
+                                    Email cannot be changed at this time
+                                </RadzenText>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Phone Number (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.PhoneNumber"
+                                                   Placeholder="Enter your phone number"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Save Profile Button -->
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
+                            <RadzenButton Text="Save Profile"
+                                          Icon="save"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="@SaveProfile"
+                                          Style="padding: 0.75rem 2rem; border-radius: 10px;" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </div>
+
+            <!-- Change Password Card -->
+            <div class="dashboard-card">
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Change Password</RadzenText>
+
+                    <RadzenRow Gap="1.5rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Current Password" Variant="Variant.Outlined" Style="width: 100%;">
+                                <RadzenPassword @bind-Value="_currentPassword"
+                                                Placeholder="Enter current password"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <!-- Spacer for layout -->
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="New Password" Variant="Variant.Outlined" Style="width: 100%;">
+                                <RadzenPassword @bind-Value="_newPassword"
+                                                Placeholder="Enter new password"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Confirm New Password" Variant="Variant.Outlined" Style="width: 100%;">
+                                <RadzenPassword @bind-Value="_confirmPassword"
+                                                Placeholder="Confirm new password"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <!-- Change Password Button -->
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Change Password"
+                                      Icon="lock"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@ChangePassword"
+                                      Style="padding: 0.75rem 2rem; border-radius: 10px;" />
+                    </RadzenStack>
+                </RadzenStack>
+            </div>
+
+            <!-- Account Statistics Card -->
+            <div class="dashboard-card">
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Account Information</RadzenText>
+
+                    <RadzenRow Gap="1.5rem">
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Member Since</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                    @_user.CreatedAt.ToString("MMMM dd, yyyy")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Email Confirmed</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                    @(_user.EmailConfirmed ? "Yes" : "No")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Two-Factor Authentication</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                    @(_user.TwoFactorEnabled ? "Enabled" : "Disabled")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </div>
+        }
+        else
+        {
+            <div class="text-center" style="padding: 3rem;">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText Style="color: #718096; margin-top: 1rem;">Loading profile...</RadzenText>
+            </div>
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .dashboard-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .avatar-initials {
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+</style>
+
+@code {
+    private ApplicationUser? _user;
+    private string _fullName = "";
+    private string _initials = "U";
+
+    private string _currentPassword = "";
+    private string _newPassword = "";
+    private string _confirmPassword = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userPrincipal = authState.User;
+
+        if (userPrincipal?.Identity?.IsAuthenticated == true)
+        {
+            _user = await UserManager.GetUserAsync(userPrincipal);
+
+            if (_user != null)
+            {
+                // Get full name from claims or use email
+                var name = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                _fullName = !string.IsNullOrEmpty(name) ? name : _user.Email?.Split('@')[0] ?? "User";
+
+                // Generate initials
+                _initials = GenerateInitials(_fullName);
+            }
+        }
+    }
+
+    private string GenerateInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "U";
+
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length == 0)
+            return "U";
+
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2
+                ? parts[0].Substring(0, 2).ToUpper()
+                : parts[0].ToUpper();
+        }
+
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+    }
+
+    private async Task SaveProfile()
+    {
+        if (_user == null) return;
+
+        try
+        {
+            // Note: UserName is typically the email in ASP.NET Core Identity
+            // You would need to add a custom field for display name if you want to store it separately
+
+            var result = await UserManager.UpdateAsync(_user);
+
+            if (result.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Profile Updated",
+                    Detail = "Your profile has been updated successfully.",
+                    Duration = 4000
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Update Failed",
+                    Detail = "Failed to update profile. " + string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Duration = 6000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "An error occurred while updating your profile.",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        if (_user == null) return;
+
+        if (string.IsNullOrWhiteSpace(_currentPassword) || string.IsNullOrWhiteSpace(_newPassword))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Validation Error",
+                Detail = "Please fill in all password fields.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        if (_newPassword != _confirmPassword)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Validation Error",
+                Detail = "New password and confirmation do not match.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        try
+        {
+            var result = await UserManager.ChangePasswordAsync(_user, _currentPassword, _newPassword);
+
+            if (result.Succeeded)
+            {
+                // Clear password fields
+                _currentPassword = "";
+                _newPassword = "";
+                _confirmPassword = "";
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Password Changed",
+                    Detail = "Your password has been changed successfully.",
+                    Duration = 4000
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Password Change Failed",
+                    Detail = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Duration = 6000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "An error occurred while changing your password.",
+                Duration = 4000
+            });
+        }
+    }
+}

@@ -1,0 +1,171 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<AuthorizeView>
+    <Authorized>
+        <RadzenProfileMenu>
+            <Template>
+                <div class="user-avatar" title="@_userEmail">
+                    <span class="avatar-initials">@_initials</span>
+                </div>
+            </Template>
+            <ChildContent>
+                <RadzenProfileMenuItem>
+                    <Template>
+                        <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">@_fullName</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: #718096;">@_userEmail</RadzenText>
+                        </div>
+                    </Template>
+                </RadzenProfileMenuItem>
+                <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
+                <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
+                <div style="height: 1px; background: #e2e8f0; margin: 0.5rem 0;"></div>
+                <RadzenProfileMenuItem Text="Sign Out" Icon="logout">
+                    <Template>
+                        <form action="/Account/Logout" method="post" style="width: 100%;">
+                            <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+                            <button type="submit" class="sign-out-button">
+                                <RadzenIcon Icon="logout" Style="margin-right: 0.5rem;" />
+                                Sign Out
+                            </button>
+                        </form>
+                    </Template>
+                </RadzenProfileMenuItem>
+            </ChildContent>
+        </RadzenProfileMenu>
+    </Authorized>
+    <NotAuthorized>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenButton Text="Login" Click="@(() => NavigationManager.NavigateTo("/Account/Login"))"
+                          ButtonStyle="ButtonStyle.Light" Style="border-radius: 10px;" />
+            <RadzenButton Text="Register" Click="@(() => NavigationManager.NavigateTo("/Account/Register"))"
+                          ButtonStyle="ButtonStyle.Primary" Style="border-radius: 10px;" />
+        </RadzenStack>
+    </NotAuthorized>
+</AuthorizeView>
+
+<style>
+    /* Remove background from RadzenProfileMenu dropdown */
+    ::ng-deep .rz-profile-menu,
+    ::ng-deep ul.rz-profile-menu,
+    ::ng-deep .rz-dropdown-menu,
+    ::ng-deep .rz-menu,
+    ::ng-deep .rz-context-menu {
+        background-color: transparent !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: transparent;
+        border: 2px solid #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+
+    .user-avatar:hover {
+        border-color: #764ba2;
+        transform: scale(1.05);
+    }
+
+    .avatar-initials {
+        color: #667eea;
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .sign-out-button {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        color: #2d3748;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+
+    .sign-out-button:hover {
+        background-color: #f7fafc;
+    }
+
+    /* Hide the dropdown arrow */
+    ::ng-deep .rz-profile-menu-toggle::after,
+    .rz-profile-menu-toggle::after {
+        display: none !important;
+    }
+</style>
+
+@code {
+    private string _fullName = "User";
+    private string _userEmail = "";
+    private string _initials = "U";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            // Get email from claims
+            _userEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+
+            // Try to get full name from claims
+            var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                _fullName = name;
+            }
+            else if (!string.IsNullOrEmpty(_userEmail))
+            {
+                // Use email username part as fallback
+                _fullName = _userEmail.Split('@')[0];
+            }
+
+            // Generate initials
+            _initials = GenerateInitials(_fullName);
+        }
+    }
+
+    private string GenerateInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "U";
+
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length == 0)
+            return "U";
+
+        if (parts.Length == 1)
+        {
+            // Single name - take first two letters
+            return parts[0].Length >= 2
+                ? parts[0].Substring(0, 2).ToUpper()
+                : parts[0].ToUpper();
+        }
+
+        // Multiple names - take first letter of first and last name
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+    }
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+}
