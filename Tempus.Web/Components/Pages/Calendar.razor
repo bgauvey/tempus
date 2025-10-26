@@ -667,6 +667,8 @@
     private bool _shouldScrollToWorkHours = false;
     private DotNetObjectReference<Calendar>? _dotNetHelper;
     private bool _dragDropInitialized = false;
+    private bool _isDragDropOperation = false;
+    private bool _hasRenderedOnce = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -703,9 +705,17 @@
             _dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("TempusCalendar.initializeDragDrop", _dotNetHelper);
             _dragDropInitialized = true;
+            _hasRenderedOnce = true;
         }
 
-        if (_dragDropInitialized && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
+        // Don't do any auto-scrolling or re-initialization during drag-drop operations
+        if (_isDragDropOperation)
+        {
+            return;
+        }
+
+        // Only setup drag-drop on the first render after initialization, not on every render
+        if (_dragDropInitialized && !_hasRenderedOnce && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
         {
             // Small delay to ensure DOM is fully rendered
             await Task.Delay(100);
@@ -713,6 +723,7 @@
             // Setup drag and drop for events
             await JSRuntime.InvokeVoidAsync("TempusCalendar.makeAllEventsDraggable");
             await JSRuntime.InvokeVoidAsync("TempusCalendar.setupDropZones");
+            _hasRenderedOnce = true;
         }
 
         if (_shouldScrollToWorkHours && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
@@ -783,6 +794,9 @@
 
         await LoadEvents();
 
+        // Reset the render flag so drag-drop gets re-initialized for the new view
+        _hasRenderedOnce = false;
+
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -806,6 +820,9 @@
 
         await LoadEvents();
 
+        // Reset the render flag so drag-drop gets re-initialized
+        _hasRenderedOnce = false;
+
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -828,6 +845,9 @@
 
         await LoadEvents();
 
+        // Reset the render flag so drag-drop gets re-initialized
+        _hasRenderedOnce = false;
+
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -841,6 +861,9 @@
         _selectedDate = DateTime.Today;
 
         await LoadEvents();
+
+        // Reset the render flag so drag-drop gets re-initialized
+        _hasRenderedOnce = false;
 
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
@@ -2019,11 +2042,18 @@
     {
         try
         {
+            // Mark that we're in a drag-drop operation to prevent auto-scrolling
+            _isDragDropOperation = true;
+
             // Save scroll position before making changes
             var scrollPosition = await SaveScrollPosition();
 
             var evt = _events.FirstOrDefault(e => e.Id.ToString() == eventId);
-            if (evt == null) return;
+            if (evt == null)
+            {
+                _isDragDropOperation = false;
+                return;
+            }
 
             // Calculate the new date based on day index and current view
             DateTime newDate = _selectedDate.Date;
@@ -2054,6 +2084,7 @@
                 {
                     // User cancelled - restore scroll position
                     await RestoreScrollPosition(scrollPosition);
+                    _isDragDropOperation = false;
                     return;
                 }
 
@@ -2077,10 +2108,20 @@
 
             // Restore scroll position after the update
             await RestoreScrollPosition(scrollPosition);
+
+            // Re-enable drag-drop setup for the new events
+            await Task.Delay(100);
+            await JSRuntime.InvokeVoidAsync("TempusCalendar.makeAllEventsDraggable");
+            await JSRuntime.InvokeVoidAsync("TempusCalendar.setupDropZones");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in OnEventDropped: {ex.Message}");
+        }
+        finally
+        {
+            // Always clear the flag
+            _isDragDropOperation = false;
         }
     }
 
