@@ -14,8 +14,9 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **Event Types**: Support for different event types (Meeting, Appointment, Task, Time Block, Reminder, Deadline)
 - **Priority System**: Assign priorities to events (Low, Medium, High, Urgent)
 - **Recurring Events**: Support for recurring event patterns with flexible recurrence rules
-- **Attendee Management**: Add and track attendees for events
-- **Address Book**: Contact management with integration into event attendees
+- **Attendee Management**: Add and track attendees for events with organizer designation, auto-add current user as organizer
+- **Meeting Cost Calculator**: Calculate estimated meeting costs based on attendee count, duration, and hourly rates
+- **Address Book**: Contact management with automatic integration into event attendees
 
 ### User Experience
 - **Award-Winning UI**: Modern gradient designs with purple, blue, green, and pink color schemes
@@ -159,21 +160,24 @@ dotnet ef database update --startup-project ../Tempus.Web
 - ✅ Multiple event types and priorities
 - ✅ Recurring events with flexible patterns
 - ✅ User authentication and authorization
-- ✅ Contact management and address book
+- ✅ Contact management and address book with auto-creation
+- ✅ Meeting cost calculator with hourly rate tracking
 - ✅ Award-winning UI with animations and modern design
 - ✅ GDPR compliance (Privacy, Terms of Service, Security)
 - ✅ Responsive design for all devices
 - ✅ PDF export capabilities (via QuestPDF)
+- ✅ Organizer designation and protection in meetings
+- ✅ User avatar menu with profile management
 
 ### Planned Features
 - 🔄 Google Calendar integration (OAuth2 sync)
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 Time blocking visualization enhancements
-- 🔄 Meeting cost calculator
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Push notifications and email reminders
 - 🔄 Advanced calendar analytics and insights
+- 🔄 Meeting cost analytics and reports
 - 🔄 Export to additional formats (Excel, CSV)
 - 🔄 Dark mode theme
 - 🔄 Multi-language support (i18n)
@@ -203,8 +207,30 @@ The application features a modern sidebar navigation with the following sections
    - Event type (Meeting, Appointment, Task, etc.)
    - Priority level (Low, Medium, High, Urgent)
    - Recurrence pattern (if recurring)
-4. Add attendees from your address book
+4. **For Meeting-type events:**
+   - Current user is automatically added as the organizer
+   - Add attendees from your address book or create new contacts on-the-fly
+   - New contacts are automatically saved to your address book
+   - Organizers cannot be removed from the attendee list
+   - Set hourly cost per attendee to calculate meeting expenses
+   - View real-time meeting cost estimates
 5. Save the event
+
+### Meeting Cost Calculator
+
+For meeting-type events, Tempus includes a powerful cost calculator:
+
+1. When creating or editing a meeting, navigate to the **Meeting Cost Calculator** section
+2. Set the **Hourly Cost Per Attendee** (defaults to $75/hour)
+3. View the real-time **Estimated Meeting Cost** calculation based on:
+   - Number of attendees
+   - Meeting duration
+   - Hourly rate per attendee
+4. The calculated cost is saved with the meeting for future reporting and analytics
+
+**Example:** A 2-hour meeting with 5 attendees at $75/hour = $750 total cost
+
+This feature helps organizations understand the true cost of meetings and make informed decisions about scheduling.
 
 ### Customizing Calendar Settings
 
@@ -307,18 +333,29 @@ dotnet nuget locals all --clear
 dotnet restore
 ```
 
+## Recent Improvements
+
+### Version 1.1 - Meeting Cost Tracking & Bug Fixes
+- ✅ **Meeting Cost Calculator**: Calculate and track meeting expenses based on attendee count and hourly rates
+- ✅ **Organizer Management**: Automatic organizer designation with protection from removal
+- ✅ **Auto-Contact Creation**: New attendees are automatically saved to address book
+- ✅ **Entity Framework Fix**: Resolved critical concurrency error when adding attendees to existing meetings
+- ✅ **Enhanced Error Reporting**: Better user notifications for errors and validation issues
+- ✅ **User Avatar Menu**: Profile management with avatar display
+- ✅ **Test Coverage**: Added comprehensive tests for event repository operations (12 tests passing)
+
 ## Contributing
 
 Contributions are welcome! Areas for improvement:
 
 - **Calendar Integrations**: Implement OAuth2 flows for Google, Outlook, Apple Calendar
-- **Analytics & Insights**: Advanced calendar analytics and productivity metrics
+- **Analytics & Insights**: Meeting cost analytics, productivity metrics, and advanced reporting
 - **Mobile Development**: .NET MAUI mobile application
 - **Performance**: Optimize calendar rendering for large event sets
 - **UI/UX**: Additional themes, animations, and accessibility improvements
 - **Testing**: Expand unit and integration test coverage
 - **Localization**: Multi-language support (i18n)
-- **Features**: Meeting cost calculator, smart scheduling, time blocking visualizations
+- **Features**: Smart scheduling, time blocking visualizations, AI-powered suggestions
 
 ## License
 
