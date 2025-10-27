@@ -746,13 +746,36 @@ html, body {
 
 /* RadzenProfileMenu - Remove background from dropdown */
 .rz-profile-menu,
-ul.rz-profile-menu,
-.rz-dropdown-menu,
-.rz-menu,
-.rz-context-menu,
-.rz-popup,
-.rz-overlaypanel {
+ul.rz-profile-menu {
     background-color: transparent !important;
     background: none !important;
     box-shadow: none !important;
+}
+
+/* Radzen Dropdown Lists - Add solid background for readability */
+.rz-dropdown-panel,
+.rz-listbox-panel,
+.rz-multiselect-panel,
+.rz-autocomplete-panel,
+ul.rz-dropdown-items,
+ul.rz-listbox-items,
+ul.rz-multiselect-items {
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Radzen Dialog and Popup backgrounds */
+.rz-dialog,
+.rz-popup {
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Radzen Context Menu */
+.rz-context-menu,
+.rz-menu {
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #e2e8f0 !important;
 }
