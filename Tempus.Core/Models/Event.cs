@@ -35,6 +35,10 @@ public class Event
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
 
+    // Meeting cost tracking
+    public decimal HourlyCostPerAttendee { get; set; } = 75.00m;
+    public decimal? MeetingCost { get; set; }
+
     // User ownership
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser? User { get; set; }

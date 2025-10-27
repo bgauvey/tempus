@@ -9,6 +9,7 @@
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+@inject NotificationService NotificationService
 
 <RadzenStack Gap="1rem">
     <RadzenFormField Text="Title" Variant="Variant.Outlined">
@@ -42,6 +43,7 @@
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
                 <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
+                              Change="@OnEventTypeChanged"
                               Style="width: 100%;" />
             </RadzenFormField>
         </RadzenColumn>
@@ -76,11 +78,20 @@
                             <RadzenCard Style="padding: 0.75rem; margin-bottom: 0.5rem;">
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@attendee.Name</RadzenText>
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@attendee.Name</RadzenText>
+                                            @if (attendee.IsOrganizer)
+                                            {
+                                                <RadzenBadge Text="Organizer" BadgeStyle="BadgeStyle.Info" Variant="Variant.Filled" />
+                                            }
+                                        </RadzenStack>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">@attendee.Email</RadzenText>
                                     </RadzenStack>
-                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                Click="@(() => RemoveAttendee(attendee))" />
+                                    @if (!attendee.IsOrganizer)
+                                    {
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                    Click="@(() => RemoveAttendee(attendee))" />
+                                    }
                                 </RadzenStack>
                             </RadzenCard>
                         }
@@ -131,6 +142,40 @@
                                     Click="AddAttendee" Disabled="@(!CanAddAttendee())" Style="width: 100%;" />
                     </RadzenColumn>
                 </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Meeting Cost Calculator (only for Meeting type events) -->
+        <RadzenFieldset Text="Meeting Cost Calculator" Style="margin-top: 1rem;">
+            <RadzenStack Gap="1rem">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Hourly Cost Per Attendee" Variant="Variant.Outlined">
+                            <RadzenNumeric @bind-Value="@_event.HourlyCostPerAttendee"
+                                         Min="0"
+                                         Step="5"
+                                         Format="c"
+                                         Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <div style="padding: 1rem; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 8px; border: 1px solid #667eea30;">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; font-weight: 600;">ESTIMATED MEETING COST</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800;">
+                                    @CalculateMeetingCost().ToString("C")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
+                                    @_event.Attendees.Count attendee(s) × @GetMeetingDuration().ToString("0.##") hour(s)
+                                </RadzenText>
+                            </RadzenStack>
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
+                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem; color: #718096;">
+                    <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                    <strong>Note:</strong> This cost will be saved and used for monthly meeting analysis reports.
+                </div>
             </RadzenStack>
         </RadzenFieldset>
     }
@@ -235,6 +280,8 @@
     private readonly RecurrencePattern[] _recurrencePatterns = Enum.GetValues<RecurrencePattern>();
     private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
     private string _userId = string.Empty;
+    private string _userEmail = string.Empty;
+    private string _userName = string.Empty;
 
     // Attendee management
     private string _newAttendeeName = string.Empty;
@@ -348,6 +395,11 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userEmail = appUser.Email ?? string.Empty;
+
+                // Get user's display name from claims or use email
+                var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
             }
         }
 
@@ -377,7 +429,7 @@
                 Tags = InstanceEvent.Tags.ToList(),
                 Attendees = InstanceEvent.Attendees.Select(a => new Attendee
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Empty, // Use Empty GUID since this will be a new event
                     Name = a.Name,
                     Email = a.Email,
                     IsOrganizer = a.IsOrganizer,
@@ -412,6 +464,12 @@
                 _event.StartTime = PrefilledDate.Value.Date.AddHours(9); // 9 AM
                 _event.EndTime = PrefilledDate.Value.Date.AddHours(9).AddMinutes(30); // 9:30 AM
             }
+
+            // Add current user as organizer for new meetings
+            if (_event.EventType == EventType.Meeting)
+            {
+                AddCurrentUserAsOrganizer();
+            }
         }
     }
 
@@ -427,6 +485,12 @@
         {
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
+
+            // Calculate and save meeting cost for meetings
+            if (_event.EventType == EventType.Meeting)
+            {
+                _event.MeetingCost = CalculateMeetingCost();
+            }
 
             if (EditSingleOccurrence)
             {
@@ -453,14 +517,27 @@
         }
         catch (Exception ex)
         {
-            // Handle error - could show a notification here
+            // Show error notification to user
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error Saving Event",
+                Detail = $"An error occurred while saving the event: {ex.Message}",
+                Duration = 4000
+            });
             Console.WriteLine($"Error saving event: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 
     private async Task AutoCreateContactsForAttendeesAsync()
     {
-        foreach (var attendee in _event.Attendees)
+        // Extract just the data we need to avoid any entity tracking issues
+        var attendeesToProcess = _event.Attendees
+            .Select(a => new { a.Email, a.Name })
+            .ToList();
+
+        foreach (var attendee in attendeesToProcess)
         {
             // Check if contact already exists in address book
             var existingContact = _contacts.FirstOrDefault(c =>
@@ -521,11 +598,7 @@
                 // Pre-fill the name from the contact
                 _newAttendeeName = _selectedContact.Name;
             }
-            else
-            {
-                // Clear name for new contact entry
-                _newAttendeeName = string.Empty;
-            }
+            // Don't clear the name for new contacts - let the user type it
         }
     }
 
@@ -534,11 +607,15 @@
         if (string.IsNullOrWhiteSpace(_selectedContactEmail) || !IsValidEmail(_selectedContactEmail))
             return false;
 
+        // Check if this email exists in contacts (look it up dynamically to be more robust)
+        var existingContact = _contacts.FirstOrDefault(c =>
+            c.Email.Equals(_selectedContactEmail, StringComparison.OrdinalIgnoreCase));
+
         // If it's a new contact (not in address book), name is required
-        if (_selectedContact == null && string.IsNullOrWhiteSpace(_newAttendeeName))
+        if (existingContact == null && string.IsNullOrWhiteSpace(_newAttendeeName))
             return false;
 
-        // Check if attendee already added
+        // Check if attendee already added (including organizer)
         if (_event.Attendees.Any(a => a.Email.Equals(_selectedContactEmail, StringComparison.OrdinalIgnoreCase)))
             return false;
 
@@ -567,7 +644,7 @@
 
         var attendee = new Attendee
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.Empty, // Use Empty GUID to indicate this is a new attendee
             Name = attendeeName,
             Email = _selectedContactEmail,
             EventId = _event.Id,
@@ -586,5 +663,63 @@
     private void RemoveAttendee(Attendee attendee)
     {
         _event.Attendees.Remove(attendee);
+        StateHasChanged();
+    }
+
+    // Meeting Cost Calculator Methods
+    private decimal CalculateMeetingCost()
+    {
+        if (_event.EventType != EventType.Meeting)
+            return 0;
+
+        var attendeeCount = _event.Attendees.Count;
+        var durationHours = GetMeetingDuration();
+        var hourlyRate = _event.HourlyCostPerAttendee;
+
+        return attendeeCount * durationHours * hourlyRate;
+    }
+
+    private decimal GetMeetingDuration()
+    {
+        var duration = _event.EndTime - _event.StartTime;
+        return (decimal)duration.TotalHours;
+    }
+
+    private void OnCostParametersChanged()
+    {
+        StateHasChanged();
+    }
+
+    // Auto-add organizer methods
+    private void OnEventTypeChanged()
+    {
+        // When changing to Meeting type, add current user as organizer if not already present
+        if (_event.EventType == EventType.Meeting && !_event.Attendees.Any(a => a.IsOrganizer))
+        {
+            AddCurrentUserAsOrganizer();
+        }
+        StateHasChanged();
+    }
+
+    private void AddCurrentUserAsOrganizer()
+    {
+        // Check if current user is already in attendees
+        if (_event.Attendees.Any(a => a.Email.Equals(_userEmail, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        if (string.IsNullOrEmpty(_userEmail))
+            return;
+
+        var organizer = new Attendee
+        {
+            Id = Guid.Empty, // Use Empty GUID to indicate this is a new attendee
+            Name = _userName,
+            Email = _userEmail,
+            EventId = _event.Id,
+            Status = AttendeeStatus.Accepted,
+            IsOrganizer = true
+        };
+
+        _event.Attendees.Insert(0, organizer); // Insert at the beginning so organizer is always first
     }
 }

@@ -110,7 +110,23 @@ public class EventRepository : IEventRepository
     public async Task<Event> UpdateAsync(Event @event)
     {
         @event.UpdatedAt = DateTime.UtcNow;
-        _context.Events.Update(@event);
+
+        // The event is already tracked by the context from when it was loaded in the dialog
+        // We need to explicitly mark new attendees as Added to prevent UPDATE attempts
+
+        // Find new attendees (those with Guid.Empty)
+        var newAttendees = @event.Attendees.Where(a => a.Id == Guid.Empty).ToList();
+
+        // Handle new attendees - explicitly mark them as Added
+        foreach (var newAttendee in newAttendees)
+        {
+            newAttendee.Id = Guid.NewGuid();
+            newAttendee.EventId = @event.Id;
+
+            // Explicitly tell EF this is a new entity to INSERT, not UPDATE
+            _context.Entry(newAttendee).State = EntityState.Added;
+        }
+
         await _context.SaveChangesAsync();
         return @event;
     }
