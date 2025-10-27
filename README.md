@@ -173,7 +173,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Google Calendar integration (OAuth2 sync)
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
-- 🔄 Time blocking visualization enhancements
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Push notifications and email reminders
 - 🔄 Advanced calendar analytics and insights
