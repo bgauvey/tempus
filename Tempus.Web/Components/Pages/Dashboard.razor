@@ -30,38 +30,46 @@
         <!-- Metrics Cards -->
         <RadzenRow Gap="1.5rem">
             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="metric-card">
-                    <div class="metric-value">@_todayEvents</div>
-                    <div class="metric-label">Today's Events</div>
-                </div>
+                <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_todayEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Today's Events</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <div class="metric-value">@_upcomingEvents</div>
-                    <div class="metric-label">This Week</div>
-                </div>
+                <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_upcomingEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">This Week</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                    <div class="metric-value">@_totalEvents</div>
-                    <div class="metric-label">Total Events</div>
-                </div>
+                <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_totalEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Total Events</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                    <div class="metric-value">@_pendingTasks</div>
-                    <div class="metric-label">Pending Tasks</div>
-                </div>
+                <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(250, 112, 154, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_pendingTasks</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Pending Tasks</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
             </RadzenColumn>
         </RadzenRow>
 
         <!-- Main Content -->
-        <RadzenRow Gap="1.5rem">
-            <RadzenColumn Size="12" SizeLG="8">
-                <div class="dashboard-card">
+        <RadzenRow Gap="1.5rem" class="dashboard-main-row">
+            <RadzenColumn Size="12" SizeLG="8" class="dashboard-column">
+                <RadzenCard class="dashboard-card dashboard-card-equal-height">
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Upcoming Events</RadzenText>
                         @if (_recentEvents.Any())
@@ -69,38 +77,38 @@
                             <RadzenStack Gap="0.75rem">
                                 @foreach (var evt in _recentEvents)
                                 {
-                                    <div class="dashboard-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); padding: 1.25rem;">
+                                    <RadzenCard>
                                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
-                                                <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                                                     <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
                                                 </div>
                                                 <RadzenStack Gap="0.25rem">
                                                     <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@evt.Title</RadzenText>
-                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                                    <RadzenText TextStyle="TextStyle.Body2">
                                                         @evt.StartTime.ToString("MMM dd, yyyy • hh:mm tt")
                                                     </RadzenText>
                                                 </RadzenStack>
                                             </RadzenStack>
                                             <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@evt.EventType.ToString()" />
                                         </RadzenStack>
-                                    </div>
+                                    </RadzenCard>
                                 }
                             </RadzenStack>
                         }
                         else
                         {
-                            <div class="text-center" style="padding: 3rem;">
-                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: #e0e0e0; margin-bottom: 1rem;" />
-                                <RadzenText Style="color: #718096;">No upcoming events. Start by creating your first event!</RadzenText>
-                            </div>
+                            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Style="padding: 3rem; text-align: center;">
+                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; opacity: 0.3;" />
+                                <RadzenText>No upcoming events. Start by creating your first event!</RadzenText>
+                            </RadzenStack>
                         }
                     </RadzenStack>
-                </div>
+                </RadzenCard>
             </RadzenColumn>
 
-            <RadzenColumn Size="12" SizeLG="4">
-                <div class="dashboard-card">
+            <RadzenColumn Size="12" SizeLG="4" class="dashboard-column">
+                <RadzenCard class="dashboard-card dashboard-card-equal-height">
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
                         <RadzenStack Gap="0.75rem">
@@ -131,14 +139,14 @@
                             </RadzenButton>
                         </RadzenStack>
                     </RadzenStack>
-                </div>
+                </RadzenCard>
             </RadzenColumn>
         </RadzenRow>
 
         <!-- Additional Stats Section -->
         <RadzenRow Gap="1.5rem">
             <RadzenColumn Size="12" SizeMD="6">
-                <div class="dashboard-card">
+                <RadzenCard class="dashboard-card">
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Event Distribution</RadzenText>
                         <RadzenStack Gap="0.5rem">
@@ -156,11 +164,11 @@
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenStack>
-                </div>
+                </RadzenCard>
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6">
-                <div class="dashboard-card">
+                <RadzenCard class="dashboard-card">
                     <RadzenStack Gap="1rem">
                         <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Recent Activity</RadzenText>
                         <RadzenStack Gap="0.5rem">
@@ -170,26 +178,26 @@
                                     <RadzenIcon Icon="check_circle" Style="color: #43e97b; margin-top: 2px;" />
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Events Created</RadzenText>
-                                        <RadzenText Style="font-size: 0.85rem; color: #718096;">@_totalEvents total events in the system</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@_totalEvents total events in the system</RadzenText>
                                     </RadzenStack>
                                 </RadzenStack>
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
                                     <RadzenIcon Icon="schedule" Style="color: #4facfe; margin-top: 2px;" />
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Upcoming This Week</RadzenText>
-                                        <RadzenText Style="font-size: 0.85rem; color: #718096;">@_upcomingEvents events scheduled</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@_upcomingEvents events scheduled</RadzenText>
                                     </RadzenStack>
                                 </RadzenStack>
                             }
                             else
                             {
-                                <RadzenText Style="color: #718096; text-align: center; padding: 1rem;">
+                                <RadzenText Style="text-align: center; padding: 1rem;">
                                     No activity yet. Start creating events!
                                 </RadzenText>
                             }
                         </RadzenStack>
                     </RadzenStack>
-                </div>
+                </RadzenCard>
             </RadzenColumn>
         </RadzenRow>
     </RadzenStack>

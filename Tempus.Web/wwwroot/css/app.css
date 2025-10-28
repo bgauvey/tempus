@@ -319,45 +319,32 @@ html, body {
     opacity: 0.9;
 }
 
-/* Dashboard Enhancements */
-.dashboard-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: var(--transition-smooth);
-    border: 1px solid #f0f0f0;
-}
-
+/* Dashboard Card Styles */
 .dashboard-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
-}
-
-.metric-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    transition: var(--transition-smooth);
 }
 
 .metric-card:hover {
     transform: scale(1.05);
-    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-}
-
-.metric-value {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-.metric-label {
-    font-size: 1rem;
-    opacity: 0.9;
     font-weight: 500;
+}
+
+/* Equal height cards on large screens only (matches Radzen LG breakpoint) */
+@media (min-width: 992px) {
+    .dashboard-main-row {
+        display: flex;
+    }
+
+    .dashboard-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dashboard-card-equal-height {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
 }
 
 /* Calendar Styling */
