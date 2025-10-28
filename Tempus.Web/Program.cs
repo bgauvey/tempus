@@ -22,6 +22,11 @@ builder.Services.AddHttpContextAccessor();
 
 // Add Radzen services
 builder.Services.AddRadzenComponents();
+builder.Services.AddRadzenCookieThemeService(options =>
+{
+    options.Name = "TempusTheme";
+    options.Duration = TimeSpan.FromDays(365);
+});
 
 // Add database context (use SQL Server)
 builder.Services.AddDbContext<TempusDbContext>(options =>

@@ -1,11 +1,13 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Web.Components.Shared
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject UserManager<ApplicationUser> UserManager
+@inject ThemeService ThemeService
 
 <RadzenComponents @rendermode="InteractiveServer" />
 <ScrollToTopHandler />
@@ -14,40 +16,54 @@
     <!-- Public Header for Unauthenticated Users -->
     <AuthorizeView>
         <NotAuthorized>
-            <RadzenHeader Style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); position: sticky; top: 0; z-index: 1000;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%; padding: 0 2rem; max-width: 1400px; margin: 0 auto;">
+            <RadzenHeader>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                            <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
-                        </div>
-                        <RadzenText TextStyle="TextStyle.H5" Style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; margin: 0;">
+                        <RadzenIcon Icon="access_time" />
+                        <RadzenText TextStyle="TextStyle.H5">
                             Tempus
                         </RadzenText>
                     </RadzenStack>
 
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
-                        <RadzenLink Path="/" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">Home</RadzenLink>
-                        <RadzenLink Path="/features" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">Features</RadzenLink>
-                        <RadzenLink Path="/about" Style="color: #2d3748; font-weight: 600; text-decoration: none; transition: color 0.3s;">About</RadzenLink>
-                        <RadzenLink Path="/Account/Login" Style="padding: 0.5rem 1.5rem; background: var(--primary-gradient); color: white; font-weight: 600; text-decoration: none; border-radius: 8px; transition: var(--transition-smooth);">Login</RadzenLink>
+                        <RadzenLink Path="/">Home</RadzenLink>
+                        <RadzenLink Path="/features">Features</RadzenLink>
+                        <RadzenLink Path="/about">About</RadzenLink>
+                        <RadzenDropDown Name="ThemeDropDown" 
+                                        TValue="string" 
+                                        Value="@ThemeService.Theme" 
+                                        ValueChanged="@OnThemeChanged" 
+                                        Data="@Themes.Free" 
+                                        TextProperty=@nameof(Theme.Text) 
+                                        ValueProperty=@nameof(Theme.Value)
+                                        Width="150px" Style="width: 150px;">
+                        </RadzenDropDown>
+                        <RadzenLink Path="/Account/Login">Login</RadzenLink>
                     </RadzenStack>
                 </RadzenStack>
             </RadzenHeader>
         </NotAuthorized>
         <Authorized>
-            <RadzenHeader Style="background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%; padding: 0 1rem;">
+            <RadzenHeader>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
-                            </div>
-                            <RadzenText TextStyle="TextStyle.H5" Style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; margin: 0;">
+                            <RadzenIcon Icon="access_time" />
+                            <RadzenText TextStyle="TextStyle.H5">
                                 Tempus
                             </RadzenText>
                         </RadzenStack>
                     </RadzenStack>
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenDropDown Name="ThemeDropDown" 
+                                        TValue="string" 
+                                        Value="@ThemeService.Theme" 
+                                        ValueChanged="@OnThemeChanged" 
+                                        Data="@Themes.Free" 
+                                        TextProperty=@nameof(Theme.Text) 
+                                        ValueProperty=@nameof(Theme.Value)
+                                        Width="150px" Style="width: 150px;">
+                        </RadzenDropDown>
                         <NavMenu />
                     </RadzenStack>
                 </RadzenStack>
@@ -58,103 +74,67 @@
     <!-- Sidebar only for Authenticated Users -->
     <AuthorizeView>
         <Authorized>
-            <RadzenSidebar @bind-Expanded="_drawerOpen" Style="width: 280px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);">
-                <div style="padding: 2rem 1rem;">
-                    <RadzenPanelMenu Style="background: transparent;">
-                        <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard"
-                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                            <Template>
-                                <RadzenIcon Icon="dashboard" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                                <span style="color: white;">Dashboard</span>
-                            </Template>
-                        </RadzenPanelMenuItem>
-                        <RadzenPanelMenuItem Text="Calendar" Path="/calendar"
-                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                            <Template>
-                                <RadzenIcon Icon="calendar_month" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                                <span style="color: white;">Calendar</span>
-                            </Template>
-                        </RadzenPanelMenuItem>
-                        <RadzenPanelMenuItem Text="Import ICS" Path="/import"
-                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                            <Template>
-                                <RadzenIcon Icon="upload" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                                <span style="color: white;">Import ICS</span>
-                            </Template>
-                        </RadzenPanelMenuItem>
-                        <RadzenPanelMenuItem Text="Integrations" Path="/integrations"
-                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                            <Template>
-                                <RadzenIcon Icon="link" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                                <span style="color: white;">Integrations</span>
-                            </Template>
-                        </RadzenPanelMenuItem>
-                        <RadzenPanelMenuItem Text="Address Book" Path="/addresses"
-                                             Style="color: white; border-radius: 10px; margin-bottom: 0.5rem;">
-                            <Template>
-                                <RadzenIcon Icon="contacts" Style="color: white; margin-right: 0.5rem; font-size: 1.2rem;" />
-                                <span style="color: white;">Address Book</span>
-                            </Template>
-                        </RadzenPanelMenuItem>
-                    </RadzenPanelMenu>
-                </div>
+            <RadzenSidebar FullHeight="true"  @bind-Expanded="_drawerOpen">
+                <RadzenPanelMenu>
+                    <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
+                    <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
+                    <RadzenPanelMenuItem Text="Import ICS" Path="/import" Icon="upload" />
+                    <RadzenPanelMenuItem Text="Integrations" Path="/integrations" Icon="link" />
+                    <RadzenPanelMenuItem Text="Address Book" Path="/addresses" Icon="contacts" />
+                </RadzenPanelMenu>
             </RadzenSidebar>
         </Authorized>
     </AuthorizeView>
     <RadzenBody>
-        <main id="main-content" tabindex="-1" style="min-height: calc(100vh - 60px); outline: none;">
+        <main id="main-content" tabindex="-1">
             @Body
         </main>
 
         <AuthorizeView>
             <NotAuthorized>
-                <footer style="background: #2d3748; color: white; padding: 3rem 2rem 2rem; margin-top: 4rem;">
+                <footer>
                     <div class="container-max">
                         <RadzenRow Gap="2rem">
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="1rem">
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                        <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                            <RadzenIcon Icon="access_time" Style="color: white; font-size: 1.5rem;" />
-                                        </div>
-                                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700; color: white; margin: 0;">Tempus</RadzenText>
+                                        <RadzenIcon Icon="access_time" />
+                                        <RadzenText TextStyle="TextStyle.H5">Tempus</RadzenText>
                                     </RadzenStack>
-                                    <RadzenText Style="opacity: 0.8; color:rgba(245, 245, 245, 0.8)">Master your time, transform your business. The ultimate time management platform.</RadzenText>
+                                    <RadzenText>Master your time, transform your business. The ultimate time management platform.</RadzenText>
                                 </RadzenStack>
                             </RadzenColumn>
 
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="0.75rem">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; color: white; margin-bottom: 0.5rem;">Company</RadzenText>
-                                    <RadzenLink Path="/about" Style="color: rgba(255, 255, 255, 0.8);">About Us</RadzenLink>
-                                    <RadzenLink Path="#" Style="color: rgba(255, 255, 255, 0.8);">Blog</RadzenLink>
-                                    <RadzenLink Path="#" Style="color: rgba(255, 255, 255, 0.8);">Careers</RadzenLink>
-                                    <RadzenLink Path="/contact" Style="color: rgba(255, 255, 255, 0.8);">Contact</RadzenLink>
+                                    <RadzenText TextStyle="TextStyle.H6">Company</RadzenText>
+                                    <RadzenLink Path="/about">About Us</RadzenLink>
+                                    <RadzenLink Path="#">Blog</RadzenLink>
+                                    <RadzenLink Path="#">Careers</RadzenLink>
+                                    <RadzenLink Path="/contact">Contact</RadzenLink>
                                 </RadzenStack>
                             </RadzenColumn>
 
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="0.75rem">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; color: white; margin-bottom: 0.5rem;">Legal</RadzenText>
-                                    <RadzenLink Path="/privacy" Style="color: rgba(255, 255, 255, 0.8);">Privacy Policy</RadzenLink>
-                                    <RadzenLink Path="/terms" Style="color: rgba(255, 255, 255, 0.8);">Terms of Service</RadzenLink>
-                                    <RadzenLink Path="/security" Style="color: rgba(255, 255, 255, 0.8);">Security</RadzenLink>
-                                    <RadzenLink Path="/gdpr" Style="color: rgba(255, 255, 255, 0.8);">GDPR</RadzenLink>
+                                    <RadzenText TextStyle="TextStyle.H6">Legal</RadzenText>
+                                    <RadzenLink Path="/privacy">Privacy Policy</RadzenLink>
+                                    <RadzenLink Path="/terms">Terms of Service</RadzenLink>
+                                    <RadzenLink Path="/security">Security</RadzenLink>
+                                    <RadzenLink Path="/gdpr">GDPR</RadzenLink>
                                 </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: 2rem 0;"></div>
-
                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenText Style="opacity: 0.7; color:rgba(245, 245, 245, 0.8)">© @DateTime.Now.Year Tempus. All rights reserved.</RadzenText>
+                                <RadzenText>© @DateTime.Now.Year Tempus. All rights reserved.</RadzenText>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
-                                    <RadzenButton Icon="share" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Style="border-radius: 50%; width: 40px; height: 40px;" />
-                                    <RadzenButton Icon="link" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Style="border-radius: 50%; width: 40px; height: 40px;" />
-                                    <RadzenButton Icon="email" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Style="border-radius: 50%; width: 40px; height: 40px;" />
+                                    <RadzenButton Icon="share" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                                    <RadzenButton Icon="link" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                                    <RadzenButton Icon="email" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
                                 </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
@@ -165,27 +145,37 @@
     </RadzenBody>
 </RadzenLayout>
 
-<style>
-    .rz-navigation-item-wrapper-active > .rz-navigation-item {
-        background: rgba(255, 255, 255, 0.2) !important;
-        font-weight: 600;
-    }
-
-    .rz-navigation-item:hover {
-        background: rgba(255, 255, 255, 0.15) !important;
-    }
-
-    .rz-sidebar .rz-navigation-item {
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-</style>
-
 @code {
     private bool _drawerOpen = true;
+    private string _currentTheme = "material";
+
+    private class ThemeOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+    }
+
+    private List<ThemeOption> _themeOptions = new List<ThemeOption>
+    {
+        new ThemeOption { Value = "default", Label = "Default" },
+        new ThemeOption { Value = "dark", Label = "Dark" },
+        new ThemeOption { Value = "humanistic", Label = "Humanistic" },
+        new ThemeOption { Value = "humanistic-dark", Label = "Humanistic Dark" },
+        new ThemeOption { Value = "material", Label = "Material" },
+        new ThemeOption { Value = "material-dark", Label = "Material Dark" },
+        new ThemeOption { Value = "software", Label = "Software" },
+        new ThemeOption { Value = "software-dark", Label = "Software Dark" },
+        new ThemeOption { Value = "standard", Label = "Standard" },
+        new ThemeOption { Value = "standard-dark", Label = "Standard Dark" }
+    };
 
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private void OnThemeChanged(string value)
+    {
+        ThemeService.SetTheme(value);
     }
 }
