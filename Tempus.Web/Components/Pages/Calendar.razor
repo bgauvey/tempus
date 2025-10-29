@@ -27,150 +27,7 @@
 <PageTitle>Calendar - Tempus</PageTitle>
 
 <style>
-    /* Premium Calendar Styling */
-    .calendar-header {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out;
-    }
-
-    .calendar-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin: 0;
-    }
-
-    .calendar-controls {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out 0.1s backwards;
-    }
-
-    .calendar-nav-btn {
-        border-radius: 10px !important;
-        transition: var(--transition-smooth) !important;
-    }
-
-    .calendar-nav-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .calendar-view-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .calendar-main {
-        background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        animation: fadeInUp 0.6s ease-out 0.2s backwards;
-    }
-
-    .calendar-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 8px;
-    }
-
-    .calendar-header-cell {
-        padding: 1rem;
-        text-align: center;
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: #667eea;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .calendar-day-cell {
-        vertical-align: top;
-        min-width: 120px;
-        height: 120px;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 12px;
-        cursor: context-menu;
-        background: white;
-        transition: var(--transition-smooth);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .calendar-day-cell:hover {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-color: #667eea;
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-        transform: translateY(-2px);
-    }
-
-    .calendar-day-cell.today {
-        background: linear-gradient(135deg, #667eea15 0%, #764ba220 100%);
-        border: 2px solid #667eea;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-    }
-
-    .calendar-day-cell.other-month {
-        opacity: 0.4;
-    }
-
-    .calendar-day-number {
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-bottom: 8px;
-    }
-
-    .calendar-day-number.today {
-        color: #667eea;
-        font-size: 1.3rem;
-    }
-
-    .event-badge {
-        display: block;
-        font-size: 0.7rem;
-        margin-top: 4px;
-        padding: 4px 8px;
-        border-radius: 8px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        transition: var(--transition-smooth);
-        cursor: pointer;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    .event-badge:hover {
-        transform: scale(1.05) translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        z-index: 10;
-    }
-
-    .event-detail-card {
-        border-radius: 12px;
-        transition: var(--transition-smooth);
-        border: 1px solid #e9ecef;
-    }
-
-    .event-detail-card:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
-        border-color: #667eea;
-    }
-
+    /* Calendar Styling */
     .events-sidebar {
         background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
         border-radius: 16px;
@@ -183,28 +40,23 @@
         font-size: 1.3rem;
         font-weight: 700;
         margin-bottom: 1.5rem;
-        color: #2d3748;
     }
 
     .no-events-message {
         text-align: center;
         padding: 2rem;
-        color: #718096;
         font-style: italic;
+        opacity: 0.7;
     }
 
-    .create-event-btn {
-        background: var(--primary-gradient) !important;
-        border: none !important;
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3) !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        transition: var(--transition-smooth) !important;
+    .event-detail-card {
+        border-radius: 12px;
+        transition: var(--transition-smooth);
     }
 
-    .create-event-btn:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4) !important;
+    .event-detail-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
     }
 
     .loading-container {
@@ -214,268 +66,10 @@
         min-height: 400px;
     }
 
-    /* Day View with Hours Styling */
-    .day-view-container {
-        display: flex;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .time-column {
-        background: #f8f9fa;
-        border-right: 2px solid #e9ecef;
-        overflow-y: hidden;
-    }
-
-    .time-slot {
-        height: 60px;
-        padding: 8px;
-        text-align: right;
-        font-size: 0.85rem;
-        color: #718096;
-        font-weight: 600;
-        border-bottom: 1px solid #e9ecef;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-
-    .density-indicator {
-        width: 6px;
-        height: 40px;
-        border-radius: 3px;
-        transition: var(--transition-smooth);
-        margin-right: 4px;
-    }
-
-    .density-none {
-        background: transparent;
-    }
-
-    .density-low {
-        background: linear-gradient(180deg, #48bb78 0%, #38a169 100%);
-        box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
-    }
-
-    .density-medium {
-        background: linear-gradient(180deg, #f6ad55 0%, #ed8936 100%);
-        box-shadow: 0 2px 4px rgba(237, 137, 54, 0.3);
-    }
-
-    .density-high {
-        background: linear-gradient(180deg, #fc8181 0%, #f56565 100%);
-        box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
-    }
-
-    .density-full {
-        background: linear-gradient(180deg, #e53935 0%, #c62828 100%);
-        box-shadow: 0 2px 6px rgba(229, 57, 53, 0.4);
-    }
-
-    .time-slot:first-child {
-        border-top: 1px solid #e9ecef;
-    }
-
-    .time-column-header {
-        background: #f8f9fa;
-        height: 41px;
-        border-bottom: 2px solid #e9ecef;
-    }
-
-    .day-column {
-        flex: 1;
-        position: relative;
-        min-width: 200px;
-    }
-
-    .hour-row {
-        height: 60px;
-        border-bottom: 1px solid #e9ecef;
-        position: relative;
-    }
-
-    .hour-row:first-child {
-        border-top: 1px solid #e9ecef;
-    }
-
-    .hour-row:hover {
-        background: #f8f9fa;
-    }
-
-    .timed-event {
-        position: absolute;
-        left: 4px;
-        right: 4px;
-        border-radius: 8px;
-        padding: 8px;
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: grab;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        transition: var(--transition-smooth);
-        overflow: hidden;
-        z-index: 1;
-    }
-
-    .timed-event:active {
-        cursor: grabbing;
-    }
-
-    .timed-event[draggable="true"]:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-        transform: scale(1.02);
-    }
-
-    .timed-event:hover {
-        transform: translateX(2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        z-index: 10;
-    }
-
-    .timed-event.timeblock {
-        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 50%, #4A148C 100%) !important;
-        border-left: 4px solid #CE93D8;
-        box-shadow: 0 4px 12px rgba(142, 36, 170, 0.3);
-    }
-
-    .timed-event.timeblock:hover {
-        box-shadow: 0 6px 16px rgba(142, 36, 170, 0.4);
-    }
-
-    .timed-event.has-conflict {
-        border: 2px solid #e53935;
-        box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4), 0 0 0 3px rgba(229, 57, 53, 0.1);
-    }
-
-    .event-icon {
-        display: inline-block;
-        margin-right: 4px;
-        font-size: 1rem;
-        vertical-align: middle;
-    }
-
-    .conflict-badge {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        background: #e53935;
-        color: white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 700;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        z-index: 2;
-    }
-
-    .timed-event-title {
-        font-weight: 700;
-        margin-bottom: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .timed-event-time {
-        font-size: 0.75rem;
-        opacity: 0.9;
-    }
-
-    .current-time-indicator {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #e53935;
-        z-index: 5;
-        pointer-events: none;
-    }
-
-    .current-time-indicator::before {
-        content: '';
-        position: absolute;
-        left: -4px;
-        top: -3px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #e53935;
-    }
-
-    /* Multi-Day Hour View (Work Week & Week) */
-    .multi-day-hour-view {
-        display: grid;
-        grid-template-columns: 80px 1fr;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .multi-day-columns {
-        display: flex;
-        overflow-x: auto;
-        min-width: 0;
-    }
-
-    .day-hour-column {
-        flex: 1;
-        min-width: 150px;
-        border-right: 1px solid #e9ecef;
-        position: relative;
-    }
-
-    .day-hour-column:last-child {
-        border-right: none;
-    }
-
-    .day-hour-header {
-        position: sticky;
-        top: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 12px 8px;
-        text-align: center;
-        font-weight: 700;
-        font-size: 0.9rem;
-        border-bottom: 2px solid #e9ecef;
-        z-index: 15;
-    }
-
-    .day-hour-header.today {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .day-hour-grid {
-        position: relative;
-        min-height: 1440px;
-    }
-
-    .day-hour-cell {
-        height: 60px;
-        border-bottom: 1px solid #e9ecef;
-        position: relative;
-    }
-
-    .day-hour-cell:hover {
-        background: #f8f9fa;
-    }
-
     /* Time Block Templates */
     .template-buttons-container {
-        background: white;
         border-radius: 16px;
         padding: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         margin-bottom: 2rem;
         animation: fadeInUp 0.6s ease-out 0.15s backwards;
     }
@@ -484,7 +78,6 @@
         font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 1rem;
-        color: #2d3748;
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -521,108 +114,55 @@
     .template-btn.focus {
         background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%) !important;
     }
-
-    /* Full Page Mode */
-    .full-page-mode .calendar-main {
-        height: calc(100vh - 180px);
-        overflow: hidden;
-    }
-
-    .full-page-mode .day-view-container,
-    .full-page-mode .multi-day-hour-view {
-        max-height: calc(100vh - 200px);
-    }
-
-    .fullscreen-toggle-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: var(--transition-smooth) !important;
-    }
-
-    .fullscreen-toggle-btn:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35) !important;
-    }
 </style>
 
 <div>
 
 @if (!_isFullPageMode)
 {
-    <div class="calendar-header">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-        <h1 class="calendar-title">📅 Calendar</h1>
-        <RadzenButton Icon="add" Text="Create Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Today))" class="create-event-btn" />
-    </RadzenStack>
-</div>
-}
-
-<div class="calendar-controls">
-    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
-        <RadzenColumn Size="12" SizeMD="3">
+    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); margin-bottom: 2rem;">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="NavigatePrevious" Size="ButtonSize.Medium" class="calendar-nav-btn" />
-                <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" Click="GoToToday" class="calendar-nav-btn">Today</RadzenButton>
-                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="NavigateNext" Size="ButtonSize.Medium" class="calendar-nav-btn" />
+                <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
+                <RadzenButton Icon="@(_isFullPageMode ? "fullscreen_exit" : "fullscreen")"
+                              Click="ToggleFullPageMode"
+                              Size="ButtonSize.Medium"
+                              Text="@(_isFullPageMode ? "Exit Full Page" : "Full Page")"
+                              ButtonStyle="ButtonStyle.Light"
+                              title="Toggle full page view" />
             </RadzenStack>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="3">
-            <div class="calendar-view-title">@GetCurrentViewTitle()</div>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="2">
-            <RadzenDropDown @bind-Value="_currentView" Data="@_availableViews" Change="@OnViewChanged" Style="width: 100%; border-radius: 10px;" TextProperty="Text" ValueProperty="Value" />
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="2">
-            <RadzenButton Icon="date_range" ButtonStyle="ButtonStyle.Light" Click="OpenCustomRangeDialog" Size="ButtonSize.Medium" Text="Custom Range" class="calendar-nav-btn" Style="width: 100%;" />
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="2">
-            <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" class="calendar-nav-btn" Style="width: 100%;" title="Download daily agenda as PDF" />
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="2">
-            <RadzenButton Icon="@(_isFullPageMode ? "fullscreen_exit" : "fullscreen")"
-                          Click="ToggleFullPageMode"
-                          Size="ButtonSize.Medium"
-                          Text="@(_isFullPageMode ? "Exit Full Page" : "Full Page")"
-                          class="fullscreen-toggle-btn"
-                          Style="width: 100%;"
-                          title="Toggle full page view" />
-        </RadzenColumn>
-    </RadzenRow>
-</div>
-
-@if (!_isFullPageMode)
-{
-    <div class="template-buttons-container">
-    <div class="template-buttons-title">
-        ⚡ Quick Time Block Templates
-    </div>
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-        <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
-            🧠 Deep Work (2h)
-        </RadzenButton>
-        <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
-            👥 Meeting (30m)
-        </RadzenButton>
-        <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
-            🎯 Focus Block (1.5h)
-        </RadzenButton>
-        <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
-            ☕ Break (15m)
-        </RadzenButton>
-        <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
-            📋 Planning (1h)
-        </RadzenButton>
-        <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
-            ✅ Review (45m)
-        </RadzenButton>
-    </RadzenStack>
-</div>
+        </RadzenStack>
+    </RadzenCard>
 }
 
-<div class="calendar-main @(_isFullPageMode ? "full-page-mode" : "")" @oncontextmenu:preventDefault>
+<RadzenCard Style="margin-bottom: 2rem;">
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">⚡ Quick Time Block Templates</RadzenText>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
+                🧠 Deep Work (2h)
+            </RadzenButton>
+            <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
+                👥 Meeting (30m)
+            </RadzenButton>
+            <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
+                🎯 Focus Block (1.5h)
+            </RadzenButton>
+            <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
+                ☕ Break (15m)
+            </RadzenButton>
+            <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
+                📋 Planning (1h)
+            </RadzenButton>
+            <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
+                ✅ Review (45m)
+            </RadzenButton>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+<RadzenCard @oncontextmenu:preventDefault>
     @if (_loading)
     {
         <div class="loading-container">
@@ -633,68 +173,24 @@
     {
         @RenderCurrentView()
     }
-</div>
+</RadzenCard>
 
-@if (!_isFullPageMode)
-{
-<div class="events-sidebar rz-mt-4" @oncontextmenu:preventDefault>
-    <div class="events-sidebar-title">📌 Events on @_selectedDate.ToString("MMMM dd, yyyy")</div>
-    @if (GetEventsForDay(_selectedDate).Any())
-    {
-        <RadzenStack Gap="0.75rem">
-            @foreach (var evt in GetEventsForDay(_selectedDate))
-            {
-                <div style="cursor: pointer;" @oncontextmenu="@(args => ShowEventContextMenu(args, evt))" @oncontextmenu:preventDefault @oncontextmenu:stopPropagation @onclick="@(() => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id))">
-                    <RadzenCard Style="@($"border-left: 4px solid {GetEventBackgroundColor(evt)};")" class="event-detail-card">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
-                            <div style="@($"width: 48px; height: 48px; border-radius: 12px; background: {GetEventBackgroundColor(evt)}15; display: flex; align-items: center; justify-content: center;")">
-                                <RadzenIcon Icon="event" Style="@($"color: {GetEventBackgroundColor(evt)}; font-size: 1.5rem;")" />
-                            </div>
-                            <RadzenStack Gap="0.25rem" Style="flex: 1;">
-                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 700; color: #2d3748;">@evt.Title</RadzenText>
-                                @if (!evt.IsAllDay)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
-                                        🕐 @FormatTime(evt.StartTime) - @FormatTime(evt.EndTime)
-                                    </RadzenText>
-                                }
-                                else
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
-                                        📅 All Day
-                                    </RadzenText>
-                                }
-                                @if (!string.IsNullOrEmpty(evt.Location))
-                                {
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">📍 @evt.Location</RadzenText>
-                                    </RadzenStack>
-                                }
-                                @if (evt.EventType == Core.Enums.EventType.Meeting && evt.Attendees.Any())
-                                {
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">👥 @evt.Attendees.Count attendee@(evt.Attendees.Count == 1 ? "" : "s")</RadzenText>
-                                    </RadzenStack>
-                                }
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenCard>
-                </div>
-            }
-        </RadzenStack>
-    }
-    else
-    {
-        <div class="no-events-message">No events scheduled for this date</div>
-    }
-</div>
-}
 
 </div>
 
 @code {
+    // Appointment wrapper class for RadzenScheduler
+    public class AppointmentData
+    {
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
+        public string Text { get; set; } = string.Empty;
+        public Event Event { get; set; } = null!;
+    }
+
     private DateTime _selectedDate = DateTime.Today;
     private List<Event> _events = new();
+    private List<AppointmentData> _appointments = new();
     private bool _loading = true;
     private Event? _contextMenuEvent;
     private DateTime? _contextMenuDate;
@@ -790,12 +286,35 @@
     {
         _loading = true;
         StateHasChanged();
-        var startOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
-        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
-        _events = await EventRepository.GetEventsByDateRangeAsync(
-            startOfMonth.AddDays(-7),
-            endOfMonth.AddDays(7),
-            _userId);
+
+        DateTime startDate, endDate;
+
+        // For Year, Planner, and Timeline views, load entire year
+        if (_currentView == "Year" || _currentView == "Planner" || _currentView == "Timeline")
+        {
+            startDate = new DateTime(DateTime.Today.Year, 1, 1);
+            endDate = new DateTime(DateTime.Today.Year, 12, 31);
+        }
+        else
+        {
+            // For other views, load month with buffer
+            var startOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            startDate = startOfMonth.AddDays(-7);
+            endDate = endOfMonth.AddDays(7);
+        }
+
+        _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
+
+        // Convert events to appointments for RadzenScheduler
+        _appointments = _events.Select(e => new AppointmentData
+        {
+            Start = e.StartTime,
+            End = e.EndTime,
+            Text = e.Title,
+            Event = e
+        }).ToList();
+
         _loading = false;
         StateHasChanged();
     }
@@ -813,7 +332,10 @@
             new ViewOption { Value = "Day", Text = "Day" },
             new ViewOption { Value = "WorkWeek", Text = "Work Week" },
             new ViewOption { Value = "Week", Text = "Week" },
-            new ViewOption { Value = "Month", Text = "Month" }
+            new ViewOption { Value = "Month", Text = "Month" },
+            new ViewOption { Value = "Year", Text = "Year" },
+            new ViewOption { Value = "Planner", Text = "Planner" },
+            new ViewOption { Value = "Timeline", Text = "Timeline" }
         };
 
         // Add custom ranges
@@ -928,6 +450,9 @@
             "Day" => _selectedDate.ToString("MMMM dd, yyyy"),
             "WorkWeek" or "Week" => $"{GetWeekStart().ToString("MMM dd")} - {GetWeekEnd().ToString("MMM dd, yyyy")}",
             "Month" => _selectedDate.ToString("MMMM yyyy"),
+            "Year" => DateTime.Today.Year.ToString(),
+            "Planner" => $"Year Planner - {DateTime.Today.Year}",
+            "Timeline" => $"Timeline - {DateTime.Today.Year}",
             _ when _selectedCustomRange != null => $"{GetCustomRangeStart().ToString("MMM dd")} - {GetCustomRangeEnd().ToString("MMM dd, yyyy")}",
             _ => _selectedDate.ToString("MMMM yyyy")
         };
@@ -1165,40 +690,9 @@
         {
             RenderGridView(builder);
         }
-        else if (_currentView == "Month")
-        {
-            RenderMonthView(builder);
-        }
-        else if (_currentView == "Day")
-        {
-            RenderDayViewWithHours(builder);
-        }
-        else if (_currentView == "WorkWeek")
-        {
-            RenderWorkWeekViewWithHours(builder);
-        }
-        else if (_currentView == "Week")
-        {
-            RenderWeekViewWithHours(builder);
-        }
-        else if (_currentView.StartsWith("Custom_") && _selectedCustomRange != null)
-        {
-            // Auto-select view based on custom range duration
-            if (_selectedCustomRange.DaysCount <= 7)
-            {
-                // Use multi-day hourly view for shorter ranges
-                var customDays = GetCustomRangeDays();
-                RenderMultiDayHourView(builder, customDays);
-            }
-            else
-            {
-                // Use grid view for longer ranges
-                RenderGridView(builder);
-            }
-        }
         else
         {
-            RenderLinearView(builder);
+            RenderSchedulerView(builder);
         }
     };
 
@@ -1212,6 +706,94 @@
         builder.AddAttribute(5, "OnDeleteEvent", EventCallback.Factory.Create<Guid>(this, DeleteEventAsync));
         builder.AddAttribute(6, "OnCreateEvent", EventCallback.Factory.Create(this, CreateEventFromGrid));
         builder.CloseComponent();
+    }
+
+    private void RenderSchedulerView(RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<RadzenScheduler<AppointmentData>>(0);
+        builder.AddAttribute(1, "Data", _appointments);
+        builder.AddAttribute(2, "TItem", typeof(AppointmentData));
+        builder.AddAttribute(3, "StartProperty", "Start");
+        builder.AddAttribute(4, "EndProperty", "End");
+        builder.AddAttribute(5, "TextProperty", "Text");
+        builder.AddAttribute(6, "SelectedIndex", GetSelectedViewIndex());
+        builder.AddAttribute(7, "AppointmentSelect", EventCallback.Factory.Create<SchedulerAppointmentSelectEventArgs<AppointmentData>>(this, OnAppointmentSelect));
+        builder.AddAttribute(8, "SlotSelect", EventCallback.Factory.Create<SchedulerSlotSelectEventArgs>(this, OnSlotSelect));
+        builder.AddAttribute(9, "AppointmentRender", new Action<SchedulerAppointmentRenderEventArgs<AppointmentData>>(OnAppointmentRender));
+
+        // Add child content for views
+        builder.AddAttribute(10, "ChildContent", (RenderFragment)(b =>
+        {
+            // Month View
+            b.OpenComponent<RadzenMonthView>(0);
+            b.CloseComponent();
+
+            // Week View
+            b.OpenComponent<RadzenWeekView>(1);
+            b.CloseComponent();
+
+            // Day View
+            b.OpenComponent<RadzenDayView>(2);
+            b.CloseComponent();
+
+            // Year View
+            b.OpenComponent<RadzenYearView>(3);
+            b.CloseComponent();
+
+            // Year Planner View
+            b.OpenComponent<RadzenYearPlannerView>(4);
+            b.CloseComponent();
+
+            // Year Timeline View
+            b.OpenComponent<RadzenYearTimelineView>(5);
+            b.CloseComponent();
+        }));
+
+        builder.CloseComponent();
+    }
+
+    private int GetSelectedViewIndex()
+    {
+        return _currentView switch
+        {
+            "Month" => 0,
+            "Week" => 1,
+            "WorkWeek" => 1,
+            "Day" => 2,
+            "Year" => 3,
+            "Planner" => 4,
+            "Timeline" => 5,
+            _ => 0
+        };
+    }
+
+    private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AppointmentData> args)
+    {
+        var appointment = args.Data;
+        if (appointment?.Event != null)
+        {
+            await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+        }
+    }
+
+    private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    {
+        await OpenEventDialogAsync(null, args.Start);
+    }
+
+    private void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AppointmentData> args)
+    {
+        var evt = args.Data.Event;
+        if (evt != null)
+        {
+            // Apply event color
+            var backgroundColor = GetEventBackgroundColor(evt);
+            args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+
+            // Add icon based on event type
+            var icon = GetEventIcon(evt.EventType);
+            args.Data.Text = $"{icon} {evt.Title}";
+        }
     }
 
     private async Task SearchEventsFromGrid(string searchTerm)
@@ -1238,475 +820,10 @@
         await OpenEventDialogAsync(null, DateTime.Today);
     }
 
-    private void RenderMonthView(RenderTreeBuilder builder)
-    {
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "style", "overflow-x: auto;");
 
-        builder.OpenElement(2, "table");
-        builder.AddAttribute(3, "class", "calendar-table");
 
-        var showWeekNumbers = _settings?.ShowWeekNumbers ?? false;
 
-        // Header
-        builder.OpenElement(4, "thead");
-        builder.OpenElement(5, "tr");
 
-        // Week number header column
-        if (showWeekNumbers)
-        {
-            builder.OpenElement(6, "th");
-            builder.AddAttribute(7, "class", "calendar-header-cell");
-            builder.AddAttribute(8, "style", "width: 50px;");
-            builder.AddContent(9, "Wk");
-            builder.CloseElement();
-        }
-
-        // Get day names starting from the configured start of week
-        string[] allDayNames = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
-        var dayNames = new List<string>();
-        for (int i = 0; i < 7; i++)
-        {
-            dayNames.Add(allDayNames[((int)startOfWeek + i) % 7]);
-        }
-
-        foreach (var dayName in dayNames)
-        {
-            builder.OpenElement(10, "th");
-            builder.AddAttribute(11, "class", "calendar-header-cell");
-            builder.AddContent(12, dayName);
-            builder.CloseElement();
-        }
-
-        builder.CloseElement(); // tr
-        builder.CloseElement(); // thead
-
-        // Body
-        builder.OpenElement(13, "tbody");
-
-        foreach (var week in GetCalendarWeeks())
-        {
-            builder.OpenElement(14, "tr");
-
-            // Week number cell
-            if (showWeekNumbers)
-            {
-                var weekNumber = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                    week[0],
-                    System.Globalization.CalendarWeekRule.FirstDay,
-                    startOfWeek);
-
-                builder.OpenElement(15, "td");
-                builder.AddAttribute(16, "style", "text-align: center; font-weight: 600; color: #667eea; background: #f8f9fa; vertical-align: middle;");
-                builder.AddContent(17, weekNumber);
-                builder.CloseElement();
-            }
-
-            foreach (var day in week)
-            {
-                RenderDayCell(builder, day, "120px");
-            }
-
-            builder.CloseElement(); // tr
-        }
-
-        builder.CloseElement(); // tbody
-        builder.CloseElement(); // table
-        builder.CloseElement(); // div
-    }
-
-    private void RenderDayViewWithHours(RenderTreeBuilder builder)
-    {
-        var eventsForDay = GetEventsForDay(_selectedDate);
-
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "day-view-container");
-        builder.AddAttribute(2, "id", "day-view-container");
-        builder.AddAttribute(3, "style", "max-height: 800px; overflow-y: auto;");
-
-        // Time column
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "time-column");
-
-        for (int hour = 0; hour < 24; hour++)
-        {
-            var density = CalculateHourDensity(eventsForDay, hour);
-            var densityClass = GetDensityClass(density);
-
-            builder.OpenElement(5, "div");
-            builder.AddAttribute(6, "class", "time-slot");
-            builder.AddAttribute(7, "title", $"{density}% occupied");
-
-            // Density indicator bar
-            builder.OpenElement(8, "div");
-            builder.AddAttribute(9, "class", $"density-indicator {densityClass}");
-            builder.CloseElement();
-
-            // Time label
-            builder.AddContent(10, FormatHourLabel(hour));
-            builder.CloseElement();
-        }
-
-        builder.CloseElement(); // time-column
-
-        // Day column
-        builder.OpenElement(8, "div");
-        builder.AddAttribute(9, "class", "day-column");
-
-        // Hour rows (background grid)
-        for (int hour = 0; hour < 24; hour++)
-        {
-            builder.OpenElement(10, "div");
-            builder.AddAttribute(11, "class", "hour-row");
-            builder.AddAttribute(12, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this,
-                args => OpenEventDialogAsync(null, _selectedDate.Date.AddHours(hour))));
-            builder.CloseElement();
-        }
-
-        // Render events positioned absolutely
-        foreach (var evt in eventsForDay)
-        {
-            var startHour = evt.StartTime.Hour;
-            var startMinute = evt.StartTime.Minute;
-            var endHour = evt.EndTime.Hour;
-            var endMinute = evt.EndTime.Minute;
-
-            // Calculate top position (in pixels from top)
-            var topPosition = (startHour * 60) + startMinute;
-
-            // Calculate height based on duration
-            var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
-            var height = Math.Max(30, durationMinutes); // Minimum height of 30px
-
-            // Check for conflicts
-            var conflictingEvents = GetConflictingEvents(evt, eventsForDay);
-            var hasConflict = conflictingEvents.Any();
-            var isTimeBlock = evt.EventType == Core.Enums.EventType.TimeBlock;
-
-            var cssClass = "timed-event";
-            if (isTimeBlock) cssClass += " timeblock";
-            if (hasConflict) cssClass += " has-conflict";
-
-            builder.OpenElement(13, "div");
-            builder.AddAttribute(14, "class", cssClass);
-            builder.AddAttribute(15, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)};");
-            builder.AddAttribute(16, "data-event-id", evt.Id.ToString());
-            builder.AddAttribute(17, "data-duration", durationMinutes.ToString());
-            builder.AddAttribute(18, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
-            builder.AddAttribute(19, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
-            builder.AddAttribute(20, "oncontextmenu:preventDefault", true);
-            builder.AddAttribute(21, "oncontextmenu:stopPropagation", true);
-
-            // Conflict badge
-            if (hasConflict)
-            {
-                builder.OpenElement(20, "div");
-                builder.AddAttribute(21, "class", "conflict-badge");
-                builder.AddAttribute(22, "title", $"Conflicts with {conflictingEvents.Count} event(s)");
-                builder.AddContent(23, "⚠");
-                builder.CloseElement();
-            }
-
-            // Event content with icon
-            builder.OpenElement(24, "div");
-            builder.AddAttribute(25, "class", "timed-event-title");
-            builder.OpenElement(26, "span");
-            builder.AddAttribute(27, "class", "event-icon");
-            builder.AddContent(28, GetEventIcon(evt.EventType));
-            builder.CloseElement();
-            builder.AddContent(29, evt.Title);
-            builder.CloseElement();
-
-            builder.OpenElement(30, "div");
-            builder.AddAttribute(31, "class", "timed-event-time");
-            builder.AddContent(32, $"{FormatTime(evt.StartTime)} - {FormatTime(evt.EndTime)}");
-            builder.CloseElement();
-
-            builder.CloseElement(); // timed-event
-        }
-
-        // Current time indicator (red line) if viewing today
-        if (_selectedDate.Date == DateTime.Today)
-        {
-            var now = DateTime.Now;
-            var currentPosition = (now.Hour * 60) + now.Minute;
-
-            builder.OpenElement(26, "div");
-            builder.AddAttribute(27, "class", "current-time-indicator");
-            builder.AddAttribute(28, "style", $"top: {currentPosition}px;");
-            builder.CloseElement();
-        }
-
-        builder.CloseElement(); // day-column
-        builder.CloseElement(); // day-view-container
-    }
-
-    private void RenderWorkWeekViewWithHours(RenderTreeBuilder builder)
-    {
-        var workWeekDays = GetWorkWeekDays();
-        RenderMultiDayHourView(builder, workWeekDays);
-    }
-
-    private void RenderWeekViewWithHours(RenderTreeBuilder builder)
-    {
-        var weekDays = GetWeekDays();
-        RenderMultiDayHourView(builder, weekDays);
-    }
-
-    private void RenderMultiDayHourView(RenderTreeBuilder builder, List<DateTime> days)
-    {
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "multi-day-hour-view");
-        builder.AddAttribute(2, "id", "multi-day-view-container");
-        builder.AddAttribute(3, "style", "max-height: 800px; overflow-y: auto;");
-
-        // Time column (shared)
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "time-column");
-
-        // Empty header cell for time column
-        builder.OpenElement(5, "div");
-        builder.AddAttribute(6, "class", "time-column-header");
-        builder.CloseElement();
-
-        // Calculate average density across all days for each hour
-        for (int hour = 0; hour < 24; hour++)
-        {
-            var hourCopy = hour; // Capture for lambda
-            var avgDensity = days.Average(day => CalculateHourDensity(GetEventsForDay(day), hourCopy));
-            var densityClass = GetDensityClass((int)avgDensity);
-
-            builder.OpenElement(7, "div");
-            builder.AddAttribute(8, "class", "time-slot");
-            builder.AddAttribute(9, "title", $"{avgDensity:F0}% avg occupied");
-
-            // Density indicator bar
-            builder.OpenElement(10, "div");
-            builder.AddAttribute(11, "class", $"density-indicator {densityClass}");
-            builder.CloseElement();
-
-            // Time label
-            builder.AddContent(12, FormatHourLabel(hourCopy));
-            builder.CloseElement();
-        }
-
-        builder.CloseElement(); // time-column
-
-        // Day columns container
-        builder.OpenElement(10, "div");
-        builder.AddAttribute(11, "class", "multi-day-columns");
-
-        foreach (var day in days)
-        {
-            var eventsForDay = GetEventsForDay(day);
-            var isToday = day.Date == DateTime.Today;
-
-            builder.OpenElement(12, "div");
-            builder.AddAttribute(13, "class", "day-hour-column");
-
-            // Day header
-            builder.OpenElement(14, "div");
-            builder.AddAttribute(15, "class", "day-hour-header" + (isToday ? " today" : ""));
-            builder.OpenElement(16, "div");
-            builder.AddContent(17, day.ToString("ddd"));
-            builder.CloseElement();
-            builder.OpenElement(18, "div");
-            builder.AddAttribute(19, "style", "font-size: 0.8rem; font-weight: 600;");
-            builder.AddContent(20, day.ToString("MMM dd"));
-            builder.CloseElement();
-            builder.CloseElement();
-
-            // Day grid with hours
-            builder.OpenElement(21, "div");
-            builder.AddAttribute(22, "class", "day-hour-grid");
-
-            // Hour cells (background grid)
-            for (int hour = 0; hour < 24; hour++)
-            {
-                builder.OpenElement(23, "div");
-                builder.AddAttribute(24, "class", "day-hour-cell");
-                builder.AddAttribute(25, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    args => OpenEventDialogAsync(null, day.Date.AddHours(hour))));
-                builder.CloseElement();
-            }
-
-            // Render events positioned absolutely
-            foreach (var evt in eventsForDay)
-            {
-                var startHour = evt.StartTime.Hour;
-                var startMinute = evt.StartTime.Minute;
-                var topPosition = (startHour * 60) + startMinute;
-                var durationMinutes = (evt.EndTime - evt.StartTime).TotalMinutes;
-                var height = Math.Max(30, durationMinutes);
-
-                // Check for conflicts
-                var conflictingEvents = GetConflictingEvents(evt, eventsForDay);
-                var hasConflict = conflictingEvents.Any();
-                var isTimeBlock = evt.EventType == Core.Enums.EventType.TimeBlock;
-
-                var cssClass = "timed-event";
-                if (isTimeBlock) cssClass += " timeblock";
-                if (hasConflict) cssClass += " has-conflict";
-
-                builder.OpenElement(26, "div");
-                builder.AddAttribute(27, "class", cssClass);
-                builder.AddAttribute(28, "style", $"top: {topPosition}px; height: {height}px; background-color: {GetEventBackgroundColor(evt)}; left: 2px; right: 2px;");
-                builder.AddAttribute(29, "data-event-id", evt.Id.ToString());
-                builder.AddAttribute(30, "data-duration", durationMinutes.ToString());
-                builder.AddAttribute(31, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
-                builder.AddAttribute(32, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
-                builder.AddAttribute(33, "oncontextmenu:preventDefault", true);
-                builder.AddAttribute(34, "oncontextmenu:stopPropagation", true);
-
-                // Conflict badge
-                if (hasConflict && height > 30)
-                {
-                    builder.OpenElement(33, "div");
-                    builder.AddAttribute(34, "class", "conflict-badge");
-                    builder.AddAttribute(35, "title", $"Conflicts with {conflictingEvents.Count} event(s)");
-                    builder.AddAttribute(36, "style", "width: 16px; height: 16px; font-size: 0.6rem;");
-                    builder.AddContent(37, "⚠");
-                    builder.CloseElement();
-                }
-
-                // Event content with icon
-                builder.OpenElement(38, "div");
-                builder.AddAttribute(39, "class", "timed-event-title");
-                builder.AddAttribute(40, "style", "font-size: 0.75rem;");
-                builder.OpenElement(41, "span");
-                builder.AddAttribute(42, "class", "event-icon");
-                builder.AddAttribute(43, "style", "font-size: 0.75rem;");
-                builder.AddContent(44, GetEventIcon(evt.EventType));
-                builder.CloseElement();
-                var displayTitle = evt.Title.Length > 12 ? evt.Title.Substring(0, 10) + "..." : evt.Title;
-                builder.AddContent(45, displayTitle);
-                builder.CloseElement();
-
-                if (height > 40)
-                {
-                    builder.OpenElement(46, "div");
-                    builder.AddAttribute(47, "class", "timed-event-time");
-                    builder.AddAttribute(48, "style", "font-size: 0.65rem;");
-                    builder.AddContent(49, FormatTime(evt.StartTime));
-                    builder.CloseElement();
-                }
-
-                builder.CloseElement(); // timed-event
-            }
-
-            // Current time indicator for today
-            if (isToday)
-            {
-                var now = DateTime.Now;
-                var currentPosition = (now.Hour * 60) + now.Minute;
-
-                builder.OpenElement(41, "div");
-                builder.AddAttribute(42, "class", "current-time-indicator");
-                builder.AddAttribute(43, "style", $"top: {currentPosition}px;");
-                builder.CloseElement();
-            }
-
-            builder.CloseElement(); // day-hour-grid
-            builder.CloseElement(); // day-hour-column
-        }
-
-        builder.CloseElement(); // multi-day-columns
-        builder.CloseElement(); // multi-day-hour-view
-    }
-
-    private void RenderLinearView(RenderTreeBuilder builder)
-    {
-        var days = GetDaysForCurrentView();
-
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "style", "overflow-x: auto;");
-
-        builder.OpenElement(2, "table");
-        builder.AddAttribute(3, "class", "calendar-table");
-
-        // Header
-        builder.OpenElement(4, "thead");
-        builder.OpenElement(5, "tr");
-
-        foreach (var day in days)
-        {
-            builder.OpenElement(6, "th");
-            builder.AddAttribute(7, "class", "calendar-header-cell");
-            builder.AddAttribute(8, "style", "min-width: 150px;");
-            builder.OpenComponent<RadzenText>(9);
-            builder.AddAttribute(10, "TextStyle", TextStyle.Body1);
-            builder.AddAttribute(11, "ChildContent", (RenderFragment)(b =>
-            {
-                b.AddContent(0, day.ToString("ddd"));
-                b.OpenElement(1, "br");
-                b.CloseElement();
-                b.AddContent(2, day.ToString("MMM dd"));
-            }));
-            builder.CloseComponent();
-            builder.CloseElement();
-        }
-
-        builder.CloseElement(); // tr
-        builder.CloseElement(); // thead
-
-        // Body
-        builder.OpenElement(12, "tbody");
-        builder.OpenElement(13, "tr");
-
-        foreach (var day in days)
-        {
-            RenderDayCell(builder, day, "150px");
-        }
-
-        builder.CloseElement(); // tr
-        builder.CloseElement(); // tbody
-        builder.CloseElement(); // table
-        builder.CloseElement(); // div
-    }
-
-    private void RenderDayCell(RenderTreeBuilder builder, DateTime day, string minWidth)
-    {
-        var isToday = day.Date == DateTime.Today;
-        var isOtherMonth = _currentView == "Month" && day.Month != _selectedDate.Month;
-        var cellClass = "calendar-day-cell" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "");
-        var dayCellContextDate = day; // Capture for lambda
-
-        builder.OpenElement(0, "td");
-        builder.AddAttribute(1, "class", cellClass);
-        builder.AddAttribute(2, "style", $"min-width: {minWidth};");
-
-        // Day number (with context menu for adding events)
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "calendar-day-number" + (isToday ? " today" : ""));
-        builder.AddAttribute(5, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowAddEventContextMenu(args, dayCellContextDate)));
-        builder.AddAttribute(6, "oncontextmenu:preventDefault", true);
-        builder.AddAttribute(7, "style", "cursor: context-menu;");
-        builder.AddContent(8, day.Day);
-        builder.CloseElement();
-
-        // Events
-        var events = GetEventsForDay(day);
-        foreach (var evt in events)
-        {
-            builder.OpenElement(9, "div");
-            builder.AddAttribute(10, "class", "event-container");
-            builder.AddAttribute(11, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowEventContextMenu(args, evt)));
-            builder.AddAttribute(12, "oncontextmenu:preventDefault", true);
-            builder.AddAttribute(13, "onclick", EventCallback.Factory.Create(this, () => OpenEventDialogAsync(evt.RecurrenceParentId ?? evt.Id)));
-
-            builder.OpenElement(14, "div");
-            builder.AddAttribute(15, "class", "event-badge");
-            builder.AddAttribute(16, "style", $"background-color: {GetEventBackgroundColor(evt)}; color: white;");
-            builder.AddAttribute(17, "title", evt.Title); // Full title on hover
-            builder.AddContent(18, evt.Title.Substring(0, Math.Min(15, evt.Title.Length)) + (evt.Title.Length > 15 ? "..." : ""));
-            builder.CloseElement();
-
-            builder.CloseElement(); // div
-        }
-
-        builder.CloseElement(); // td
-    }
 
     private string FormatTime(DateTime time)
     {
@@ -1965,57 +1082,6 @@
         }
     }
 
-    // Time Density Calculation
-    private int CalculateHourDensity(List<Event> events, int hour)
-    {
-        var hourStart = new TimeSpan(hour, 0, 0);
-        var hourEnd = new TimeSpan(hour, 59, 59);
-
-        var totalMinutesOccupied = 0;
-
-        foreach (var evt in events)
-        {
-            var eventStart = evt.StartTime.TimeOfDay;
-            var eventEnd = evt.EndTime.TimeOfDay;
-
-            // Check if event overlaps with this hour
-            if (eventStart < hourEnd && eventEnd > hourStart)
-            {
-                // Calculate overlap
-                var overlapStart = eventStart > hourStart ? eventStart : hourStart;
-                var overlapEnd = eventEnd < hourEnd ? eventEnd : hourEnd;
-                var overlapMinutes = (overlapEnd - overlapStart).TotalMinutes;
-
-                totalMinutesOccupied += (int)Math.Ceiling(overlapMinutes);
-            }
-        }
-
-        // Cap at 60 minutes and return percentage
-        totalMinutesOccupied = Math.Min(totalMinutesOccupied, 60);
-        return (int)Math.Round((totalMinutesOccupied / 60.0) * 100);
-    }
-
-    private string GetDensityClass(int densityPercentage)
-    {
-        return densityPercentage switch
-        {
-            0 => "density-none",
-            <= 33 => "density-low",
-            <= 66 => "density-medium",
-            < 100 => "density-high",
-            _ => "density-full"
-        };
-    }
-
-    // Conflict Detection
-    private List<Event> GetConflictingEvents(Event targetEvent, List<Event> allEvents)
-    {
-        return allEvents
-            .Where(e => e.Id != targetEvent.Id &&
-                       e.StartTime < targetEvent.EndTime &&
-                       e.EndTime > targetEvent.StartTime)
-            .ToList();
-    }
 
     // Event Icon Mapping
     private string GetEventIcon(Core.Enums.EventType eventType)
