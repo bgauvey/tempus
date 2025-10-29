@@ -14,129 +14,138 @@
 
 <PageTitle>Address Book - Tempus</PageTitle>
 
-<div class="page-header">
-    <h1 style="font-size: 2rem; font-weight: 700; color: #1a202c; margin: 0;">📇 Address Book</h1>
-    <p style="color: #718096; margin-top: 0.5rem;">Manage your contacts and connections</p>
-</div>
-
-<RadzenStack Gap="1.5rem" Style="margin-top: 2rem;">
-    <!-- Toolbar -->
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-            <RadzenButton Icon="add" Text="New Contact" ButtonStyle="ButtonStyle.Success" Click="@OpenNewContactDialog" />
-            <RadzenButton Icon="upload_file" Text="Import CSV" ButtonStyle="ButtonStyle.Primary" Click="@OpenImportDialog" />
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">📇 Address Book</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">Manage your contacts and connections</RadzenText>
         </RadzenStack>
 
-        <RadzenTextBox Placeholder="Search contacts..." Style="width: 300px;"
-                      @bind-Value="@_searchTerm" @oninput="@OnSearchInput" />
+        <!-- Toolbar -->
+        <RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenButton Icon="add" Text="New Contact" ButtonStyle="ButtonStyle.Success" Click="@OpenNewContactDialog" />
+                    <RadzenButton Icon="upload_file" Text="Import CSV" ButtonStyle="ButtonStyle.Primary" Click="@OpenImportDialog" />
+                </RadzenStack>
+
+                <RadzenTextBox Placeholder="Search contacts..." Style="width: 300px;"
+                              @bind-Value="@_searchTerm" @oninput="@OnSearchInput" />
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Data Grid -->
+        @if (_loading)
+        {
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 400px;">
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else if (_contacts.Any())
+        {
+            <RadzenCard>
+                <RadzenDataGrid Data="@_filteredContacts" TItem="Tempus.Core.Models.Contact" AllowFiltering="true" AllowSorting="true"
+                               AllowPaging="true" PageSize="20" PagerHorizontalAlign="HorizontalAlign.Center">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Name" Title="Name" Width="200px">
+                            <Template Context="contact">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@GetInitials(contact.Name)"
+                                                Style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;" />
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@contact.Name</RadzenText>
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Email" Title="Email" Width="250px">
+                            <Template Context="contact">
+                                <RadzenLink Path="@($"mailto:{contact.Email}")" Text="@contact.Email" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Phone" Title="Phone" Width="150px">
+                            <Template Context="contact">
+                                @if (!string.IsNullOrEmpty(contact.Phone))
+                                {
+                                    <RadzenText>@contact.Phone</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText Style="opacity: 0.5;">—</RadzenText>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Company" Title="Company" Width="180px">
+                            <Template Context="contact">
+                                @if (!string.IsNullOrEmpty(contact.Company))
+                                {
+                                    <RadzenText>@contact.Company</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText Style="opacity: 0.5;">—</RadzenText>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="JobTitle" Title="Job Title" Width="180px">
+                            <Template Context="contact">
+                                @if (!string.IsNullOrEmpty(contact.JobTitle))
+                                {
+                                    <RadzenText>@contact.JobTitle</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText Style="opacity: 0.5;">—</RadzenText>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Source" Width="100px" Sortable="false" Filterable="false">
+                            <Template Context="contact">
+                                @if (contact.IsAutoCreated)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Auto" />
+                                }
+                                else
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Manual" />
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+                            <Template Context="contact">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                Click="@(() => OpenEditContactDialog(contact.Id))" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                Click="@(() => DeleteContact(contact.Id))" />
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem; text-align: center;">
+                    <RadzenIcon Icon="contacts" Style="font-size: 4rem; opacity: 0.3;" />
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600;">No contacts yet</RadzenText>
+                    <RadzenText>Start by adding a new contact or importing from CSV</RadzenText>
+                    <RadzenButton Icon="add" Text="Add Your First Contact" ButtonStyle="ButtonStyle.Success"
+                                Click="@OpenNewContactDialog" Style="margin-top: 0.5rem;" />
+                </RadzenStack>
+            </RadzenCard>
+        }
     </RadzenStack>
-
-    <!-- Data Grid -->
-    @if (_loading)
-    {
-        <div style="display: flex; justify-content: center; align-items: center; min-height: 400px;">
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        </div>
-    }
-    else if (_contacts.Any())
-    {
-        <RadzenDataGrid Data="@_filteredContacts" TItem="Tempus.Core.Models.Contact" AllowFiltering="true" AllowSorting="true"
-                       AllowPaging="true" PageSize="20" PagerHorizontalAlign="HorizontalAlign.Center"
-                       Style="box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;">
-            <Columns>
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Name" Title="Name" Width="200px">
-                    <Template Context="contact">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
-                                @GetInitials(contact.Name)
-                            </div>
-                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@contact.Name</RadzenText>
-                        </RadzenStack>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Email" Title="Email" Width="250px">
-                    <Template Context="contact">
-                        <a href="mailto:@contact.Email" style="color: #4299e1; text-decoration: none;">@contact.Email</a>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Phone" Title="Phone" Width="150px">
-                    <Template Context="contact">
-                        @if (!string.IsNullOrEmpty(contact.Phone))
-                        {
-                            <span>@contact.Phone</span>
-                        }
-                        else
-                        {
-                            <span style="color: #a0aec0;">—</span>
-                        }
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="Company" Title="Company" Width="180px">
-                    <Template Context="contact">
-                        @if (!string.IsNullOrEmpty(contact.Company))
-                        {
-                            <span>@contact.Company</span>
-                        }
-                        else
-                        {
-                            <span style="color: #a0aec0;">—</span>
-                        }
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Property="JobTitle" Title="Job Title" Width="180px">
-                    <Template Context="contact">
-                        @if (!string.IsNullOrEmpty(contact.JobTitle))
-                        {
-                            <span>@contact.JobTitle</span>
-                        }
-                        else
-                        {
-                            <span style="color: #a0aec0;">—</span>
-                        }
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Source" Width="100px" Sortable="false" Filterable="false">
-                    <Template Context="contact">
-                        @if (contact.IsAutoCreated)
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Auto" />
-                        }
-                        else
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Manual" />
-                        }
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Tempus.Core.Models.Contact" Title="Actions" Width="120px" Sortable="false" Filterable="false">
-                    <Template Context="contact">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                        Click="@(() => OpenEditContactDialog(contact.Id))" />
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                        Click="@(() => DeleteContact(contact.Id))" />
-                        </RadzenStack>
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    }
-    else
-    {
-        <div style="text-align: center; padding: 4rem; color: #718096;">
-            <RadzenIcon Icon="contacts" Style="font-size: 4rem; color: #cbd5e0; margin-bottom: 1rem;" />
-            <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No contacts yet</p>
-            <p>Start by adding a new contact or importing from CSV</p>
-            <RadzenButton Icon="add" Text="Add Your First Contact" ButtonStyle="ButtonStyle.Success"
-                        Click="@OpenNewContactDialog" Style="margin-top: 1rem;" />
-        </div>
-    }
-</RadzenStack>
+</div>
 
 @code {
     private List<Tempus.Core.Models.Contact> _contacts = new();

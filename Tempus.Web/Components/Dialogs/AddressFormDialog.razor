@@ -7,53 +7,74 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 
-<RadzenStack Gap="1rem">
-    <RadzenFormField Text="Name" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@_contact.Name" Style="width: 100%;" Placeholder="Enter full name" />
-    </RadzenFormField>
+<RadzenStack Gap="1.5rem">
+    <!-- Contact Information Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600; margin-bottom: 0.5rem;">Contact Information</RadzenText>
 
-    <RadzenFormField Text="Email" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@_contact.Email" Style="width: 100%;" Placeholder="email@example.com" />
-        @if (!string.IsNullOrEmpty(_contact.Email) && !IsValidEmail(_contact.Email))
-        {
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #e53935; margin-top: 0.25rem;">
-                Please enter a valid email address
-            </RadzenText>
-        }
-    </RadzenFormField>
-
-    <RadzenFormField Text="Phone" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@_contact.Phone" Style="width: 100%;" Placeholder="(123) 456-7890" />
-    </RadzenFormField>
-
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Company" Variant="Variant.Outlined">
-                <RadzenTextBox @bind-Value="@_contact.Company" Style="width: 100%;" Placeholder="Company name" />
+            <RadzenFormField Text="Name" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Name" Style="width: 100%;" Placeholder="Enter full name" />
             </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Job Title" Variant="Variant.Outlined">
-                <RadzenTextBox @bind-Value="@_contact.JobTitle" Style="width: 100%;" Placeholder="Position" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
 
-    <RadzenFormField Text="Notes" Variant="Variant.Outlined">
-        <RadzenTextArea @bind-Value="@_contact.Notes" Style="width: 100%;" Rows="4"
-                       Placeholder="Add any additional notes about this contact..." />
-    </RadzenFormField>
+            <RadzenFormField Text="Email" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Email" Style="width: 100%;" Placeholder="email@example.com" />
+                @if (!string.IsNullOrEmpty(_contact.Email) && !IsValidEmail(_contact.Email))
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin-top: 0.25rem; font-style: italic; opacity: 0.8;">
+                        ⚠️ Please enter a valid email address
+                    </RadzenText>
+                }
+            </RadzenFormField>
+
+            <RadzenFormField Text="Phone" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_contact.Phone" Style="width: 100%;" Placeholder="(123) 456-7890" />
+            </RadzenFormField>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Professional Details Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600; margin-bottom: 0.5rem;">Professional Details</RadzenText>
+
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Company" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@_contact.Company" Style="width: 100%;" Placeholder="Company name" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Job Title" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@_contact.JobTitle" Style="width: 100%;" Placeholder="Position" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Additional Notes Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600; margin-bottom: 0.5rem;">Additional Notes</RadzenText>
+
+            <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+                <RadzenTextArea @bind-Value="@_contact.Notes" Style="width: 100%;" Rows="4"
+                               Placeholder="Add any additional notes about this contact..." />
+            </RadzenFormField>
+        </RadzenStack>
+    </RadzenCard>
 
     @if (ContactId.HasValue && _contact.IsAutoCreated)
     {
-        <RadzenCard Style="background: linear-gradient(135deg, #43e97b15 0%, #38f9d715 100%); border: 1px solid #43e97b; padding: 1rem;">
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                <RadzenIcon Icon="auto_awesome" Style="color: #43e97b;" />
-                <RadzenText TextStyle="TextStyle.Body2" Style="color: #2d3748;">
+                <RadzenIcon Icon="auto_awesome" />
+                <RadzenText TextStyle="TextStyle.Body2">
                     This contact was automatically created from a meeting attendee.
                 </RadzenText>
             </RadzenStack>
-        </RadzenCard>
+        </RadzenAlert>
     }
 
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
