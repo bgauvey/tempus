@@ -27,6 +27,53 @@
 <PageTitle>Calendar - Tempus</PageTitle>
 
 <style>
+    /* Calendar Page Layout */
+    .calendar-page-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 80px); /* Subtract header height */
+        overflow: hidden;
+    }
+
+    .calendar-header-section {
+        flex-shrink: 0;
+    }
+
+    .calendar-templates-section {
+        flex-shrink: 0;
+    }
+
+    .calendar-main-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* Important for flex children */
+        overflow: hidden;
+    }
+
+    .calendar-scheduler-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calendar-scheduler-card .rz-card-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Make RadzenScheduler fill available space */
+    .calendar-scheduler-card .rz-scheduler {
+        height: 100% !important;
+        min-height: 500px;
+    }
+
+    .calendar-scheduler-card .rz-scheduler .rz-scheduler-content {
+        height: calc(100% - 60px) !important; /* Subtract scheduler header */
+    }
+
     /* Calendar Styling */
     .events-sidebar {
         background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
@@ -116,64 +163,61 @@
     }
 </style>
 
-<div>
+<div class="calendar-page-container">
 
-@if (!_isFullPageMode)
-{
+<div class="calendar-header-section">
     <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); margin-bottom: 2rem;">
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                 <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
-                <RadzenButton Icon="@(_isFullPageMode ? "fullscreen_exit" : "fullscreen")"
-                              Click="ToggleFullPageMode"
-                              Size="ButtonSize.Medium"
-                              Text="@(_isFullPageMode ? "Exit Full Page" : "Full Page")"
-                              ButtonStyle="ButtonStyle.Light"
-                              title="Toggle full page view" />
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
-}
+</div>
 
-<RadzenCard Style="margin-bottom: 2rem;">
-    <RadzenStack Gap="1rem">
-        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">⚡ Quick Time Block Templates</RadzenText>
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-            <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
-                🧠 Deep Work (2h)
-            </RadzenButton>
-            <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
-                👥 Meeting (30m)
-            </RadzenButton>
-            <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
-                🎯 Focus Block (1.5h)
-            </RadzenButton>
-            <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
-                ☕ Break (15m)
-            </RadzenButton>
-            <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
-                📋 Planning (1h)
-            </RadzenButton>
-            <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
-                ✅ Review (45m)
-            </RadzenButton>
+<div class="calendar-templates-section">
+    <RadzenCard Style="margin-bottom: 2rem;">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">⚡ Quick Time Block Templates</RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
+                    🧠 Deep Work (2h)
+                </RadzenButton>
+                <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
+                    👥 Meeting (30m)
+                </RadzenButton>
+                <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
+                    🎯 Focus Block (1.5h)
+                </RadzenButton>
+                <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
+                    ☕ Break (15m)
+                </RadzenButton>
+                <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
+                    📋 Planning (1h)
+                </RadzenButton>
+                <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
+                    ✅ Review (45m)
+                </RadzenButton>
+            </RadzenStack>
         </RadzenStack>
-    </RadzenStack>
-</RadzenCard>
+    </RadzenCard>
+</div>
 
-<RadzenCard @oncontextmenu:preventDefault>
-    @if (_loading)
-    {
-        <div class="loading-container">
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        </div>
-    }
-    else
-    {
-        @RenderCurrentView()
-    }
-</RadzenCard>
+<div class="calendar-main-section">
+    <RadzenCard class="calendar-scheduler-card" @oncontextmenu:preventDefault>
+        @if (_loading)
+        {
+            <div class="loading-container">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            </div>
+        }
+        else
+        {
+            @RenderCurrentView()
+        }
+    </RadzenCard>
+</div>
 
 
 </div>
@@ -212,7 +256,6 @@
     private bool _dragDropInitialized = false;
     private bool _isDragDropOperation = false;
     private bool _hasRenderedOnce = false;
-    private bool _isFullPageMode = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1461,13 +1504,6 @@
         {
             Console.WriteLine($"Error restoring scroll position: {ex.Message}");
         }
-    }
-
-    // Toggle Full Page Mode
-    private void ToggleFullPageMode()
-    {
-        _isFullPageMode = !_isFullPageMode;
-        StateHasChanged();
     }
 
     // Cleanup
