@@ -1,0 +1,360 @@
+@page "/analytics"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@attribute [Authorize]
+@inject IAnalyticsService AnalyticsService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Analytics - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">📊 Calendar Analytics & Insights</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
+                    Understand your time usage patterns and optimize your schedule.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Date Range Selector -->
+        <RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                <RadzenText TextStyle="TextStyle.H6">Analysis Period:</RadzenText>
+                <RadzenButton Text="Last 7 Days" Click="@(() => LoadAnalytics(7))" ButtonStyle="@(GetButtonStyle(7))" Size="ButtonSize.Small" />
+                <RadzenButton Text="Last 30 Days" Click="@(() => LoadAnalytics(30))" ButtonStyle="@(GetButtonStyle(30))" Size="ButtonSize.Small" />
+                <RadzenButton Text="Last 90 Days" Click="@(() => LoadAnalytics(90))" ButtonStyle="@(GetButtonStyle(90))" Size="ButtonSize.Small" />
+                <RadzenButton Text="Last Year" Click="@(() => LoadAnalytics(365))" ButtonStyle="@(GetButtonStyle(365))" Size="ButtonSize.Small" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (_loading)
+        {
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    <RadzenText Style="opacity: 0.7;">Analyzing your calendar...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else if (_analytics != null)
+        {
+            <!-- Quick Stats -->
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.TotalEvents</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Total Events</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                    <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.MeetingCount</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Meetings</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                    <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3);">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.TotalHours</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Scheduled Hours</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                    <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(250, 112, 154, 0.3);">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">$@_analytics.TotalMeetingCost.ToString("N0")</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Meeting Costs</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <!-- Calendar Health Score -->
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🏥 Calendar Health Score</RadzenText>
+                    <RadzenRow>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                                <div style="position: relative; width: 200px; height: 200px;">
+                                    <svg viewBox="0 0 200 200" style="transform: rotate(-90deg);">
+                                        <circle cx="100" cy="100" r="90" fill="none" stroke="#e0e0e0" stroke-width="20"/>
+                                        <circle cx="100" cy="100" r="90" fill="none" stroke="@GetHealthScoreColor()" stroke-width="20"
+                                                stroke-dasharray="@($"{(_analytics.Productivity.CalendarHealthScore / 100) * 565.48} 565.48")"
+                                                stroke-linecap="round"/>
+                                    </svg>
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                        <RadzenText TextStyle="TextStyle.DisplayH2" Style="font-weight: 800; margin: 0;">@((int)_analytics.Productivity.CalendarHealthScore)</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption">out of 100</RadzenText>
+                                    </div>
+                                </div>
+                                <RadzenBadge Text="@GetHealthScoreLabel()" Style="@($"background: {GetHealthScoreColor()}; font-size: 1rem; padding: 0.5rem 1rem;")" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Score Breakdown:</RadzenText>
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="schedule" />
+                                        <RadzenText>Scheduled Time: @_analytics.TimeUsage.ScheduledPercentage.ToString("F1")%</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="psychology" />
+                                        <RadzenText>Focus Blocks: @_analytics.Productivity.FocusTimeBlocks</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="people" />
+                                        <RadzenText>Back-to-Back Meetings: @_analytics.MeetingStats.BackToBackMeetings</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Time Usage Breakdown -->
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">⏱️ Time Usage Breakdown</RadzenText>
+                    <RadzenRow Gap="1rem">
+                        @foreach (var eventType in _analytics.TimeUsage.EventTypeHours.OrderByDescending(kvp => kvp.Value))
+                        {
+                            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                                <RadzenCard Style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">@eventType.Key</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">@eventType.Value hrs</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@_analytics.TimeUsage.EventTypeCounts[eventType.Key] events</RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        }
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Meeting Analytics -->
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">👥 Meeting Analytics</RadzenText>
+                    <RadzenRow Gap="1.5rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Meeting Statistics</RadzenText>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="6">
+                                        <RadzenText Style="opacity: 0.7;">Total Meetings:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@_analytics.MeetingStats.TotalMeetings</RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenText Style="opacity: 0.7;">Total Hours:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@_analytics.MeetingStats.TotalMeetingHours</RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenText Style="opacity: 0.7;">Avg Duration:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@_analytics.MeetingStats.AverageMeetingDuration.ToString("F0") min</RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenText Style="opacity: 0.7;">Total Cost:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">$@_analytics.MeetingStats.TotalMeetingCost.ToString("N0")</RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Top Meeting Participants</RadzenText>
+                                @if (_analytics.MeetingStats.TopAttendees.Any())
+                                {
+                                    @foreach (var attendee in _analytics.MeetingStats.TopAttendees.Take(5))
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenText Style="font-weight: 600;">@attendee.Name</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@attendee.Email</RadzenText>
+                                            </RadzenStack>
+                                            <RadzenBadge Text="@($"{attendee.MeetingCount} meetings")" Style="background: #667eea;" />
+                                        </RadzenStack>
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenText Style="opacity: 0.7; font-style: italic;">No attendee data available</RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Productivity Metrics -->
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🎯 Productivity Insights</RadzenText>
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenCard Style="background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, rgba(56, 249, 215, 0.1) 100%);">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText Style="opacity: 0.7;">Focus Time Blocks</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">@_analytics.Productivity.FocusTimeBlocks</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption">@_analytics.Productivity.TotalFocusHours hours total</RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenCard Style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText Style="opacity: 0.7;">Task Completion Rate</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">@_analytics.Productivity.TaskCompletionRate.ToString("F0")%</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption">@_analytics.Productivity.CompletedTasks of @(_analytics.Productivity.CompletedTasks + _analytics.Productivity.OverdueTasks) tasks</RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenCard Style="background: linear-gradient(135deg, rgba(250, 112, 154, 0.1) 0%, rgba(254, 225, 64, 0.1) 100%);">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText Style="opacity: 0.7;">Fragmented Hours</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">@_analytics.Productivity.FragmentedHours</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption">Hours with 3+ events</RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Recommendations -->
+            @if (_analytics.Productivity.Recommendations.Any())
+            {
+                <RadzenCard>
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">💡 Recommendations</RadzenText>
+                        <RadzenStack Gap="1rem">
+                            @foreach (var recommendation in _analytics.Productivity.Recommendations)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                    @recommendation
+                                </RadzenAlert>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+
+            <!-- Warnings -->
+            @if (_analytics.Productivity.Warnings.Any())
+            {
+                <RadzenCard>
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">⚠️ Warnings</RadzenText>
+                        <RadzenStack Gap="1rem">
+                            @foreach (var warning in _analytics.Productivity.Warnings)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                    @warning
+                                </RadzenAlert>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    /* Analytics Page Styling */
+    .rz-card {
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .rz-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+</style>
+
+@code {
+    private CalendarAnalytics? _analytics;
+    private bool _loading = true;
+    private int _selectedDays = 30;
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                await LoadAnalytics(30);
+            }
+        }
+    }
+
+    private async Task LoadAnalytics(int days)
+    {
+        _loading = true;
+        _selectedDays = days;
+        StateHasChanged();
+
+        try
+        {
+            _analytics = await AnalyticsService.GetQuickStatsAsync(_userId, days);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private ButtonStyle GetButtonStyle(int days)
+    {
+        return days == _selectedDays ? ButtonStyle.Primary : ButtonStyle.Light;
+    }
+
+    private string GetHealthScoreColor()
+    {
+        if (_analytics == null) return "#667eea";
+
+        var score = _analytics.Productivity.CalendarHealthScore;
+        if (score >= 80) return "#43e97b";
+        if (score >= 60) return "#667eea";
+        if (score >= 40) return "#fa709a";
+        return "#ff6b6b";
+    }
+
+    private string GetHealthScoreLabel()
+    {
+        if (_analytics == null) return "Good";
+
+        var score = _analytics.Productivity.CalendarHealthScore;
+        if (score >= 80) return "Excellent";
+        if (score >= 60) return "Good";
+        if (score >= 40) return "Fair";
+        return "Needs Improvement";
+    }
+}
