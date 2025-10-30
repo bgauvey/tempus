@@ -14,17 +14,19 @@
 <div style="padding: 2rem;">
     <RadzenStack Gap="2rem">
         <!-- Header -->
-        <RadzenStack Gap="0.5rem">
-            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">My Profile</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
-                Manage your account information and preferences.
-            </RadzenText>
-        </RadzenStack>
+        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">👤 My Profile</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
+                    Manage your account information and preferences.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
 
         @if (_user != null)
         {
             <!-- Profile Card -->
-            <div class="dashboard-card">
+            <RadzenCard>
                 <RadzenStack Gap="2rem">
                     <!-- Avatar and Basic Info -->
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
@@ -33,15 +35,15 @@
                         </div>
                         <RadzenStack Gap="0.25rem">
                             <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@_fullName</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; color: #718096;">@_user.Email</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; opacity: 0.7;">@_user.Email</RadzenText>
                         </RadzenStack>
                     </RadzenStack>
 
-                    <div style="height: 1px; background: #e2e8f0;"></div>
+                    <RadzenStack Style="height: 1px; opacity: 0.2; background: currentColor;"></RadzenStack>
 
                     <!-- Profile Form -->
                     <RadzenStack Gap="1.5rem">
-                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Account Information</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📝 Account Information</RadzenText>
 
                         <RadzenRow Gap="1.5rem">
                             <RadzenColumn Size="12" SizeMD="6">
@@ -58,7 +60,7 @@
                                                    Disabled="true"
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7; margin-top: 0.5rem;">
                                     Email cannot be changed at this time
                                 </RadzenText>
                             </RadzenColumn>
@@ -82,12 +84,12 @@
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenStack>
-            </div>
+            </RadzenCard>
 
             <!-- Change Password Card -->
-            <div class="dashboard-card">
+            <RadzenCard>
                 <RadzenStack Gap="1.5rem">
-                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Change Password</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔒 Change Password</RadzenText>
 
                     <RadzenRow Gap="1.5rem">
                         <RadzenColumn Size="12" SizeMD="6">
@@ -128,17 +130,17 @@
                                       Style="padding: 0.75rem 2rem; border-radius: 10px;" />
                     </RadzenStack>
                 </RadzenStack>
-            </div>
+            </RadzenCard>
 
             <!-- Account Statistics Card -->
-            <div class="dashboard-card">
+            <RadzenCard>
                 <RadzenStack Gap="1.5rem">
-                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Account Information</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📊 Account Information</RadzenText>
 
                     <RadzenRow Gap="1.5rem">
                         <RadzenColumn Size="12" SizeMD="4">
                             <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Member Since</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Member Since</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
                                     @_user.CreatedAt.ToString("MMMM dd, yyyy")
                                 </RadzenText>
@@ -147,7 +149,7 @@
 
                         <RadzenColumn Size="12" SizeMD="4">
                             <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Email Confirmed</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Email Confirmed</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
                                     @(_user.EmailConfirmed ? "Yes" : "No")
                                 </RadzenText>
@@ -156,7 +158,7 @@
 
                         <RadzenColumn Size="12" SizeMD="4">
                             <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">Two-Factor Authentication</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Two-Factor Authentication</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
                                     @(_user.TwoFactorEnabled ? "Enabled" : "Disabled")
                                 </RadzenText>
@@ -164,43 +166,48 @@
                         </RadzenColumn>
                     </RadzenRow>
                 </RadzenStack>
-            </div>
+            </RadzenCard>
         }
         else
         {
-            <div class="text-center" style="padding: 3rem;">
-                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-                <RadzenText Style="color: #718096; margin-top: 1rem;">Loading profile...</RadzenText>
-            </div>
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    <RadzenText Style="opacity: 0.7;">Loading profile...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
         }
     </RadzenStack>
 </div>
 
 <style>
-    .dashboard-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        padding: 2rem;
-        transition: var(--transition-smooth);
+    /* Profile Page Styling - Theme-aware */
+    .rz-card {
+        transition: box-shadow 0.3s ease;
     }
 
-    .dashboard-card:hover {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    .rz-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
     .profile-avatar {
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        background: var(--primary-gradient);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        transition: transform 0.3s ease;
     }
 
-    .avatar-initials {
+    .profile-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    /* Scope avatar initials to only profile page - don't affect menubar */
+    .profile-avatar .avatar-initials {
         color: white;
         font-size: 2rem;
         font-weight: 700;

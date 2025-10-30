@@ -17,12 +17,14 @@
 <div style="padding: 2rem;">
     <RadzenStack Gap="2rem">
         <!-- Header -->
-        <RadzenStack Gap="0.5rem">
-            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Calendar Settings</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
-                Customize your calendar experience and preferences.
-            </RadzenText>
-        </RadzenStack>
+        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">⚙️ Calendar Settings</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
+                    Customize your calendar experience and preferences.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
 
         @if (_settings != null)
         {
@@ -30,9 +32,9 @@
                 <Tabs>
                     <!-- General Settings Tab -->
                     <RadzenTabsItem Text="General">
-                        <div class="dashboard-card" style="margin-top: 1rem;">
+                        <RadzenCard Style="margin-top: 1rem;">
                             <RadzenStack Gap="1.5rem">
-                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">General Settings</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📋 General Settings</RadzenText>
 
                                 <RadzenRow Gap="1.5rem">
                                     <RadzenColumn Size="12" SizeMD="6">
@@ -91,14 +93,14 @@
                                     </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
-                        </div>
+                        </RadzenCard>
                     </RadzenTabsItem>
 
                     <!-- Work Hours Tab -->
                     <RadzenTabsItem Text="Work Hours">
-                        <div class="dashboard-card" style="margin-top: 1rem;">
+                        <RadzenCard Style="margin-top: 1rem;">
                             <RadzenStack Gap="1.5rem">
-                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Working Hours & Availability</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🕐 Working Hours & Availability</RadzenText>
 
                                 <RadzenRow Gap="1.5rem">
                                     <RadzenColumn Size="12" SizeMD="6">
@@ -161,14 +163,14 @@
                                     </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
-                        </div>
+                        </RadzenCard>
                     </RadzenTabsItem>
 
                     <!-- Event Defaults Tab -->
                     <RadzenTabsItem Text="Event Defaults">
-                        <div class="dashboard-card" style="margin-top: 1rem;">
+                        <RadzenCard Style="margin-top: 1rem;">
                             <RadzenStack Gap="1.5rem">
-                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Default Event Settings</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📅 Default Event Settings</RadzenText>
 
                                 <RadzenRow Gap="1.5rem">
                                     <RadzenColumn Size="12" SizeMD="6">
@@ -206,14 +208,14 @@
                                     </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
-                        </div>
+                        </RadzenCard>
                     </RadzenTabsItem>
 
                     <!-- Notifications Tab -->
                     <RadzenTabsItem Text="Notifications">
-                        <div class="dashboard-card" style="margin-top: 1rem;">
+                        <RadzenCard Style="margin-top: 1rem;">
                             <RadzenStack Gap="1.5rem">
-                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Notification Settings</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔔 Notification Settings</RadzenText>
 
                                 <RadzenRow Gap="1.5rem">
                                     <RadzenColumn Size="12">
@@ -236,13 +238,13 @@
                                                            Placeholder="15,60"
                                                            Style="width: 100%;" />
                                         </RadzenFormField>
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7; margin-top: 0.5rem;">
                                             Example: "15,60" for reminders 15 minutes and 1 hour before events
                                         </RadzenText>
                                     </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
-                        </div>
+                        </RadzenCard>
                     </RadzenTabsItem>
                 </Tabs>
             </RadzenTabs>
@@ -258,36 +260,29 @@
         }
         else
         {
-            <div class="text-center" style="padding: 3rem;">
-                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-                <RadzenText Style="color: #718096; margin-top: 1rem;">Loading settings...</RadzenText>
-            </div>
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    <RadzenText Style="opacity: 0.7;">Loading settings...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
         }
     </RadzenStack>
 </div>
 
 <style>
-    .dashboard-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        padding: 2rem;
-        transition: var(--transition-smooth);
-    }
-
-    .dashboard-card:hover {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    }
-
-    .rz-tabview-nav-content {
-        background: white;
-        border-radius: 12px;
-        padding: 0.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-
+    /* Settings Page Styling - Theme-aware */
     .rz-tabview-nav li {
         border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .rz-card {
+        transition: box-shadow 0.3s ease;
+    }
+
+    .rz-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 </style>
 
