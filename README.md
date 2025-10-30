@@ -152,37 +152,47 @@ dotnet ef database update --startup-project ../Tempus.Web
 
 ### Current Features
 - ✅ Event CRUD operations with full attendee management
-- ✅ Multiple calendar views (Monthly, Weekly, Work Week, Daily, Agenda)
-- ✅ Advanced calendar settings (time formats, work hours, time slots)
+- ✅ Multiple calendar views (Monthly, Weekly, Work Week, Daily, Year, Planner, Timeline, Grid)
+- ✅ Full viewport calendar layout with optimized screen space usage
+- ✅ Drag-and-drop event rescheduling with recurring event support
+- ✅ Quick time block templates (Deep Work, Meetings, Focus Blocks, Breaks)
+- ✅ Advanced calendar settings with integrated Integrations tab
 - ✅ Custom calendar ranges for specialized scheduling
-- ✅ ICS file import and export
+- ✅ ICS file import and export with daily agenda PDF generation
 - ✅ Dashboard with real-time statistics and analytics
 - ✅ Multiple event types and priorities
-- ✅ Recurring events with flexible patterns
+- ✅ Recurring events with flexible patterns (edit single or all occurrences)
 - ✅ User authentication and authorization
 - ✅ Contact management and address book with auto-creation
 - ✅ Meeting cost calculator with hourly rate tracking
 - ✅ Award-winning UI with animations and modern design
+- ✅ Full theme support (multiple Radzen themes - light and dark modes)
+- ✅ Theme-aware components (Settings, Profile, Calendar, Dashboard)
 - ✅ GDPR compliance (Privacy, Terms of Service, Security)
 - ✅ Responsive design for all devices
-- ✅ PDF export capabilities (via QuestPDF)
+- ✅ PDF export capabilities (daily agenda via QuestPDF)
 - ✅ Organizer designation and protection in meetings
 - ✅ User avatar menu with profile management
+- ✅ Email notifications for meeting updates (created, updated, cancelled)
 
 ### Planned Features
 - 🔄 Google Calendar integration (OAuth2 sync)
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
-- 🔄 Push notifications and email reminders
+- 🔄 Push notifications and browser notifications
 - 🔄 Advanced calendar analytics and insights
-- 🔄 Meeting cost analytics and reports
+- 🔄 Meeting cost analytics and reports dashboard
 - 🔄 Export to additional formats (Excel, CSV)
-- 🔄 Dark mode theme
+- 🔄 Additional custom themes and theme editor
 - 🔄 Multi-language support (i18n)
 - 🔄 Mobile native app (MAUI)
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
+- 🔄 Time zone support for multi-location meetings
+- 🔄 Calendar view preferences and saved layouts
+- 🔄 Bulk event operations
+- 🔄 Advanced search and filtering
 
 ## Using the Application
 
@@ -191,10 +201,10 @@ dotnet ef database update --startup-project ../Tempus.Web
 The application features a modern sidebar navigation with the following sections:
 - **Home**: Landing page with feature highlights
 - **Dashboard**: Your personalized command center with statistics and upcoming events
-- **Calendar**: Advanced calendar with multiple view options
-- **Settings**: Configure calendar preferences, time formats, and work hours
-- **Address Book**: Manage contacts for event attendees
+- **Calendar**: Advanced calendar with multiple view options, drag-and-drop rescheduling, and quick time block templates
 - **Import ICS**: Import events from other calendar applications
+- **Address Book**: Manage contacts for event attendees
+- **Settings**: Configure calendar preferences, time formats, work hours, notifications, and integrations (accessible via user menu)
 
 ### Creating Events
 
@@ -233,23 +243,32 @@ This feature helps organizations understand the true cost of meetings and make i
 
 ### Customizing Calendar Settings
 
-1. Navigate to **Settings** from the sidebar
-2. Configure your preferences:
-   - **Time Format**: Choose 12-hour or 24-hour format
-   - **Date Format**: Select your preferred date display
-   - **Work Hours**: Set your typical working hours
-   - **Time Slot Duration**: Choose 15, 30, or 60-minute increments
-   - **Default View**: Set your preferred calendar view
-   - **Event Visibility**: Control which event types are displayed
+1. Navigate to **Settings** from the user menu (top-right avatar)
+2. Configure your preferences across multiple tabs:
+   - **General**: Time format (12/24-hour), date format, time zone, week start day, default calendar view
+   - **Work Hours**: Set working hours, lunch breaks, time slot duration, buffer times
+   - **Event Defaults**: Default meeting duration, event visibility, default colors and locations
+   - **Notifications**: Email and desktop notifications, default reminder times
+   - **Integrations**: View upcoming calendar integrations (Google, Outlook, Apple Calendar)
 
 ### Using Calendar Views
 
 The Calendar page supports multiple viewing modes:
 - **Month View**: Overview of the entire month with event indicators
-- **Week View**: Detailed week schedule with time slots
+- **Week View**: Detailed week schedule with time slots and drag-and-drop support
 - **Work Week View**: Monday-Friday focus for work scheduling
-- **Day View**: Hour-by-hour breakdown of a single day
-- **Agenda View**: List-based view of upcoming events
+- **Day View**: Hour-by-hour breakdown of a single day with automatic scroll to work hours
+- **Year View**: Annual overview with event density visualization
+- **Year Planner**: Comprehensive yearly planning view
+- **Year Timeline**: Timeline-based yearly view
+- **Grid View**: List-based view with search and filter capabilities
+
+**Key Features:**
+- Drag-and-drop events to reschedule (supports recurring events)
+- Quick time block templates for common activities
+- Automatic scroll to work hours in day/week views
+- Full viewport layout for maximum screen usage
+- Download daily agenda as PDF
 
 Navigate views using the toolbar buttons and customize settings in real-time.
 
@@ -333,6 +352,18 @@ dotnet restore
 ```
 
 ## Recent Improvements
+
+### Version 1.2 - Enhanced UI/UX & Theme Support
+- ✅ **Full Theme Support**: All pages now support multiple Radzen themes (light and dark modes)
+- ✅ **Calendar Enhancements**: Full viewport layout, drag-and-drop rescheduling, recurring event support
+- ✅ **Quick Time Block Templates**: Pre-configured templates for Deep Work, Meetings, Focus Blocks, and Breaks
+- ✅ **Settings Consolidation**: Added Integrations tab to Settings page, removed from sidebar
+- ✅ **Theme-Aware Components**: Settings, Profile, Calendar, and Dashboard pages fully support themes
+- ✅ **Profile Page Enhancement**: Improved avatar display with scoped CSS to prevent menubar conflicts
+- ✅ **Daily Agenda PDF**: Export daily schedule as professionally formatted PDF
+- ✅ **Enhanced Calendar Views**: Added Year, Planner, Timeline, and Grid views
+- ✅ **Automatic Work Hours Scroll**: Calendar automatically scrolls to configured work hours
+- ✅ **Improved Navigation**: Streamlined sidebar with Settings in user menu
 
 ### Version 1.1 - Meeting Cost Tracking & Bug Fixes
 - ✅ **Meeting Cost Calculator**: Calculate and track meeting expenses based on attendee count and hourly rates
