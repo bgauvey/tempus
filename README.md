@@ -174,6 +174,14 @@ dotnet ef database update --startup-project ../Tempus.Web
 - ✅ Organizer designation and protection in meetings
 - ✅ User avatar menu with profile management
 - ✅ Email notifications for meeting updates (created, updated, cancelled)
+- ✅ Advanced calendar analytics and insights dashboard
+  - Calendar health score (0-100) with visual gauge
+  - Time usage breakdown by event type, day of week, and hour
+  - Meeting analytics with cost tracking and top participants
+  - Productivity metrics (focus time, task completion rate, fragmentation)
+  - AI-powered recommendations for schedule optimization
+  - Warning system for burnout prevention and scheduling issues
+  - Flexible date range analysis (7, 30, 90, 365 days)
 
 ### Planned Features
 - 🔄 Google Calendar integration (OAuth2 sync)
@@ -181,9 +189,11 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Push notifications and browser notifications
-- 🔄 Advanced calendar analytics and insights
-- 🔄 Meeting cost analytics and reports dashboard
-- 🔄 Export to additional formats (Excel, CSV)
+- 🔄 Advanced analytics visualizations (interactive charts, heatmaps, graphs)
+- 🔄 Predictive analytics and trend forecasting
+- 🔄 Benchmarking against industry standards and best practices
+- 🔄 Analytics report export (PDF, Excel, CSV)
+- 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
 - 🔄 Multi-language support (i18n)
 - 🔄 Mobile native app (MAUI)
@@ -202,6 +212,7 @@ The application features a modern sidebar navigation with the following sections
 - **Home**: Landing page with feature highlights
 - **Dashboard**: Your personalized command center with statistics and upcoming events
 - **Calendar**: Advanced calendar with multiple view options, drag-and-drop rescheduling, and quick time block templates
+- **Analytics**: Comprehensive calendar analytics and insights dashboard with health scores, time usage breakdowns, meeting analytics, and AI-powered recommendations
 - **Import ICS**: Import events from other calendar applications
 - **Address Book**: Manage contacts for event attendees
 - **Settings**: Configure calendar preferences, time formats, work hours, notifications, and integrations (accessible via user menu)
@@ -271,6 +282,38 @@ The Calendar page supports multiple viewing modes:
 - Download daily agenda as PDF
 
 Navigate views using the toolbar buttons and customize settings in real-time.
+
+### Using Calendar Analytics
+
+The Analytics dashboard provides comprehensive insights into your time usage and scheduling patterns:
+
+1. Navigate to **Analytics** from the sidebar
+2. Select your analysis period:
+   - **Last 7 Days**: Quick weekly review
+   - **Last 30 Days**: Monthly patterns and trends
+   - **Last 90 Days**: Quarterly analysis
+   - **Last Year**: Annual overview
+
+**Key Metrics Displayed:**
+- **Quick Stats**: Total events, meetings, scheduled hours, and meeting costs at a glance
+- **Calendar Health Score**: A 0-100 score indicating schedule quality with color-coded gauge
+  - Green (80-100): Excellent schedule balance
+  - Blue (60-79): Good schedule with minor improvements needed
+  - Pink (40-59): Fair schedule needing attention
+  - Red (0-39): Needs significant improvement
+- **Time Usage Breakdown**: See how your time is distributed across event types
+- **Meeting Analytics**: Total meetings, average duration, top participants, and cost analysis
+- **Productivity Insights**: Focus time blocks, task completion rate, and schedule fragmentation
+- **AI-Powered Recommendations**: Smart suggestions for optimizing your schedule
+- **Warnings**: Proactive alerts for potential burnout or scheduling issues
+
+**Use Analytics To:**
+- Identify time-wasting activities and inefficient meetings
+- Track meeting costs and ROI
+- Find optimal times for deep work
+- Monitor work-life balance
+- Prevent schedule overload and burnout
+- Make data-driven decisions about your calendar
 
 ### Importing ICS Files
 
@@ -357,13 +400,21 @@ dotnet restore
 - ✅ **Full Theme Support**: All pages now support multiple Radzen themes (light and dark modes)
 - ✅ **Calendar Enhancements**: Full viewport layout, drag-and-drop rescheduling, recurring event support
 - ✅ **Quick Time Block Templates**: Pre-configured templates for Deep Work, Meetings, Focus Blocks, and Breaks
+- ✅ **Advanced Calendar Analytics Dashboard**: Comprehensive analytics and insights feature
+  - Calendar health score (0-100) with visual gauge and color-coded status
+  - Time usage breakdown by event type, day of week, and hour of day
+  - Meeting analytics with cost tracking, top participants, and costly meeting identification
+  - Productivity metrics including focus time blocks, task completion rate, and schedule fragmentation
+  - AI-powered recommendations for schedule optimization
+  - Warning system for burnout prevention and overbooked schedules
+  - Flexible date range analysis (7, 30, 90, 365 days)
 - ✅ **Settings Consolidation**: Added Integrations tab to Settings page, removed from sidebar
-- ✅ **Theme-Aware Components**: Settings, Profile, Calendar, and Dashboard pages fully support themes
+- ✅ **Theme-Aware Components**: Settings, Profile, Calendar, Dashboard, and Analytics pages fully support themes
 - ✅ **Profile Page Enhancement**: Improved avatar display with scoped CSS to prevent menubar conflicts
 - ✅ **Daily Agenda PDF**: Export daily schedule as professionally formatted PDF
 - ✅ **Enhanced Calendar Views**: Added Year, Planner, Timeline, and Grid views
 - ✅ **Automatic Work Hours Scroll**: Calendar automatically scrolls to configured work hours
-- ✅ **Improved Navigation**: Streamlined sidebar with Settings in user menu
+- ✅ **Improved Navigation**: Streamlined sidebar with Settings in user menu, Analytics added to main navigation
 
 ### Version 1.1 - Meeting Cost Tracking & Bug Fixes
 - ✅ **Meeting Cost Calculator**: Calculate and track meeting expenses based on attendee count and hourly rates
