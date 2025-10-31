@@ -7,8 +7,10 @@
 @using Tempus.Core.Models
 @attribute [Authorize]
 @inject IAnalyticsService AnalyticsService
+@inject IAnalyticsReportService ReportService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Analytics - Tempus</PageTitle>
 
@@ -24,14 +26,45 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Date Range Selector -->
+        <!-- Controls -->
         <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-                <RadzenText TextStyle="TextStyle.H6">Analysis Period:</RadzenText>
-                <RadzenButton Text="Last 7 Days" Click="@(() => LoadAnalytics(7))" ButtonStyle="@(GetButtonStyle(7))" Size="ButtonSize.Small" />
-                <RadzenButton Text="Last 30 Days" Click="@(() => LoadAnalytics(30))" ButtonStyle="@(GetButtonStyle(30))" Size="ButtonSize.Small" />
-                <RadzenButton Text="Last 90 Days" Click="@(() => LoadAnalytics(90))" ButtonStyle="@(GetButtonStyle(90))" Size="ButtonSize.Small" />
-                <RadzenButton Text="Last Year" Click="@(() => LoadAnalytics(365))" ButtonStyle="@(GetButtonStyle(365))" Size="ButtonSize.Small" />
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+                <!-- Analysis Period Menu -->
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Period:</RadzenText>
+                    <RadzenSplitButton Text="@GetPeriodText()"
+                                       Click="@(() => LoadAnalytics(_selectedDays))"
+                                       ButtonStyle="ButtonStyle.Primary"
+                                       Size="ButtonSize.Small"
+                                       Icon="calendar_today">
+                        <ChildContent>
+                            <RadzenSplitButtonItem Text="Last 7 Days" Value="7" Click="@(() => LoadAnalytics(7))" />
+                            <RadzenSplitButtonItem Text="Last 30 Days" Value="30" Click="@(() => LoadAnalytics(30))" />
+                            <RadzenSplitButtonItem Text="Last 90 Days" Value="90" Click="@(() => LoadAnalytics(90))" />
+                            <RadzenSplitButtonItem Text="Last Year" Value="365" Click="@(() => LoadAnalytics(365))" />
+                        </ChildContent>
+                    </RadzenSplitButton>
+                </RadzenStack>
+
+                <!-- Export Menu -->
+                @if (_analytics != null && !_loading)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Export:</RadzenText>
+                        <RadzenSplitButton Text="Download Report"
+                                           Click="@DownloadPdfReport"
+                                           ButtonStyle="ButtonStyle.Success"
+                                           Size="ButtonSize.Small"
+                                           Icon="download"
+                                           Disabled="@(_downloadingPdf || _downloadingCsv || _downloadingExcel)">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="PDF Report" Icon="picture_as_pdf" Click="@DownloadPdfReport" Disabled="@_downloadingPdf" />
+                                <RadzenSplitButtonItem Text="CSV Data" Icon="table_view" Click="@DownloadCsvReport" Disabled="@_downloadingCsv" />
+                                <RadzenSplitButtonItem Text="Excel Report" Icon="description" Click="@DownloadExcelReport" Disabled="@_downloadingExcel" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    </RadzenStack>
+                }
             </RadzenStack>
         </RadzenCard>
 
@@ -297,6 +330,10 @@
     private bool _loading = true;
     private int _selectedDays = 30;
     private string _userId = string.Empty;
+    private string _userName = string.Empty;
+    private bool _downloadingPdf = false;
+    private bool _downloadingCsv = false;
+    private bool _downloadingExcel = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -309,6 +346,7 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userName = appUser.Email ?? appUser.UserName ?? "User";
                 await LoadAnalytics(30);
             }
         }
@@ -331,9 +369,16 @@
         }
     }
 
-    private ButtonStyle GetButtonStyle(int days)
+    private string GetPeriodText()
     {
-        return days == _selectedDays ? ButtonStyle.Primary : ButtonStyle.Light;
+        return _selectedDays switch
+        {
+            7 => "Last 7 Days",
+            30 => "Last 30 Days",
+            90 => "Last 90 Days",
+            365 => "Last Year",
+            _ => $"Last {_selectedDays} Days"
+        };
     }
 
     private string GetHealthScoreColor()
@@ -356,5 +401,71 @@
         if (score >= 60) return "Good";
         if (score >= 40) return "Fair";
         return "Needs Improvement";
+    }
+
+    private async Task DownloadPdfReport()
+    {
+        if (_analytics == null) return;
+
+        _downloadingPdf = true;
+        StateHasChanged();
+
+        try
+        {
+            var pdfBytes = await ReportService.GeneratePdfReportAsync(_analytics, _userName);
+            var fileName = $"Tempus_Analytics_Report_{DateTime.Now:yyyyMMdd}.pdf";
+            await DownloadFile(fileName, pdfBytes, "application/pdf");
+        }
+        finally
+        {
+            _downloadingPdf = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadCsvReport()
+    {
+        if (_analytics == null) return;
+
+        _downloadingCsv = true;
+        StateHasChanged();
+
+        try
+        {
+            var csvBytes = await ReportService.GenerateCsvReportAsync(_analytics);
+            var fileName = $"Tempus_Analytics_Data_{DateTime.Now:yyyyMMdd}.csv";
+            await DownloadFile(fileName, csvBytes, "text/csv");
+        }
+        finally
+        {
+            _downloadingCsv = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadExcelReport()
+    {
+        if (_analytics == null) return;
+
+        _downloadingExcel = true;
+        StateHasChanged();
+
+        try
+        {
+            var excelBytes = await ReportService.GenerateExcelReportAsync(_analytics, _userName);
+            var fileName = $"Tempus_Analytics_Report_{DateTime.Now:yyyyMMdd}.xlsx";
+            await DownloadFile(fileName, excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        finally
+        {
+            _downloadingExcel = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadFile(string fileName, byte[] fileBytes, string contentType)
+    {
+        var base64 = Convert.ToBase64String(fileBytes);
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64, contentType);
     }
 }

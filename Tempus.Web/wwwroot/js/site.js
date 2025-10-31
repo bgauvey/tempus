@@ -26,9 +26,12 @@ window.scrollToTop = function() {
 
 console.log('window.scrollToTop function defined:', typeof window.scrollToTop);
 
-// Download file function for PDF generation
-window.downloadFile = function(filename, base64Data) {
+// Download file function for PDF, CSV, Excel, and other file generation
+window.downloadFile = function(filename, base64Data, contentType) {
     console.log('downloadFile function called for:', filename);
+
+    // Use provided content type or default to PDF
+    contentType = contentType || 'application/pdf';
 
     // Convert base64 to blob
     const byteCharacters = atob(base64Data);
@@ -37,7 +40,7 @@ window.downloadFile = function(filename, base64Data) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const blob = new Blob([byteArray], { type: contentType });
 
     // Create download link
     const url = window.URL.createObjectURL(blob);

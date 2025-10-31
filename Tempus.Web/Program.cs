@@ -69,6 +69,7 @@ builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IAnalyticsReportService, AnalyticsReportService>();
 
 var app = builder.Build();
 

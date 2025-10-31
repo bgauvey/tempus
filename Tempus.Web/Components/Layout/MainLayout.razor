@@ -110,14 +110,12 @@
                                     <RadzenText TextStyle="TextStyle.H6">Company</RadzenText>
                                     <RadzenLink Path="/about">About Us</RadzenLink>
                                     <RadzenLink Path="#">Blog</RadzenLink>
-                                    <RadzenLink Path="#">Careers</RadzenLink>
                                     <RadzenLink Path="/contact">Contact</RadzenLink>
                                 </RadzenStack>
                             </RadzenColumn>
 
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="0.75rem">
-                                    <RadzenText TextStyle="TextStyle.H6">Legal</RadzenText>
                                     <RadzenLink Path="/privacy">Privacy Policy</RadzenLink>
                                     <RadzenLink Path="/terms">Terms of Service</RadzenLink>
                                     <RadzenLink Path="/security">Security</RadzenLink>
@@ -147,32 +145,6 @@
 
 @code {
     private bool _drawerOpen = true;
-    private string _currentTheme = "material";
-
-    private class ThemeOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;
-    }
-
-    private List<ThemeOption> _themeOptions = new List<ThemeOption>
-    {
-        new ThemeOption { Value = "default", Label = "Default" },
-        new ThemeOption { Value = "dark", Label = "Dark" },
-        new ThemeOption { Value = "humanistic", Label = "Humanistic" },
-        new ThemeOption { Value = "humanistic-dark", Label = "Humanistic Dark" },
-        new ThemeOption { Value = "material", Label = "Material" },
-        new ThemeOption { Value = "material-dark", Label = "Material Dark" },
-        new ThemeOption { Value = "software", Label = "Software" },
-        new ThemeOption { Value = "software-dark", Label = "Software Dark" },
-        new ThemeOption { Value = "standard", Label = "Standard" },
-        new ThemeOption { Value = "standard-dark", Label = "Standard Dark" }
-    };
-
-    private void ToggleDrawer()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
 
     private void OnThemeChanged(string value)
     {
