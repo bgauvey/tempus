@@ -8,6 +8,7 @@
 @attribute [Authorize]
 @inject IAnalyticsService AnalyticsService
 @inject IAnalyticsReportService ReportService
+@inject ITrendForecastService TrendForecastService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject IJSRuntime JSRuntime
@@ -309,6 +310,149 @@
                     </RadzenStack>
                 </RadzenCard>
             }
+
+            <!-- Trend Forecasting -->
+            @if (_trendAnalysis != null)
+            {
+                <!-- Key Insights -->
+                @if (_trendAnalysis.KeyInsights.Any() || _trendAnalysis.Warnings.Any())
+                {
+                    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem;">
+                        <RadzenStack Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔮 Predictive Insights</RadzenText>
+                            <RadzenText Style="opacity: 0.9;">@_trendAnalysis.WorkloadPattern</RadzenText>
+
+                            @foreach (var insight in _trendAnalysis.KeyInsights)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="trending_up" />
+                                    <RadzenText Style="opacity: 0.95;">@insight</RadzenText>
+                                </RadzenStack>
+                            }
+
+                            @foreach (var warning in _trendAnalysis.Warnings)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="warning" />
+                                    <RadzenText Style="opacity: 0.95;">@warning</RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+
+                <!-- Historical Trends -->
+                <RadzenCard>
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📈 Historical Trends (@_trendAnalysis.HistoricalDays days)</RadzenText>
+                        <RadzenRow Gap="1rem">
+                            @foreach (var trend in _trendAnalysis.Trends)
+                            {
+                                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                                    <RadzenCard Style="background: rgba(102, 126, 234, 0.05);">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">@trend.MetricName</RadzenText>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                <RadzenIcon Icon="@GetTrendIcon(trend.Direction)" Style="@GetTrendColor(trend.Direction)" />
+                                                <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">@trend.ChangePercentage.ToString("F1")%</RadzenText>
+                                            </RadzenStack>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@trend.Interpretation</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.6;">Avg: @trend.Average.ToString("F1") | Range: @trend.Min.ToString("F1")-@trend.Max.ToString("F1")</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                </RadzenColumn>
+                            }
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Future Predictions -->
+                <RadzenCard>
+                    <RadzenStack Gap="1.5rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔮 Forecast (@_trendAnalysis.ForecastDays days)</RadzenText>
+                        <RadzenRow Gap="1rem">
+                            @foreach (var prediction in _trendAnalysis.Predictions)
+                            {
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCard Style="background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, rgba(56, 249, 215, 0.1) 100%);">
+                                        <RadzenStack Gap="0.75rem">
+                                            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">@prediction.MetricName</RadzenText>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                                <div>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Predicted Average</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">@prediction.PredictedValue.ToString("F1")</RadzenText>
+                                                </div>
+                                                <div>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Confidence</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@prediction.ConfidenceLevel.ToString("F0")%</RadzenText>
+                                                </div>
+                                            </RadzenStack>
+                                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin-top: 0.5rem;">
+                                                @prediction.Recommendation
+                                            </RadzenAlert>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                </RadzenColumn>
+                            }
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenCard>
+
+                <!-- Detected Patterns -->
+                @if (_trendAnalysis.DetectedPatterns.Any())
+                {
+                    <RadzenCard>
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔍 Detected Patterns</RadzenText>
+                            <RadzenRow Gap="0.5rem">
+                                @foreach (var pattern in _trendAnalysis.DetectedPatterns)
+                                {
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                            <RadzenIcon Icon="insights" Style="color: #667eea;" />
+                                            <RadzenText>@pattern</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                }
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+
+                <!-- Workload Forecast -->
+                @if (_workloadForecasts.Any())
+                {
+                    <RadzenCard>
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📅 Workload Forecast (Next 4 Weeks)</RadzenText>
+                            <RadzenRow Gap="1rem">
+                                @foreach (var forecast in _workloadForecasts)
+                                {
+                                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                                        <RadzenCard Style="@GetWorkloadCardStyle(forecast.WorkloadLevel)">
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">@forecast.Description</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Caption">@forecast.StartDate.ToString("MMM dd") - @forecast.EndDate.ToString("MMM dd")</RadzenText>
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-top: 0.5rem;">
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Events</RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@forecast.PredictedEventCount</RadzenText>
+                                                    </div>
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">Hours</RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">@forecast.PredictedHours.ToString("F0")</RadzenText>
+                                                    </div>
+                                                </RadzenStack>
+                                                <RadzenBadge Text="@forecast.WorkloadLevel" Style="@GetWorkloadBadgeStyle(forecast.WorkloadLevel)" />
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </RadzenColumn>
+                                }
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            }
         }
     </RadzenStack>
 </div>
@@ -327,6 +471,8 @@
 
 @code {
     private CalendarAnalytics? _analytics;
+    private TrendAnalysis? _trendAnalysis;
+    private List<WorkloadForecast> _workloadForecasts = new();
     private bool _loading = true;
     private int _selectedDays = 30;
     private string _userId = string.Empty;
@@ -361,6 +507,10 @@
         try
         {
             _analytics = await AnalyticsService.GetQuickStatsAsync(_userId, days);
+
+            // Load trend analysis and forecasts
+            _trendAnalysis = await TrendForecastService.GenerateTrendAnalysisAsync(_userId, days, 30);
+            _workloadForecasts = await TrendForecastService.ForecastWorkloadAsync(_userId, 28);
         }
         finally
         {
@@ -412,7 +562,7 @@
 
         try
         {
-            var pdfBytes = await ReportService.GeneratePdfReportAsync(_analytics, _userName);
+            var pdfBytes = await ReportService.GeneratePdfReportAsync(_analytics, _userName, _trendAnalysis);
             var fileName = $"Tempus_Analytics_Report_{DateTime.Now:yyyyMMdd}.pdf";
             await DownloadFile(fileName, pdfBytes, "application/pdf");
         }
@@ -432,7 +582,7 @@
 
         try
         {
-            var csvBytes = await ReportService.GenerateCsvReportAsync(_analytics);
+            var csvBytes = await ReportService.GenerateCsvReportAsync(_analytics, _trendAnalysis);
             var fileName = $"Tempus_Analytics_Data_{DateTime.Now:yyyyMMdd}.csv";
             await DownloadFile(fileName, csvBytes, "text/csv");
         }
@@ -452,7 +602,7 @@
 
         try
         {
-            var excelBytes = await ReportService.GenerateExcelReportAsync(_analytics, _userName);
+            var excelBytes = await ReportService.GenerateExcelReportAsync(_analytics, _userName, _trendAnalysis);
             var fileName = $"Tempus_Analytics_Report_{DateTime.Now:yyyyMMdd}.xlsx";
             await DownloadFile(fileName, excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
@@ -467,5 +617,54 @@
     {
         var base64 = Convert.ToBase64String(fileBytes);
         await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64, contentType);
+    }
+
+    // Trend visualization helper methods
+    private string GetTrendIcon(TrendDirection direction)
+    {
+        return direction switch
+        {
+            TrendDirection.Increasing => "trending_up",
+            TrendDirection.Decreasing => "trending_down",
+            TrendDirection.Stable => "trending_flat",
+            TrendDirection.Volatile => "show_chart",
+            _ => "trending_flat"
+        };
+    }
+
+    private string GetTrendColor(TrendDirection direction)
+    {
+        return direction switch
+        {
+            TrendDirection.Increasing => "color: #43e97b;",
+            TrendDirection.Decreasing => "color: #fa709a;",
+            TrendDirection.Stable => "color: #667eea;",
+            TrendDirection.Volatile => "color: #ffa500;",
+            _ => "color: #667eea;"
+        };
+    }
+
+    private string GetWorkloadCardStyle(string level)
+    {
+        return level switch
+        {
+            "Light" => "background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, rgba(56, 249, 215, 0.1) 100%);",
+            "Moderate" => "background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);",
+            "Heavy" => "background: linear-gradient(135deg, rgba(250, 112, 154, 0.1) 0%, rgba(254, 225, 64, 0.1) 100%);",
+            "Very Heavy" => "background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 69, 96, 0.1) 100%);",
+            _ => "background: rgba(102, 126, 234, 0.05);"
+        };
+    }
+
+    private string GetWorkloadBadgeStyle(string level)
+    {
+        return level switch
+        {
+            "Light" => "background: #43e97b; color: white;",
+            "Moderate" => "background: #667eea; color: white;",
+            "Heavy" => "background: #fa709a; color: white;",
+            "Very Heavy" => "background: #ff6b6b; color: white;",
+            _ => "background: #667eea; color: white;"
+        };
     }
 }

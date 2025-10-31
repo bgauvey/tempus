@@ -16,7 +16,7 @@ public class AnalyticsReportService : IAnalyticsReportService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public Task<byte[]> GeneratePdfReportAsync(CalendarAnalytics analytics, string userName)
+    public Task<byte[]> GeneratePdfReportAsync(CalendarAnalytics analytics, string userName, TrendAnalysis? trendAnalysis = null)
     {
         var document = Document.Create(container =>
         {
@@ -99,6 +99,58 @@ public class AnalyticsReportService : IAnalyticsReportService
                                 column.Item().Text($"• {recommendation}").FontSize(9);
                             }
                         }
+
+                        // Trend Analysis and Predictions
+                        if (trendAnalysis != null)
+                        {
+                            column.Item().PaddingTop(10).Text("Predictive Analytics & Trends").FontSize(14).SemiBold();
+                            column.Item().Text($"Workload Pattern: {trendAnalysis.WorkloadPattern}").FontSize(10);
+                            column.Item().PaddingVertical(5);
+
+                            // Historical Trends
+                            if (trendAnalysis.Trends.Any())
+                            {
+                                column.Item().Text("Historical Trends:").FontSize(12).SemiBold();
+                                foreach (var trend in trendAnalysis.Trends.Take(5))
+                                {
+                                    var direction = trend.Direction.ToString();
+                                    column.Item().Text($"• {trend.MetricName}: {direction} ({trend.ChangePercentage:F1}%)").FontSize(9);
+                                }
+                                column.Item().PaddingVertical(3);
+                            }
+
+                            // Future Predictions
+                            if (trendAnalysis.Predictions.Any())
+                            {
+                                column.Item().Text("Forecasts (Next 30 days):").FontSize(12).SemiBold();
+                                foreach (var prediction in trendAnalysis.Predictions.Take(3))
+                                {
+                                    column.Item().Text($"• {prediction.MetricName}: {prediction.PredictedValue:F1} (Confidence: {prediction.ConfidenceLevel:F0}%)").FontSize(9);
+                                }
+                                column.Item().PaddingVertical(3);
+                            }
+
+                            // Detected Patterns
+                            if (trendAnalysis.DetectedPatterns.Any())
+                            {
+                                column.Item().Text("Detected Patterns:").FontSize(12).SemiBold();
+                                foreach (var pattern in trendAnalysis.DetectedPatterns.Take(3))
+                                {
+                                    column.Item().Text($"• {pattern}").FontSize(9);
+                                }
+                            }
+
+                            // Key Insights
+                            if (trendAnalysis.KeyInsights.Any())
+                            {
+                                column.Item().PaddingVertical(3);
+                                column.Item().Text("Key Insights:").FontSize(12).SemiBold();
+                                foreach (var insight in trendAnalysis.KeyInsights)
+                                {
+                                    column.Item().Text($"• {insight}").FontSize(9);
+                                }
+                            }
+                        }
                     });
 
                 page.Footer()
@@ -117,7 +169,7 @@ public class AnalyticsReportService : IAnalyticsReportService
         return Task.FromResult(pdfBytes);
     }
 
-    public Task<byte[]> GenerateCsvReportAsync(CalendarAnalytics analytics)
+    public Task<byte[]> GenerateCsvReportAsync(CalendarAnalytics analytics, TrendAnalysis? trendAnalysis = null)
     {
         var csv = new StringBuilder();
 
@@ -202,13 +254,71 @@ public class AnalyticsReportService : IAnalyticsReportService
             {
                 csv.AppendLine($"{i + 1},\"{analytics.Productivity.Recommendations[i]}\"");
             }
+            csv.AppendLine();
+        }
+
+        // Predictive Analytics & Trends
+        if (trendAnalysis != null)
+        {
+            csv.AppendLine("Predictive Analytics & Trends");
+            csv.AppendLine($"Workload Pattern,{trendAnalysis.WorkloadPattern}");
+            csv.AppendLine($"Analysis Date,{trendAnalysis.AnalysisDate:yyyy-MM-dd}");
+            csv.AppendLine($"Historical Days,{trendAnalysis.HistoricalDays}");
+            csv.AppendLine($"Forecast Days,{trendAnalysis.ForecastDays}");
+            csv.AppendLine();
+
+            // Historical Trends
+            if (trendAnalysis.Trends.Any())
+            {
+                csv.AppendLine("Historical Trends");
+                csv.AppendLine("Metric,Direction,Change %,Average,Min,Max");
+                foreach (var trend in trendAnalysis.Trends)
+                {
+                    csv.AppendLine($"\"{trend.MetricName}\",{trend.Direction},{trend.ChangePercentage:F1},{trend.Average:F1},{trend.Min:F1},{trend.Max:F1}");
+                }
+                csv.AppendLine();
+            }
+
+            // Future Predictions
+            if (trendAnalysis.Predictions.Any())
+            {
+                csv.AppendLine("Future Predictions");
+                csv.AppendLine("Metric,Predicted Value,Confidence %");
+                foreach (var prediction in trendAnalysis.Predictions)
+                {
+                    csv.AppendLine($"\"{prediction.MetricName}\",{prediction.PredictedValue:F1},{prediction.ConfidenceLevel:F0}");
+                }
+                csv.AppendLine();
+            }
+
+            // Detected Patterns
+            if (trendAnalysis.DetectedPatterns.Any())
+            {
+                csv.AppendLine("Detected Patterns");
+                foreach (var pattern in trendAnalysis.DetectedPatterns)
+                {
+                    csv.AppendLine($"\"{pattern}\"");
+                }
+                csv.AppendLine();
+            }
+
+            // Key Insights
+            if (trendAnalysis.KeyInsights.Any())
+            {
+                csv.AppendLine("Key Insights");
+                foreach (var insight in trendAnalysis.KeyInsights)
+                {
+                    csv.AppendLine($"\"{insight}\"");
+                }
+                csv.AppendLine();
+            }
         }
 
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
         return Task.FromResult(bytes);
     }
 
-    public Task<byte[]> GenerateExcelReportAsync(CalendarAnalytics analytics, string userName)
+    public Task<byte[]> GenerateExcelReportAsync(CalendarAnalytics analytics, string userName, TrendAnalysis? trendAnalysis = null)
     {
         using var workbook = new XLWorkbook();
 
@@ -227,6 +337,13 @@ public class AnalyticsReportService : IAnalyticsReportService
         // Productivity Sheet
         var productivitySheet = workbook.Worksheets.Add("Productivity");
         CreateProductivitySheet(productivitySheet, analytics);
+
+        // Trend Analysis Sheet
+        if (trendAnalysis != null)
+        {
+            var trendSheet = workbook.Worksheets.Add("Trend Analysis");
+            CreateTrendAnalysisSheet(trendSheet, trendAnalysis);
+        }
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
@@ -424,6 +541,132 @@ public class AnalyticsReportService : IAnalyticsReportService
             {
                 row++;
                 sheet.Cell($"A{row}").Value = $"• {recommendation}";
+            }
+        }
+
+        sheet.Columns().AdjustToContents();
+    }
+
+    private void CreateTrendAnalysisSheet(IXLWorksheet sheet, TrendAnalysis trendAnalysis)
+    {
+        sheet.Cell("A1").Value = "Predictive Analytics & Trend Analysis";
+        sheet.Cell("A1").Style.Font.Bold = true;
+        sheet.Cell("A1").Style.Font.FontSize = 14;
+
+        var row = 3;
+        sheet.Cell($"A{row}").Value = "Workload Pattern";
+        sheet.Cell($"B{row}").Value = trendAnalysis.WorkloadPattern;
+
+        row++;
+        sheet.Cell($"A{row}").Value = "Analysis Date";
+        sheet.Cell($"B{row}").Value = trendAnalysis.AnalysisDate;
+        sheet.Cell($"B{row}").Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
+
+        row++;
+        sheet.Cell($"A{row}").Value = "Historical Days";
+        sheet.Cell($"B{row}").Value = trendAnalysis.HistoricalDays;
+
+        row++;
+        sheet.Cell($"A{row}").Value = "Forecast Days";
+        sheet.Cell($"B{row}").Value = trendAnalysis.ForecastDays;
+
+        // Historical Trends Section
+        if (trendAnalysis.Trends.Any())
+        {
+            row += 2;
+            sheet.Cell($"A{row}").Value = "Historical Trends";
+            sheet.Cell($"A{row}").Style.Font.Bold = true;
+            sheet.Cell($"A{row}").Style.Font.FontSize = 12;
+
+            row++;
+            sheet.Cell($"A{row}").Value = "Metric";
+            sheet.Cell($"B{row}").Value = "Direction";
+            sheet.Cell($"C{row}").Value = "Change %";
+            sheet.Cell($"D{row}").Value = "Average";
+            sheet.Cell($"E{row}").Value = "Min";
+            sheet.Cell($"F{row}").Value = "Max";
+            sheet.Range($"A{row}:F{row}").Style.Font.Bold = true;
+            sheet.Range($"A{row}:F{row}").Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+            foreach (var trend in trendAnalysis.Trends)
+            {
+                row++;
+                sheet.Cell($"A{row}").Value = trend.MetricName;
+                sheet.Cell($"B{row}").Value = trend.Direction.ToString();
+                sheet.Cell($"C{row}").Value = trend.ChangePercentage;
+                sheet.Cell($"C{row}").Style.NumberFormat.Format = "0.0";
+                sheet.Cell($"D{row}").Value = trend.Average;
+                sheet.Cell($"D{row}").Style.NumberFormat.Format = "0.0";
+                sheet.Cell($"E{row}").Value = trend.Min;
+                sheet.Cell($"E{row}").Style.NumberFormat.Format = "0.0";
+                sheet.Cell($"F{row}").Value = trend.Max;
+                sheet.Cell($"F{row}").Style.NumberFormat.Format = "0.0";
+
+                // Color code based on direction
+                if (trend.Direction == TrendDirection.Increasing)
+                {
+                    sheet.Cell($"B{row}").Style.Font.FontColor = XLColor.Green;
+                }
+                else if (trend.Direction == TrendDirection.Decreasing)
+                {
+                    sheet.Cell($"B{row}").Style.Font.FontColor = XLColor.Red;
+                }
+            }
+        }
+
+        // Future Predictions Section
+        if (trendAnalysis.Predictions.Any())
+        {
+            row += 2;
+            sheet.Cell($"A{row}").Value = "Future Predictions";
+            sheet.Cell($"A{row}").Style.Font.Bold = true;
+            sheet.Cell($"A{row}").Style.Font.FontSize = 12;
+
+            row++;
+            sheet.Cell($"A{row}").Value = "Metric";
+            sheet.Cell($"B{row}").Value = "Predicted Value";
+            sheet.Cell($"C{row}").Value = "Confidence %";
+            sheet.Range($"A{row}:C{row}").Style.Font.Bold = true;
+            sheet.Range($"A{row}:C{row}").Style.Fill.BackgroundColor = XLColor.LightGreen;
+
+            foreach (var prediction in trendAnalysis.Predictions)
+            {
+                row++;
+                sheet.Cell($"A{row}").Value = prediction.MetricName;
+                sheet.Cell($"B{row}").Value = prediction.PredictedValue;
+                sheet.Cell($"B{row}").Style.NumberFormat.Format = "0.0";
+                sheet.Cell($"C{row}").Value = prediction.ConfidenceLevel;
+                sheet.Cell($"C{row}").Style.NumberFormat.Format = "0";
+            }
+        }
+
+        // Detected Patterns Section
+        if (trendAnalysis.DetectedPatterns.Any())
+        {
+            row += 2;
+            sheet.Cell($"A{row}").Value = "Detected Patterns";
+            sheet.Cell($"A{row}").Style.Font.Bold = true;
+            sheet.Cell($"A{row}").Style.Font.FontSize = 12;
+
+            foreach (var pattern in trendAnalysis.DetectedPatterns)
+            {
+                row++;
+                sheet.Cell($"A{row}").Value = $"• {pattern}";
+            }
+        }
+
+        // Key Insights Section
+        if (trendAnalysis.KeyInsights.Any())
+        {
+            row += 2;
+            sheet.Cell($"A{row}").Value = "Key Insights";
+            sheet.Cell($"A{row}").Style.Font.Bold = true;
+            sheet.Cell($"A{row}").Style.Font.FontSize = 12;
+
+            foreach (var insight in trendAnalysis.KeyInsights)
+            {
+                row++;
+                sheet.Cell($"A{row}").Value = $"• {insight}";
             }
         }
 

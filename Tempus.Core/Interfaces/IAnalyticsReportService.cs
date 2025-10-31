@@ -10,15 +10,15 @@ public interface IAnalyticsReportService
     /// <summary>
     /// Generate a comprehensive analytics report in PDF format
     /// </summary>
-    Task<byte[]> GeneratePdfReportAsync(CalendarAnalytics analytics, string userName);
+    Task<byte[]> GeneratePdfReportAsync(CalendarAnalytics analytics, string userName, TrendAnalysis? trendAnalysis = null);
 
     /// <summary>
     /// Generate analytics data in CSV format
     /// </summary>
-    Task<byte[]> GenerateCsvReportAsync(CalendarAnalytics analytics);
+    Task<byte[]> GenerateCsvReportAsync(CalendarAnalytics analytics, TrendAnalysis? trendAnalysis = null);
 
     /// <summary>
     /// Generate analytics data in Excel format
     /// </summary>
-    Task<byte[]> GenerateExcelReportAsync(CalendarAnalytics analytics, string userName);
+    Task<byte[]> GenerateExcelReportAsync(CalendarAnalytics analytics, string userName, TrendAnalysis? trendAnalysis = null);
 }
