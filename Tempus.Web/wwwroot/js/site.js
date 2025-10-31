@@ -1,17 +1,12 @@
 // Tempus Site JavaScript - Scroll to Top for Radzen Layout
 
-console.log('Tempus site.js loaded successfully');
-
 // Scroll to top function targeting Radzen's .rz-body container
 window.scrollToTop = function() {
-    console.log('scrollToTop function called from Blazor');
 
     // Primary target: Radzen body container (this is the main scroll container)
     const radzenBody = document.querySelector('.rz-body');
     if (radzenBody) {
-        console.log('Found .rz-body, current scrollTop:', radzenBody.scrollTop);
         radzenBody.scrollTop = 0;
-        console.log('Set .rz-body scrollTop to 0, now:', radzenBody.scrollTop);
     } else {
         console.warn('.rz-body element not found!');
     }
@@ -20,15 +15,13 @@ window.scrollToTop = function() {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     window.scrollTo(0, 0);
-
-    console.log('scrollToTop function completed');
 };
 
-console.log('window.scrollToTop function defined:', typeof window.scrollToTop);
+// Download file function for PDF, CSV, Excel, and other file generation
+window.downloadFile = function(filename, base64Data, contentType) {
 
-// Download file function for PDF generation
-window.downloadFile = function(filename, base64Data) {
-    console.log('downloadFile function called for:', filename);
+    // Use provided content type or default to PDF
+    contentType = contentType || 'application/pdf';
 
     // Convert base64 to blob
     const byteCharacters = atob(base64Data);
@@ -37,7 +30,7 @@ window.downloadFile = function(filename, base64Data) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const blob = new Blob([byteArray], { type: contentType });
 
     // Create download link
     const url = window.URL.createObjectURL(blob);
@@ -50,8 +43,4 @@ window.downloadFile = function(filename, base64Data) {
     // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-
-    console.log('File download triggered successfully');
 };
-
-console.log('window.downloadFile function defined:', typeof window.downloadFile);
