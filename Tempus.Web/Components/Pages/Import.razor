@@ -7,26 +7,27 @@
 @using Tempus.Core.Models
 @attribute [Authorize]
 @inject IIcsImportService IcsImportService
+@inject IPstImportService PstImportService
 @inject IEventRepository EventRepository
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 
-<PageTitle>Import ICS - Tempus</PageTitle>
+<PageTitle>Import Calendar - Tempus</PageTitle>
 
-<RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Import ICS File</RadzenText>
-<RadzenText class="rz-mb-4">Upload an ICS calendar file to import events into Tempus</RadzenText>
+<RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Import Calendar File</RadzenText>
+<RadzenText class="rz-mb-4">Upload an ICS or PST calendar file to import events into Tempus</RadzenText>
 
 <RadzenRow Gap="1rem">
     <RadzenColumn Size="12" SizeMD="8">
         <RadzenCard>
             <RadzenStack Gap="1rem">
                 <div style="border: 2px dashed var(--rz-border-color); border-radius: 4px; padding: 3rem; text-align: center; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <InputFile OnChange="HandleFileSelected" accept=".ics" id="fileUpload" style="display: none;" />
+                    <InputFile OnChange="HandleFileSelected" accept=".ics,.pst" id="fileUpload" style="display: none;" />
                     <label for="fileUpload" style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
                         <RadzenIcon Icon="cloud_upload" IconStyle="IconStyle.Primary" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                        <RadzenText TextStyle="TextStyle.H6" class="rz-mt-2">Click to upload ICS file</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">or drag and drop</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-mt-2">Click to upload calendar file</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">ICS or PST format</RadzenText>
                     </label>
                 </div>
 
@@ -34,7 +35,9 @@
                 {
                     <RadzenCard Variant="Variant.Outlined" class="rz-mt-2">
                         <RadzenText TextStyle="TextStyle.Body1">Selected file: <strong>@_selectedFile.Name</strong></RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">Size: @FormatFileSize(_selectedFile.Size)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                            Size: @FormatFileSize(_selectedFile.Size) | Type: @GetFileType(_selectedFile.Name)
+                        </RadzenText>
                     </RadzenCard>
 
                     <RadzenButton ButtonStyle="ButtonStyle.Primary"
@@ -105,31 +108,61 @@
     <RadzenColumn Size="12" SizeMD="4">
         <RadzenCard>
             <RadzenStack Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H6">About ICS Import</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
-                    ICS (iCalendar) is a universal calendar format supported by:
-                </RadzenText>
-                <RadzenStack Gap="0.5rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="check" />
-                        <RadzenText>Google Calendar</RadzenText>
+                <RadzenText TextStyle="TextStyle.H6">Supported Formats</RadzenText>
+
+                <div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-1" Style="font-weight: 600;">ICS (iCalendar)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
+                        Universal calendar format supported by:
+                    </RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #43e97b;" />
+                            <RadzenText>Google Calendar</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #43e97b;" />
+                            <RadzenText>Microsoft Outlook</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #43e97b;" />
+                            <RadzenText>Apple Calendar</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #43e97b;" />
+                            <RadzenText>Mozilla Thunderbird</RadzenText>
+                        </RadzenStack>
                     </RadzenStack>
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="check" />
-                        <RadzenText>Microsoft Outlook</RadzenText>
+                </div>
+
+                <RadzenSeparator />
+
+                <div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-1" Style="font-weight: 600;">PST (Outlook Personal Storage)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
+                        Microsoft Outlook's native format containing:
+                    </RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #667eea;" />
+                            <RadzenText>Calendar Events</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #667eea;" />
+                            <RadzenText>Appointments</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="check" Style="color: #667eea;" />
+                            <RadzenText>Meeting Invites</RadzenText>
+                        </RadzenStack>
                     </RadzenStack>
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="check" />
-                        <RadzenText>Apple Calendar</RadzenText>
-                    </RadzenStack>
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="check" />
-                        <RadzenText>Mozilla Thunderbird</RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mt-4">
-                    You can export your calendar from these applications and import them into Tempus.
-                </RadzenText>
+                </div>
+
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-3">
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Export your calendar and upload it here to migrate to Tempus.
+                    </RadzenText>
+                </RadzenAlert>
             </RadzenStack>
         </RadzenCard>
     </RadzenColumn>
@@ -169,13 +202,30 @@
         _importing = true;
         try
         {
-            using var stream = _selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB limit
-            _importedEvents = await IcsImportService.ImportFromStreamAsync(stream);
+            var fileType = GetFileType(_selectedFile.Name);
+            var maxFileSize = fileType == "PST" ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for PST, 10MB for ICS
+
+            using var stream = _selectedFile.OpenReadStream(maxAllowedSize: maxFileSize);
+
+            // Route to appropriate parser based on file type
+            if (fileType == "PST")
+            {
+                _importedEvents = await PstImportService.ImportFromStreamAsync(stream);
+            }
+            else if (fileType == "ICS")
+            {
+                _importedEvents = await IcsImportService.ImportFromStreamAsync(stream);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported file type. Please upload an ICS or PST file.");
+            }
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Success",
-                Detail = $"Successfully parsed {_importedEvents.Count} events from ICS file",
+                Detail = $"Successfully parsed {_importedEvents.Count} events from {fileType} file",
                 Duration = 4000
             });
         }
@@ -242,5 +292,16 @@
             len = len / 1024;
         }
         return $"{len:0.##} {sizes[order]}";
+    }
+
+    private string GetFileType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName)?.ToLower();
+        return extension switch
+        {
+            ".ics" => "ICS",
+            ".pst" => "PST",
+            _ => "Unknown"
+        };
     }
 }

@@ -65,6 +65,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
+builder.Services.AddScoped<IPstImportService, PstImportService>();
 builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
