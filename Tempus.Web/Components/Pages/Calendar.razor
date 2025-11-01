@@ -646,15 +646,25 @@
     {
         _selectedViewIndex = newIndex;
 
-        // Save the selected view to settings asynchronously without awaiting
+        // Save the selected view to settings asynchronously
         if (_settings != null)
         {
             var newView = GetCalendarViewFromSchedulerIndex(newIndex);
             _settings.DefaultCalendarView = newView;
             _settings.UpdatedAt = DateTime.UtcNow;
 
-            // Fire and forget - save settings in background
-            _ = Task.Run(async () => await SettingsService.CreateOrUpdateSettingsAsync(_settings));
+            // Use InvokeAsync to ensure proper context for scoped services
+            _ = InvokeAsync(async () =>
+            {
+                try
+                {
+                    await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error saving calendar view preference: {ex.Message}");
+                }
+            });
         }
 
         StateHasChanged();
