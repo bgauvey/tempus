@@ -11,20 +11,21 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
 
-<RadzenTabs>
-    <Tabs>
-        <!-- Details Tab -->
-        <RadzenTabsItem Text="Details" Icon="event">
-            <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <RadzenFormField Text="Title" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
-                </RadzenFormField>
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Title" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
+    </RadzenFormField>
 
-                <RadzenFormField Text="Description" Variant="Variant.Outlined">
-                    <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
-                </RadzenFormField>
+    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
+    </RadzenFormField>
 
-                <RadzenRow Gap="1rem">
+    <RadzenTabs>
+        <Tabs>
+            <!-- Details Tab -->
+            <RadzenTabsItem Text="Details" Icon="event">
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
                             <RadzenDatePicker @bind-Value="@StartTime" ShowTime="@(!IsAllDay)"
@@ -253,13 +254,14 @@
                 </RadzenStack>
             </RadzenTabsItem>
         }
-    </Tabs>
-</RadzenTabs>
+        </Tabs>
+    </RadzenTabs>
 
-<RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem; padding: 1rem; border-top: 1px solid #e2e8f0;">
-    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
-    <RadzenButton Text="@(GetSaveButtonText())" ButtonStyle="ButtonStyle.Primary"
-                Click="Save" Disabled="@(!IsValid())" />
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="@(GetSaveButtonText())" ButtonStyle="ButtonStyle.Primary"
+                    Click="Save" Disabled="@(!IsValid())" />
+    </RadzenStack>
 </RadzenStack>
 
 @code {
