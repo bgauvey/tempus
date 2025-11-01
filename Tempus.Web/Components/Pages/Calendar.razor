@@ -244,10 +244,7 @@
     private List<CalendarNavigationManager.ViewOption> _availableViews = new();
     private string _userId = string.Empty;
     private bool _shouldScrollToWorkHours = false;
-    private DotNetObjectReference<Calendar>? _dotNetHelper;
-    private bool _dragDropInitialized = false;
-    private bool _isDragDropOperation = false;
-    private bool _hasRenderedOnce = false;
+    private RadzenScheduler<AppointmentData>? _scheduler;
 
     // Helper classes
     private CalendarEventManager? _eventManager;
@@ -277,7 +274,7 @@
         _eventManager = new CalendarEventManager(
             EventRepository, DialogService, EmailNotificationService,
             AuthenticationStateProvider, UserManager);
-        _dragDropManager = new CalendarDragDropManager(JSRuntime, DialogService, _eventManager);
+        _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _scrollManager = new CalendarScrollManager(JSRuntime);
         _formatter = new CalendarFormatter(_settings);
 
@@ -294,31 +291,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _dragDropManager != null)
-        {
-            // Initialize drag and drop
-            _dotNetHelper = DotNetObjectReference.Create(this);
-            await _dragDropManager.InitializeDragDropAsync(_dotNetHelper);
-            _dragDropInitialized = true;
-        }
-
-        // Don't do any auto-scrolling or re-initialization during drag-drop operations
-        if (_isDragDropOperation)
-        {
-            return;
-        }
-
-        // Setup drag-drop when needed (after content changes or view changes)
-        if (_dragDropInitialized && !_hasRenderedOnce && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day") && _dragDropManager != null)
-        {
-            // Small delay to ensure DOM is fully rendered
-            await Task.Delay(100);
-
-            // Setup drag and drop for events
-            await _dragDropManager.SetupDragDropAsync();
-            _hasRenderedOnce = true;
-        }
-
         if (_shouldScrollToWorkHours && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day") && _scrollManager != null)
         {
             _shouldScrollToWorkHours = false;
@@ -378,9 +350,6 @@
 
         await LoadEvents();
 
-        // Reset the render flag so drag-drop gets re-initialized for the new view
-        _hasRenderedOnce = false;
-
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -396,9 +365,6 @@
 
         await LoadEvents();
 
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
-
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -413,9 +379,6 @@
 
         await LoadEvents();
 
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
-
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
         {
@@ -429,9 +392,6 @@
         _selectedDate = DateTime.Today;
 
         await LoadEvents();
-
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
 
         // Trigger scroll to work hours for day/week views after content is loaded
         if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
@@ -648,9 +608,11 @@
         builder.AddAttribute(7, "AppointmentSelect", EventCallback.Factory.Create<SchedulerAppointmentSelectEventArgs<AppointmentData>>(this, OnAppointmentSelect));
         builder.AddAttribute(8, "SlotSelect", EventCallback.Factory.Create<SchedulerSlotSelectEventArgs>(this, OnSlotSelect));
         builder.AddAttribute(9, "AppointmentRender", new Action<SchedulerAppointmentRenderEventArgs<AppointmentData>>(OnAppointmentRender));
+        builder.AddAttribute(10, "AppointmentMove", EventCallback.Factory.Create<SchedulerAppointmentMoveEventArgs>(this, OnAppointmentMove));
+        builder.AddComponentReferenceCapture(11, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
 
         // Add child content for views
-        builder.AddAttribute(10, "ChildContent", (RenderFragment)(b =>
+        builder.AddAttribute(12, "ChildContent", (RenderFragment)(b =>
         {
             // Month View
             b.OpenComponent<RadzenMonthView>(0);
@@ -818,34 +780,23 @@
         }
     }
 
-    // Drag and Drop Callback
-    [JSInvokable]
-    public async Task OnEventDropped(string eventId, int dayIndex, int hour, int minute)
+    // AppointmentMove - handles drag and drop using RadzenScheduler's built-in functionality
+    private async Task OnAppointmentMove(SchedulerAppointmentMoveEventArgs args)
     {
-        if (_dragDropManager == null || _scrollManager == null) return;
+        if (_dragDropManager == null) return;
 
         try
         {
-            // Mark that we're in a drag-drop operation to prevent auto-scrolling
-            _isDragDropOperation = true;
+            var appointment = (AppointmentData)args.Appointment.Data;
+            var evt = appointment?.Event;
 
-            // Save scroll position before making changes
-            var scrollPosition = await _scrollManager.SaveScrollPositionAsync(_currentView);
+            if (evt == null) return;
 
-            var evt = _events.FirstOrDefault(e => e.Id.ToString() == eventId);
-            if (evt == null)
-            {
-                _isDragDropOperation = false;
-                return;
-            }
+            // Calculate new start and end times
+            var newStartTime = evt.StartTime + args.TimeSpan;
+            var newEndTime = evt.EndTime + args.TimeSpan;
 
-            // Calculate the new date based on day index and current view
-            var newDate = _dragDropManager.CalculateNewDate(_selectedDate, _currentView, dayIndex, GetWeekDays(), GetWorkWeekDays());
-
-            var newStartTime = newDate.AddHours(hour).AddMinutes(minute);
-            var duration = evt.EndTime - evt.StartTime;
-            var newEndTime = newStartTime.Add(duration);
-
+            // Handle recurring events with confirmation dialog
             await _dragDropManager.HandleEventDropAsync(
                 evt,
                 newStartTime,
@@ -853,23 +804,23 @@
                 _userId,
                 async () =>
                 {
-                    await LoadEvents();
-                    StateHasChanged();
-                    await _scrollManager.RestoreScrollPositionAsync(_currentView, scrollPosition);
-                });
+                    // Update the appointment data immediately for UI responsiveness
+                    appointment.Start = newStartTime;
+                    appointment.End = newEndTime;
 
-            // Re-enable drag-drop setup for the new events
-            await Task.Delay(100);
-            await _dragDropManager.SetupDragDropAsync();
+                    // Reload events from database
+                    await LoadEvents();
+
+                    // Reload the scheduler
+                    if (_scheduler != null)
+                    {
+                        await _scheduler.Reload();
+                    }
+                });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in OnEventDropped: {ex.Message}");
-        }
-        finally
-        {
-            // Always clear the flag
-            _isDragDropOperation = false;
+            Console.WriteLine($"Error in OnAppointmentMove: {ex.Message}");
         }
     }
 
@@ -877,6 +828,6 @@
     // Cleanup
     public void Dispose()
     {
-        _dotNetHelper?.Dispose();
+        // No cleanup needed
     }
 }

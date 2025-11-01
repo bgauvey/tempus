@@ -1,37 +1,23 @@
-using Microsoft.JSInterop;
 using Radzen;
 using Tempus.Core.Models;
 
 namespace Tempus.Web.Helpers;
 
 /// <summary>
-/// Manages drag and drop operations for the Calendar component
+/// Manages appointment move operations for the Calendar component,
+/// including handling recurring events with user confirmation
 /// </summary>
 public class CalendarDragDropManager
 {
-    private readonly IJSRuntime _jsRuntime;
     private readonly DialogService _dialogService;
     private readonly CalendarEventManager _eventManager;
 
     public CalendarDragDropManager(
-        IJSRuntime jsRuntime,
         DialogService dialogService,
         CalendarEventManager eventManager)
     {
-        _jsRuntime = jsRuntime;
         _dialogService = dialogService;
         _eventManager = eventManager;
-    }
-
-    public async Task InitializeDragDropAsync<T>(DotNetObjectReference<T> dotNetHelper) where T : class
-    {
-        await _jsRuntime.InvokeVoidAsync("TempusCalendar.initializeDragDrop", dotNetHelper);
-    }
-
-    public async Task SetupDragDropAsync()
-    {
-        await _jsRuntime.InvokeVoidAsync("TempusCalendar.makeAllEventsDraggable");
-        await _jsRuntime.InvokeVoidAsync("TempusCalendar.setupDropZones");
     }
 
     public async Task<bool?> ShowRescheduleConfirmationDialogAsync(Event evt, DateTime newStartTime, DateTime newEndTime, CalendarFormatter formatter)
@@ -61,21 +47,6 @@ public class CalendarDragDropManager
         return allOccurrences ?? false;
     }
 
-    public DateTime CalculateNewDate(DateTime selectedDate, string currentView, int dayIndex, List<DateTime> weekDays, List<DateTime> workWeekDays)
-    {
-        DateTime newDate = selectedDate.Date;
-
-        if (currentView == "Week" || currentView == "WorkWeek")
-        {
-            var days = currentView == "Week" ? weekDays : workWeekDays;
-            if (dayIndex >= 0 && dayIndex < days.Count)
-            {
-                newDate = days[dayIndex].Date;
-            }
-        }
-
-        return newDate;
-    }
 
     public async Task HandleEventDropAsync(
         Event evt,
