@@ -8,13 +8,11 @@
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
 @using Tempus.Web.Components.Shared
-@using Microsoft.AspNetCore.Components.Rendering
 @using Tempus.Web.Services
 @using Tempus.Web.Helpers
 @using Microsoft.JSInterop
 @attribute [Authorize]
 @inject IEventRepository EventRepository
-@inject ICustomRangeRepository CustomRangeRepository
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -215,7 +213,26 @@
         }
         else
         {
-            @RenderCurrentView()
+            <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
+                           StartProperty="Start" EndProperty="End" TextProperty="Text"
+                           AppointmentSelect="@OnAppointmentSelect"
+                           SlotSelect="@OnSlotSelect"
+                           AppointmentRender="@OnAppointmentRender"
+                           AppointmentMove="@OnAppointmentMove">
+                <ChildContent>
+                    <RadzenMonthView />
+                    <RadzenWeekView />
+                    <RadzenDayView />
+                    <RadzenYearView />
+                    <RadzenYearPlannerView />
+                    <RadzenYearTimelineView />
+                </ChildContent>
+                <Template Context="appointment">
+                    <div @oncontextmenu="@(args => ShowContextMenu(args, appointment))" @oncontextmenu:preventDefault="true">
+                        @appointment.Text
+                    </div>
+                </Template>
+            </RadzenScheduler>
         }
     </RadzenCard>
 </div>
@@ -238,18 +255,12 @@
     private List<Event> _events = new();
     private List<AppointmentData> _appointments = new();
     private bool _loading = true;
-    private string _currentView = "Month";
-    private List<CustomCalendarRange> _customRanges = new();
-    private CustomCalendarRange? _selectedCustomRange;
     private CalendarSettings? _settings;
-    private List<CalendarNavigationManager.ViewOption> _availableViews = new();
     private string _userId = string.Empty;
-    private bool _shouldScrollToWorkHours = false;
     private RadzenScheduler<AppointmentData>? _scheduler;
 
     // Helper classes
     private CalendarEventManager? _eventManager;
-    private CalendarNavigationManager _navigationManager = new();
     private CalendarDragDropManager? _dragDropManager;
     private CalendarScrollManager? _scrollManager;
     private CalendarFormatter? _formatter;
@@ -265,9 +276,6 @@
             {
                 _userId = appUser.Id;
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
-
-                // Apply default calendar view from settings
-                _currentView = _settings.DefaultCalendarView.ToString();
             }
         }
 
@@ -279,38 +287,18 @@
         _scrollManager = new CalendarScrollManager(JSRuntime);
         _formatter = new CalendarFormatter(_settings);
 
-        await LoadCustomRanges();
-        LoadAvailableViews();
         await LoadEvents();
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-        }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_shouldScrollToWorkHours && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day") && _scrollManager != null)
-        {
-            _shouldScrollToWorkHours = false;
-            await Task.Delay(50);
-            await _scrollManager.ScrollToWorkHoursAsync(_currentView, _settings);
-        }
-    }
-
-    private async Task LoadCustomRanges()
-    {
-        _customRanges = await CustomRangeRepository.GetAllAsync(_userId);
-    }
 
     private async Task LoadEvents()
     {
         _loading = true;
         StateHasChanged();
 
-        var (startDate, endDate) = _navigationManager.GetDateRangeForView(_selectedDate, _currentView);
+        // Load events for a wide range (3 months back, 3 months forward)
+        var startDate = DateTime.Today.AddMonths(-3);
+        var endDate = DateTime.Today.AddMonths(3);
 
         _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
@@ -325,112 +313,6 @@
 
         _loading = false;
         StateHasChanged();
-    }
-
-    private async Task OnDateChanged()
-    {
-        await LoadEvents();
-    }
-
-    private void LoadAvailableViews()
-    {
-        _availableViews = _navigationManager.GetAvailableViews(_customRanges);
-    }
-
-    private async Task OnViewChanged()
-    {
-        if (_currentView.StartsWith("Custom_"))
-        {
-            var rangeId = Guid.Parse(_currentView.Replace("Custom_", ""));
-            _selectedCustomRange = _customRanges.FirstOrDefault(r => r.Id == rangeId);
-        }
-        else
-        {
-            _selectedCustomRange = null;
-        }
-
-        await LoadEvents();
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task NavigatePrevious()
-    {
-        _selectedDate = _navigationManager.NavigatePrevious(_selectedDate, _currentView, _selectedCustomRange);
-
-        await LoadEvents();
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private async Task NavigateNext()
-    {
-        _selectedDate = _navigationManager.NavigateNext(_selectedDate, _currentView, _selectedCustomRange);
-
-        await LoadEvents();
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private async Task GoToToday()
-    {
-        _selectedDate = DateTime.Today;
-
-        await LoadEvents();
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private string GetCurrentViewTitle()
-    {
-        return _navigationManager.GetCurrentViewTitle(_selectedDate, _currentView, _selectedCustomRange, _settings);
-    }
-
-    private async Task OpenCustomRangeDialog()
-    {
-        var result = await DialogService.OpenAsync<CustomRangeDialog>(
-            "Create Custom Calendar Range",
-            null,
-            new DialogOptions
-            {
-                Width = "500px",
-                Height = "auto",
-                Resizable = false,
-                Draggable = true
-            });
-
-        if (result is CustomCalendarRange newRange)
-        {
-            // Save to database
-            var savedRange = await CustomRangeRepository.CreateAsync(newRange);
-            _customRanges.Add(savedRange);
-            LoadAvailableViews();
-            _currentView = $"Custom_{savedRange.Id}";
-            _selectedCustomRange = savedRange;
-            await LoadEvents();
-            StateHasChanged();
-        }
     }
 
     private async Task DownloadDailyAgenda()
@@ -490,11 +372,6 @@
         }
     }
 
-    private List<List<DateTime>> GetCalendarWeeks()
-    {
-        return _navigationManager.GetCalendarWeeks(_selectedDate, _settings);
-    }
-
     private List<Event> GetEventsForDay(DateTime date)
     {
         return _events
@@ -503,162 +380,6 @@
             .ToList();
     }
 
-    private DateTime GetWeekStart()
-    {
-        return _navigationManager.GetWeekStart(_selectedDate, _settings);
-    }
-
-    private DateTime GetWeekEnd()
-    {
-        return _navigationManager.GetWeekEnd(_selectedDate, _settings);
-    }
-
-    private DateTime GetWorkWeekStart()
-    {
-        return _navigationManager.GetWorkWeekStart(_selectedDate);
-    }
-
-    private DateTime GetWorkWeekEnd()
-    {
-        return _navigationManager.GetWorkWeekEnd(_selectedDate);
-    }
-
-    private DateTime GetCustomRangeStart()
-    {
-        return _selectedDate.Date;
-    }
-
-    private DateTime GetCustomRangeEnd()
-    {
-        if (_selectedCustomRange == null) return _selectedDate;
-        return _selectedDate.AddDays(_selectedCustomRange.DaysCount - 1);
-    }
-
-    private List<DateTime> GetDaysForCurrentView()
-    {
-        return _currentView switch
-        {
-            "Day" => new List<DateTime> { _selectedDate.Date },
-            "WorkWeek" => GetWorkWeekDays(),
-            "Week" => GetWeekDays(),
-            "Month" => GetMonthDays(),
-            _ when _selectedCustomRange != null => GetCustomRangeDays(),
-            _ => GetMonthDays()
-        };
-    }
-
-    private List<DateTime> GetWorkWeekDays()
-    {
-        return _navigationManager.GetWorkWeekDays(_selectedDate);
-    }
-
-    private List<DateTime> GetWeekDays()
-    {
-        return _navigationManager.GetWeekDays(_selectedDate, _settings);
-    }
-
-    private List<DateTime> GetMonthDays()
-    {
-        var days = new List<DateTime>();
-        foreach (var week in GetCalendarWeeks())
-        {
-            days.AddRange(week);
-        }
-        return days;
-    }
-
-    private List<DateTime> GetCustomRangeDays()
-    {
-        if (_selectedCustomRange == null) return new List<DateTime>();
-        return _navigationManager.GetCustomRangeDays(_selectedDate, _selectedCustomRange);
-    }
-
-    private RenderFragment RenderCurrentView() => builder =>
-    {
-        if (_currentView == "Grid")
-        {
-            RenderGridView(builder);
-        }
-        else
-        {
-            RenderSchedulerView(builder);
-        }
-    };
-
-    private void RenderGridView(RenderTreeBuilder builder)
-    {
-        builder.OpenComponent<EventsGrid>(0);
-        builder.AddAttribute(1, "Events", _events);
-        builder.AddAttribute(2, "IsLoading", _loading);
-        builder.AddAttribute(3, "OnSearch", EventCallback.Factory.Create<string>(this, SearchEventsFromGrid));
-        builder.AddAttribute(4, "OnEditEvent", EventCallback.Factory.Create<Guid>(this, EditEventFromGrid));
-        builder.AddAttribute(5, "OnDeleteEvent", EventCallback.Factory.Create<Guid>(this, DeleteEventAsync));
-        builder.AddAttribute(6, "OnCreateEvent", EventCallback.Factory.Create(this, CreateEventFromGrid));
-        builder.CloseComponent();
-    }
-
-    private void RenderSchedulerView(RenderTreeBuilder builder)
-    {
-        builder.OpenComponent<RadzenScheduler<AppointmentData>>(0);
-        builder.AddAttribute(1, "Data", _appointments);
-        builder.AddAttribute(2, "TItem", typeof(AppointmentData));
-        builder.AddAttribute(3, "StartProperty", "Start");
-        builder.AddAttribute(4, "EndProperty", "End");
-        builder.AddAttribute(5, "TextProperty", "Text");
-        builder.AddAttribute(6, "SelectedIndex", GetSelectedViewIndex());
-        builder.AddAttribute(7, "AppointmentSelect", EventCallback.Factory.Create<SchedulerAppointmentSelectEventArgs<AppointmentData>>(this, OnAppointmentSelect));
-        builder.AddAttribute(8, "SlotSelect", EventCallback.Factory.Create<SchedulerSlotSelectEventArgs>(this, OnSlotSelect));
-        builder.AddAttribute(9, "AppointmentRender", new Action<SchedulerAppointmentRenderEventArgs<AppointmentData>>(OnAppointmentRender));
-        builder.AddAttribute(10, "AppointmentMove", EventCallback.Factory.Create<SchedulerAppointmentMoveEventArgs>(this, OnAppointmentMove));
-
-        // Add child content for views
-        builder.AddAttribute(11, "ChildContent", (RenderFragment)(b =>
-        {
-            // Month View
-            b.OpenComponent<RadzenMonthView>(0);
-            b.CloseComponent();
-
-            // Week View
-            b.OpenComponent<RadzenWeekView>(1);
-            b.CloseComponent();
-
-            // Day View
-            b.OpenComponent<RadzenDayView>(2);
-            b.CloseComponent();
-
-            // Year View
-            b.OpenComponent<RadzenYearView>(3);
-            b.CloseComponent();
-
-            // Year Planner View
-            b.OpenComponent<RadzenYearPlannerView>(4);
-            b.CloseComponent();
-
-            // Year Timeline View
-            b.OpenComponent<RadzenYearTimelineView>(5);
-            b.CloseComponent();
-        }));
-
-        // Add Template for custom appointment rendering with context menu
-        builder.AddAttribute(12, "Template", (RenderFragment<AppointmentData>)(context => builder2 =>
-        {
-            builder2.OpenElement(0, "div");
-            builder2.AddAttribute(1, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowContextMenu(args, context)));
-            builder2.AddAttribute(2, "oncontextmenu:preventDefault", true);
-            builder2.AddContent(3, context.Text);
-            builder2.CloseElement();
-        }));
-
-        // Capture component reference - must be after all attributes
-        builder.AddComponentReferenceCapture(13, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
-
-        builder.CloseComponent();
-    }
-
-    private int GetSelectedViewIndex()
-    {
-        return _navigationManager.GetSelectedViewIndex(_currentView);
-    }
 
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AppointmentData> args)
     {
@@ -689,29 +410,6 @@
         }
     }
 
-    private async Task SearchEventsFromGrid(string searchTerm)
-    {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            await LoadEvents();
-        }
-        else
-        {
-            _loading = true;
-            _events = await EventRepository.SearchAsync(searchTerm, _userId);
-            _loading = false;
-        }
-    }
-
-    private async Task EditEventFromGrid(Guid eventId)
-    {
-        await OpenEventDialogAsync(eventId);
-    }
-
-    private async Task CreateEventFromGrid()
-    {
-        await OpenEventDialogAsync(null, DateTime.Today);
-    }
 
     private string FormatTime(DateTime time)
     {
