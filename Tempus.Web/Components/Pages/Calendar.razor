@@ -204,7 +204,7 @@
 </div>
 
 <div class="calendar-main-section">
-    <RadzenCard class="calendar-scheduler-card" @oncontextmenu:preventDefault>
+    <RadzenCard class="calendar-scheduler-card">
         @if (_loading)
         {
             <div class="loading-container">
@@ -218,20 +218,14 @@
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
                            AppointmentRender="@OnAppointmentRender"
-                           AppointmentMove="@OnAppointmentMove">
-                <ChildContent>
-                    <RadzenMonthView />
-                    <RadzenWeekView />
-                    <RadzenDayView />
-                    <RadzenYearView />
-                    <RadzenYearPlannerView />
-                    <RadzenYearTimelineView />
-                </ChildContent>
-                <Template Context="appointment">
-                    <div @oncontextmenu="@(args => ShowContextMenu(args, appointment))" @oncontextmenu:preventDefault="true">
-                        @appointment.Text
-                    </div>
-                </Template>
+                           AppointmentMove="@OnAppointmentMove"
+                           @oncontextmenu:preventDefault>
+                <RadzenMonthView />
+                <RadzenWeekView />
+                <RadzenDayView />
+                <RadzenYearView />
+                <RadzenYearPlannerView />
+                <RadzenYearTimelineView />
             </RadzenScheduler>
         }
     </RadzenCard>
@@ -408,6 +402,12 @@
             var icon = _formatter.GetEventIcon(evt.EventType);
             args.Data.Text = $"{icon} {evt.Title}";
         }
+
+        // Add context menu to appointment
+        args.Attributes["oncontextmenu"] = (MouseEventArgs mouseArgs) =>
+        {
+            ShowContextMenu(mouseArgs, args.Data);
+        };
     }
 
 
