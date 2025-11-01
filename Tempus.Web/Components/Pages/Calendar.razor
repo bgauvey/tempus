@@ -841,11 +841,22 @@
     // Context Menu
     private void ShowContextMenu(MouseEventArgs args, AppointmentData data)
     {
+        var evt = data.Event;
+        if (evt == null) return;
+
         var menuItems = new List<ContextMenuItem>
         {
-            new ContextMenuItem { Text = "Edit", Value = data },
-            new ContextMenuItem { Text = "Delete", Value = data }
+            new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" }
         };
+
+        // Add "Edit Series" option if this is a recurring event
+        if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
+        {
+            menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+        }
+
+        menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+        menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
 
         ContextMenuService.Open(args, menuItems, OnMenuItemClick);
     }
@@ -857,13 +868,72 @@
         var data = item.Value as AppointmentData;
         if (data?.Event == null) return;
 
-        if (item.Text == "Edit")
+        switch (item.Text)
         {
-            await OpenEventDialogAsync(data.Event.Id);
+            case "Edit":
+                await OpenEventDialogAsync(data.Event.Id);
+                break;
+
+            case "Edit Series":
+                // For recurring events, edit the parent event
+                var eventIdToEdit = data.Event.RecurrenceParentId ?? data.Event.Id;
+                await OpenEventDialogAsync(eventIdToEdit);
+                break;
+
+            case "Duplicate":
+                await DuplicateEventAsync(data.Event);
+                break;
+
+            case "Delete":
+                await DeleteEventAsync(data.Event.Id);
+                break;
         }
-        else if (item.Text == "Delete")
+    }
+
+    private async Task DuplicateEventAsync(Event originalEvent)
+    {
+        try
         {
-            await DeleteEventAsync(data.Event.Id);
+            // Create a duplicate of the event
+            var duplicateEvent = new Event
+            {
+                Id = Guid.NewGuid(),
+                Title = $"{originalEvent.Title} (Copy)",
+                Description = originalEvent.Description,
+                StartTime = originalEvent.StartTime,
+                EndTime = originalEvent.EndTime,
+                Location = originalEvent.Location,
+                EventType = originalEvent.EventType,
+                Priority = originalEvent.Priority,
+                Color = originalEvent.Color,
+                UserId = _userId,
+                IsAllDay = originalEvent.IsAllDay,
+                IsRecurring = false, // Don't duplicate recurrence
+                RecurrencePattern = RecurrencePattern.None,
+                RecurrenceEndDate = null,
+                RecurrenceParentId = null,
+                IsRecurrenceException = false,
+                RecurrenceExceptionDate = null,
+                Tags = new List<string>(originalEvent.Tags),
+                Attendees = new List<Attendee>(originalEvent.Attendees.Select(a => new Attendee
+                {
+                    Id = Guid.NewGuid(),
+                    Name = a.Name,
+                    Email = a.Email,
+                    EventId = Guid.Empty // Will be set when saved
+                })),
+                CreatedAt = DateTime.UtcNow,
+                HourlyCostPerAttendee = originalEvent.HourlyCostPerAttendee,
+                MeetingCost = originalEvent.MeetingCost
+            };
+
+            await EventRepository.CreateAsync(duplicateEvent);
+            await LoadEvents();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error duplicating event: {ex.Message}");
         }
     }
 
