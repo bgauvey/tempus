@@ -59,9 +59,9 @@
                                            Icon="download"
                                            Disabled="@(_downloadingPdf || _downloadingCsv || _downloadingExcel)">
                             <ChildContent>
-                                <RadzenSplitButtonItem Text="PDF Report" Icon="picture_as_pdf" Click="@DownloadPdfReport" Disabled="@_downloadingPdf" />
-                                <RadzenSplitButtonItem Text="CSV Data" Icon="table_view" Click="@DownloadCsvReport" Disabled="@_downloadingCsv" />
-                                <RadzenSplitButtonItem Text="Excel Report" Icon="description" Click="@DownloadExcelReport" Disabled="@_downloadingExcel" />
+                                <RadzenSplitButtonItem Text="PDF Report" Icon="picture_as_pdf" Click="@(() => DownloadPdfReport())" Disabled="@_downloadingPdf" />
+                                <RadzenSplitButtonItem Text="CSV Data" Icon="table_view" Click="@(() => DownloadCsvReport())" Disabled="@_downloadingCsv" />
+                                <RadzenSplitButtonItem Text="Excel Report" Icon="description" Click="@(() => DownloadExcelReport())" Disabled="@_downloadingExcel" />
                             </ChildContent>
                         </RadzenSplitButton>
                     </RadzenStack>

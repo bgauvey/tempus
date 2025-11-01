@@ -803,7 +803,7 @@
             var appointment = (AppointmentData)args.Appointment.Data;
             var evt = appointment?.Event;
 
-            if (evt == null) return;
+            if (evt == null || appointment == null) return;
 
             // Calculate new start and end times
             var newStartTime = evt.StartTime + args.TimeSpan;
