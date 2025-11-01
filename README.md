@@ -9,7 +9,7 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **Advanced Calendar Views**: Multiple calendar views (Monthly, Weekly, Work Week, Daily, Agenda) with customizable settings
 - **Calendar Settings**: Comprehensive configuration including time formats (12/24-hour), date formats, work hours, time slot duration, and event visibility
 - **Custom Calendar Ranges**: Define and manage custom date ranges for specialized scheduling
-- **ICS Import/Export**: Import events from ICS files (compatible with Google Calendar, Outlook, Apple Calendar)
+- **Calendar Import**: Import events from ICS and PST files (compatible with Google Calendar, Microsoft Outlook, Apple Calendar)
 - **Dashboard**: Real-time overview of upcoming events, tasks, statistics, and analytics
 - **Event Types**: Support for different event types (Meeting, Appointment, Task, Time Block, Reminder, Deadline)
 - **Priority System**: Assign priorities to events (Low, Medium, High, Urgent)
@@ -33,6 +33,7 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **SQLite**: Default database provider (with SQL Server support available)
 - **Radzen Blazor**: Modern UI component library (v5.9.0)
 - **Ical.Net**: iCalendar format parsing and generation (v4.2.0)
+- **Aspose.Email**: PST/OST file parsing for Outlook integration (v24.12.0)
 - **QuestPDF**: PDF generation capabilities (v2025.7.3)
 - **ASP.NET Core Identity**: Authentication and authorization
 
@@ -418,6 +419,13 @@ dotnet restore
 - ✅ **Full Theme Support**: All pages now support multiple Radzen themes (light and dark modes)
 - ✅ **Calendar Enhancements**: Full viewport layout, drag-and-drop rescheduling, recurring event support
 - ✅ **Quick Time Block Templates**: Pre-configured templates for Deep Work, Meetings, Focus Blocks, and Breaks
+- ✅ **PST File Import**: Import calendar events from Microsoft Outlook PST (Personal Storage Table) files
+  - Automatic detection of calendar folders within PST files
+  - Extraction of appointments, meetings, and events with all metadata
+  - Attendee and organizer information preservation
+  - Support for event location, description, and time details
+  - Unified import interface supporting both ICS and PST formats
+  - Large file support (up to 100MB for PST files)
 - ✅ **Advanced Calendar Analytics Dashboard**: Comprehensive analytics and insights feature
   - Calendar health score (0-100) with visual gauge and color-coded status
   - Time usage breakdown by event type, day of week, and hour of day
