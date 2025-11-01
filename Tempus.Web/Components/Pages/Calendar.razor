@@ -276,6 +276,8 @@
 
                 // Load saved view preference
                 _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
+
+                Console.WriteLine($"[Calendar Init] Loaded view preference: {_settings.DefaultCalendarView} (index: {_selectedViewIndex})");
             }
         }
 
@@ -653,16 +655,21 @@
             _settings.DefaultCalendarView = newView;
             _settings.UpdatedAt = DateTime.UtcNow;
 
+            Console.WriteLine($"[Calendar OnViewChanged] Changing view to: {newView} (index: {newIndex})");
+
             // Use InvokeAsync to ensure proper context for scoped services
             _ = InvokeAsync(async () =>
             {
                 try
                 {
-                    await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+                    Console.WriteLine($"[Calendar OnViewChanged] Saving view preference: {newView}");
+                    var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+                    Console.WriteLine($"[Calendar OnViewChanged] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error saving calendar view preference: {ex.Message}");
+                    Console.WriteLine($"[Calendar OnViewChanged] Error saving calendar view preference: {ex.Message}");
+                    Console.WriteLine($"[Calendar OnViewChanged] Stack trace: {ex.StackTrace}");
                 }
             });
         }
