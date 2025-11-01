@@ -22,6 +22,7 @@
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
+@inject ContextMenuService ContextMenuService
 @implements IDisposable
 
 <PageTitle>Calendar - Tempus</PageTitle>
@@ -638,8 +639,18 @@
             b.CloseComponent();
         }));
 
+        // Add Template for custom appointment rendering with context menu
+        builder.AddAttribute(12, "Template", (RenderFragment<AppointmentData>)(context => builder2 =>
+        {
+            builder2.OpenElement(0, "div");
+            builder2.AddAttribute(1, "oncontextmenu", EventCallback.Factory.Create<MouseEventArgs>(this, args => ShowContextMenu(args, context)));
+            builder2.AddAttribute(2, "oncontextmenu:preventDefault", true);
+            builder2.AddContent(3, context.Text);
+            builder2.CloseElement();
+        }));
+
         // Capture component reference - must be after all attributes
-        builder.AddComponentReferenceCapture(12, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
+        builder.AddComponentReferenceCapture(13, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
 
         builder.CloseComponent();
     }
@@ -826,6 +837,35 @@
         }
     }
 
+
+    // Context Menu
+    private void ShowContextMenu(MouseEventArgs args, AppointmentData data)
+    {
+        var menuItems = new List<ContextMenuItem>
+        {
+            new ContextMenuItem { Text = "Edit", Value = data },
+            new ContextMenuItem { Text = "Delete", Value = data }
+        };
+
+        ContextMenuService.Open(args, menuItems, OnMenuItemClick);
+    }
+
+    private async void OnMenuItemClick(MenuItemEventArgs item)
+    {
+        ContextMenuService.Close();
+
+        var data = item.Value as AppointmentData;
+        if (data?.Event == null) return;
+
+        if (item.Text == "Edit")
+        {
+            await OpenEventDialogAsync(data.Event.Id);
+        }
+        else if (item.Text == "Delete")
+        {
+            await DeleteEventAsync(data.Event.Id);
+        }
+    }
 
     // Cleanup
     public void Dispose()
