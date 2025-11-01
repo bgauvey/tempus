@@ -29,6 +29,10 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Location).HasMaxLength(500);
             entity.Property(e => e.UserId).IsRequired();
 
+            // Configure decimal properties with precision and scale
+            entity.Property(e => e.HourlyCostPerAttendee).HasPrecision(18, 2);
+            entity.Property(e => e.MeetingCost).HasPrecision(18, 2);
+
             entity.HasMany(e => e.Attendees)
                   .WithOne()
                   .HasForeignKey(a => a.EventId)

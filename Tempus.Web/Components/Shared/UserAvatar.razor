@@ -15,26 +15,22 @@
             </Template>
             <ChildContent>
                 <RadzenProfileMenuItem>
-                    <Template>
-                        <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0;">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">@_fullName</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: #718096;">@_userEmail</RadzenText>
-                        </div>
-                    </Template>
+                    <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">@_fullName</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: #718096;">@_userEmail</RadzenText>
+                    </div>
                 </RadzenProfileMenuItem>
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
                 <div style="height: 1px; background: #e2e8f0; margin: 0.5rem 0;"></div>
                 <RadzenProfileMenuItem Text="Sign Out" Icon="logout">
-                    <Template>
-                        <form action="/Account/Logout" method="post" style="width: 100%;">
-                            <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
-                            <button type="submit" class="sign-out-button">
-                                <RadzenIcon Icon="logout" Style="margin-right: 0.5rem;" />
-                                Sign Out
-                            </button>
-                        </form>
-                    </Template>
+                    <form action="/Account/Logout" method="post" style="width: 100%;">
+                        <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+                        <button type="submit" class="sign-out-button">
+                            <RadzenIcon Icon="logout" Style="margin-right: 0.5rem;" />
+                            Sign Out
+                        </button>
+                    </form>
                 </RadzenProfileMenuItem>
             </ChildContent>
         </RadzenProfileMenu>

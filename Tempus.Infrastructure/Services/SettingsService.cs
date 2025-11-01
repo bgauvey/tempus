@@ -22,10 +22,14 @@ public class SettingsService : ISettingsService
 
     public async Task<CalendarSettings> CreateOrUpdateSettingsAsync(CalendarSettings settings)
     {
+        Console.WriteLine($"[SettingsService] CreateOrUpdateSettingsAsync called for userId: {settings.UserId}, DefaultCalendarView: {settings.DefaultCalendarView}");
+
         var existingSettings = await GetUserSettingsAsync(settings.UserId);
 
         if (existingSettings != null)
         {
+            Console.WriteLine($"[SettingsService] Found existing settings. Current DefaultCalendarView: {existingSettings.DefaultCalendarView}");
+
             // Update existing settings
             existingSettings.StartOfWeek = settings.StartOfWeek;
             existingSettings.TimeFormat = settings.TimeFormat;
@@ -53,15 +57,25 @@ public class SettingsService : ISettingsService
             existingSettings.DefaultCalendarId = settings.DefaultCalendarId;
             existingSettings.UpdatedAt = DateTime.UtcNow;
 
+            Console.WriteLine($"[SettingsService] Updating DefaultCalendarView to: {existingSettings.DefaultCalendarView}");
+
             _context.CalendarSettings.Update(existingSettings);
             await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[SettingsService] Settings saved to database");
+
             return existingSettings;
         }
         else
         {
+            Console.WriteLine($"[SettingsService] No existing settings found. Creating new settings.");
+
             // Create new settings
             _context.CalendarSettings.Add(settings);
             await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[SettingsService] New settings created");
+
             return settings;
         }
     }

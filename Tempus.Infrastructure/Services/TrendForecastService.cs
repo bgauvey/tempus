@@ -182,7 +182,7 @@ public class TrendForecastService : ITrendForecastService
     }
 
     // Helper methods for trend generation
-    private async Task<MetricTrend> GenerateMetricTrendAsync(string userId, TrendMetric metric, int days, IEnumerable<Event> events)
+    private Task<MetricTrend> GenerateMetricTrendAsync(string userId, TrendMetric metric, int days, IEnumerable<Event> events)
     {
         var endDate = DateTime.Today;
         var startDate = endDate.AddDays(-days);
@@ -225,10 +225,10 @@ public class TrendForecastService : ITrendForecastService
             trend.Interpretation = GenerateTrendInterpretation(metric, trend.Direction, trend.ChangePercentage);
         }
 
-        return trend;
+        return Task.FromResult(trend);
     }
 
-    private async Task<MetricPrediction> GenerateMetricPredictionAsync(string userId, TrendMetric metric, int historicalDays, int forecastDays, IEnumerable<Event> events)
+    private Task<MetricPrediction> GenerateMetricPredictionAsync(string userId, TrendMetric metric, int historicalDays, int forecastDays, IEnumerable<Event> events)
     {
         var endDate = DateTime.Today;
         var startDate = endDate.AddDays(-historicalDays);
@@ -293,7 +293,7 @@ public class TrendForecastService : ITrendForecastService
             prediction.Recommendation = GeneratePredictionRecommendation(metric, prediction.PredictedValue, movingAverage);
         }
 
-        return prediction;
+        return Task.FromResult(prediction);
     }
 
     private double CalculateMetricValue(TrendMetric metric, List<Event> events)

@@ -8,20 +8,19 @@
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
 @using Tempus.Web.Components.Shared
-@using Microsoft.AspNetCore.Components.Rendering
 @using Tempus.Web.Services
+@using Tempus.Web.Helpers
 @using Microsoft.JSInterop
 @attribute [Authorize]
 @inject IEventRepository EventRepository
-@inject ICustomRangeRepository CustomRangeRepository
 @inject ISettingsService SettingsService
-@inject ContextMenuService ContextMenuService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
+@inject ContextMenuService ContextMenuService
 @implements IDisposable
 
 <PageTitle>Calendar - Tempus</PageTitle>
@@ -205,7 +204,7 @@
 </div>
 
 <div class="calendar-main-section">
-    <RadzenCard class="calendar-scheduler-card" @oncontextmenu:preventDefault>
+    <RadzenCard class="calendar-scheduler-card">
         @if (_loading)
         {
             <div class="loading-container">
@@ -214,7 +213,45 @@
         }
         else
         {
-            @RenderCurrentView()
+            <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
+                           StartProperty="Start" EndProperty="End" TextProperty="Text"
+                           SelectedIndex="@_selectedViewIndex"
+                           AppointmentSelect="@OnAppointmentSelect"
+                           SlotSelect="@OnSlotSelect"
+                           AppointmentRender="@OnAppointmentRender"
+                           AppointmentMove="@OnAppointmentMove"
+                           @oncontextmenu:preventDefault>
+                <ChildContent>
+                    <RadzenMonthView />
+                    <RadzenWeekView />
+                    <RadzenDayView />
+                    <RadzenYearView />
+                    <RadzenYearPlannerView />
+                    <RadzenYearTimelineView />
+                </ChildContent>
+                <NavigationTemplate>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-bottom: 1rem;">
+                        <RadzenButton Text="Month" Click="@(() => ChangeView(0))"
+                                    ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Week" Click="@(() => ChangeView(1))"
+                                    ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Day" Click="@(() => ChangeView(2))"
+                                    ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Year" Click="@(() => ChangeView(3))"
+                                    ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Planner" Click="@(() => ChangeView(4))"
+                                    ButtonStyle="@(_selectedViewIndex == 4 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Timeline" Click="@(() => ChangeView(5))"
+                                    ButtonStyle="@(_selectedViewIndex == 5 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                    </RadzenStack>
+                </NavigationTemplate>
+            </RadzenScheduler>
         }
     </RadzenCard>
 </div>
@@ -232,30 +269,21 @@
         public Event Event { get; set; } = null!;
     }
 
+    // State variables
     private DateTime _selectedDate = DateTime.Today;
     private List<Event> _events = new();
     private List<AppointmentData> _appointments = new();
     private bool _loading = true;
-    private Event? _contextMenuEvent;
-    private DateTime? _contextMenuDate;
-    private string _currentView = "Month";
-    private List<CustomCalendarRange> _customRanges = new();
-    private CustomCalendarRange? _selectedCustomRange;
     private CalendarSettings? _settings;
-
-    private class ViewOption
-    {
-        public string Value { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-    }
-
-    private List<ViewOption> _availableViews = new();
     private string _userId = string.Empty;
-    private bool _shouldScrollToWorkHours = false;
-    private DotNetObjectReference<Calendar>? _dotNetHelper;
-    private bool _dragDropInitialized = false;
-    private bool _isDragDropOperation = false;
-    private bool _hasRenderedOnce = false;
+    private RadzenScheduler<AppointmentData>? _scheduler;
+    private int _selectedViewIndex = 1; // Default to Week view (index 1)
+
+    // Helper classes
+    private CalendarEventManager? _eventManager;
+    private CalendarDragDropManager? _dragDropManager;
+    private CalendarScrollManager? _scrollManager;
+    private CalendarFormatter? _formatter;
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,83 +297,39 @@
                 _userId = appUser.Id;
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
-                // Apply default calendar view from settings
-                _currentView = _settings.DefaultCalendarView.ToString();
+                // Load saved view preference
+                _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
             }
         }
-        await LoadCustomRanges();
-        LoadAvailableViews();
-        await LoadEvents();
 
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-        }
+        // Initialize helper classes
+        _eventManager = new CalendarEventManager(
+            EventRepository, DialogService, EmailNotificationService,
+            AuthenticationStateProvider, UserManager);
+        _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
+        _scrollManager = new CalendarScrollManager(JSRuntime);
+        _formatter = new CalendarFormatter(_settings);
+
+        await LoadEvents();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && _settings != null)
         {
-            // Initialize drag and drop
-            _dotNetHelper = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("TempusCalendar.initializeDragDrop", _dotNetHelper);
-            _dragDropInitialized = true;
-        }
-
-        // Don't do any auto-scrolling or re-initialization during drag-drop operations
-        if (_isDragDropOperation)
-        {
-            return;
-        }
-
-        // Setup drag-drop when needed (after content changes or view changes)
-        if (_dragDropInitialized && !_hasRenderedOnce && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
-        {
-            // Small delay to ensure DOM is fully rendered
-            await Task.Delay(100);
-
-            // Setup drag and drop for events
-            await JSRuntime.InvokeVoidAsync("TempusCalendar.makeAllEventsDraggable");
-            await JSRuntime.InvokeVoidAsync("TempusCalendar.setupDropZones");
-            _hasRenderedOnce = true;
-        }
-
-        if (_shouldScrollToWorkHours && (_currentView == "Week" || _currentView == "WorkWeek" || _currentView == "Day"))
-        {
-            _shouldScrollToWorkHours = false;
-            await Task.Delay(50);
-            await ScrollToWorkHours();
+            await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar Init] Loaded view preference: {_settings.DefaultCalendarView} (index: {_selectedViewIndex})");
         }
     }
 
-    private async Task LoadCustomRanges()
-    {
-        _customRanges = await CustomRangeRepository.GetAllAsync(_userId);
-    }
 
     private async Task LoadEvents()
     {
         _loading = true;
         StateHasChanged();
 
-        DateTime startDate, endDate;
-
-        // For Year, Planner, and Timeline views, load entire year
-        if (_currentView == "Year" || _currentView == "Planner" || _currentView == "Timeline")
-        {
-            startDate = new DateTime(DateTime.Today.Year, 1, 1);
-            endDate = new DateTime(DateTime.Today.Year, 12, 31);
-        }
-        else
-        {
-            // For other views, load month with buffer
-            var startOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
-            startDate = startOfMonth.AddDays(-7);
-            endDate = endOfMonth.AddDays(7);
-        }
+        // Load events for a wide range (3 months back, 3 months forward)
+        var startDate = DateTime.Today.AddMonths(-3);
+        var endDate = DateTime.Today.AddMonths(3);
 
         _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
@@ -360,171 +344,6 @@
 
         _loading = false;
         StateHasChanged();
-    }
-
-    private async Task OnDateChanged()
-    {
-        await LoadEvents();
-    }
-
-    private void LoadAvailableViews()
-    {
-        _availableViews = new List<ViewOption>
-        {
-            new ViewOption { Value = "Grid", Text = "Grid" },
-            new ViewOption { Value = "Day", Text = "Day" },
-            new ViewOption { Value = "WorkWeek", Text = "Work Week" },
-            new ViewOption { Value = "Week", Text = "Week" },
-            new ViewOption { Value = "Month", Text = "Month" },
-            new ViewOption { Value = "Year", Text = "Year" },
-            new ViewOption { Value = "Planner", Text = "Planner" },
-            new ViewOption { Value = "Timeline", Text = "Timeline" }
-        };
-
-        // Add custom ranges
-        foreach (var range in _customRanges)
-        {
-            _availableViews.Add(new ViewOption
-            {
-                Value = $"Custom_{range.Id}",
-                Text = range.Name
-            });
-        }
-    }
-
-    private async Task OnViewChanged()
-    {
-        if (_currentView.StartsWith("Custom_"))
-        {
-            var rangeId = Guid.Parse(_currentView.Replace("Custom_", ""));
-            _selectedCustomRange = _customRanges.FirstOrDefault(r => r.Id == rangeId);
-        }
-        else
-        {
-            _selectedCustomRange = null;
-        }
-
-        await LoadEvents();
-
-        // Reset the render flag so drag-drop gets re-initialized for the new view
-        _hasRenderedOnce = false;
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task NavigatePrevious()
-    {
-        _selectedDate = _currentView switch
-        {
-            "Day" => _selectedDate.AddDays(-1),
-            "WorkWeek" => _selectedDate.AddDays(-7),
-            "Week" => _selectedDate.AddDays(-7),
-            "Month" => _selectedDate.AddMonths(-1),
-            _ when _selectedCustomRange != null => _selectedDate.AddDays(-_selectedCustomRange.DaysCount),
-            _ => _selectedDate.AddMonths(-1)
-        };
-
-        await LoadEvents();
-
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private async Task NavigateNext()
-    {
-        _selectedDate = _currentView switch
-        {
-            "Day" => _selectedDate.AddDays(1),
-            "WorkWeek" => _selectedDate.AddDays(7),
-            "Week" => _selectedDate.AddDays(7),
-            "Month" => _selectedDate.AddMonths(1),
-            _ when _selectedCustomRange != null => _selectedDate.AddDays(_selectedCustomRange.DaysCount),
-            _ => _selectedDate.AddMonths(1)
-        };
-
-        await LoadEvents();
-
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private async Task GoToToday()
-    {
-        _selectedDate = DateTime.Today;
-
-        await LoadEvents();
-
-        // Reset the render flag so drag-drop gets re-initialized
-        _hasRenderedOnce = false;
-
-        // Trigger scroll to work hours for day/week views after content is loaded
-        if (_currentView == "Day" || _currentView == "Week" || _currentView == "WorkWeek")
-        {
-            _shouldScrollToWorkHours = true;
-            StateHasChanged();
-        }
-    }
-
-    private string GetCurrentViewTitle()
-    {
-        return _currentView switch
-        {
-            "Grid" => "All Events",
-            "Day" => _selectedDate.ToString("MMMM dd, yyyy"),
-            "WorkWeek" or "Week" => $"{GetWeekStart().ToString("MMM dd")} - {GetWeekEnd().ToString("MMM dd, yyyy")}",
-            "Month" => _selectedDate.ToString("MMMM yyyy"),
-            "Year" => DateTime.Today.Year.ToString(),
-            "Planner" => $"Year Planner - {DateTime.Today.Year}",
-            "Timeline" => $"Timeline - {DateTime.Today.Year}",
-            _ when _selectedCustomRange != null => $"{GetCustomRangeStart().ToString("MMM dd")} - {GetCustomRangeEnd().ToString("MMM dd, yyyy")}",
-            _ => _selectedDate.ToString("MMMM yyyy")
-        };
-    }
-
-    private async Task OpenCustomRangeDialog()
-    {
-        var result = await DialogService.OpenAsync<CustomRangeDialog>(
-            "Create Custom Calendar Range",
-            null,
-            new DialogOptions
-            {
-                Width = "500px",
-                Height = "auto",
-                Resizable = false,
-                Draggable = true
-            });
-
-        if (result is CustomCalendarRange newRange)
-        {
-            // Save to database
-            var savedRange = await CustomRangeRepository.CreateAsync(newRange);
-            _customRanges.Add(savedRange);
-            LoadAvailableViews();
-            _currentView = $"Custom_{savedRange.Id}";
-            _selectedCustomRange = savedRange;
-            await LoadEvents();
-            StateHasChanged();
-        }
     }
 
     private async Task DownloadDailyAgenda()
@@ -584,37 +403,6 @@
         }
     }
 
-    private List<List<DateTime>> GetCalendarWeeks()
-    {
-        var firstDayOfMonth = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
-        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-
-        // Use start of week from settings
-        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
-
-        // Calculate days to subtract to get to the start of week
-        var daysToSubtract = ((int)firstDayOfMonth.DayOfWeek - (int)startOfWeek + 7) % 7;
-        var startDate = firstDayOfMonth.AddDays(-daysToSubtract);
-
-        var daysToAdd = (6 - ((int)lastDayOfMonth.DayOfWeek - (int)startOfWeek + 7) % 7);
-        var endDate = lastDayOfMonth.AddDays(daysToAdd);
-
-        var weeks = new List<List<DateTime>>();
-        var currentWeek = new List<DateTime>();
-
-        for (var date = startDate; date <= endDate; date = date.AddDays(1))
-        {
-            currentWeek.Add(date);
-            if (currentWeek.Count == 7)
-            {
-                weeks.Add(currentWeek);
-                currentWeek = new List<DateTime>();
-            }
-        }
-
-        return weeks;
-    }
-
     private List<Event> GetEventsForDay(DateTime date)
     {
         return _events
@@ -623,192 +411,6 @@
             .ToList();
     }
 
-    private DateTime GetWeekStart()
-    {
-        var startOfWeek = _settings?.StartOfWeek ?? DayOfWeek.Sunday;
-        var diff = ((int)_selectedDate.DayOfWeek - (int)startOfWeek + 7) % 7;
-        return _selectedDate.AddDays(-diff).Date;
-    }
-
-    private DateTime GetWeekEnd()
-    {
-        return GetWeekStart().AddDays(6);
-    }
-
-    private DateTime GetWorkWeekStart()
-    {
-        var diff = _selectedDate.DayOfWeek - DayOfWeek.Monday;
-        if (diff < 0) diff += 7;
-        return _selectedDate.AddDays(-diff).Date;
-    }
-
-    private DateTime GetWorkWeekEnd()
-    {
-        return GetWorkWeekStart().AddDays(4); // Monday to Friday
-    }
-
-    private DateTime GetCustomRangeStart()
-    {
-        return _selectedDate.Date;
-    }
-
-    private DateTime GetCustomRangeEnd()
-    {
-        if (_selectedCustomRange == null) return _selectedDate;
-        return _selectedDate.AddDays(_selectedCustomRange.DaysCount - 1);
-    }
-
-    private List<DateTime> GetDaysForCurrentView()
-    {
-        return _currentView switch
-        {
-            "Day" => new List<DateTime> { _selectedDate.Date },
-            "WorkWeek" => GetWorkWeekDays(),
-            "Week" => GetWeekDays(),
-            "Month" => GetMonthDays(),
-            _ when _selectedCustomRange != null => GetCustomRangeDays(),
-            _ => GetMonthDays()
-        };
-    }
-
-    private List<DateTime> GetWorkWeekDays()
-    {
-        var days = new List<DateTime>();
-        var start = GetWorkWeekStart();
-        for (int i = 0; i < 5; i++)
-        {
-            days.Add(start.AddDays(i));
-        }
-        return days;
-    }
-
-    private List<DateTime> GetWeekDays()
-    {
-        var days = new List<DateTime>();
-        var start = GetWeekStart();
-        var showWeekends = _settings?.ShowWeekendInWeekView ?? true;
-
-        for (int i = 0; i < 7; i++)
-        {
-            var day = start.AddDays(i);
-            if (showWeekends || (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday))
-            {
-                days.Add(day);
-            }
-        }
-        return days;
-    }
-
-    private List<DateTime> GetMonthDays()
-    {
-        var days = new List<DateTime>();
-        foreach (var week in GetCalendarWeeks())
-        {
-            days.AddRange(week);
-        }
-        return days;
-    }
-
-    private List<DateTime> GetCustomRangeDays()
-    {
-        if (_selectedCustomRange == null) return new List<DateTime>();
-
-        var days = new List<DateTime>();
-        var start = GetCustomRangeStart();
-
-        for (int i = 0; i < _selectedCustomRange.DaysCount; i++)
-        {
-            var day = start.AddDays(i);
-            if (_selectedCustomRange.ShowWeekends || (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday))
-            {
-                days.Add(day);
-            }
-        }
-        return days;
-    }
-
-    private RenderFragment RenderCurrentView() => builder =>
-    {
-        if (_currentView == "Grid")
-        {
-            RenderGridView(builder);
-        }
-        else
-        {
-            RenderSchedulerView(builder);
-        }
-    };
-
-    private void RenderGridView(RenderTreeBuilder builder)
-    {
-        builder.OpenComponent<EventsGrid>(0);
-        builder.AddAttribute(1, "Events", _events);
-        builder.AddAttribute(2, "IsLoading", _loading);
-        builder.AddAttribute(3, "OnSearch", EventCallback.Factory.Create<string>(this, SearchEventsFromGrid));
-        builder.AddAttribute(4, "OnEditEvent", EventCallback.Factory.Create<Guid>(this, EditEventFromGrid));
-        builder.AddAttribute(5, "OnDeleteEvent", EventCallback.Factory.Create<Guid>(this, DeleteEventAsync));
-        builder.AddAttribute(6, "OnCreateEvent", EventCallback.Factory.Create(this, CreateEventFromGrid));
-        builder.CloseComponent();
-    }
-
-    private void RenderSchedulerView(RenderTreeBuilder builder)
-    {
-        builder.OpenComponent<RadzenScheduler<AppointmentData>>(0);
-        builder.AddAttribute(1, "Data", _appointments);
-        builder.AddAttribute(2, "TItem", typeof(AppointmentData));
-        builder.AddAttribute(3, "StartProperty", "Start");
-        builder.AddAttribute(4, "EndProperty", "End");
-        builder.AddAttribute(5, "TextProperty", "Text");
-        builder.AddAttribute(6, "SelectedIndex", GetSelectedViewIndex());
-        builder.AddAttribute(7, "AppointmentSelect", EventCallback.Factory.Create<SchedulerAppointmentSelectEventArgs<AppointmentData>>(this, OnAppointmentSelect));
-        builder.AddAttribute(8, "SlotSelect", EventCallback.Factory.Create<SchedulerSlotSelectEventArgs>(this, OnSlotSelect));
-        builder.AddAttribute(9, "AppointmentRender", new Action<SchedulerAppointmentRenderEventArgs<AppointmentData>>(OnAppointmentRender));
-
-        // Add child content for views
-        builder.AddAttribute(10, "ChildContent", (RenderFragment)(b =>
-        {
-            // Month View
-            b.OpenComponent<RadzenMonthView>(0);
-            b.CloseComponent();
-
-            // Week View
-            b.OpenComponent<RadzenWeekView>(1);
-            b.CloseComponent();
-
-            // Day View
-            b.OpenComponent<RadzenDayView>(2);
-            b.CloseComponent();
-
-            // Year View
-            b.OpenComponent<RadzenYearView>(3);
-            b.CloseComponent();
-
-            // Year Planner View
-            b.OpenComponent<RadzenYearPlannerView>(4);
-            b.CloseComponent();
-
-            // Year Timeline View
-            b.OpenComponent<RadzenYearTimelineView>(5);
-            b.CloseComponent();
-        }));
-
-        builder.CloseComponent();
-    }
-
-    private int GetSelectedViewIndex()
-    {
-        return _currentView switch
-        {
-            "Month" => 0,
-            "Week" => 1,
-            "WorkWeek" => 1,
-            "Day" => 2,
-            "Year" => 3,
-            "Planner" => 4,
-            "Timeline" => 5,
-            _ => 0
-        };
-    }
 
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AppointmentData> args)
     {
@@ -827,688 +429,306 @@
     private void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AppointmentData> args)
     {
         var evt = args.Data.Event;
-        if (evt != null)
+        if (evt != null && _formatter != null)
         {
             // Apply event color
-            var backgroundColor = GetEventBackgroundColor(evt);
+            var backgroundColor = _formatter.GetEventBackgroundColor(evt);
             args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
 
             // Add icon based on event type
-            var icon = GetEventIcon(evt.EventType);
+            var icon = _formatter.GetEventIcon(evt.EventType);
             args.Data.Text = $"{icon} {evt.Title}";
         }
-    }
 
-    private async Task SearchEventsFromGrid(string searchTerm)
-    {
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        // Add context menu to appointment
+        args.Attributes["oncontextmenu"] = (MouseEventArgs mouseArgs) =>
         {
-            await LoadEvents();
-        }
-        else
-        {
-            _loading = true;
-            _events = await EventRepository.SearchAsync(searchTerm, _userId);
-            _loading = false;
-        }
+            ShowContextMenu(mouseArgs, args.Data);
+        };
     }
-
-    private async Task EditEventFromGrid(Guid eventId)
-    {
-        await OpenEventDialogAsync(eventId);
-    }
-
-    private async Task CreateEventFromGrid()
-    {
-        await OpenEventDialogAsync(null, DateTime.Today);
-    }
-
-
-
-
 
 
     private string FormatTime(DateTime time)
     {
-        var format = _settings?.TimeFormat ?? TimeFormat.TwelveHour;
-        return format == TimeFormat.TwelveHour
-            ? time.ToString("h:mm tt")
-            : time.ToString("HH:mm");
+        return _formatter?.FormatTime(time) ?? time.ToString("h:mm tt");
     }
 
     private string FormatHourLabel(int hour)
     {
-        var format = _settings?.TimeFormat ?? TimeFormat.TwelveHour;
-        if (format == TimeFormat.TwelveHour)
-        {
-            return hour == 0 ? "12 AM" :
-                   hour < 12 ? $"{hour} AM" :
-                   hour == 12 ? "12 PM" :
-                   $"{hour - 12} PM";
-        }
-        else
-        {
-            return $"{hour:00}:00";
-        }
+        return _formatter?.FormatHourLabel(hour) ?? $"{hour}:00";
     }
 
     private string GetEventBackgroundColor(Event evt)
     {
-        // If the event has a custom color, use it
-        if (!string.IsNullOrEmpty(evt.Color))
-        {
-            return evt.Color;
-        }
-
-        // Otherwise, use color based on event type
-        return evt.EventType switch
-        {
-            Core.Enums.EventType.Meeting => "#1E88E5",      // Blue
-            Core.Enums.EventType.Appointment => "#43A047",  // Green
-            Core.Enums.EventType.Task => "#FB8C00",         // Orange
-            Core.Enums.EventType.TimeBlock => "#8E24AA",    // Purple
-            Core.Enums.EventType.Reminder => "#FDD835",     // Yellow
-            Core.Enums.EventType.Deadline => "#E53935",     // Red
-            _ => "#757575"                                   // Gray
-        };
-    }
-
-    private void ShowEventContextMenu(MouseEventArgs args, Event evt)
-    {
-        _contextMenuEvent = evt;
-
-        // Check if this is a recurring event instance or parent
-        var isRecurringInstance = evt.RecurrenceParentId.HasValue;
-        var isRecurringParent = evt.IsRecurring && !evt.RecurrenceParentId.HasValue;
-
-        var menuItems = new List<ContextMenuItem>();
-
-        if (isRecurringInstance || isRecurringParent)
-        {
-            // Options for recurring event instance or parent
-            menuItems.Add(new ContextMenuItem { Text = "Edit This Occurrence", Icon = "edit", Value = "edit-single" });
-            menuItems.Add(new ContextMenuItem { Text = "Edit All Occurrences", Icon = "edit_note", Value = "edit-all" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete This Occurrence", Icon = "delete", Value = "delete-single" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete All Occurrences", Icon = "delete_forever", Value = "delete-all" });
-        }
-        else
-        {
-            // Options for regular event
-            menuItems.Add(new ContextMenuItem { Text = "Edit", Icon = "edit", Value = "edit" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete", Icon = "delete", Value = "delete" });
-        }
-
-        ContextMenuService.Open(args, menuItems, OnEventContextMenuClick);
-    }
-
-    private void ShowAddEventContextMenu(MouseEventArgs args, DateTime date)
-    {
-        _contextMenuDate = date;
-        ContextMenuService.Open(args, new List<ContextMenuItem>
-        {
-            new ContextMenuItem { Text = "Add Event", Icon = "add", Value = "add" }
-        }, OnAddEventContextMenuClick);
-    }
-
-    private void OnEventContextMenuClick(MenuItemEventArgs args)
-    {
-        if (_contextMenuEvent == null) return;
-
-        var action = args.Value?.ToString();
-        switch (action)
-        {
-            case "edit":
-                _ = OpenEventDialogAsync(_contextMenuEvent.Id);
-                break;
-            case "edit-single":
-                _ = EditSingleOccurrenceAsync(_contextMenuEvent);
-                break;
-            case "edit-all":
-                _ = OpenEventDialogAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
-                break;
-            case "delete":
-                _ = DeleteEventAsync(_contextMenuEvent.Id);
-                break;
-            case "delete-single":
-                _ = DeleteSingleOccurrenceAsync(_contextMenuEvent);
-                break;
-            case "delete-all":
-                _ = DeleteEventAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
-                break;
-        }
-        ContextMenuService.Close();
-        _contextMenuEvent = null;
-    }
-
-    private void OnAddEventContextMenuClick(MenuItemEventArgs args)
-    {
-        if (_contextMenuDate.HasValue)
-        {
-            _ = OpenEventDialogAsync(null, _contextMenuDate.Value);
-        }
-        ContextMenuService.Close();
-        _contextMenuDate = null;
+        return _formatter?.GetEventBackgroundColor(evt) ?? "#757575";
     }
 
     private async Task OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
     {
-        var parameters = new Dictionary<string, object>();
-
-        if (eventId.HasValue)
+        if (_eventManager != null)
         {
-            parameters.Add("EventId", eventId.Value);
-        }
-
-        if (prefilledDate.HasValue)
-        {
-            parameters.Add("PrefilledDate", prefilledDate.Value);
-        }
-
-        var result = await DialogService.OpenAsync<EventFormDialog>(
-            eventId.HasValue ? "Edit Event" : "Create Event",
-            parameters,
-            new DialogOptions
+            var saved = await _eventManager.OpenEventDialogAsync(eventId, prefilledDate);
+            if (saved)
             {
-                Width = "600px",
-                Height = "auto",
-                Resizable = true,
-                Draggable = true
-            });
-
-        // If the dialog was saved (result == true), reload events
-        if (result is bool saved && saved)
-        {
-            await LoadEvents();
+                await LoadEvents();
+            }
         }
     }
 
     private async Task EditSingleOccurrenceAsync(Event instance)
     {
-        if (!instance.RecurrenceParentId.HasValue) return;
-
-        // Open dialog with the instance data and EditSingleOccurrence flag
-        var parameters = new Dictionary<string, object>
+        if (_eventManager != null)
         {
-            { "EditSingleOccurrence", true },
-            { "InstanceEvent", instance }
-        };
-
-        var result = await DialogService.OpenAsync<EventFormDialog>(
-            "Edit This Occurrence",
-            parameters,
-            new DialogOptions
+            var saved = await _eventManager.EditSingleOccurrenceAsync(instance);
+            if (saved)
             {
-                Width = "600px",
-                Height = "auto",
-                Resizable = true,
-                Draggable = true
-            });
-
-        // If the dialog was saved, reload events
-        if (result is bool saved && saved)
-        {
-            await LoadEvents();
+                await LoadEvents();
+            }
         }
     }
 
     private async Task DeleteSingleOccurrenceAsync(Event instance)
     {
-        if (!instance.RecurrenceParentId.HasValue) return;
-
-        var result = await DialogService.Confirm(
-            "Are you sure you want to delete this occurrence?",
-            "Delete Occurrence",
-            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
-
-        if (result == true)
+        if (_eventManager != null)
         {
-            // Create a "tombstone" exception to mark this date as deleted
-            var exceptionEvent = new Event
+            var deleted = await _eventManager.DeleteSingleOccurrenceAsync(instance, _userId);
+            if (deleted)
             {
-                Id = Guid.NewGuid(),
-                Title = "(Deleted)",
-                StartTime = instance.StartTime,
-                EndTime = instance.EndTime,
-                UserId = _userId,
-                IsRecurring = false,
-                IsRecurrenceException = true,
-                RecurrenceExceptionDate = instance.StartTime.Date,
-                RecurrenceParentId = instance.RecurrenceParentId.Value,
-                CreatedAt = DateTime.UtcNow,
-                Tags = new List<string>(),
-                Attendees = new List<Attendee>()
-            };
-
-            await EventRepository.CreateAsync(exceptionEvent);
-            await LoadEvents();
+                await LoadEvents();
+            }
         }
     }
 
     private async Task DeleteEventAsync(Guid id)
     {
-        var result = await DialogService.Confirm(
-            "Are you sure you want to delete this event?",
-            "Delete Event",
-            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
-
-        if (result == true)
+        if (_eventManager != null)
         {
-            await EventRepository.DeleteAsync(id, _userId);
-            await LoadEvents();
+            var deleted = await _eventManager.DeleteEventAsync(id, _userId);
+            if (deleted)
+            {
+                await LoadEvents();
+            }
         }
     }
-
-    private async Task ScrollToWorkHours()
-    {
-        try
-        {
-            var workStartHour = _settings?.WorkHoursStart.Hours ?? 8;
-            var workStartMinute = _settings?.WorkHoursStart.Minutes ?? 0;
-
-            // Each hour is 60px tall, calculate exact pixel position
-            var scrollPosition = (workStartHour * 60) + workStartMinute;
-
-            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
-
-            await JSRuntime.InvokeVoidAsync("eval", $@"
-                (function() {{
-                    var container = document.getElementById('{containerId}');
-                    if (container) {{
-                        container.scrollTop = {scrollPosition};
-                    }}
-                }})();
-            ");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error scrolling to work hours: {ex.Message}");
-        }
-    }
-
 
     // Event Icon Mapping
     private string GetEventIcon(Core.Enums.EventType eventType)
     {
-        return eventType switch
-        {
-            Core.Enums.EventType.Meeting => "👥",
-            Core.Enums.EventType.Appointment => "📅",
-            Core.Enums.EventType.Task => "✓",
-            Core.Enums.EventType.TimeBlock => "🎯",
-            Core.Enums.EventType.Reminder => "🔔",
-            Core.Enums.EventType.Deadline => "⚡",
-            _ => "📌"
-        };
+        return _formatter?.GetEventIcon(eventType) ?? "📌";
     }
 
     // Template Creation
     private async Task CreateFromTemplate(string templateName, int durationMinutes)
     {
-        // Find the next available time slot starting from current time or work hours
-        var now = DateTime.Now;
-        var startTime = now;
-
-        // If viewing a different day, use that day at work start time
-        if (_selectedDate.Date != DateTime.Today)
+        if (_eventManager != null)
         {
-            var workStartHour = _settings?.WorkHoursStart.Hours ?? 8;
-            startTime = _selectedDate.Date.AddHours(workStartHour);
+            await _eventManager.CreateFromTemplateAsync(templateName, durationMinutes, _selectedDate, _settings, _userId);
+            await LoadEvents();
+            StateHasChanged();
         }
-        else
+    }
+
+    // AppointmentMove - handles drag and drop using RadzenScheduler's built-in functionality
+    private async Task OnAppointmentMove(SchedulerAppointmentMoveEventArgs args)
+    {
+        if (_dragDropManager == null) return;
+
+        try
         {
-            // Round to next 15-minute interval
-            var minutes = startTime.Minute;
-            var roundedMinutes = ((minutes + 14) / 15) * 15;
-            startTime = startTime.Date.AddHours(startTime.Hour).AddMinutes(roundedMinutes);
+            var appointment = (AppointmentData)args.Appointment.Data;
+            var evt = appointment?.Event;
+
+            if (evt == null || appointment == null) return;
+
+            // Calculate new start and end times
+            var newStartTime = evt.StartTime + args.TimeSpan;
+            var newEndTime = evt.EndTime + args.TimeSpan;
+
+            // Handle recurring events with confirmation dialog
+            await _dragDropManager.HandleEventDropAsync(
+                evt,
+                newStartTime,
+                newEndTime,
+                _userId,
+                async () =>
+                {
+                    // Update the appointment data immediately for UI responsiveness
+                    appointment.Start = newStartTime;
+                    appointment.End = newEndTime;
+
+                    // Reload events from database
+                    await LoadEvents();
+
+                    // Reload the scheduler
+                    if (_scheduler != null)
+                    {
+                        await _scheduler.Reload();
+                    }
+                });
         }
-
-        var endTime = startTime.AddMinutes(durationMinutes);
-
-        // Determine event type based on template
-        var eventType = templateName.ToLower() switch
+        catch (Exception ex)
         {
-            "meeting" => Core.Enums.EventType.Meeting,
-            "break" => Core.Enums.EventType.TimeBlock,
-            _ => Core.Enums.EventType.TimeBlock
+            Console.WriteLine($"Error in OnAppointmentMove: {ex.Message}");
+        }
+    }
+
+
+    // Context Menu
+    private void ShowContextMenu(MouseEventArgs args, AppointmentData data)
+    {
+        var evt = data.Event;
+        if (evt == null) return;
+
+        var menuItems = new List<ContextMenuItem>
+        {
+            new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" }
         };
 
-        // Create the event
-        var newEvent = new Event
+        // Add "Edit Series" option if this is a recurring event
+        if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
         {
-            Id = Guid.NewGuid(),
-            Title = templateName,
-            StartTime = startTime,
-            EndTime = endTime,
-            EventType = eventType,
-            Priority = Core.Enums.Priority.Medium,
-            UserId = _userId,
-            CreatedAt = DateTime.UtcNow,
-            Tags = new List<string>(),
-            Attendees = new List<Attendee>()
-        };
+            menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+        }
 
-        await EventRepository.CreateAsync(newEvent);
-        await LoadEvents();
+        menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+        menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+
+        ContextMenuService.Open(args, menuItems, OnMenuItemClick);
+    }
+
+    private async void OnMenuItemClick(MenuItemEventArgs item)
+    {
+        ContextMenuService.Close();
+
+        var data = item.Value as AppointmentData;
+        if (data?.Event == null) return;
+
+        switch (item.Text)
+        {
+            case "Edit":
+                await OpenEventDialogAsync(data.Event.Id);
+                break;
+
+            case "Edit Series":
+                // For recurring events, edit the parent event
+                var eventIdToEdit = data.Event.RecurrenceParentId ?? data.Event.Id;
+                await OpenEventDialogAsync(eventIdToEdit);
+                break;
+
+            case "Duplicate":
+                await DuplicateEventAsync(data.Event);
+                break;
+
+            case "Delete":
+                await DeleteEventAsync(data.Event.Id);
+                break;
+        }
+    }
+
+    private async Task DuplicateEventAsync(Event originalEvent)
+    {
+        try
+        {
+            // Create a duplicate of the event
+            var duplicateEvent = new Event
+            {
+                Id = Guid.NewGuid(),
+                Title = $"{originalEvent.Title} (Copy)",
+                Description = originalEvent.Description,
+                StartTime = originalEvent.StartTime,
+                EndTime = originalEvent.EndTime,
+                Location = originalEvent.Location,
+                EventType = originalEvent.EventType,
+                Priority = originalEvent.Priority,
+                Color = originalEvent.Color,
+                UserId = _userId,
+                IsAllDay = originalEvent.IsAllDay,
+                IsRecurring = false, // Don't duplicate recurrence
+                RecurrencePattern = RecurrencePattern.None,
+                RecurrenceEndDate = null,
+                RecurrenceParentId = null,
+                IsRecurrenceException = false,
+                RecurrenceExceptionDate = null,
+                Tags = new List<string>(originalEvent.Tags),
+                Attendees = new List<Attendee>(originalEvent.Attendees.Select(a => new Attendee
+                {
+                    Id = Guid.NewGuid(),
+                    Name = a.Name,
+                    Email = a.Email,
+                    EventId = Guid.Empty // Will be set when saved
+                })),
+                CreatedAt = DateTime.UtcNow,
+                HourlyCostPerAttendee = originalEvent.HourlyCostPerAttendee,
+                MeetingCost = originalEvent.MeetingCost
+            };
+
+            await EventRepository.CreateAsync(duplicateEvent);
+            await LoadEvents();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error duplicating event: {ex.Message}");
+        }
+    }
+
+    // View management
+    private async Task ChangeView(int newIndex)
+    {
+        _selectedViewIndex = newIndex;
+
+        // Use JSRuntime to log to browser console
+        await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Changing view to index: {newIndex}");
+
+        // Save the selected view to settings
+        if (_settings != null)
+        {
+            var newView = GetCalendarViewFromSchedulerIndex(newIndex);
+            _settings.DefaultCalendarView = newView;
+            _settings.UpdatedAt = DateTime.UtcNow;
+
+            await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saving view preference: {newView}");
+
+            try
+            {
+                var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", $"[Calendar ChangeView] Error saving: {ex.Message}");
+            }
+        }
+
         StateHasChanged();
     }
 
-    // Drag and Drop Callback
-    [JSInvokable]
-    public async Task OnEventDropped(string eventId, int dayIndex, int hour, int minute)
+    private int GetSchedulerIndexFromCalendarView(CalendarView view)
     {
-        try
+        return view switch
         {
-            // Mark that we're in a drag-drop operation to prevent auto-scrolling
-            _isDragDropOperation = true;
-
-            // Save scroll position before making changes
-            var scrollPosition = await SaveScrollPosition();
-
-            var evt = _events.FirstOrDefault(e => e.Id.ToString() == eventId);
-            if (evt == null)
-            {
-                _isDragDropOperation = false;
-                return;
-            }
-
-            // Calculate the new date based on day index and current view
-            DateTime newDate = _selectedDate.Date;
-
-            if (_currentView == "Week" || _currentView == "WorkWeek")
-            {
-                var days = _currentView == "Week" ? GetWeekDays() : GetWorkWeekDays();
-                if (dayIndex >= 0 && dayIndex < days.Count)
-                {
-                    newDate = days[dayIndex].Date;
-                }
-            }
-
-            var newStartTime = newDate.AddHours(hour).AddMinutes(minute);
-            var duration = evt.EndTime - evt.StartTime;
-            var newEndTime = newStartTime.Add(duration);
-
-            // Check if this is a recurring event
-            bool isRecurringInstance = evt.RecurrenceParentId.HasValue;
-            bool isRecurringParent = evt.IsRecurring && !evt.RecurrenceParentId.HasValue;
-
-            if (isRecurringInstance || isRecurringParent)
-            {
-                // Ask user if they want to reschedule all occurrences or just this one
-                var result = await ShowRescheduleConfirmationDialog(evt, newStartTime, newEndTime);
-
-                if (result == null)
-                {
-                    // User cancelled - restore scroll position
-                    await RestoreScrollPosition(scrollPosition);
-                    _isDragDropOperation = false;
-                    return;
-                }
-
-                if (result.Value) // Reschedule all occurrences
-                {
-                    await RescheduleAllOccurrences(evt, newStartTime, newEndTime);
-                }
-                else // Reschedule only this occurrence
-                {
-                    await RescheduleSingleOccurrence(evt, newStartTime, newEndTime);
-                }
-            }
-            else
-            {
-                // Regular event - just reschedule it
-                await RescheduleEvent(evt, newStartTime, newEndTime);
-            }
-
-            await LoadEvents();
-            StateHasChanged();
-
-            // Restore scroll position after the update
-            await RestoreScrollPosition(scrollPosition);
-
-            // Re-enable drag-drop setup for the new events
-            await Task.Delay(100);
-            await JSRuntime.InvokeVoidAsync("TempusCalendar.makeAllEventsDraggable");
-            await JSRuntime.InvokeVoidAsync("TempusCalendar.setupDropZones");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in OnEventDropped: {ex.Message}");
-        }
-        finally
-        {
-            // Always clear the flag
-            _isDragDropOperation = false;
-        }
-    }
-
-    private async Task<bool?> ShowRescheduleConfirmationDialog(Event evt, DateTime newStartTime, DateTime newEndTime)
-    {
-        var options = new List<string>
-        {
-            "This occurrence only",
-            "All occurrences"
+            CalendarView.Month => 0,      // RadzenMonthView
+            CalendarView.Week => 1,       // RadzenWeekView
+            CalendarView.Day => 2,        // RadzenDayView
+            CalendarView.WorkWeek => 1,   // RadzenWeekView (no separate WorkWeek view in scheduler)
+            _ => 1                        // Default to Week
         };
-
-        var result = await DialogService.Confirm(
-            $"Do you want to reschedule all occurrences or just this one?\n\nNew time: {FormatDateTime(newStartTime)} - {FormatTime(newEndTime)}",
-            "Reschedule Recurring Event",
-            new ConfirmOptions
-            {
-                OkButtonText = "This occurrence only",
-                CancelButtonText = "Cancel",
-                Width = "500px"
-            });
-
-        if (result == null) return null; // Cancelled
-
-        // Show second dialog for "All occurrences" option
-        var allOccurrences = await DialogService.Confirm(
-            "Reschedule all occurrences of this event?",
-            "Confirm",
-            new ConfirmOptions
-            {
-                OkButtonText = "All occurrences",
-                CancelButtonText = "This occurrence only",
-                Width = "400px"
-            });
-
-        return allOccurrences ?? false;
     }
 
-    private async Task RescheduleEvent(Event evt, DateTime newStartTime, DateTime newEndTime)
+    private CalendarView GetCalendarViewFromSchedulerIndex(int index)
     {
-        var originalEvent = new Event
+        return index switch
         {
-            Id = evt.Id,
-            Title = evt.Title,
-            StartTime = evt.StartTime,
-            EndTime = evt.EndTime,
-            Location = evt.Location,
-            Description = evt.Description,
-            EventType = evt.EventType,
-            Attendees = evt.Attendees
+            0 => CalendarView.Month,      // RadzenMonthView
+            1 => CalendarView.Week,       // RadzenWeekView
+            2 => CalendarView.Day,        // RadzenDayView
+            _ => CalendarView.Week        // Default to Week
         };
-
-        evt.StartTime = newStartTime;
-        evt.EndTime = newEndTime;
-
-        await EventRepository.UpdateAsync(evt);
-
-        // Send meeting update notifications if this is a meeting with attendees
-        if (evt.EventType == Core.Enums.EventType.Meeting && evt.Attendees.Any())
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var appUser = await UserManager.GetUserAsync(user);
-            var organizerName = appUser != null ? $"{appUser.FirstName} {appUser.LastName}".Trim() : "Unknown";
-            if (string.IsNullOrWhiteSpace(organizerName)) organizerName = appUser?.Email ?? "Unknown";
-
-            await EmailNotificationService.SendMeetingUpdateAsync(
-                originalEvent,
-                evt,
-                organizerName,
-                MeetingUpdateType.Rescheduled
-            );
-        }
-    }
-
-    private async Task RescheduleSingleOccurrence(Event evt, DateTime newStartTime, DateTime newEndTime)
-    {
-        // Create an exception for this occurrence
-        var exceptionEvent = new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = evt.Title,
-            Description = evt.Description,
-            StartTime = newStartTime,
-            EndTime = newEndTime,
-            Location = evt.Location,
-            EventType = evt.EventType,
-            Priority = evt.Priority,
-            Color = evt.Color,
-            UserId = evt.UserId,
-            IsRecurring = false,
-            IsRecurrenceException = true,
-            RecurrenceExceptionDate = evt.StartTime.Date,
-            RecurrenceParentId = evt.RecurrenceParentId ?? evt.Id,
-            CreatedAt = DateTime.UtcNow,
-            Tags = new List<string>(evt.Tags),
-            Attendees = new List<Attendee>(evt.Attendees.Select(a => new Attendee
-            {
-                Name = a.Name,
-                Email = a.Email
-            }))
-        };
-
-        await EventRepository.CreateAsync(exceptionEvent);
-
-        // Send meeting update for this occurrence only
-        if (evt.EventType == Core.Enums.EventType.Meeting && evt.Attendees.Any())
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var appUser = await UserManager.GetUserAsync(user);
-            var organizerName = appUser != null ? $"{appUser.FirstName} {appUser.LastName}".Trim() : "Unknown";
-            if (string.IsNullOrWhiteSpace(organizerName)) organizerName = appUser?.Email ?? "Unknown";
-
-            var originalOccurrence = new Event
-            {
-                Title = evt.Title,
-                StartTime = evt.StartTime,
-                EndTime = evt.EndTime,
-                Location = evt.Location,
-                Attendees = evt.Attendees
-            };
-
-            await EmailNotificationService.SendMeetingUpdateAsync(
-                originalOccurrence,
-                exceptionEvent,
-                organizerName,
-                MeetingUpdateType.Rescheduled
-            );
-        }
-    }
-
-    private async Task RescheduleAllOccurrences(Event evt, DateTime newStartTime, DateTime newEndTime)
-    {
-        var parentId = evt.RecurrenceParentId ?? evt.Id;
-        var parentEvent = evt.RecurrenceParentId.HasValue
-            ? await EventRepository.GetByIdAsync(parentId, _userId)
-            : evt;
-
-        if (parentEvent == null) return;
-
-        // Calculate the time difference
-        var timeDiff = newStartTime - evt.StartTime;
-
-        var originalEvent = new Event
-        {
-            Id = parentEvent.Id,
-            Title = parentEvent.Title,
-            StartTime = parentEvent.StartTime,
-            EndTime = parentEvent.EndTime,
-            Location = parentEvent.Location,
-            Description = parentEvent.Description,
-            EventType = parentEvent.EventType,
-            Attendees = parentEvent.Attendees
-        };
-
-        // Update the parent event's time
-        parentEvent.StartTime = parentEvent.StartTime.Add(timeDiff);
-        parentEvent.EndTime = parentEvent.EndTime.Add(timeDiff);
-
-        await EventRepository.UpdateAsync(parentEvent);
-
-        // Send meeting update for all occurrences
-        if (parentEvent.EventType == Core.Enums.EventType.Meeting && parentEvent.Attendees.Any())
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var appUser = await UserManager.GetUserAsync(user);
-            var organizerName = appUser != null ? $"{appUser.FirstName} {appUser.LastName}".Trim() : "Unknown";
-            if (string.IsNullOrWhiteSpace(organizerName)) organizerName = appUser?.Email ?? "Unknown";
-
-            await EmailNotificationService.SendMeetingUpdateAsync(
-                originalEvent,
-                parentEvent,
-                organizerName,
-                MeetingUpdateType.Rescheduled
-            );
-        }
-    }
-
-    private string FormatDateTime(DateTime dt)
-    {
-        return dt.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt");
-    }
-
-    // Scroll Position Management
-    private async Task<int> SaveScrollPosition()
-    {
-        try
-        {
-            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
-            var scrollTop = await JSRuntime.InvokeAsync<int>("eval", $@"
-                (function() {{
-                    var container = document.getElementById('{containerId}');
-                    return container ? container.scrollTop : 0;
-                }})();
-            ");
-            return scrollTop;
-        }
-        catch
-        {
-            return 0;
-        }
-    }
-
-    private async Task RestoreScrollPosition(int scrollPosition)
-    {
-        try
-        {
-            var containerId = _currentView == "Day" ? "day-view-container" : "multi-day-view-container";
-
-            // Small delay to ensure DOM is fully rendered
-            await Task.Delay(50);
-
-            await JSRuntime.InvokeVoidAsync("eval", $@"
-                (function() {{
-                    var container = document.getElementById('{containerId}');
-                    if (container) {{
-                        container.scrollTop = {scrollPosition};
-                    }}
-                }})();
-            ");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error restoring scroll position: {ex.Message}");
-        }
     }
 
     // Cleanup
     public void Dispose()
     {
-        _dotNetHelper?.Dispose();
+        // No cleanup needed
     }
 }

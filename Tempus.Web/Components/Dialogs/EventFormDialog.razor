@@ -20,56 +20,66 @@
         <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
     </RadzenFormField>
 
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
-                <RadzenDatePicker @bind-Value="@StartTime" ShowTime="@(!IsAllDay)"
-                                DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="@(IsAllDay ? "End Date" : "End Date/Time")" Variant="Variant.Outlined">
-                <RadzenDatePicker @bind-Value="@EndTime" ShowTime="@(!IsAllDay)"
-                                DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
+    <RadzenTabs>
+        <Tabs>
+            <!-- Details Tab -->
+            <RadzenTabsItem Text="Details" Icon="event">
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@StartTime" ShowTime="@(!IsAllDay)"
+                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="@(IsAllDay ? "End Date" : "End Date/Time")" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@EndTime" ShowTime="@(!IsAllDay)"
+                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
 
-    <RadzenFormField Text="Location" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
-    </RadzenFormField>
+                <RadzenFormField Text="Location" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
+                </RadzenFormField>
 
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
-                <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
-                              Change="@OnEventTypeChanged"
-                              Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenFormField Text="Priority" Variant="Variant.Outlined">
-                <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
-                              Style="width: 100%;" />
-            </RadzenFormField>
-        </RadzenColumn>
-    </RadzenRow>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
+                                          Change="@OnEventTypeChanged"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
+                                          Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
 
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-        <RadzenCheckBox @bind-Value="@IsAllDay" />
-        <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
-    </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenCheckBox @bind-Value="@IsAllDay" />
+                    <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
+                </RadzenStack>
 
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-        <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
-        <RadzenColorPicker @bind-Value="@_event.Color" />
-    </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
+                    <RadzenColorPicker @bind-Value="@_event.Color" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenTabsItem>
 
-    <!-- Attendees Section (only for Meeting type events) -->
-    @if (_event.EventType == EventType.Meeting)
-    {
-        <RadzenFieldset Text="Attendees" Style="margin-top: 1rem;">
-            <RadzenStack Gap="1rem">
+        <!-- Meeting Tab (only for Meeting type events) -->
+        @if (_event.EventType == EventType.Meeting)
+        {
+            <RadzenTabsItem Text="Meeting" Icon="groups">
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <!-- Attendees Section -->
+                    <RadzenFieldset Text="Attendees">
+                        <RadzenStack Gap="1rem">
                 @if (_event.Attendees.Any())
                 {
                     <div style="max-height: 200px; overflow-y: auto;">
@@ -143,11 +153,11 @@
                     </RadzenColumn>
                 </RadzenRow>
             </RadzenStack>
-        </RadzenFieldset>
+                    </RadzenFieldset>
 
-        <!-- Meeting Cost Calculator (only for Meeting type events) -->
-        <RadzenFieldset Text="Meeting Cost Calculator" Style="margin-top: 1rem;">
-            <RadzenStack Gap="1rem">
+                    <!-- Meeting Cost Calculator -->
+                    <RadzenFieldset Text="Meeting Cost Calculator">
+                        <RadzenStack Gap="1rem">
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Hourly Cost Per Attendee" Variant="Variant.Outlined">
@@ -176,15 +186,17 @@
                     <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
                     <strong>Note:</strong> This cost will be saved and used for monthly meeting analysis reports.
                 </div>
-            </RadzenStack>
-        </RadzenFieldset>
-    }
+                        </RadzenStack>
+                    </RadzenFieldset>
+                </RadzenStack>
+            </RadzenTabsItem>
+        }
 
-    <!-- Recurrence Section (hidden when editing single occurrence) -->
-    @if (!EditSingleOccurrence)
-    {
-        <RadzenFieldset Text="Recurrence" Style="margin-top: 1rem;">
-            <RadzenStack Gap="1rem">
+        <!-- Recurrence Tab (hidden when editing single occurrence) -->
+        @if (!EditSingleOccurrence)
+        {
+            <RadzenTabsItem Text="Recurrence" Icon="repeat">
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
                     <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
@@ -235,15 +247,17 @@
                     </RadzenFormField>
                 }
 
-                    <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
-                        <strong>Summary:</strong> @GetRecurrenceSummary()
-                    </div>
-                }
-            </RadzenStack>
-        </RadzenFieldset>
-    }
+                        <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                            <strong>Summary:</strong> @GetRecurrenceSummary()
+                        </div>
+                    }
+                </RadzenStack>
+            </RadzenTabsItem>
+        }
+        </Tabs>
+    </RadzenTabs>
 
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
         <RadzenButton Text="@(GetSaveButtonText())" ButtonStyle="ButtonStyle.Primary"
                     Click="Save" Disabled="@(!IsValid())" />
