@@ -216,18 +216,41 @@
             <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                            SelectedIndex="@_selectedViewIndex"
-                           SelectedIndexChanged="@(EventCallback.Factory.Create<int>(this, OnViewChanged))"
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
                            AppointmentRender="@OnAppointmentRender"
                            AppointmentMove="@OnAppointmentMove"
                            @oncontextmenu:preventDefault>
-                <RadzenMonthView />
-                <RadzenWeekView />
-                <RadzenDayView />
-                <RadzenYearView />
-                <RadzenYearPlannerView />
-                <RadzenYearTimelineView />
+                <ChildContent>
+                    <RadzenMonthView />
+                    <RadzenWeekView />
+                    <RadzenDayView />
+                    <RadzenYearView />
+                    <RadzenYearPlannerView />
+                    <RadzenYearTimelineView />
+                </ChildContent>
+                <NavigationTemplate>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-bottom: 1rem;">
+                        <RadzenButton Text="Month" Click="@(() => ChangeView(0))"
+                                    ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Week" Click="@(() => ChangeView(1))"
+                                    ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Day" Click="@(() => ChangeView(2))"
+                                    ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Year" Click="@(() => ChangeView(3))"
+                                    ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Planner" Click="@(() => ChangeView(4))"
+                                    ButtonStyle="@(_selectedViewIndex == 4 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                        <RadzenButton Text="Timeline" Click="@(() => ChangeView(5))"
+                                    ButtonStyle="@(_selectedViewIndex == 5 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                    Size="ButtonSize.Small" />
+                    </RadzenStack>
+                </NavigationTemplate>
             </RadzenScheduler>
         }
     </RadzenCard>
@@ -276,8 +299,6 @@
 
                 // Load saved view preference
                 _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
-
-                Console.WriteLine($"[Calendar Init] Loaded view preference: {_settings.DefaultCalendarView} (index: {_selectedViewIndex})");
             }
         }
 
@@ -290,6 +311,14 @@
         _formatter = new CalendarFormatter(_settings);
 
         await LoadEvents();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _settings != null)
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar Init] Loaded view preference: {_settings.DefaultCalendarView} (index: {_selectedViewIndex})");
+        }
     }
 
 
@@ -644,34 +673,31 @@
     }
 
     // View management
-    private void OnViewChanged(int newIndex)
+    private async Task ChangeView(int newIndex)
     {
         _selectedViewIndex = newIndex;
 
-        // Save the selected view to settings asynchronously
+        // Use JSRuntime to log to browser console
+        await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Changing view to index: {newIndex}");
+
+        // Save the selected view to settings
         if (_settings != null)
         {
             var newView = GetCalendarViewFromSchedulerIndex(newIndex);
             _settings.DefaultCalendarView = newView;
             _settings.UpdatedAt = DateTime.UtcNow;
 
-            Console.WriteLine($"[Calendar OnViewChanged] Changing view to: {newView} (index: {newIndex})");
+            await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saving view preference: {newView}");
 
-            // Use InvokeAsync to ensure proper context for scoped services
-            _ = InvokeAsync(async () =>
+            try
             {
-                try
-                {
-                    Console.WriteLine($"[Calendar OnViewChanged] Saving view preference: {newView}");
-                    var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
-                    Console.WriteLine($"[Calendar OnViewChanged] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[Calendar OnViewChanged] Error saving calendar view preference: {ex.Message}");
-                    Console.WriteLine($"[Calendar OnViewChanged] Stack trace: {ex.StackTrace}");
-                }
-            });
+                var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
+                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", $"[Calendar ChangeView] Error saving: {ex.Message}");
+            }
         }
 
         StateHasChanged();
