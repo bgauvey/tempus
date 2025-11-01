@@ -215,6 +215,8 @@
         {
             <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
+                           SelectedIndex="@_selectedViewIndex"
+                           SelectedIndexChanged="@(EventCallback.Factory.Create<int>(this, OnViewChanged))"
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
                            AppointmentRender="@OnAppointmentRender"
@@ -252,6 +254,7 @@
     private CalendarSettings? _settings;
     private string _userId = string.Empty;
     private RadzenScheduler<AppointmentData>? _scheduler;
+    private int _selectedViewIndex = 1; // Default to Week view (index 1)
 
     // Helper classes
     private CalendarEventManager? _eventManager;
@@ -270,6 +273,9 @@
             {
                 _userId = appUser.Id;
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
+
+                // Load saved view preference
+                _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
             }
         }
 
@@ -633,6 +639,48 @@
         {
             Console.WriteLine($"Error duplicating event: {ex.Message}");
         }
+    }
+
+    // View management
+    private void OnViewChanged(int newIndex)
+    {
+        _selectedViewIndex = newIndex;
+
+        // Save the selected view to settings asynchronously without awaiting
+        if (_settings != null)
+        {
+            var newView = GetCalendarViewFromSchedulerIndex(newIndex);
+            _settings.DefaultCalendarView = newView;
+            _settings.UpdatedAt = DateTime.UtcNow;
+
+            // Fire and forget - save settings in background
+            _ = Task.Run(async () => await SettingsService.CreateOrUpdateSettingsAsync(_settings));
+        }
+
+        StateHasChanged();
+    }
+
+    private int GetSchedulerIndexFromCalendarView(CalendarView view)
+    {
+        return view switch
+        {
+            CalendarView.Month => 0,      // RadzenMonthView
+            CalendarView.Week => 1,       // RadzenWeekView
+            CalendarView.Day => 2,        // RadzenDayView
+            CalendarView.WorkWeek => 1,   // RadzenWeekView (no separate WorkWeek view in scheduler)
+            _ => 1                        // Default to Week
+        };
+    }
+
+    private CalendarView GetCalendarViewFromSchedulerIndex(int index)
+    {
+        return index switch
+        {
+            0 => CalendarView.Month,      // RadzenMonthView
+            1 => CalendarView.Week,       // RadzenWeekView
+            2 => CalendarView.Day,        // RadzenDayView
+            _ => CalendarView.Week        // Default to Week
+        };
     }
 
     // Cleanup
