@@ -1,13 +1,16 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Options
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Web.Components.Shared
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject UserManager<ApplicationUser> UserManager
-@inject ThemeService ThemeService
+@inject CookieThemeService CookieThemeService
+@inject ThemeService ThemeService 
+@inject IOptions<CookieThemeServiceOptions> Options 
 
 <RadzenComponents @rendermode="InteractiveServer" />
 <RadzenContextMenu @rendermode="InteractiveServer" />
@@ -30,15 +33,6 @@
                         <RadzenLink Path="/">Home</RadzenLink>
                         <RadzenLink Path="/features">Features</RadzenLink>
                         <RadzenLink Path="/about">About</RadzenLink>
-                        <RadzenDropDown Name="ThemeDropDown" 
-                                        TValue="string" 
-                                        Value="@ThemeService.Theme" 
-                                        ValueChanged="@OnThemeChanged" 
-                                        Data="@Themes.Free" 
-                                        TextProperty=@nameof(Theme.Text) 
-                                        ValueProperty=@nameof(Theme.Value)
-                                        Width="150px" Style="width: 150px;">
-                        </RadzenDropDown>
                         <RadzenLink Path="/Account/Login">Login</RadzenLink>
                     </RadzenStack>
                 </RadzenStack>
@@ -56,15 +50,7 @@
                         </RadzenStack>
                     </RadzenStack>
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <RadzenDropDown Name="ThemeDropDown" 
-                                        TValue="string" 
-                                        Value="@ThemeService.Theme" 
-                                        ValueChanged="@OnThemeChanged" 
-                                        Data="@Themes.Free" 
-                                        TextProperty=@nameof(Theme.Text) 
-                                        ValueProperty=@nameof(Theme.Value)
-                                        Width="150px" Style="width: 150px;">
-                        </RadzenDropDown>
+                        <RadzenAppearanceToggle />
                         <NavMenu />
                     </RadzenStack>
                 </RadzenStack>
@@ -145,10 +131,32 @@
 </RadzenLayout>
 
 @code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; }
+
     private bool _drawerOpen = true;
 
-    private void OnThemeChanged(string value)
+    protected override void OnInitialized()
     {
-        ThemeService.SetTheme(value);
+        base.OnInitialized();
+
+        if (HttpContext != null)
+        {
+            var theme = HttpContext.Request.Cookies["TempusTheme"];
+
+            if (!string.IsNullOrEmpty(theme))
+            {
+                ThemeService.SetTheme(theme, false);
+            }
+            else
+            {
+                HttpContext.Response.Cookies.Append("TempusTheme", 
+                "software" , 
+                new CookieOptions {
+                    Secure = true, 
+                    Expires = DateTimeOffset.Now.Add(Options.Value.Duration) 
+                });    
+            }
+        }
     }
 }
