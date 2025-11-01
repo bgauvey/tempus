@@ -15,7 +15,6 @@
 @inject IEventRepository EventRepository
 @inject ICustomRangeRepository CustomRangeRepository
 @inject ISettingsService SettingsService
-@inject ContextMenuService ContextMenuService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
@@ -236,8 +235,6 @@
     private List<Event> _events = new();
     private List<AppointmentData> _appointments = new();
     private bool _loading = true;
-    private Event? _contextMenuEvent;
-    private DateTime? _contextMenuDate;
     private string _currentView = "Month";
     private List<CustomCalendarRange> _customRanges = new();
     private CustomCalendarRange? _selectedCustomRange;
@@ -863,11 +860,6 @@
         await OpenEventDialogAsync(null, DateTime.Today);
     }
 
-
-
-
-
-
     private string FormatTime(DateTime time)
     {
         var format = _settings?.TimeFormat ?? TimeFormat.TwelveHour;
@@ -911,83 +903,6 @@
             Core.Enums.EventType.Deadline => "#E53935",     // Red
             _ => "#757575"                                   // Gray
         };
-    }
-
-    private void ShowEventContextMenu(MouseEventArgs args, Event evt)
-    {
-        _contextMenuEvent = evt;
-
-        // Check if this is a recurring event instance or parent
-        var isRecurringInstance = evt.RecurrenceParentId.HasValue;
-        var isRecurringParent = evt.IsRecurring && !evt.RecurrenceParentId.HasValue;
-
-        var menuItems = new List<ContextMenuItem>();
-
-        if (isRecurringInstance || isRecurringParent)
-        {
-            // Options for recurring event instance or parent
-            menuItems.Add(new ContextMenuItem { Text = "Edit This Occurrence", Icon = "edit", Value = "edit-single" });
-            menuItems.Add(new ContextMenuItem { Text = "Edit All Occurrences", Icon = "edit_note", Value = "edit-all" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete This Occurrence", Icon = "delete", Value = "delete-single" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete All Occurrences", Icon = "delete_forever", Value = "delete-all" });
-        }
-        else
-        {
-            // Options for regular event
-            menuItems.Add(new ContextMenuItem { Text = "Edit", Icon = "edit", Value = "edit" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete", Icon = "delete", Value = "delete" });
-        }
-
-        ContextMenuService.Open(args, menuItems, OnEventContextMenuClick);
-    }
-
-    private void ShowAddEventContextMenu(MouseEventArgs args, DateTime date)
-    {
-        _contextMenuDate = date;
-        ContextMenuService.Open(args, new List<ContextMenuItem>
-        {
-            new ContextMenuItem { Text = "Add Event", Icon = "add", Value = "add" }
-        }, OnAddEventContextMenuClick);
-    }
-
-    private void OnEventContextMenuClick(MenuItemEventArgs args)
-    {
-        if (_contextMenuEvent == null) return;
-
-        var action = args.Value?.ToString();
-        switch (action)
-        {
-            case "edit":
-                _ = OpenEventDialogAsync(_contextMenuEvent.Id);
-                break;
-            case "edit-single":
-                _ = EditSingleOccurrenceAsync(_contextMenuEvent);
-                break;
-            case "edit-all":
-                _ = OpenEventDialogAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
-                break;
-            case "delete":
-                _ = DeleteEventAsync(_contextMenuEvent.Id);
-                break;
-            case "delete-single":
-                _ = DeleteSingleOccurrenceAsync(_contextMenuEvent);
-                break;
-            case "delete-all":
-                _ = DeleteEventAsync(_contextMenuEvent.RecurrenceParentId ?? _contextMenuEvent.Id);
-                break;
-        }
-        ContextMenuService.Close();
-        _contextMenuEvent = null;
-    }
-
-    private void OnAddEventContextMenuClick(MenuItemEventArgs args)
-    {
-        if (_contextMenuDate.HasValue)
-        {
-            _ = OpenEventDialogAsync(null, _contextMenuDate.Value);
-        }
-        ContextMenuService.Close();
-        _contextMenuDate = null;
     }
 
     private async Task OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
