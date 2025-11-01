@@ -609,10 +609,9 @@
         builder.AddAttribute(8, "SlotSelect", EventCallback.Factory.Create<SchedulerSlotSelectEventArgs>(this, OnSlotSelect));
         builder.AddAttribute(9, "AppointmentRender", new Action<SchedulerAppointmentRenderEventArgs<AppointmentData>>(OnAppointmentRender));
         builder.AddAttribute(10, "AppointmentMove", EventCallback.Factory.Create<SchedulerAppointmentMoveEventArgs>(this, OnAppointmentMove));
-        builder.AddComponentReferenceCapture(11, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
 
         // Add child content for views
-        builder.AddAttribute(12, "ChildContent", (RenderFragment)(b =>
+        builder.AddAttribute(11, "ChildContent", (RenderFragment)(b =>
         {
             // Month View
             b.OpenComponent<RadzenMonthView>(0);
@@ -638,6 +637,9 @@
             b.OpenComponent<RadzenYearTimelineView>(5);
             b.CloseComponent();
         }));
+
+        // Capture component reference - must be after all attributes
+        builder.AddComponentReferenceCapture(12, component => _scheduler = (RadzenScheduler<AppointmentData>)component);
 
         builder.CloseComponent();
     }
