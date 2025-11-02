@@ -66,8 +66,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             [FromForm] string? returnUrl) =>
         {
             await signInManager.SignOutAsync();
-            var redirectUrl = string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl;
-            return TypedResults.LocalRedirect($"~/{redirectUrl}");
+            return TypedResults.LocalRedirect("~/");
         }).DisableAntiforgery();
 
         return accountGroup;
