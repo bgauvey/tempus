@@ -23,13 +23,14 @@
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
                 <div style="height: 1px; background: #e2e8f0; margin: 0.5rem 0;"></div>
-                <RadzenProfileMenuItem Text="Sign Out" Icon="logout">
-                    <form action="/Account/Logout" method="post" style="width: 100%;">
-                        <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+                <RadzenProfileMenuItem>
+                    <form action="/Account/Logout" method="post" style="width: 100%; margin: 0;">
+                        <input type="hidden" name="returnUrl" value="/" />
                         <button type="submit" class="sign-out-button">
                             <RadzenIcon Icon="logout" Style="margin-right: 0.5rem;" />
                             Sign Out
                         </button>
+                        <AntiforgeryToken />
                     </form>
                 </RadzenProfileMenuItem>
             </ChildContent>
