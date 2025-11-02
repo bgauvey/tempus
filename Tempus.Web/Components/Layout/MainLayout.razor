@@ -22,13 +22,12 @@
         <NotAuthorized>
             <RadzenHeader>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="access_time" />
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenImage Path="./images/favicon-gray.png" Style="width: 32px; height: 32px; background-color: transparent;" Class="tempus-icon" AlternateText="Tempus Icon" />
                         <RadzenText TextStyle="TextStyle.H5">
                             Tempus
                         </RadzenText>
-                    </RadzenStack>
-
+                    </RadzenStack>                    
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
                         <RadzenLink Path="/">Home</RadzenLink>
                         <RadzenLink Path="/features">Features</RadzenLink>
@@ -43,7 +42,7 @@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="access_time" />
+                            <RadzenImage Path="./images/favicon2.png" Style="width: 32px; height: 32px; background-color: transparent;" Class="tempus-icon" AlternateText="Tempus Icon" />
                             <RadzenText TextStyle="TextStyle.H5">
                                 Tempus
                             </RadzenText>
@@ -76,7 +75,6 @@
         <main id="main-content" tabindex="-1">
             @Body
         </main>
-
         <AuthorizeView>
             <NotAuthorized>
                 <footer>
@@ -91,7 +89,6 @@
                                     <RadzenText>Master your time, transform your business. The ultimate time management platform.</RadzenText>
                                 </RadzenStack>
                             </RadzenColumn>
-
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="0.75rem">
                                     <RadzenText TextStyle="TextStyle.H6">Company</RadzenText>
@@ -100,7 +97,6 @@
                                     <RadzenLink Path="/contact">Contact</RadzenLink>
                                 </RadzenStack>
                             </RadzenColumn>
-
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                                 <RadzenStack Gap="0.75rem">
                                     <RadzenLink Path="/privacy">Privacy Policy</RadzenLink>
@@ -110,7 +106,6 @@
                                 </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
-
                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenText>© @DateTime.Now.Year Tempus. All rights reserved.</RadzenText>
@@ -132,7 +127,7 @@
 
 @code {
     [CascadingParameter]
-    private HttpContext HttpContext { get; set; }
+    private HttpContext? HttpContext { get; set; }
 
     private bool _drawerOpen = true;
 

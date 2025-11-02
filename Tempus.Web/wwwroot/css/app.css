@@ -712,5 +712,18 @@ html, body {
     background: #555;
 }
 
+/* Logo/Icon Styling */
+.tempus-icon {
+    background-color: transparent !important;
+}
+
+.tempus-icon img {
+    background-color: transparent !important;
+}
+
+/* Force transparent background on Radzen image wrapper */
+.rz-image {
+    background-color: transparent !important;
+}
 
 
