@@ -7,24 +7,28 @@ namespace Tempus.Infrastructure.Services;
 
 public class SettingsService : ISettingsService
 {
-    private readonly TempusDbContext _context;
+    private readonly IDbContextFactory<TempusDbContext> _contextFactory;
 
-    public SettingsService(TempusDbContext context)
+    public SettingsService(IDbContextFactory<TempusDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<CalendarSettings?> GetUserSettingsAsync(string userId)
     {
-        return await _context.CalendarSettings
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.CalendarSettings
             .FirstOrDefaultAsync(s => s.UserId == userId);
     }
 
     public async Task<CalendarSettings> CreateOrUpdateSettingsAsync(CalendarSettings settings)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
         Console.WriteLine($"[SettingsService] CreateOrUpdateSettingsAsync called for userId: {settings.UserId}, DefaultCalendarView: {settings.DefaultCalendarView}");
 
-        var existingSettings = await GetUserSettingsAsync(settings.UserId);
+        var existingSettings = await context.CalendarSettings
+            .FirstOrDefaultAsync(s => s.UserId == settings.UserId);
 
         if (existingSettings != null)
         {
@@ -59,8 +63,8 @@ public class SettingsService : ISettingsService
 
             Console.WriteLine($"[SettingsService] Updating DefaultCalendarView to: {existingSettings.DefaultCalendarView}");
 
-            _context.CalendarSettings.Update(existingSettings);
-            await _context.SaveChangesAsync();
+            context.CalendarSettings.Update(existingSettings);
+            await context.SaveChangesAsync();
 
             Console.WriteLine($"[SettingsService] Settings saved to database");
 
@@ -71,8 +75,8 @@ public class SettingsService : ISettingsService
             Console.WriteLine($"[SettingsService] No existing settings found. Creating new settings.");
 
             // Create new settings
-            _context.CalendarSettings.Add(settings);
-            await _context.SaveChangesAsync();
+            context.CalendarSettings.Add(settings);
+            await context.SaveChangesAsync();
 
             Console.WriteLine($"[SettingsService] New settings created");
 
@@ -82,7 +86,10 @@ public class SettingsService : ISettingsService
 
     public async Task<CalendarSettings> GetOrCreateDefaultSettingsAsync(string userId)
     {
-        var settings = await GetUserSettingsAsync(userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var settings = await context.CalendarSettings
+            .FirstOrDefaultAsync(s => s.UserId == userId);
 
         if (settings == null)
         {
@@ -93,8 +100,8 @@ public class SettingsService : ISettingsService
                 // All other properties will use their default values from the model
             };
 
-            _context.CalendarSettings.Add(settings);
-            await _context.SaveChangesAsync();
+            context.CalendarSettings.Add(settings);
+            await context.SaveChangesAsync();
         }
 
         return settings;

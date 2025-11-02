@@ -7,23 +7,25 @@ namespace Tempus.Infrastructure.Repositories;
 
 public class NotificationRepository : INotificationRepository
 {
-    private readonly TempusDbContext _context;
+    private readonly IDbContextFactory<TempusDbContext> _contextFactory;
 
-    public NotificationRepository(TempusDbContext context)
+    public NotificationRepository(IDbContextFactory<TempusDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<Notification?> GetByIdAsync(Guid id, string userId)
     {
-        return await _context.Notifications
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Notifications
             .Include(n => n.Event)
             .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
     }
 
     public async Task<List<Notification>> GetAllAsync(string userId)
     {
-        return await _context.Notifications
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Notifications
             .Include(n => n.Event)
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.CreatedAt)
@@ -32,7 +34,8 @@ public class NotificationRepository : INotificationRepository
 
     public async Task<List<Notification>> GetUnreadAsync(string userId)
     {
-        return await _context.Notifications
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Notifications
             .Include(n => n.Event)
             .Where(n => n.UserId == userId && !n.IsRead)
             .OrderByDescending(n => n.CreatedAt)
@@ -41,52 +44,69 @@ public class NotificationRepository : INotificationRepository
 
     public async Task<int> GetUnreadCountAsync(string userId)
     {
-        return await _context.Notifications
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead);
     }
 
     public async Task<Notification> CreateAsync(Notification notification)
     {
-        _context.Notifications.Add(notification);
-        await _context.SaveChangesAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        context.Notifications.Add(notification);
+        await context.SaveChangesAsync();
         return notification;
     }
 
     public async Task UpdateAsync(Notification notification)
     {
-        _context.Notifications.Update(notification);
-        await _context.SaveChangesAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        context.Notifications.Update(notification);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Guid id, string userId)
     {
-        var notification = await GetByIdAsync(id, userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var notification = await context.Notifications
+            .Include(n => n.Event)
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
         if (notification != null)
         {
-            _context.Notifications.Remove(notification);
-            await _context.SaveChangesAsync();
+            context.Notifications.Remove(notification);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task MarkAsReadAsync(Guid id, string userId)
     {
-        var notification = await GetByIdAsync(id, userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var notification = await context.Notifications
+            .Include(n => n.Event)
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
         if (notification != null && !notification.IsRead)
         {
             notification.IsRead = true;
             notification.ReadAt = DateTime.UtcNow;
-            await UpdateAsync(notification);
+            context.Notifications.Update(notification);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task MarkAllAsReadAsync(string userId)
     {
-        var unreadNotifications = await GetUnreadAsync(userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var unreadNotifications = await context.Notifications
+            .Include(n => n.Event)
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ToListAsync();
+
         foreach (var notification in unreadNotifications)
         {
             notification.IsRead = true;
             notification.ReadAt = DateTime.UtcNow;
         }
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }
