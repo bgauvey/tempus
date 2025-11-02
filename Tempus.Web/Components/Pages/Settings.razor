@@ -8,6 +8,7 @@
 @using Tempus.Core.Enums
 @attribute [Authorize]
 @inject ISettingsService SettingsService
+@inject ITimeZoneConversionService TimeZoneConversionService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
@@ -71,13 +72,21 @@
 
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Time Zone" Variant="Variant.Outlined" Style="width: 100%;">
-                                            <RadzenDropDown @bind-Value="_settings.TimeZone"
-                                                            Data="@_timeZones"
-                                                            TextProperty="DisplayName"
-                                                            ValueProperty="Id"
-                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                            AllowFiltering="true"
-                                                            Style="width: 100%;" />
+                                            <ChildContent>
+                                                <RadzenDropDown @bind-Value="_settings.TimeZone"
+                                                                Data="@_timeZones"
+                                                                TextProperty="DisplayName"
+                                                                ValueProperty="Id"
+                                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                AllowFiltering="true"
+                                                                Placeholder="Select your timezone"
+                                                                Style="width: 100%;" />
+                                            </ChildContent>
+                                            <Helper>
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
+                                                    Your timezone is used for all events you create and for displaying shared events.
+                                                </RadzenText>
+                                            </Helper>
                                         </RadzenFormField>
                                     </RadzenColumn>
 

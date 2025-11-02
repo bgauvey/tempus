@@ -11,7 +11,6 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
-@inject ITimeZoneConversionService TimeZoneConversionService
 
 <RadzenStack Gap="1rem">
     <RadzenFormField Text="Title" Variant="Variant.Outlined">
@@ -41,18 +40,6 @@
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
-
-                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
-                    <RadzenDropDown @bind-Value="@_event.TimeZoneId"
-                                    Data="@_availableTimeZones"
-                                    TextProperty="DisplayName"
-                                    ValueProperty="Id"
-                                    AllowClear="true"
-                                    Placeholder="Select timezone (optional - defaults to your timezone)"
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                    AllowFiltering="true"
-                                    Style="width: 100%;" />
-                </RadzenFormField>
 
                 <RadzenFormField Text="Location" Variant="Variant.Outlined">
                     <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
@@ -307,10 +294,10 @@
     private readonly Priority[] _priorities = Enum.GetValues<Priority>();
     private readonly RecurrencePattern[] _recurrencePatterns = Enum.GetValues<RecurrencePattern>();
     private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
-    private List<TimeZoneInfo> _availableTimeZones = new();
     private string _userId = string.Empty;
     private string _userEmail = string.Empty;
     private string _userName = string.Empty;
+    private CalendarSettings? _userSettings;
 
     // Attendee management
     private string _newAttendeeName = string.Empty;
@@ -416,9 +403,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Load available timezones (using common timezones for better UX)
-        _availableTimeZones = TimeZoneConversionService.GetCommonTimeZones();
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
@@ -432,6 +416,9 @@
                 // Get user's display name from claims or use email
                 var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                 _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
+
+                // Load user's settings to get their timezone
+                _userSettings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
             }
         }
 
@@ -515,6 +502,12 @@
     {
         try
         {
+            // Set the event's timezone from the user's profile settings
+            if (_userSettings != null)
+            {
+                _event.TimeZoneId = _userSettings.TimeZone;
+            }
+
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
 
