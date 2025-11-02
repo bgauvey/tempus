@@ -29,13 +29,13 @@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
                             <RadzenDatePicker @bind-Value="@StartTime" ShowTime="@(!IsAllDay)"
-                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
+                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 230px;" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="@(IsAllDay ? "End Date" : "End Date/Time")" Variant="Variant.Outlined">
                             <RadzenDatePicker @bind-Value="@EndTime" ShowTime="@(!IsAllDay)"
-                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 100%;" />
+                                            DateFormat="@(IsAllDay ? "MM/dd/yyyy" : "MM/dd/yyyy hh:mm tt")" Style="width: 230px;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -49,13 +49,13 @@
                         <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
                             <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
                                           Change="@OnEventTypeChanged"
-                                          Style="width: 100%;" />
+                                          Style="width: 230px;" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Priority" Variant="Variant.Outlined">
                             <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
-                                          Style="width: 100%;" />
+                                          Style="width: 230px;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
