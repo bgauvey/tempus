@@ -4,12 +4,13 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Core.Helpers
+@using Tempus.Web.Components.Account
 @inject IEventRepository EventRepository
 @inject IContactRepository ContactRepository
 @inject ITimeZoneConversionService TimeZoneService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 @inject NotificationService NotificationService
 
 <RadzenStack Gap="1rem">
@@ -445,7 +446,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;

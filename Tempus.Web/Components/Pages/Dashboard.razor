@@ -7,11 +7,12 @@
 @using Tempus.Core.Models
 @using Tempus.Web.Services
 @using Microsoft.JSInterop
+@using Tempus.Web.Components.Account
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject ITimeZoneConversionService TimeZoneConversionService
@@ -220,7 +221,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;
@@ -273,7 +274,7 @@
             var userName = "User";
             if (user.Identity?.IsAuthenticated == true)
             {
-                var appUser = await UserManager.GetUserAsync(user);
+                var appUser = await IdentityUserAccessor.GetUserAsync(user);
                 if (appUser != null)
                 {
                     userName = $"{appUser.FirstName} {appUser.LastName}".Trim();

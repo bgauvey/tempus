@@ -5,13 +5,14 @@
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@using Tempus.Web.Components.Account
 @attribute [Authorize]
 @inject IIcsImportService IcsImportService
 @inject IPstImportService PstImportService
 @inject IEventRepository EventRepository
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 
 <PageTitle>Import Calendar - Tempus</PageTitle>
 
@@ -181,7 +182,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;
