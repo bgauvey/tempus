@@ -21,20 +21,24 @@
     <AuthorizeView>
         <NotAuthorized>
             <RadzenHeader>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
+                <!-- wrap public header in container-max so it gets the same horizontal padding as other pages
+                     and add a small top padding so it doesn't touch the very top of the browser -->
+                <div class="container-max header-container">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenImage Path="./images/favicon-gray.png" Style="width: 32px; height: 32px; background-color: transparent;" Class="tempus-icon" AlternateText="Tempus Icon" />
-                        <RadzenText TextStyle="TextStyle.H5">
-                            Tempus
-                        </RadzenText>
-                    </RadzenStack>                    
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
-                        <RadzenLink Path="/">Home</RadzenLink>
-                        <RadzenLink Path="/features">Features</RadzenLink>
-                        <RadzenLink Path="/about">About</RadzenLink>
-                        <RadzenLink Path="/Account/Login">Login</RadzenLink>
+                            <RadzenImage Path="./images/favicon-gray.png" Style="width: 32px; height: 32px; background-color: transparent;" Class="tempus-icon" AlternateText="Tempus Icon" />
+                            <RadzenText TextStyle="TextStyle.H5">
+                                Tempus
+                            </RadzenText>
+                        </RadzenStack>                    
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
+                            <RadzenLink Path="/">Home</RadzenLink>
+                            <RadzenLink Path="/features">Features</RadzenLink>
+                            <RadzenLink Path="/about">About</RadzenLink>
+                            <RadzenLink Path="/Account/Login">Login</RadzenLink>
+                        </RadzenStack>
                     </RadzenStack>
-                </RadzenStack>
+                </div>
             </RadzenHeader>
         </NotAuthorized>
         <Authorized>
@@ -141,10 +145,11 @@
 
             if (!string.IsNullOrEmpty(theme))
             {
-                ThemeService.SetTheme(theme, false);
+                ThemeService.SetTheme(theme, true);
             }
             else
             {
+                ThemeService.SetTheme("software", true);
                 HttpContext.Response.Cookies.Append("TempusTheme", 
                 "software" , 
                 new CookieOptions {

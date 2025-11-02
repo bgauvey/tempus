@@ -464,9 +464,16 @@ html, body {
 }
 
 .container-max {
-    max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
+}
+
+/* Header-specific container: narrower horizontal padding and a small top gap
+   used for the public (NotAuthorized) header so it aligns with content but
+   doesn't touch the viewport edges. */
+.header-container {
+    /* top right bottom left -> 1rem top, 1rem right, 0 bottom, 1rem left */
+    padding: 1rem 1rem 0 1rem;
 }
 
 .text-center {
