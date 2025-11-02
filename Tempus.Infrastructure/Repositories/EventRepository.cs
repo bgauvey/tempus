@@ -8,23 +8,25 @@ namespace Tempus.Infrastructure.Repositories;
 
 public class EventRepository : IEventRepository
 {
-    private readonly TempusDbContext _context;
+    private readonly IDbContextFactory<TempusDbContext> _contextFactory;
 
-    public EventRepository(TempusDbContext context)
+    public EventRepository(IDbContextFactory<TempusDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<Event?> GetByIdAsync(Guid id, string userId)
     {
-        return await _context.Events
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Events
             .Include(e => e.Attendees)
             .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
     }
 
     public async Task<List<Event>> GetAllAsync(string userId)
     {
-        return await _context.Events
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId)
             .OrderBy(e => e.StartTime)
@@ -33,8 +35,10 @@ public class EventRepository : IEventRepository
 
     public async Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
         // Get all non-recurring events in the date range (excluding exceptions)
-        var nonRecurringEvents = await _context.Events
+        var nonRecurringEvents = await context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId &&
                        !e.IsRecurring &&
@@ -44,7 +48,7 @@ public class EventRepository : IEventRepository
             .ToListAsync();
 
         // Get all recurring events that could have instances in this range
-        var recurringEvents = await _context.Events
+        var recurringEvents = await context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId &&
                        e.IsRecurring &&
@@ -53,7 +57,7 @@ public class EventRepository : IEventRepository
             .ToListAsync();
 
         // Get all exception events (modified or deleted occurrences)
-        var exceptionEvents = await _context.Events
+        var exceptionEvents = await context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId &&
                        e.IsRecurrenceException &&
@@ -102,17 +106,21 @@ public class EventRepository : IEventRepository
 
     public async Task<Event> CreateAsync(Event @event)
     {
-        _context.Events.Add(@event);
-        await _context.SaveChangesAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        context.Events.Add(@event);
+        await context.SaveChangesAsync();
         return @event;
     }
 
     public async Task<Event> UpdateAsync(Event @event)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
         @event.UpdatedAt = DateTime.UtcNow;
 
-        // The event is already tracked by the context from when it was loaded in the dialog
-        // We need to explicitly mark new attendees as Added to prevent UPDATE attempts
+        // Attach the event to this new context
+        context.Events.Attach(@event);
+        context.Entry(@event).State = EntityState.Modified;
 
         // Find new attendees (those with Guid.Empty)
         var newAttendees = @event.Attendees.Where(a => a.Id == Guid.Empty).ToList();
@@ -124,26 +132,38 @@ public class EventRepository : IEventRepository
             newAttendee.EventId = @event.Id;
 
             // Explicitly tell EF this is a new entity to INSERT, not UPDATE
-            _context.Entry(newAttendee).State = EntityState.Added;
+            context.Entry(newAttendee).State = EntityState.Added;
         }
 
-        await _context.SaveChangesAsync();
+        // Handle existing attendees
+        var existingAttendees = @event.Attendees.Where(a => a.Id != Guid.Empty).ToList();
+        foreach (var attendee in existingAttendees)
+        {
+            context.Entry(attendee).State = EntityState.Modified;
+        }
+
+        await context.SaveChangesAsync();
         return @event;
     }
 
     public async Task DeleteAsync(Guid id, string userId)
     {
-        var @event = await GetByIdAsync(id, userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var @event = await context.Events
+            .Include(e => e.Attendees)
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
+
         if (@event != null)
         {
-            _context.Events.Remove(@event);
-            await _context.SaveChangesAsync();
+            context.Events.Remove(@event);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<List<Event>> SearchAsync(string searchTerm, string userId)
     {
-        return await _context.Events
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Events
             .Include(e => e.Attendees)
             .Where(e => e.UserId == userId &&
                        (e.Title.Contains(searchTerm) ||

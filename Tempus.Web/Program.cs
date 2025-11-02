@@ -29,7 +29,13 @@ builder.Services.AddRadzenCookieThemeService(options =>
 });
 
 // Add database context (use SQL Server)
+// AddDbContext for Identity (required by Identity)
 builder.Services.AddDbContext<TempusDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
+
+// Add DbContextFactory for repository pattern to avoid concurrency issues in Blazor Server
+builder.Services.AddDbContextFactory<TempusDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
 
