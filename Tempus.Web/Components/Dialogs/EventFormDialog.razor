@@ -6,7 +6,6 @@
 @using Tempus.Core.Helpers
 @inject IEventRepository EventRepository
 @inject IContactRepository ContactRepository
-@inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
@@ -297,7 +296,7 @@
     private string _userId = string.Empty;
     private string _userEmail = string.Empty;
     private string _userName = string.Empty;
-    private CalendarSettings? _userSettings;
+    private string _userTimeZone = TimeZoneInfo.Local.Id;
 
     // Attendee management
     private string _newAttendeeName = string.Empty;
@@ -412,13 +411,11 @@
             {
                 _userId = appUser.Id;
                 _userEmail = appUser.Email ?? string.Empty;
+                _userTimeZone = appUser.TimeZone;
 
                 // Get user's display name from claims or use email
                 var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                 _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
-
-                // Load user's settings to get their timezone
-                _userSettings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
             }
         }
 
@@ -502,11 +499,8 @@
     {
         try
         {
-            // Set the event's timezone from the user's profile settings
-            if (_userSettings != null)
-            {
-                _event.TimeZoneId = _userSettings.TimeZone;
-            }
+            // Set the event's timezone from the user's profile
+            _event.TimeZoneId = _userTimeZone;
 
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();

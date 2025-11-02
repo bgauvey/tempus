@@ -8,6 +8,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
+@inject Tempus.Core.Interfaces.ITimeZoneConversionService TimeZoneConversionService
 
 <PageTitle>Profile - Tempus</PageTitle>
 
@@ -70,6 +71,26 @@
                                     <RadzenTextBox @bind-Value="_user.PhoneNumber"
                                                    Placeholder="Enter your phone number"
                                                    Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <ChildContent>
+                                        <RadzenDropDown @bind-Value="_user.TimeZone"
+                                                        Data="@_timeZones"
+                                                        TextProperty="DisplayName"
+                                                        ValueProperty="Id"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowFiltering="true"
+                                                        Placeholder="Select your timezone"
+                                                        Style="width: 100%;" />
+                                    </ChildContent>
+                                    <Helper>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
+                                            Your timezone is used for all events you create and for displaying shared events.
+                                        </RadzenText>
+                                    </Helper>
                                 </RadzenFormField>
                             </RadzenColumn>
                         </RadzenRow>
@@ -219,6 +240,7 @@
     private ApplicationUser? _user;
     private string _fullName = "";
     private string _initials = "U";
+    private List<TimeZoneInfo> _timeZones = new();
 
     private string _currentPassword = "";
     private string _newPassword = "";
@@ -226,6 +248,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Load common timezones for dropdown
+        _timeZones = TimeZoneConversionService.GetCommonTimeZones();
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var userPrincipal = authState.User;
 

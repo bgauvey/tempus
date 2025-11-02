@@ -249,6 +249,7 @@
     private bool _loading = true;
     private CalendarSettings? _settings;
     private string _userId = string.Empty;
+    private string _userTimeZone = TimeZoneInfo.Local.Id;
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
 
@@ -267,6 +268,7 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userTimeZone = appUser.TimeZone;
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
                 // Load saved view preference
@@ -297,9 +299,6 @@
 
         _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
-        // Get user's timezone preference
-        var userTimeZone = _settings?.TimeZone ?? TimeZoneInfo.Local.Id;
-
         // Convert events to appointments for RadzenScheduler
         // If event has a timezone, convert it to user's timezone for display
         _appointments = _events.Select(e =>
@@ -307,9 +306,9 @@
             var displayEvent = e;
 
             // If event has a timezone different from user's, convert it
-            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != userTimeZone)
+            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
             {
-                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, userTimeZone);
+                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
             }
 
             return new AppointmentData

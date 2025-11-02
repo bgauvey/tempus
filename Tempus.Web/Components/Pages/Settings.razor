@@ -8,7 +8,6 @@
 @using Tempus.Core.Enums
 @attribute [Authorize]
 @inject ISettingsService SettingsService
-@inject ITimeZoneConversionService TimeZoneConversionService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
@@ -67,26 +66,6 @@
                                             <RadzenDropDown @bind-Value="_settings.DateFormat"
                                                             Data="@(Enum.GetValues<DateFormat>())"
                                                             Style="width: 100%;" />
-                                        </RadzenFormField>
-                                    </RadzenColumn>
-
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="Time Zone" Variant="Variant.Outlined" Style="width: 100%;">
-                                            <ChildContent>
-                                                <RadzenDropDown @bind-Value="_settings.TimeZone"
-                                                                Data="@_timeZones"
-                                                                TextProperty="DisplayName"
-                                                                ValueProperty="Id"
-                                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                                AllowFiltering="true"
-                                                                Placeholder="Select your timezone"
-                                                                Style="width: 100%;" />
-                                            </ChildContent>
-                                            <Helper>
-                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
-                                                    Your timezone is used for all events you create and for displaying shared events.
-                                                </RadzenText>
-                                            </Helper>
                                         </RadzenFormField>
                                     </RadzenColumn>
 
@@ -370,7 +349,6 @@
     private DateTime _workEndDateTime;
     private DateTime? _lunchStartDateTime;
     private DateTime? _lunchEndDateTime;
-    private List<TimeZoneInfo> _timeZones = new();
 
     private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwelveHour ? "hh:mm tt" : "HH:mm";
 
@@ -397,9 +375,6 @@
 
                 if (_settings.LunchBreakEnd.HasValue)
                     _lunchEndDateTime = DateTime.Today.Add(_settings.LunchBreakEnd.Value);
-
-                // Load time zones
-                _timeZones = TimeZoneInfo.GetSystemTimeZones().ToList();
             }
         }
     }
