@@ -44,3 +44,81 @@ window.downloadFile = function(filename, base64Data, contentType) {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 };
+
+// Browser Notification Support
+
+// Check if browser notifications are supported
+window.notificationsSupported = function() {
+    return 'Notification' in window;
+};
+
+// Request notification permission
+window.requestNotificationPermission = async function() {
+    if (!window.notificationsSupported()) {
+        console.warn('Browser notifications are not supported');
+        return 'denied';
+    }
+
+    if (Notification.permission === 'granted') {
+        return 'granted';
+    }
+
+    if (Notification.permission !== 'denied') {
+        try {
+            const permission = await Notification.requestPermission();
+            return permission;
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            return 'denied';
+        }
+    }
+
+    return Notification.permission;
+};
+
+// Show a browser notification
+window.showNotification = function(title, options) {
+    if (!window.notificationsSupported()) {
+        console.warn('Browser notifications are not supported');
+        return null;
+    }
+
+    if (Notification.permission !== 'granted') {
+        console.warn('Notification permission not granted');
+        return null;
+    }
+
+    try {
+        const notification = new Notification(title, {
+            body: options?.body || '',
+            icon: options?.icon || '/favicon-192.png',
+            badge: options?.badge || '/favicon-192.png',
+            tag: options?.tag || 'tempus-notification',
+            requireInteraction: options?.requireInteraction || false,
+            silent: options?.silent || false,
+            data: options?.data || null
+        });
+
+        // Handle notification click
+        if (options?.clickUrl) {
+            notification.onclick = function() {
+                window.focus();
+                window.location.href = options.clickUrl;
+                notification.close();
+            };
+        }
+
+        return notification;
+    } catch (error) {
+        console.error('Error showing notification:', error);
+        return null;
+    }
+};
+
+// Get current notification permission status
+window.getNotificationPermission = function() {
+    if (!window.notificationsSupported()) {
+        return 'unsupported';
+    }
+    return Notification.permission;
+};
