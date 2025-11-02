@@ -37,9 +37,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddPooledDbContextFactory<TempusDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Add DbContext registration for Identity (required by ASP.NET Core Identity)
-// This uses the factory under the hood
-builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<TempusDbContext>>().CreateDbContext());
+// Add separate DbContext pool for ASP.NET Core Identity
+// This ensures Identity operations don't interfere with repository operations
+builder.Services.AddDbContextPool<TempusDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // Add Identity services
 builder.Services.AddCascadingAuthenticationState();
