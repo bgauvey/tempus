@@ -23,7 +23,7 @@
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
                 <div style="height: 1px; background: #e2e8f0; margin: 0.5rem 0;"></div>
-                <RadzenProfileMenuItem>
+                <li class="rz-navigation-item">
                     <form action="/Account/Logout" method="post" style="width: 100%; margin: 0;">
                         <input type="hidden" name="returnUrl" value="/" />
                         <button type="submit" class="sign-out-button">
@@ -32,7 +32,7 @@
                         </button>
                         <AntiforgeryToken />
                     </form>
-                </RadzenProfileMenuItem>
+                </li>
             </ChildContent>
         </RadzenProfileMenu>
     </Authorized>
