@@ -8,6 +8,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
+@inject Tempus.Core.Interfaces.ITimeZoneConversionService TimeZoneConversionService
 
 <PageTitle>Profile - Tempus</PageTitle>
 
@@ -34,7 +35,7 @@
                             <span class="avatar-initials">@_initials</span>
                         </div>
                         <RadzenStack Gap="0.25rem">
-                            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@_fullName</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 700;">@GetFullName()</RadzenText>
                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; opacity: 0.7;">@_user.Email</RadzenText>
                         </RadzenStack>
                     </RadzenStack>
@@ -47,9 +48,17 @@
 
                         <RadzenRow Gap="1.5rem">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Full Name" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="_fullName"
-                                                   Placeholder="Enter your full name"
+                                <RadzenFormField Text="First Name" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.FirstName"
+                                                   Placeholder="Enter your first name"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Last Name" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.LastName"
+                                                   Placeholder="Enter your last name"
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenColumn>
@@ -69,6 +78,76 @@
                                 <RadzenFormField Text="Phone Number (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
                                     <RadzenTextBox @bind-Value="_user.PhoneNumber"
                                                    Placeholder="Enter your phone number"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Date of Birth (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenDatePicker @bind-Value="_user.DateOfBirth"
+                                                      DateFormat="MM/dd/yyyy"
+                                                      Placeholder="Select your date of birth"
+                                                      ShowTime="false"
+                                                      Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <ChildContent>
+                                        <RadzenDropDown @bind-Value="_user.TimeZone"
+                                                        Data="@_timeZones"
+                                                        TextProperty="DisplayName"
+                                                        ValueProperty="Id"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowFiltering="true"
+                                                        Placeholder="Select your timezone"
+                                                        Style="width: 100%;" />
+                                    </ChildContent>
+                                    <Helper>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
+                                            Your timezone is used for all events you create and for displaying shared events.
+                                        </RadzenText>
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Address (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.Address"
+                                                   Placeholder="Enter your street address"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="City (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.City"
+                                                   Placeholder="Enter your city"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="State/Province (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.State"
+                                                   Placeholder="Enter your state or province"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Zip/Postal Code (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.ZipCode"
+                                                   Placeholder="Enter your zip or postal code"
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Country (Optional)" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenTextBox @bind-Value="_user.Country"
+                                                   Placeholder="Enter your country"
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenColumn>
@@ -135,7 +214,7 @@
             <!-- Account Statistics Card -->
             <RadzenCard>
                 <RadzenStack Gap="1.5rem">
-                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📊 Account Information</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">📊 Account Statistics</RadzenText>
 
                     <RadzenRow Gap="1.5rem">
                         <RadzenColumn Size="12" SizeMD="4">
@@ -217,8 +296,8 @@
 
 @code {
     private ApplicationUser? _user;
-    private string _fullName = "";
     private string _initials = "U";
+    private List<TimeZoneInfo> _timeZones = new();
 
     private string _currentPassword = "";
     private string _newPassword = "";
@@ -226,6 +305,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Load common timezones for dropdown
+        _timeZones = TimeZoneConversionService.GetCommonTimeZones();
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var userPrincipal = authState.User;
 
@@ -235,34 +317,47 @@
 
             if (_user != null)
             {
-                // Get full name from claims or use email
-                var name = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-                _fullName = !string.IsNullOrEmpty(name) ? name : _user.Email?.Split('@')[0] ?? "User";
-
-                // Generate initials
-                _initials = GenerateInitials(_fullName);
+                // Generate initials from FirstName and LastName
+                _initials = GenerateInitials();
             }
         }
     }
 
-    private string GenerateInitials(string name)
+    private string GetFullName()
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (_user == null)
+            return "User";
+
+        var firstName = _user.FirstName?.Trim() ?? "";
+        var lastName = _user.LastName?.Trim() ?? "";
+
+        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
+            return _user.Email?.Split('@')[0] ?? "User";
+
+        return $"{firstName} {lastName}".Trim();
+    }
+
+    private string GenerateInitials()
+    {
+        if (_user == null)
             return "U";
 
-        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var firstName = _user.FirstName?.Trim() ?? "";
+        var lastName = _user.LastName?.Trim() ?? "";
 
-        if (parts.Length == 0)
-            return "U";
-
-        if (parts.Length == 1)
+        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
         {
-            return parts[0].Length >= 2
-                ? parts[0].Substring(0, 2).ToUpper()
-                : parts[0].ToUpper();
+            var email = _user.Email?.Split('@')[0] ?? "U";
+            return email.Substring(0, Math.Min(2, email.Length)).ToUpper();
         }
 
-        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        if (string.IsNullOrEmpty(lastName))
+            return firstName.Substring(0, Math.Min(2, firstName.Length)).ToUpper();
+
+        if (string.IsNullOrEmpty(firstName))
+            return lastName.Substring(0, Math.Min(2, lastName.Length)).ToUpper();
+
+        return $"{firstName[0]}{lastName[0]}".ToUpper();
     }
 
     private async Task SaveProfile()

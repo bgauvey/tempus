@@ -12,6 +12,7 @@ public class ApplicationUser : IdentityUser
     public string? State { get; set; }
     public string? ZipCode { get; set; }
     public string? Country { get; set; }
+    public string TimeZone { get; set; } = TimeZoneInfo.Local.Id;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
 

@@ -15,23 +15,23 @@
             </Template>
             <ChildContent>
                 <RadzenProfileMenuItem>
-                    <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+                    <div class="profile-header">
                         <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">@_fullName</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: #718096;">@_userEmail</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.7;">@_userEmail</RadzenText>
                     </div>
                 </RadzenProfileMenuItem>
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
-                <div style="height: 1px; background: #e2e8f0; margin: 0.5rem 0;"></div>
-                <RadzenProfileMenuItem Text="Sign Out" Icon="logout">
-                    <form action="/Account/Logout" method="post" style="width: 100%;">
-                        <input type="hidden" name="returnUrl" value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
+                <div class="menu-divider"></div>
+                <li class="rz-navigation-item">
+                    <form action="/Account/Logout" method="post" style="width: 100%; margin: 0;">
+                        <input type="hidden" name="returnUrl" value="/" />
                         <button type="submit" class="sign-out-button">
                             <RadzenIcon Icon="logout" Style="margin-right: 0.5rem;" />
                             Sign Out
                         </button>
                     </form>
-                </RadzenProfileMenuItem>
+                </li>
             </ChildContent>
         </RadzenProfileMenu>
     </Authorized>
@@ -82,6 +82,17 @@
         text-transform: uppercase;
     }
 
+    .profile-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--rz-border-color);
+    }
+
+    .menu-divider {
+        height: 1px;
+        background: var(--rz-border-color);
+        margin: 0.5rem 0;
+    }
+
     .sign-out-button {
         width: 100%;
         text-align: left;
@@ -91,13 +102,13 @@
         cursor: pointer;
         display: flex;
         align-items: center;
-        color: #2d3748;
+        color: var(--rz-text-color);
         font-size: 0.875rem;
         transition: background-color 0.2s;
     }
 
     .sign-out-button:hover {
-        background-color: #f7fafc;
+        background-color: var(--rz-secondary);
     }
 
     /* Hide the dropdown arrow */

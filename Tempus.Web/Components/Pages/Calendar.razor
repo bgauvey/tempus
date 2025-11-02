@@ -21,6 +21,7 @@
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
 @inject ContextMenuService ContextMenuService
+@inject ITimeZoneConversionService TimeZoneConversionService
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -248,6 +249,7 @@
     private bool _loading = true;
     private CalendarSettings? _settings;
     private string _userId = string.Empty;
+    private string _userTimeZone = TimeZoneInfo.Local.Id;
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
 
@@ -266,6 +268,7 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userTimeZone = appUser.TimeZone;
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
                 // Load saved view preference
@@ -297,12 +300,24 @@
         _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
         // Convert events to appointments for RadzenScheduler
-        _appointments = _events.Select(e => new AppointmentData
+        // If event has a timezone, convert it to user's timezone for display
+        _appointments = _events.Select(e =>
         {
-            Start = e.StartTime,
-            End = e.EndTime,
-            Text = e.Title,
-            Event = e
+            var displayEvent = e;
+
+            // If event has a timezone different from user's, convert it
+            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+            {
+                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+            }
+
+            return new AppointmentData
+            {
+                Start = displayEvent.StartTime,
+                End = displayEvent.EndTime,
+                Text = displayEvent.Title,
+                Event = e // Keep original event for editing
+            };
         }).ToList();
 
         _loading = false;

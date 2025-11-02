@@ -72,6 +72,7 @@ builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>(
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IAnalyticsReportService, AnalyticsReportService>();
 builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
+builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
 
 var app = builder.Build();
 
