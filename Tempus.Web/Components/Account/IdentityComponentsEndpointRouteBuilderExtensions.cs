@@ -17,11 +17,11 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
         accountGroup.MapPost("/PerformLogin", async (
             [FromForm] string email,
             [FromForm] string password,
-            [FromForm] bool rememberMe,
+            [FromForm] bool? rememberMe,
             [FromForm] string? returnUrl,
             SignInManager<ApplicationUser> signInManager) =>
         {
-            var result = await signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: false);
+            var result = await signInManager.PasswordSignInAsync(email, password, rememberMe ?? false, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
