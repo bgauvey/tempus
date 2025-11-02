@@ -21,7 +21,6 @@
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
 @inject ContextMenuService ContextMenuService
-@implements IDisposable
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -74,42 +73,15 @@
     }
 
     /* Calendar Styling */
-    .events-sidebar {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        animation: fadeInUp 0.6s ease-out 0.3s backwards;
-    }
-
-    .events-sidebar-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-    }
-
-    .no-events-message {
-        text-align: center;
-        padding: 2rem;
-        font-style: italic;
-        opacity: 0.7;
-    }
-
-    .event-detail-card {
-        border-radius: 12px;
-        transition: var(--transition-smooth);
-    }
-
-    .event-detail-card:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
-    }
-
     .loading-container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 400px;
+    }
+
+    :root {
+        --transition-smooth: all 0.3s ease-in-out;
     }
 
     /* Time Block Templates */
@@ -130,35 +102,35 @@
     }
 
     .template-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: var(--transition-smooth) !important;
-        padding: 10px 16px !important;
-        font-size: 0.85rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        border-radius: 10px;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+        padding: 10px 16px;
+        font-size: 0.85rem;
     }
 
     .template-btn:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
     }
 
     .template-btn.deep-work {
-        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%) !important;
+        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);
     }
 
     .template-btn.meeting {
-        background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%) !important;
+        background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
     }
 
     .template-btn.break {
-        background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%) !important;
+        background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%);
     }
 
     .template-btn.focus {
-        background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%) !important;
+        background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%);
     }
 </style>
 
@@ -282,7 +254,6 @@
     // Helper classes
     private CalendarEventManager? _eventManager;
     private CalendarDragDropManager? _dragDropManager;
-    private CalendarScrollManager? _scrollManager;
     private CalendarFormatter? _formatter;
 
     protected override async Task OnInitializedAsync()
@@ -307,19 +278,11 @@
             EventRepository, DialogService, EmailNotificationService,
             AuthenticationStateProvider, UserManager);
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
-        _scrollManager = new CalendarScrollManager(JSRuntime);
         _formatter = new CalendarFormatter(_settings);
 
         await LoadEvents();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && _settings != null)
-        {
-            await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar Init] Loaded view preference: {_settings.DefaultCalendarView} (index: {_selectedViewIndex})");
-        }
-    }
 
 
     private async Task LoadEvents()
@@ -447,21 +410,6 @@
         };
     }
 
-
-    private string FormatTime(DateTime time)
-    {
-        return _formatter?.FormatTime(time) ?? time.ToString("h:mm tt");
-    }
-
-    private string FormatHourLabel(int hour)
-    {
-        return _formatter?.FormatHourLabel(hour) ?? $"{hour}:00";
-    }
-
-    private string GetEventBackgroundColor(Event evt)
-    {
-        return _formatter?.GetEventBackgroundColor(evt) ?? "#757575";
-    }
 
     private async Task OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
     {
@@ -724,11 +672,5 @@
             2 => CalendarView.Day,        // RadzenDayView
             _ => CalendarView.Week        // Default to Week
         };
-    }
-
-    // Cleanup
-    public void Dispose()
-    {
-        // No cleanup needed
     }
 }
