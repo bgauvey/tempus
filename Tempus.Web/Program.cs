@@ -28,16 +28,18 @@ builder.Services.AddRadzenCookieThemeService(options =>
     options.Duration = TimeSpan.FromDays(365);
 });
 
-// Add database context (use SQL Server)
-// AddDbContext for Identity (required by Identity)
-builder.Services.AddDbContext<TempusDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
+// Get connection string
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True";
 
-// Add DbContextFactory for repository pattern to avoid concurrency issues in Blazor Server
-builder.Services.AddDbContextFactory<TempusDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
+// Add pooled DbContextFactory for better performance in Blazor Server
+// This creates a pool of reusable contexts to avoid concurrency issues
+builder.Services.AddPooledDbContextFactory<TempusDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Add DbContext registration for Identity (required by ASP.NET Core Identity)
+// This uses the factory under the hood
+builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<TempusDbContext>>().CreateDbContext());
 
 // Add Identity services
 builder.Services.AddCascadingAuthenticationState();
