@@ -16,7 +16,7 @@
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject Tempus.Web.Components.Account.IdentityUserAccessor IdentityUserAccessor
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
@@ -264,7 +264,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;
@@ -279,7 +279,7 @@
         // Initialize helper classes
         _eventManager = new CalendarEventManager(
             EventRepository, DialogService, EmailNotificationService,
-            AuthenticationStateProvider, UserManager);
+            AuthenticationStateProvider, IdentityUserAccessor);
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _formatter = new CalendarFormatter(_settings);
 
@@ -337,7 +337,7 @@
             var userName = "User";
             if (user.Identity?.IsAuthenticated == true)
             {
-                var appUser = await UserManager.GetUserAsync(user);
+                var appUser = await IdentityUserAccessor.GetUserAsync(user);
                 if (appUser != null)
                 {
                     userName = $"{appUser.FirstName} {appUser.LastName}".Trim();

@@ -2,7 +2,7 @@
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
-@inject UserManager<ApplicationUser> UserManager
+@inject Tempus.Web.Components.Account.IdentityUserAccessor IdentityUserAccessor
 @inject NavigationManager NavigationManager
 @inject INotificationRepository NotificationRepository
 @rendermode InteractiveServer
@@ -184,7 +184,7 @@
             _initials = GenerateInitials(_fullName);
 
             // Load unread notification count
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _unreadCount = await NotificationRepository.GetUnreadCountAsync(appUser.Id);

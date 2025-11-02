@@ -37,10 +37,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddPooledDbContextFactory<TempusDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Add separate DbContext pool for ASP.NET Core Identity
-// This ensures Identity operations don't interfere with repository operations
-builder.Services.AddDbContextPool<TempusDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// Some libraries (like Identity's EF stores) expect TempusDbContext to be resolvable
+// from DI. We register a scoped TempusDbContext that uses the pooled factory to
+// create a context per scope so existing code that requests TempusDbContext will
+// be satisfied while still benefiting from the pooled factory for manual usage.
+// Use transient DbContext so each injection resolves a new instance. In Blazor Server
+// circuits multiple threads can use services from the same scope concurrently; a
+// transient DbContext reduces the chance the same instance is used concurrently.
+// For best safety, refactor services/repositories to take IDbContextFactory and
+// create a DbContext per operation.
+builder.Services.AddTransient<TempusDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<TempusDbContext>>().CreateDbContext());
 
 // Add Identity services
 builder.Services.AddCascadingAuthenticationState();
