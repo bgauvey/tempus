@@ -64,6 +64,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 builder.Services.AddScoped<IPstImportService, PstImportService>();
 builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
@@ -73,6 +74,7 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IAnalyticsReportService, AnalyticsReportService>();
 builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
 builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
+builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,270 @@
+@page "/notifications"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@attribute [Authorize]
+@inject INotificationRepository NotificationRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Notifications - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">🔔 Notifications</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
+                        Stay updated with your calendar events and reminders
+                    </RadzenText>
+                </RadzenStack>
+                @if (_unreadCount > 0)
+                {
+                    <RadzenButton Text="Mark All as Read"
+                                  Icon="done_all"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@MarkAllAsRead"
+                                  Style="border-radius: 10px;" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (_loading)
+        {
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            </RadzenCard>
+        }
+        else if (!_notifications.Any())
+        {
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="notifications_none" Style="font-size: 4rem; opacity: 0.3;" />
+                    <RadzenText TextStyle="TextStyle.H5" Style="opacity: 0.7;">No notifications yet</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.5;">
+                        You'll see event reminders and updates here
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenStack Gap="1rem">
+                @foreach (var notification in _notifications)
+                {
+                    <div class="notification-card @(!notification.IsRead ? "notification-unread" : "")"
+                         @onclick="@(() => HandleNotificationClick(notification))">
+                        <RadzenCard>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start">
+                                <div class="notification-icon @GetNotificationIconClass(notification.Type)">
+                                    <RadzenIcon Icon="@GetNotificationIcon(notification.Type)" />
+                                </div>
+                                <RadzenStack Gap="0.5rem" Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                            @notification.Title
+                                        </RadzenText>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <div class="unread-badge"></div>
+                                        }
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; opacity: 0.8;">
+                                        @notification.Message
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; opacity: 0.6;">
+                                        @FormatTimeAgo(notification.CreatedAt)
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </div>
+                }
+            </RadzenStack>
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    .notification-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .notification-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-unread {
+        border-left-color: var(--rz-primary);
+        background: var(--rz-secondary);
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .notification-icon-reminder {
+        background: #ebf4ff;
+        color: #2563eb;
+    }
+
+    .notification-icon-update {
+        background: #fef3c7;
+        color: #f59e0b;
+    }
+
+    .notification-icon-cancelled {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .notification-icon-invitation {
+        background: #dbeafe;
+        color: #3b82f6;
+    }
+
+    .notification-icon-meeting {
+        background: #fce7f3;
+        color: #ec4899;
+    }
+
+    .notification-icon-task {
+        background: #d1fae5;
+        color: #10b981;
+    }
+
+    .notification-icon-system {
+        background: #e0e7ff;
+        color: #6366f1;
+    }
+
+    .unread-badge {
+        width: 10px;
+        height: 10px;
+        background: var(--rz-primary);
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    private List<Notification> _notifications = new();
+    private int _unreadCount = 0;
+    private bool _loading = true;
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await UserManager.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                await LoadNotifications();
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task LoadNotifications()
+    {
+        _notifications = await NotificationRepository.GetAllAsync(_userId);
+        _unreadCount = await NotificationRepository.GetUnreadCountAsync(_userId);
+    }
+
+    private async Task HandleNotificationClick(Notification notification)
+    {
+        // Mark as read
+        if (!notification.IsRead)
+        {
+            await NotificationRepository.MarkAsReadAsync(notification.Id, _userId);
+            notification.IsRead = true;
+            _unreadCount = await NotificationRepository.GetUnreadCountAsync(_userId);
+            StateHasChanged();
+        }
+
+        // Navigate to event if linked
+        if (notification.EventId.HasValue && notification.Event != null)
+        {
+            // Navigate to calendar page with the event date
+            var eventDate = notification.Event.StartTime.ToString("yyyy-MM-dd");
+            NavigationManager.NavigateTo($"/calendar?date={eventDate}&eventId={notification.EventId}");
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        await NotificationRepository.MarkAllAsReadAsync(_userId);
+        await LoadNotifications();
+        StateHasChanged();
+    }
+
+    private string GetNotificationIcon(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.EventReminder => "alarm",
+            NotificationType.EventUpdate => "update",
+            NotificationType.EventCancelled => "event_busy",
+            NotificationType.EventInvitation => "mail",
+            NotificationType.MeetingStartingSoon => "schedule",
+            NotificationType.TaskDue => "assignment_late",
+            NotificationType.System => "info",
+            _ => "notifications"
+        };
+    }
+
+    private string GetNotificationIconClass(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.EventReminder => "notification-icon-reminder",
+            NotificationType.EventUpdate => "notification-icon-update",
+            NotificationType.EventCancelled => "notification-icon-cancelled",
+            NotificationType.EventInvitation => "notification-icon-invitation",
+            NotificationType.MeetingStartingSoon => "notification-icon-meeting",
+            NotificationType.TaskDue => "notification-icon-task",
+            NotificationType.System => "notification-icon-system",
+            _ => "notification-icon-system"
+        };
+    }
+
+    private string FormatTimeAgo(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+
+        if (diff.TotalMinutes < 1)
+            return "Just now";
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes} minute{((int)diff.TotalMinutes != 1 ? "s" : "")} ago";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours} hour{((int)diff.TotalHours != 1 ? "s" : "")} ago";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays} day{((int)diff.TotalDays != 1 ? "s" : "")} ago";
+        if (diff.TotalDays < 30)
+            return $"{(int)(diff.TotalDays / 7)} week{((int)(diff.TotalDays / 7) != 1 ? "s" : "")} ago";
+
+        return date.ToString("MMM dd, yyyy");
+    }
+}

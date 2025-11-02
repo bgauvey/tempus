@@ -16,6 +16,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<CalendarSettings> CalendarSettings { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,6 +110,27 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
 
             // One settings record per user
             entity.HasIndex(s => s.UserId).IsUnique();
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(n => n.Id);
+            entity.Property(n => n.Title).IsRequired().HasMaxLength(200);
+            entity.Property(n => n.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(n => n.UserId).IsRequired();
+            entity.Property(n => n.Type).IsRequired();
+
+            entity.HasOne(n => n.User)
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(n => n.Event)
+                  .WithMany()
+                  .HasForeignKey(n => n.EventId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(n => new { n.UserId, n.IsRead });
         });
     }
 }
