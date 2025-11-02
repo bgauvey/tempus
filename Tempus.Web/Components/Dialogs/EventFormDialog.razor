@@ -6,6 +6,7 @@
 @using Tempus.Core.Helpers
 @inject IEventRepository EventRepository
 @inject IContactRepository ContactRepository
+@inject ITimeZoneConversionService TimeZoneService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
@@ -42,6 +43,28 @@
 
                 <RadzenFormField Text="Location" Variant="Variant.Outlined">
                     <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                        <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
+                                      Data="@_availableTimeZones"
+                                      TextProperty="DisplayName"
+                                      ValueProperty="Id"
+                                      FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                      AllowFiltering="true"
+                                      Placeholder="Select timezone..."
+                                      Style="width: 100%;" />
+                        <RadzenButton Icon="refresh"
+                                    ButtonStyle="ButtonStyle.Light"
+                                    Size="ButtonSize.Small"
+                                    Click="@ResetToUserTimeZone"
+                                    title="Reset to your timezone" />
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem; display: block;">
+                        <RadzenIcon Icon="info_outline" Style="font-size: 0.875rem; vertical-align: middle;" />
+                        Set timezone for multi-location meetings. Current: @GetTimeZoneAbbreviation()
+                    </RadzenText>
                 </RadzenFormField>
 
                 <RadzenRow Gap="1rem">
@@ -298,6 +321,9 @@
     private string _userName = string.Empty;
     private string _userTimeZone = TimeZoneInfo.Local.Id;
 
+    // Timezone management
+    private List<TimeZoneOption> _availableTimeZones = new();
+
     // Attendee management
     private string _newAttendeeName = string.Empty;
     private string _selectedContactEmail = string.Empty;
@@ -400,6 +426,19 @@
         public int Value { get; set; }
     }
 
+    private class TimeZoneOption
+    {
+        public string Id { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+    }
+
+    // Timezone property that binds to event's TimeZoneId
+    private string SelectedTimeZoneId
+    {
+        get => _event.TimeZoneId ?? _userTimeZone;
+        set => _event.TimeZoneId = value;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -418,6 +457,9 @@
                 _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
             }
         }
+
+        // Load timezones for selection
+        LoadTimeZones();
 
         // Load contacts for autocomplete
         _contacts = await ContactRepository.GetAllAsync(_userId);
@@ -499,8 +541,12 @@
     {
         try
         {
-            // Set the event's timezone from the user's profile
-            _event.TimeZoneId = _userTimeZone;
+            // Timezone is already set via the SelectedTimeZoneId property binding
+            // If not set, default to user's timezone
+            if (string.IsNullOrEmpty(_event.TimeZoneId))
+            {
+                _event.TimeZoneId = _userTimeZone;
+            }
 
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
@@ -740,5 +786,91 @@
         };
 
         _event.Attendees.Insert(0, organizer); // Insert at the beginning so organizer is always first
+    }
+
+    // Timezone management methods
+    private void LoadTimeZones()
+    {
+        // Get all available timezones from the service
+        var allTimeZones = TimeZoneService.GetAvailableTimeZones();
+
+        // Get common timezones for quick access
+        var commonTimeZones = TimeZoneService.GetCommonTimeZones();
+
+        // Create option list with common zones first, then separator, then all zones
+        _availableTimeZones = new List<TimeZoneOption>();
+
+        // Add common timezones
+        _availableTimeZones.Add(new TimeZoneOption
+        {
+            Id = "",
+            DisplayName = "─── Common Timezones ───"
+        });
+
+        foreach (var tz in commonTimeZones)
+        {
+            _availableTimeZones.Add(new TimeZoneOption
+            {
+                Id = tz.Id,
+                DisplayName = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset:hh\\:mm})"
+            });
+        }
+
+        // Add separator
+        _availableTimeZones.Add(new TimeZoneOption
+        {
+            Id = "",
+            DisplayName = "─── All Timezones ───"
+        });
+
+        // Add all timezones
+        foreach (var tz in allTimeZones)
+        {
+            // Skip if already in common list
+            if (commonTimeZones.Any(c => c.Id == tz.Id))
+                continue;
+
+            _availableTimeZones.Add(new TimeZoneOption
+            {
+                Id = tz.Id,
+                DisplayName = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset:hh\\:mm})"
+            });
+        }
+    }
+
+    private void ResetToUserTimeZone()
+    {
+        _event.TimeZoneId = _userTimeZone;
+        StateHasChanged();
+    }
+
+    private string GetTimeZoneAbbreviation()
+    {
+        try
+        {
+            var tzId = _event.TimeZoneId ?? _userTimeZone;
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+
+            // Get the abbreviation (e.g., PST, EST, UTC)
+            var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
+                ? tz.DaylightName
+                : tz.StandardName;
+
+            // Try to get a shorter abbreviation
+            if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
+            {
+                var words = abbreviation.Split(' ');
+                if (words.Length > 1)
+                {
+                    abbreviation = string.Join("", words.Select(w => w.First()));
+                }
+            }
+
+            return abbreviation;
+        }
+        catch
+        {
+            return "UTC";
+        }
     }
 }

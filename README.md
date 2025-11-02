@@ -174,6 +174,12 @@ dotnet ef database update --startup-project ../Tempus.Web
 - ✅ PDF export capabilities (daily agenda via QuestPDF)
 - ✅ Organizer designation and protection in meetings
 - ✅ User avatar menu with profile management
+- ✅ Time zone support for multi-location meetings
+  - Selectable timezone for each event (supports all IANA timezones)
+  - Automatic timezone conversion to user's local timezone in calendar and dashboard
+  - Visual timezone indicators (🌍) when event is in different timezone
+  - Common timezone quick-select list for easy selection
+  - Original event timezone preserved for multi-location coordination
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -222,7 +228,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Mobile native app (MAUI)
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
-- 🔄 Time zone support for multi-location meetings
 - 🔄 Calendar view preferences and saved layouts
 - 🔄 Bulk event operations
 - 🔄 Advanced search and filtering
@@ -274,6 +279,35 @@ For meeting-type events, Tempus includes a powerful cost calculator:
 **Example:** A 2-hour meeting with 5 attendees at $75/hour = $750 total cost
 
 This feature helps organizations understand the true cost of meetings and make informed decisions about scheduling.
+
+### Using Time Zones for Multi-Location Meetings
+
+Tempus supports time zone selection for events, making it easy to coordinate meetings across different locations:
+
+1. **Setting Event Time Zone:**
+   - When creating or editing an event, look for the **Time Zone** field in the Details tab
+   - By default, events use your profile timezone (set in Settings)
+   - Use the dropdown to search and select a different timezone
+   - The dropdown includes a quick-select list of common timezones at the top
+   - Click the refresh button (🔄) to reset to your default timezone
+
+2. **How Time Zones Work:**
+   - The event is stored with its original timezone (e.g., "America/New_York")
+   - When viewing in Calendar or Dashboard, times are automatically converted to YOUR timezone
+   - Events in different timezones show a 🌍 indicator with the timezone abbreviation
+   - The original timezone is preserved, so all participants see the correct local time
+
+3. **Example Scenario:**
+   - You're in Los Angeles (PST) and create a meeting set for New York (EST) at 2:00 PM
+   - Your calendar will show the event at 11:00 AM PST with 🌍 EST indicator
+   - Colleagues in New York will see it at 2:00 PM EST
+   - The meeting is correctly coordinated across time zones
+
+4. **Best Practices:**
+   - Set timezone for any meeting with participants in different locations
+   - Your default timezone is set in **Settings** → **General** → **Time Zone**
+   - Use common timezone names (Pacific, Eastern, Central, Mountain, UTC, etc.)
+   - The system handles daylight saving time changes automatically
 
 ### Customizing Calendar Settings
 
@@ -453,7 +487,16 @@ dotnet restore
 
 ## Recent Improvements
 
-### Version 1.3 - Comprehensive Notification System
+### Version 1.3 - Notifications & Time Zone Support
+- ✅ **Time Zone Support for Multi-Location Meetings**: Complete timezone management system
+  - Selectable timezone for each event with full IANA timezone database support
+  - Automatic timezone conversion to user's local timezone in calendar and dashboard
+  - Visual timezone indicators (🌍) with abbreviation when event is in different timezone
+  - Common timezone quick-select dropdown with searchable full timezone list
+  - Original event timezone preservation for accurate multi-location coordination
+  - Timezone conversion service with proper daylight saving time handling
+  - Reset button to quickly revert to user's default timezone
+  - Timezone display in event tooltips showing both original and converted times
 - ✅ **Browser Push Notifications**: Real-time desktop alerts for upcoming events and reminders
   - Native browser notification API integration
   - Support for Chrome, Firefox, Edge, and Safari

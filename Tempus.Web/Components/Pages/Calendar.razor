@@ -415,7 +415,24 @@
 
             // Add icon based on event type
             var icon = _formatter.GetEventIcon(evt.EventType);
-            args.Data.Text = $"{icon} {evt.Title}";
+
+            // Add timezone indicator if event is in a different timezone
+            var timeZoneIndicator = "";
+            if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+            {
+                try
+                {
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
+                    var abbreviation = GetTimeZoneAbbreviation(tz);
+                    timeZoneIndicator = $" 🌍 {abbreviation}";
+                }
+                catch
+                {
+                    timeZoneIndicator = " 🌍";
+                }
+            }
+
+            args.Data.Text = $"{icon} {evt.Title}{timeZoneIndicator}";
         }
 
         // Add context menu to appointment
@@ -423,6 +440,31 @@
         {
             ShowContextMenu(mouseArgs, args.Data);
         };
+    }
+
+    private string GetTimeZoneAbbreviation(TimeZoneInfo tz)
+    {
+        var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
+            ? tz.DaylightName
+            : tz.StandardName;
+
+        // Try to get a shorter abbreviation
+        if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
+        {
+            var words = abbreviation.Split(' ');
+            if (words.Length > 1)
+            {
+                abbreviation = string.Join("", words.Select(w => char.IsLetter(w.FirstOrDefault()) ? w.First() : ' ')).Trim();
+            }
+        }
+
+        // If abbreviation is still long, use UTC offset instead
+        if (abbreviation.Length > 5)
+        {
+            abbreviation = $"UTC{tz.BaseUtcOffset:hh\\:mm}";
+        }
+
+        return abbreviation;
     }
 
 
