@@ -6,10 +6,12 @@
 @using Tempus.Core.Helpers
 @inject IEventRepository EventRepository
 @inject IContactRepository ContactRepository
+@inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
+@inject ITimeZoneConversionService TimeZoneConversionService
 
 <RadzenStack Gap="1rem">
     <RadzenFormField Text="Title" Variant="Variant.Outlined">
@@ -39,6 +41,18 @@
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
+
+                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@_event.TimeZoneId"
+                                    Data="@_availableTimeZones"
+                                    TextProperty="DisplayName"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    Placeholder="Select timezone (optional - defaults to your timezone)"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    AllowFiltering="true"
+                                    Style="width: 100%;" />
+                </RadzenFormField>
 
                 <RadzenFormField Text="Location" Variant="Variant.Outlined">
                     <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
@@ -293,6 +307,7 @@
     private readonly Priority[] _priorities = Enum.GetValues<Priority>();
     private readonly RecurrencePattern[] _recurrencePatterns = Enum.GetValues<RecurrencePattern>();
     private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
+    private List<TimeZoneInfo> _availableTimeZones = new();
     private string _userId = string.Empty;
     private string _userEmail = string.Empty;
     private string _userName = string.Empty;
@@ -401,6 +416,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Load available timezones (using common timezones for better UX)
+        _availableTimeZones = TimeZoneConversionService.GetCommonTimeZones();
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)

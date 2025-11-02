@@ -9,6 +9,11 @@ public class Event
     public string? Description { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
+
+    // Timezone support - stores the IANA timezone ID (e.g., "America/New_York")
+    // If null, defaults to UTC or user's timezone
+    public string? TimeZoneId { get; set; }
+
     public string? Location { get; set; }
     public EventType EventType { get; set; }
     public Priority Priority { get; set; } = Priority.Medium;

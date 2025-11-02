@@ -21,6 +21,7 @@
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
 @inject ContextMenuService ContextMenuService
+@inject ITimeZoneConversionService TimeZoneConversionService
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -296,13 +297,28 @@
 
         _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
+        // Get user's timezone preference
+        var userTimeZone = _settings?.TimeZone ?? TimeZoneInfo.Local.Id;
+
         // Convert events to appointments for RadzenScheduler
-        _appointments = _events.Select(e => new AppointmentData
+        // If event has a timezone, convert it to user's timezone for display
+        _appointments = _events.Select(e =>
         {
-            Start = e.StartTime,
-            End = e.EndTime,
-            Text = e.Title,
-            Event = e
+            var displayEvent = e;
+
+            // If event has a timezone different from user's, convert it
+            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != userTimeZone)
+            {
+                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, userTimeZone);
+            }
+
+            return new AppointmentData
+            {
+                Start = displayEvent.StartTime,
+                End = displayEvent.EndTime,
+                Text = displayEvent.Title,
+                Event = e // Keep original event for editing
+            };
         }).ToList();
 
         _loading = false;
