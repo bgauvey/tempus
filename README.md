@@ -174,7 +174,12 @@ dotnet ef database update --startup-project ../Tempus.Web
 - ✅ PDF export capabilities (daily agenda via QuestPDF)
 - ✅ Organizer designation and protection in meetings
 - ✅ User avatar menu with profile management
-- ✅ Email notifications for meeting updates (created, updated, cancelled)
+- ✅ Comprehensive notification system
+  - Email notifications for meeting updates (created, updated, cancelled)
+  - Browser/desktop push notifications with real-time alerts
+  - Customizable notification preferences per event
+  - Support for notification permissions and fallback handling
+  - Real-time notification delivery for upcoming events and reminders
 - ✅ Advanced calendar analytics and insights dashboard
   - Calendar health score (0-100) with visual gauge
   - Time usage breakdown by event type, day of week, and hour
@@ -210,7 +215,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
-- 🔄 Push notifications and browser notifications
 - 🔄 Benchmarking against industry standards and best practices
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
@@ -234,7 +238,7 @@ The application features a modern sidebar navigation with the following sections
 - **Analytics**: Comprehensive calendar analytics and insights dashboard with health scores, time usage breakdowns, meeting analytics, and AI-powered recommendations
 - **Import ICS**: Import events from other calendar applications
 - **Address Book**: Manage contacts for event attendees
-- **Settings**: Configure calendar preferences, time formats, work hours, notifications, and integrations (accessible via user menu)
+- **Settings**: Configure calendar preferences, time formats, work hours, email and browser notifications, and integrations (accessible via user menu)
 
 ### Creating Events
 
@@ -278,7 +282,7 @@ This feature helps organizations understand the true cost of meetings and make i
    - **General**: Time format (12/24-hour), date format, time zone, week start day, default calendar view
    - **Work Hours**: Set working hours, lunch breaks, time slot duration, buffer times
    - **Event Defaults**: Default meeting duration, event visibility, default colors and locations
-   - **Notifications**: Email and desktop notifications, default reminder times
+   - **Notifications**: Enable/disable email notifications, browser push notifications, default reminder times, and per-event notification preferences
    - **Integrations**: View upcoming calendar integrations (Google, Outlook, Apple Calendar)
 
 ### Using Calendar Views
@@ -349,6 +353,40 @@ The Analytics dashboard provides comprehensive insights into your time usage and
 3. Use contacts when adding attendees to events
 4. Search and filter contacts easily
 
+### Using Notifications
+
+Tempus features a comprehensive notification system to keep you informed about upcoming events:
+
+1. **Enable Browser Notifications**:
+   - Navigate to **Settings** → **Notifications** tab
+   - Enable "Browser Notifications"
+   - Grant permission when prompted by your browser
+   - Configure default reminder times (e.g., 15 minutes before)
+
+2. **Email Notifications**:
+   - Enable "Email Notifications" in Settings
+   - Receive emails when meetings are created, updated, or cancelled
+   - Emails include full event details and calendar context
+
+3. **Per-Event Notification Settings**:
+   - When creating or editing an event, customize notification preferences
+   - Choose specific reminder times (5, 10, 15, 30 minutes, 1 hour, etc.)
+   - Mix email and browser notifications based on importance
+
+4. **Browser Notification Features**:
+   - Real-time desktop alerts for upcoming events
+   - Works even when the browser is in the background
+   - Click notification to focus on Tempus
+   - Fallback to email if browser notifications are blocked
+
+**Supported Browsers:**
+- Google Chrome / Chromium-based browsers
+- Mozilla Firefox
+- Microsoft Edge
+- Safari (macOS/iOS)
+
+**Note:** Browser notifications require HTTPS and user permission. If you decline permission, you can re-enable it in your browser settings.
+
 ### Authentication
 
 New users can register for an account:
@@ -414,6 +452,28 @@ dotnet restore
 ```
 
 ## Recent Improvements
+
+### Version 1.3 - Comprehensive Notification System
+- ✅ **Browser Push Notifications**: Real-time desktop alerts for upcoming events and reminders
+  - Native browser notification API integration
+  - Support for Chrome, Firefox, Edge, and Safari
+  - Permission management with fallback handling
+  - Click notifications to focus on Tempus application
+  - Background notification delivery
+- ✅ **Enhanced Email Notifications**: Improved email system for meeting updates
+  - Created, updated, and cancelled meeting alerts
+  - Full event details in email body
+  - Rich HTML formatting with calendar context
+- ✅ **Notification Preferences**: Granular control over notification settings
+  - Global enable/disable for email and browser notifications
+  - Per-event notification customization
+  - Configurable reminder times (5, 10, 15, 30 min, 1 hour, etc.)
+  - Default notification settings in Settings page
+- ✅ **Real-time Notification Service**: Background service for notification delivery
+  - Automatic detection of upcoming events
+  - Smart scheduling of notifications based on event start time
+  - Handles notification permissions and browser compatibility
+  - Graceful fallback when notifications are unavailable
 
 ### Version 1.2 - Enhanced UI/UX & Theme Support
 - ✅ **Full Theme Support**: All pages now support multiple Radzen themes (light and dark modes)
