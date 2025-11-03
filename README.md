@@ -180,6 +180,14 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Visual timezone indicators (🌍) when event is in different timezone
   - Common timezone quick-select list for easy selection
   - Original event timezone preserved for multi-location coordination
+- ✅ Calendar view preferences and saved layouts
+  - Remember and restore last used calendar view across sessions
+  - Support for all 6 calendar views (Month, Week, Day, Year, Year Planner, Year Timeline)
+  - Automatic view preference saving when user switches views
+  - Customizable hour range for day/week views (start/end hours)
+  - Event display filters (show/hide completed tasks, cancelled events)
+  - Display customization (event icons, colors, compact view mode)
+  - Per-user personalized calendar experience
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -228,9 +236,9 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Mobile native app (MAUI)
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
-- 🔄 Calendar view preferences and saved layouts
 - 🔄 Bulk event operations
 - 🔄 Advanced search and filtering
+- 🔄 Advanced event filtering UI with real-time application
 
 ## Using the Application
 
@@ -486,6 +494,31 @@ dotnet restore
 ```
 
 ## Recent Improvements
+
+### Version 1.4 - Calendar View Preferences & Saved Layouts
+- ✅ **Remember Last View**: Automatically save and restore user's preferred calendar view
+  - RememberLastView setting to enable/disable automatic view restoration
+  - LastUsedView tracks the most recently selected view
+  - Seamless experience across sessions
+- ✅ **Expanded Calendar View Support**: Complete support for all 6 calendar views
+  - Month, Week, Day views
+  - Year, Year Planner, Year Timeline views
+  - Updated CalendarView enum with explicit indices
+  - Proper mapping between settings and scheduler views
+- ✅ **Layout Customization Options**: Foundation for personalized calendar display
+  - Customizable hour range (CalendarStartHour, CalendarEndHour)
+  - Event display filters (HiddenEventTypes, ShowCompletedTasks, ShowCancelledEvents)
+  - Visual customization (ShowEventIcons, ShowEventColors, CompactView)
+  - Per-user preferences stored in database
+- ✅ **Automatic Preference Persistence**: No manual saving required
+  - View changes automatically saved to user settings
+  - LastViewChangeDate timestamp for tracking
+  - Integrated with existing SettingsService
+- ✅ **Enhanced User Experience**: Personalized calendar interface
+  - Calendar opens to user's preferred view
+  - Consistent experience across sessions
+  - Foundation for advanced filtering and display options
+  - Better workflow for power users
 
 ### Version 1.3 - Notifications & Time Zone Support
 - ✅ **Time Zone Support for Multi-Location Meetings**: Complete timezone management system
