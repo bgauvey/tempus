@@ -188,6 +188,26 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Event display filters (show/hide completed tasks, cancelled events)
   - Display customization (event icons, colors, compact view mode)
   - Per-user personalized calendar experience
+- ✅ Advanced search and filtering
+  - Comprehensive search dialog with organized filter sections
+  - Full-text search across titles, descriptions, locations, and attendees
+  - Selectable search scope (search in title, description, location, attendees)
+  - Date range filtering with flexible start/end dates
+  - Multi-select event type and priority filtering with checkboxes
+  - Status-based filtering (all, completed, incomplete events)
+  - Recurring event inclusion toggle
+  - Time-of-day filtering (earliest start, latest end times)
+  - Flexible sorting options (StartTime, EndTime, Title, Priority, CreatedDate, UpdatedDate)
+  - Ascending/descending sort order control
+  - Configurable result limiting (max results)
+  - Reset filter functionality to quickly clear all criteria
+  - Visual search state indicator in calendar header
+  - Clear search button to restore full calendar view
+  - Case-insensitive search capabilities
+  - Efficient database querying with EF Core
+  - Resizable, draggable search dialog (700x600px)
+  - Search results seamlessly replace calendar view
+  - Timezone-aware search results display
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -237,8 +257,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
 - 🔄 Bulk event operations
-- 🔄 Advanced search and filtering
-- 🔄 Advanced event filtering UI with real-time application
 
 ## Using the Application
 
@@ -347,6 +365,85 @@ The Calendar page supports multiple viewing modes:
 - Download daily agenda as PDF
 
 Navigate views using the toolbar buttons and customize settings in real-time.
+
+### Using Advanced Search and Filtering
+
+The Advanced Search feature allows you to quickly find specific events using multiple filter criteria:
+
+1. **Opening Advanced Search:**
+   - Navigate to the **Calendar** page
+   - Click the **Advanced Search** button in the calendar header (next to Day Agenda)
+   - A comprehensive search dialog will open (700x600px, resizable and draggable)
+
+2. **Text Search Options:**
+   - Enter search terms in the **Search term** field
+   - Select which fields to search:
+     - ✅ **Title** (default: enabled)
+     - ✅ **Description** (default: enabled)
+     - ✅ **Location** (default: enabled)
+     - ✅ **Attendees** (default: disabled)
+   - Search is case-insensitive for better results
+
+3. **Date Range Filtering:**
+   - Set **Start Date** to filter events starting from a specific date
+   - Set **End Date** to filter events ending before a specific date
+   - Leave either field empty for open-ended ranges
+
+4. **Event Type Filtering:**
+   - Select one or more event types to narrow results:
+     - Meeting, Appointment, Task, TimeBlock, Reminder, Deadline, Other
+   - Leave all unchecked to search across all event types
+
+5. **Priority Filtering:**
+   - Filter by priority levels: Low, Medium, High, Critical
+   - Select multiple priorities to include all matching events
+
+6. **Status and Options:**
+   - Choose completion status:
+     - **All**: Show both completed and incomplete events
+     - **Completed**: Only show completed events
+     - **Incomplete**: Only show incomplete events
+   - Toggle **Include Recurring Events** to include/exclude recurring events
+
+7. **Time of Day Filtering:**
+   - Set **Earliest Start Time** to find events starting after a specific time
+   - Set **Latest End Time** to find events ending before a specific time
+   - Useful for finding morning meetings, afternoon tasks, etc.
+
+8. **Sorting Results:**
+   - **Sort By**: Choose from 6 sort options
+     - StartTime (default), EndTime, Title, Priority, CreatedDate, UpdatedDate
+   - **Order**: Select Ascending (Asc) or Descending (Desc)
+
+9. **Result Limiting:**
+   - Set **Max Results** to limit the number of events returned
+   - Leave empty to show all matching events
+
+10. **Using Search Results:**
+    - Click **Search** to apply filters and view results
+    - The calendar view updates to show only matching events
+    - A **Clear Search** button appears in the header
+    - Search results maintain timezone conversion and event formatting
+    - Click **Clear Search** to restore the full calendar view
+
+11. **Resetting Filters:**
+    - Click **Reset** in the dialog to clear all filter criteria
+    - Default settings are restored (search in title, description, location enabled)
+
+**Example Use Cases:**
+- Find all High priority Meetings in the next 30 days
+- Search for events containing "Project Alpha" in any field
+- Locate all Tasks completed in the last week
+- Find afternoon meetings (start time after 1:00 PM)
+- Search for events with specific attendees
+- Identify all events at a particular location
+
+**Tips:**
+- Combine multiple filters for precise results
+- Use date ranges to focus on specific time periods
+- Sort by Priority to find urgent items quickly
+- Use time-of-day filters to find scheduling conflicts
+- The search is timezone-aware and respects your local timezone
 
 ### Using Calendar Analytics
 
