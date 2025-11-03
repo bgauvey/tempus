@@ -272,7 +272,12 @@
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
                 // Load saved view preference
-                _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
+                // If RememberLastView is enabled and there's a LastUsedView, use it; otherwise use DefaultCalendarView
+                var viewToLoad = _settings.RememberLastView && _settings.LastUsedView.HasValue
+                    ? _settings.LastUsedView.Value
+                    : _settings.DefaultCalendarView;
+
+                _selectedViewIndex = GetSchedulerIndexFromCalendarView(viewToLoad);
             }
         }
 
@@ -689,6 +694,15 @@
         if (_settings != null)
         {
             var newView = GetCalendarViewFromSchedulerIndex(newIndex);
+
+            // Update last used view if RememberLastView is enabled
+            if (_settings.RememberLastView)
+            {
+                _settings.LastUsedView = newView;
+                _settings.LastViewChangeDate = DateTime.UtcNow;
+            }
+
+            // Also update default view
             _settings.DefaultCalendarView = newView;
             _settings.UpdatedAt = DateTime.UtcNow;
 
@@ -697,7 +711,7 @@
             try
             {
                 var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
-                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
+                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView: {savedSettings.DefaultCalendarView}, LastUsedView: {savedSettings.LastUsedView}");
             }
             catch (Exception ex)
             {
@@ -712,11 +726,14 @@
     {
         return view switch
         {
-            CalendarView.Month => 0,      // RadzenMonthView
-            CalendarView.Week => 1,       // RadzenWeekView
-            CalendarView.Day => 2,        // RadzenDayView
-            CalendarView.WorkWeek => 1,   // RadzenWeekView (no separate WorkWeek view in scheduler)
-            _ => 1                        // Default to Week
+            CalendarView.Month => 0,         // RadzenMonthView
+            CalendarView.Week => 1,          // RadzenWeekView
+            CalendarView.Day => 2,           // RadzenDayView
+            CalendarView.Year => 3,          // RadzenYearView
+            CalendarView.YearPlanner => 4,   // RadzenYearPlannerView
+            CalendarView.YearTimeline => 5,  // RadzenYearTimelineView
+            CalendarView.WorkWeek => 1,      // RadzenWeekView (no separate WorkWeek view in scheduler)
+            _ => 1                           // Default to Week
         };
     }
 
@@ -724,9 +741,12 @@
     {
         return index switch
         {
-            0 => CalendarView.Month,      // RadzenMonthView
-            1 => CalendarView.Week,       // RadzenWeekView
-            2 => CalendarView.Day,        // RadzenDayView
+            0 => CalendarView.Month,         // RadzenMonthView
+            1 => CalendarView.Week,          // RadzenWeekView
+            2 => CalendarView.Day,           // RadzenDayView
+            3 => CalendarView.Year,          // RadzenYearView
+            4 => CalendarView.YearPlanner,   // RadzenYearPlannerView
+            5 => CalendarView.YearTimeline,  // RadzenYearTimelineView
             _ => CalendarView.Week        // Default to Week
         };
     }

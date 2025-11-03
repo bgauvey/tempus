@@ -23,6 +23,23 @@ public class CalendarSettings
     public TimeSlotDuration TimeSlotDuration { get; set; } = TimeSlotDuration.ThirtyMinutes;
     public TimeSpan ScrollToTime { get; set; } = new TimeSpan(8, 0, 0); // 8:00 AM
 
+    // Saved Layout Preferences
+    public bool RememberLastView { get; set; } = true; // Remember and restore last used view
+    public CalendarView? LastUsedView { get; set; } // Last view the user was using
+    public DateTime? LastViewChangeDate { get; set; }
+
+    // Event Display Filters
+    public string? HiddenEventTypes { get; set; } // Comma-separated list of EventType enums to hide
+    public bool ShowCompletedTasks { get; set; } = true;
+    public bool ShowCancelledEvents { get; set; } = false;
+
+    // Calendar Display Customization
+    public bool ShowEventIcons { get; set; } = true;
+    public bool ShowEventColors { get; set; } = true;
+    public bool CompactView { get; set; } = false; // More events in same space
+    public int CalendarStartHour { get; set; } = 0; // Start hour for day/week views (0-23)
+    public int CalendarEndHour { get; set; } = 24; // End hour for day/week views (1-24)
+
     // Working Hours & Availability
     public TimeSpan WorkHoursStart { get; set; } = new TimeSpan(8, 0, 0); // 08:00
     public TimeSpan WorkHoursEnd { get; set; } = new TimeSpan(17, 0, 0); // 17:00

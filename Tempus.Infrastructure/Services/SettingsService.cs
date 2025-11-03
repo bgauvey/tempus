@@ -44,6 +44,17 @@ public class SettingsService : ISettingsService
             existingSettings.ShowWeekendInWeekView = settings.ShowWeekendInWeekView;
             existingSettings.TimeSlotDuration = settings.TimeSlotDuration;
             existingSettings.ScrollToTime = settings.ScrollToTime;
+            existingSettings.RememberLastView = settings.RememberLastView;
+            existingSettings.LastUsedView = settings.LastUsedView;
+            existingSettings.LastViewChangeDate = settings.LastViewChangeDate;
+            existingSettings.HiddenEventTypes = settings.HiddenEventTypes;
+            existingSettings.ShowCompletedTasks = settings.ShowCompletedTasks;
+            existingSettings.ShowCancelledEvents = settings.ShowCancelledEvents;
+            existingSettings.ShowEventIcons = settings.ShowEventIcons;
+            existingSettings.ShowEventColors = settings.ShowEventColors;
+            existingSettings.CompactView = settings.CompactView;
+            existingSettings.CalendarStartHour = settings.CalendarStartHour;
+            existingSettings.CalendarEndHour = settings.CalendarEndHour;
             existingSettings.WorkHoursStart = settings.WorkHoursStart;
             existingSettings.WorkHoursEnd = settings.WorkHoursEnd;
             existingSettings.WeekendDays = settings.WeekendDays;
