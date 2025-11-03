@@ -11,4 +11,5 @@ public interface IEventRepository
     Task<Event> UpdateAsync(Event @event);
     Task DeleteAsync(Guid id, string userId);
     Task<List<Event>> SearchAsync(string searchTerm, string userId);
+    Task<List<Event>> AdvancedSearchAsync(AdvancedSearchFilter filter, string userId);
 }

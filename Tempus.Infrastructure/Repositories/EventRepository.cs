@@ -172,4 +172,122 @@ public class EventRepository : IEventRepository
             .OrderBy(e => e.StartTime)
             .ToListAsync();
     }
+
+    public async Task<List<Event>> AdvancedSearchAsync(AdvancedSearchFilter filter, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var query = context.Events
+            .Include(e => e.Attendees)
+            .Where(e => e.UserId == userId);
+
+        // Text search
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var searchLower = filter.SearchTerm.ToLower();
+            query = query.Where(e =>
+                (filter.SearchInTitle && e.Title.ToLower().Contains(searchLower)) ||
+                (filter.SearchInDescription && e.Description != null && e.Description.ToLower().Contains(searchLower)) ||
+                (filter.SearchInLocation && e.Location != null && e.Location.ToLower().Contains(searchLower)) ||
+                (filter.SearchInAttendees && e.Attendees.Any(a =>
+                    a.Name.ToLower().Contains(searchLower) ||
+                    a.Email.ToLower().Contains(searchLower))));
+        }
+
+        // Date range filtering
+        if (filter.StartDate.HasValue)
+        {
+            query = query.Where(e => e.StartTime >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            query = query.Where(e => e.EndTime <= filter.EndDate.Value);
+        }
+
+        // Event type filtering
+        if (filter.EventTypes?.Any() == true)
+        {
+            query = query.Where(e => filter.EventTypes.Contains(e.EventType));
+        }
+
+        // Priority filtering
+        if (filter.Priorities?.Any() == true)
+        {
+            query = query.Where(e => filter.Priorities.Contains(e.Priority));
+        }
+
+        // Status filtering
+        if (filter.IsCompleted.HasValue)
+        {
+            query = query.Where(e => e.IsCompleted == filter.IsCompleted.Value);
+        }
+
+        if (!filter.IncludeRecurring)
+        {
+            query = query.Where(e => !e.IsRecurring);
+        }
+
+        // Attendee filtering
+        if (!string.IsNullOrWhiteSpace(filter.AttendeeEmail))
+        {
+            var emailLower = filter.AttendeeEmail.ToLower();
+            query = query.Where(e => e.Attendees.Any(a => a.Email.ToLower() == emailLower));
+        }
+
+        if (filter.HasAttendees.HasValue)
+        {
+            if (filter.HasAttendees.Value)
+            {
+                query = query.Where(e => e.Attendees.Any());
+            }
+            else
+            {
+                query = query.Where(e => !e.Attendees.Any());
+            }
+        }
+
+        // Time of day filtering
+        if (filter.EarliestStartTime.HasValue)
+        {
+            query = query.Where(e => e.StartTime.TimeOfDay >= filter.EarliestStartTime.Value);
+        }
+
+        if (filter.LatestEndTime.HasValue)
+        {
+            query = query.Where(e => e.EndTime.TimeOfDay <= filter.LatestEndTime.Value);
+        }
+
+        // Sorting
+        query = filter.SortBy switch
+        {
+            SearchSortBy.StartTime => filter.SortDescending
+                ? query.OrderByDescending(e => e.StartTime)
+                : query.OrderBy(e => e.StartTime),
+            SearchSortBy.EndTime => filter.SortDescending
+                ? query.OrderByDescending(e => e.EndTime)
+                : query.OrderBy(e => e.EndTime),
+            SearchSortBy.Title => filter.SortDescending
+                ? query.OrderByDescending(e => e.Title)
+                : query.OrderBy(e => e.Title),
+            SearchSortBy.Priority => filter.SortDescending
+                ? query.OrderByDescending(e => e.Priority)
+                : query.OrderBy(e => e.Priority),
+            SearchSortBy.CreatedDate => filter.SortDescending
+                ? query.OrderByDescending(e => e.CreatedAt)
+                : query.OrderBy(e => e.CreatedAt),
+            SearchSortBy.UpdatedDate => filter.SortDescending
+                ? query.OrderByDescending(e => e.UpdatedAt)
+                : query.OrderBy(e => e.UpdatedAt),
+            _ => query.OrderBy(e => e.StartTime)
+        };
+
+        // Result limiting
+        if (filter.MaxResults.HasValue && filter.MaxResults.Value > 0)
+        {
+            query = query.Take(filter.MaxResults.Value);
+        }
+
+        return await query.ToListAsync();
+    }
 }
