@@ -142,7 +142,12 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
                 <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
+                @if (_isSearchActive)
+                {
+                    <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Warning" Click="ClearSearch" Size="ButtonSize.Medium" Text="Clear Search" title="Show all events" />
+                }
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
@@ -252,6 +257,8 @@
     private string _userTimeZone = TimeZoneInfo.Local.Id;
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
+    private bool _isSearchActive = false;
+    private List<Event> _allEvents = new(); // Store all events when search is active
 
     // Helper classes
     private CalendarEventManager? _eventManager;
@@ -749,5 +756,113 @@
             5 => CalendarView.YearTimeline,  // RadzenYearTimelineView
             _ => CalendarView.Week        // Default to Week
         };
+    }
+
+    // Advanced Search
+    private async Task OpenAdvancedSearch()
+    {
+        var result = await DialogService.OpenAsync<AdvancedSearchDialog>("Advanced Search",
+            new Dictionary<string, object>(),
+            new DialogOptions() { Width = "700px", Height = "600px", Resizable = true, Draggable = true });
+
+        if (result is AdvancedSearchFilter filter)
+        {
+            await PerformSearch(filter);
+        }
+    }
+
+    private async Task PerformSearch(AdvancedSearchFilter filter)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Store all events if this is the first search
+            if (!_isSearchActive)
+            {
+                _allEvents = new List<Event>(_events);
+            }
+
+            // Perform the search
+            var searchResults = await EventRepository.AdvancedSearchAsync(filter, _userId);
+
+            // Update the events list with search results
+            _events = searchResults;
+
+            // Convert search results to appointments
+            _appointments = _events.Select(e =>
+            {
+                var displayEvent = e;
+
+                // If event has a timezone different from user's, convert it
+                if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+                {
+                    displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+                }
+
+                return new AppointmentData
+                {
+                    Start = displayEvent.StartTime,
+                    End = displayEvent.EndTime,
+                    Text = displayEvent.Title,
+                    Event = e
+                };
+            }).ToList();
+
+            _isSearchActive = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing search: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        // Restore all events
+        if (_allEvents.Any())
+        {
+            _events = new List<Event>(_allEvents);
+        }
+        else
+        {
+            // If no stored events, reload from database
+            await LoadEvents();
+        }
+
+        // Convert back to appointments
+        _appointments = _events.Select(e =>
+        {
+            var displayEvent = e;
+
+            // If event has a timezone different from user's, convert it
+            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+            {
+                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+            }
+
+            return new AppointmentData
+            {
+                Start = displayEvent.StartTime,
+                End = displayEvent.EndTime,
+                Text = displayEvent.Title,
+                Event = e
+            };
+        }).ToList();
+
+        _isSearchActive = false;
+        _allEvents.Clear();
+
+        _loading = false;
+        StateHasChanged();
     }
 }
