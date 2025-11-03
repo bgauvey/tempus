@@ -47,21 +47,24 @@
                 </RadzenFormField>
 
                 <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                        <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
-                                      Data="@_availableTimeZones"
-                                      TextProperty="DisplayName"
-                                      ValueProperty="Id"
-                                      FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                      AllowFiltering="true"
-                                      Placeholder="Select timezone..."
-                                      Style="width: 100%;" />
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <div style="flex: 1; min-width: 0;">
+                            <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
+                                          Data="@_availableTimeZones"
+                                          TextProperty="DisplayName"
+                                          ValueProperty="Id"
+                                          FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                          AllowFiltering="true"
+                                          Placeholder="Select timezone..."
+                                          Style="width: 100%;" />
+                        </div>
                         <RadzenButton Icon="refresh"
                                     ButtonStyle="ButtonStyle.Light"
                                     Size="ButtonSize.Small"
                                     Click="@ResetToUserTimeZone"
-                                    title="Reset to your timezone" />
-                    </RadzenStack>
+                                    title="Reset to your timezone"
+                                    Style="flex-shrink: 0;" />
+                    </div>
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem; display: block;">
                         <RadzenIcon Icon="info_outline" Style="font-size: 0.875rem; vertical-align: middle;" />
                         Set timezone for multi-location meetings. Current: @GetTimeZoneAbbreviation()
