@@ -25,12 +25,12 @@
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
                 <RadzenProfileMenuItem Path="/notifications">
-                    <div class="notification-menu-item">
-                        <RadzenIcon Icon="notifications" Style="margin-right: 0.5rem;" />
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <RadzenIcon Icon="notifications" />
                         <span>Notifications</span>
                         @if (_unreadCount > 0)
                         {
-                            <span class="notification-badge">@_unreadCount</span>
+                            <span class="notification-badge-inline">@_unreadCount</span>
                         }
                     </div>
                 </RadzenProfileMenuItem>
@@ -140,6 +140,20 @@
         margin-left: auto;
         min-width: 20px;
         text-align: center;
+    }
+
+    .notification-badge-inline {
+        background: #ef4444;
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 0.125rem 0.4rem;
+        border-radius: 10px;
+        margin-left: 0.5rem;
+        min-width: 18px;
+        text-align: center;
+        display: inline-block;
+        vertical-align: middle;
     }
 
     /* Hide the dropdown arrow */
