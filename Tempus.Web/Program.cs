@@ -91,6 +91,7 @@ builder.Services.AddScoped<IAnalyticsReportService, AnalyticsReportService>();
 builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
 builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
 builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
+builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
 
 var app = builder.Build();
 
