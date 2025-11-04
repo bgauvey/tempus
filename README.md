@@ -208,6 +208,23 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Resizable, draggable search dialog (700x600px)
   - Search results seamlessly replace calendar view
   - Timezone-aware search results display
+- ✅ Bulk event operations
+  - Selection mode for multi-event selection on calendar
+  - Visual selection indicators (golden border, glow effect, checkmark)
+  - Dynamic bulk operations toolbar appearing when events selected
+  - Real-time selection counter with grammar-aware pluralization
+  - Bulk event type changes (Meeting, Task, Reminder, Appointment, etc.)
+  - Bulk priority updates (Low, Medium, High, Critical)
+  - Bulk color changes with 10 predefined colors + custom color picker
+  - Bulk event movement with configurable time offset (days, hours, minutes)
+  - Bulk completion status toggling (mark complete/incomplete)
+  - Bulk event deletion with confirmation dialog
+  - Click-to-select in selection mode
+  - Context menu integration for select/deselect operations
+  - Auto-clear selection after successful operations
+  - Efficient database operations using batched updates
+  - Safe user ID filtering ensures data isolation
+  - Loading states and error handling for all operations
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -256,7 +273,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Mobile native app (MAUI)
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
-- 🔄 Bulk event operations
 
 ## Using the Application
 
@@ -444,6 +460,152 @@ The Advanced Search feature allows you to quickly find specific events using mul
 - Sort by Priority to find urgent items quickly
 - Use time-of-day filters to find scheduling conflicts
 - The search is timezone-aware and respects your local timezone
+
+### Using Bulk Event Operations
+
+The Bulk Operations feature allows you to efficiently manage multiple events at once, saving time on repetitive tasks:
+
+#### Entering Selection Mode
+
+1. **Activate Selection Mode:**
+   - Navigate to the **Calendar** page
+   - Click the **Select Events** button in the calendar header
+   - The button changes to **Exit Selection** with a warning style
+   - Calendar enters selection mode
+
+2. **Visual Changes:**
+   - Events can now be selected by clicking
+   - Context menu shows Select/Deselect options
+   - Selected events display with golden border and glow effect
+   - Checkmark (✓) appears before selected event titles
+
+#### Selecting Events
+
+1. **Click to Select:**
+   - Simply click any event to select it
+   - Click again to deselect
+   - Selection state persists across view changes
+
+2. **Context Menu Selection:**
+   - Right-click any event
+   - Choose **Select** or **Deselect** from context menu
+   - Useful for precise selection control
+
+3. **Selection Indicators:**
+   - Selected events have 3px golden border (#FFD700)
+   - Glowing shadow effect around selected events
+   - Checkmark prefix in event title
+   - Selection count shown in bulk toolbar
+
+#### Using the Bulk Operations Toolbar
+
+Once events are selected, a toolbar appears with available actions:
+
+1. **Toolbar Display:**
+   - Appears between calendar header and content
+   - Shows "X event(s) selected" with real-time count
+   - **Clear Selection** button to deselect all events
+   - Action buttons for bulk operations
+
+2. **Available Bulk Actions:**
+
+   **Change Event Type:**
+   - Click **Change Type** button
+   - Select new event type from dropdown (Meeting, Task, Reminder, etc.)
+   - Apply to all selected events
+
+   **Set Priority:**
+   - Click **Set Priority** button
+   - Choose priority level (Low, Medium, High, Critical)
+   - Updates all selected events
+
+   **Set Color:**
+   - Click **Set Color** button
+   - Choose from 10 predefined colors (Blue, Green, Orange, Red, etc.)
+   - Or use custom color picker for any color
+   - Visual color swatches make selection easy
+
+   **Move Events:**
+   - Click **Move Events** button
+   - Configure time offset using three fields:
+     * **Days**: Number of days to move (positive = forward, negative = backward)
+     * **Hours**: Hour adjustment (-23 to +23)
+     * **Minutes**: Minute adjustment (-59 to +59)
+   - Preview shows direction and amount (e.g., "2 days, 3 hours forward")
+   - All selected events move by the same offset
+
+   **Mark Complete:**
+   - Click **Mark Complete** button (green)
+   - Instantly marks all selected events as complete
+   - No dialog confirmation needed
+
+   **Mark Incomplete:**
+   - Click **Mark Incomplete** button (gray)
+   - Marks all selected events as incomplete
+   - Useful for resetting completed tasks
+
+   **Delete:**
+   - Click **Delete** button (red)
+   - Confirmation dialog appears showing event count
+   - Confirm to permanently delete all selected events
+   - Operation cannot be undone
+
+#### Workflow Example
+
+**Scenario: Reschedule all meetings from Monday to Tuesday**
+
+1. Click **Select Events** to enter selection mode
+2. Click all Monday meetings on the calendar
+3. Bulk toolbar shows "5 events selected"
+4. Click **Move Events** button
+5. Enter **Days: 1** (leave hours and minutes at 0)
+6. Preview shows "1 day forward"
+7. Click **Apply**
+8. All 5 meetings move to Tuesday at same times
+9. Selection automatically clears
+10. Click **Exit Selection** to return to normal mode
+
+#### Best Practices
+
+1. **Review Selection:**
+   - Check selection count matches expectations
+   - Selected events have clear visual indicators
+   - Use Clear Selection if you made mistakes
+
+2. **Use Bulk Operations For:**
+   - Rescheduling multiple events (team meetings, deadlines)
+   - Color-coding events by project or category
+   - Changing priority for a group of tasks
+   - Converting events to different types
+   - Mass deletion of old or duplicate events
+   - Marking multiple tasks complete at once
+
+3. **Safety Features:**
+   - Delete operations require confirmation
+   - Cannot modify events from other users
+   - Operations are transactional (all or nothing)
+   - Loading states prevent accidental double-clicks
+   - Automatic event refresh shows changes immediately
+
+4. **Performance:**
+   - Efficient database batching reduces server load
+   - Works well with large selections (100+ events)
+   - Operations complete quickly with instant feedback
+
+5. **After Operations:**
+   - Selection automatically clears on success
+   - Calendar refreshes to show updated events
+   - Console logs confirm operation completion
+   - Stay in selection mode to perform more operations
+
+#### Exiting Selection Mode
+
+- Click **Exit Selection** button in calendar header
+- Selection automatically clears
+- Calendar returns to normal interaction mode
+- Context menus show Edit/Duplicate/Delete options again
+
+This feature is particularly useful for calendar maintenance, project management, and handling recurring tasks efficiently.
 
 ### Using Calendar Analytics
 
