@@ -126,6 +126,26 @@ public class PstImportService : IPstImportService
             var location = appointment.Location ?? "";
             var body = mapiMessage.Body ?? "";
 
+            // Validate dates
+            if (startTime == DateTime.MinValue || startTime == default)
+            {
+                startTime = DateTime.UtcNow;
+            }
+            if (endTime == DateTime.MinValue || endTime == default || endTime < startTime)
+            {
+                endTime = startTime.AddHours(1); // Default 1 hour duration
+            }
+
+            // Ensure dates are in a valid range for database storage
+            if (startTime.Year < 1753)
+            {
+                startTime = new DateTime(1753, 1, 1);
+            }
+            if (endTime.Year < 1753)
+            {
+                endTime = startTime.AddHours(1);
+            }
+
             // Create event object
             var evt = new Event
             {
@@ -147,10 +167,17 @@ public class PstImportService : IPstImportService
                 evt.Attendees = new List<Attendee>();
                 foreach (var recipient in mapiMessage.Recipients)
                 {
+                    // Skip attendees without email addresses (required field)
+                    var email = recipient.EmailAddress;
+                    if (string.IsNullOrWhiteSpace(email))
+                    {
+                        continue;
+                    }
+
                     var attendee = new Attendee
                     {
-                        Name = recipient.DisplayName ?? recipient.EmailAddress ?? "Unknown",
-                        Email = recipient.EmailAddress ?? "",
+                        Name = recipient.DisplayName ?? email,
+                        Email = email,
                         IsOrganizer = false  // Will be set based on organizer email if available
                     };
 
