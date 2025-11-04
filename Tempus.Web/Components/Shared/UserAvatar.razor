@@ -25,16 +25,14 @@
                 <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="person" />
                 <RadzenProfileMenuItem Text="Settings" Path="/settings" Icon="settings" />
                 <RadzenProfileMenuItem Path="/notifications">
-                    <Template>
-                        <div class="notification-menu-item">
-                            <RadzenIcon Icon="notifications" Style="margin-right: 0.5rem;" />
-                            <span>Notifications</span>
-                            @if (_unreadCount > 0)
-                            {
-                                <span class="notification-badge">@_unreadCount</span>
-                            }
-                        </div>
-                    </Template>
+                    <div class="notification-menu-item">
+                        <RadzenIcon Icon="notifications" Style="margin-right: 0.5rem;" />
+                        <span>Notifications</span>
+                        @if (_unreadCount > 0)
+                        {
+                            <span class="notification-badge">@_unreadCount</span>
+                        }
+                    </div>
                 </RadzenProfileMenuItem>
                 <div class="menu-divider"></div>
                 <li class="rz-navigation-item">
