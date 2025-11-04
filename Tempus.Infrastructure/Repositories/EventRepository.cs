@@ -108,6 +108,22 @@ public class EventRepository : IEventRepository
     public async Task<Event> CreateAsync(Event @event)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Handle attendees - ensure they have proper IDs and EventId set
+        if (@event.Attendees != null && @event.Attendees.Any())
+        {
+            foreach (var attendee in @event.Attendees)
+            {
+                // Ensure attendee has an ID
+                if (attendee.Id == Guid.Empty)
+                {
+                    attendee.Id = Guid.NewGuid();
+                }
+                // Set the EventId to link the attendee to this event
+                attendee.EventId = @event.Id;
+            }
+        }
+
         context.Events.Add(@event);
         await context.SaveChangesAsync();
         return @event;
