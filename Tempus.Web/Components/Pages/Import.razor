@@ -249,28 +249,65 @@
     private async Task SaveImportedEvents()
     {
         _saving = true;
+        Console.WriteLine("=== STARTING SAVE IMPORTED EVENTS ===");
+        Console.WriteLine($"Total events to save: {_importedEvents.Count}");
+        Console.WriteLine($"Current user ID: {_userId}");
+
         try
         {
             int savedCount = 0;
+            int eventIndex = 0;
+
             foreach (var evt in _importedEvents)
             {
+                eventIndex++;
+                Console.WriteLine($"\n--- Processing event {eventIndex}/{_importedEvents.Count} ---");
+                Console.WriteLine($"Event ID: {evt.Id}");
+                Console.WriteLine($"Title: {evt.Title}");
+                Console.WriteLine($"StartTime: {evt.StartTime}");
+                Console.WriteLine($"EndTime: {evt.EndTime}");
+                Console.WriteLine($"UserId (before): {evt.UserId}");
+                Console.WriteLine($"Attendees count: {evt.Attendees?.Count ?? 0}");
+
                 try
                 {
                     evt.UserId = _userId; // Set the current user ID before saving
-                    await EventRepository.CreateAsync(evt);
+                    Console.WriteLine($"UserId (after set): {evt.UserId}");
+
+                    if (evt.Attendees != null && evt.Attendees.Any())
+                    {
+                        Console.WriteLine("Attendee details:");
+                        foreach (var attendee in evt.Attendees)
+                        {
+                            Console.WriteLine($"  - Attendee ID: {attendee.Id}, Name: {attendee.Name}, Email: {attendee.Email}, EventId: {attendee.EventId}");
+                        }
+                    }
+
+                    Console.WriteLine($"Calling EventRepository.CreateAsync...");
+                    var result = await EventRepository.CreateAsync(evt);
+                    Console.WriteLine($"CreateAsync returned. Result ID: {result.Id}");
+
                     savedCount++;
+                    Console.WriteLine($"✓ Event saved successfully. Total saved so far: {savedCount}");
                 }
                 catch (Exception eventEx)
                 {
                     // Log individual event errors but continue
-                    Console.WriteLine($"Error saving event '{evt.Title}': {eventEx.Message}");
-                    Console.WriteLine($"Stack trace: {eventEx.StackTrace}");
+                    Console.WriteLine($"✗ ERROR saving event '{evt.Title}':");
+                    Console.WriteLine($"  Exception Type: {eventEx.GetType().Name}");
+                    Console.WriteLine($"  Message: {eventEx.Message}");
+                    Console.WriteLine($"  Stack trace: {eventEx.StackTrace}");
                     if (eventEx.InnerException != null)
                     {
-                        Console.WriteLine($"Inner exception: {eventEx.InnerException.Message}");
+                        Console.WriteLine($"  Inner exception Type: {eventEx.InnerException.GetType().Name}");
+                        Console.WriteLine($"  Inner exception Message: {eventEx.InnerException.Message}");
+                        Console.WriteLine($"  Inner exception Stack: {eventEx.InnerException.StackTrace}");
                     }
                 }
             }
+
+            Console.WriteLine($"\n=== SAVE COMPLETE ===");
+            Console.WriteLine($"Total saved: {savedCount} of {_importedEvents.Count}");
 
             if (savedCount > 0)
             {
@@ -298,8 +335,9 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Critical error in SaveImportedEvents: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"✗ CRITICAL ERROR in SaveImportedEvents:");
+            Console.WriteLine($"  Message: {ex.Message}");
+            Console.WriteLine($"  Stack trace: {ex.StackTrace}");
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
@@ -311,6 +349,7 @@
         finally
         {
             _saving = false;
+            Console.WriteLine("=== SaveImportedEvents FINISHED ===\n");
         }
     }
 
