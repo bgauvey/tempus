@@ -225,6 +225,23 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Efficient database operations using batched updates
   - Safe user ID filtering ensures data isolation
   - Loading states and error handling for all operations
+- ✅ Industry benchmarking and best practices
+  - Compare time management metrics against industry standards
+  - Overall performance score (0-100) with visual arc gauge
+  - 9 key benchmark comparisons across 5 categories
+  - Meeting benchmarks (percentage, duration, attendee count)
+  - Focus time benchmarks (percentage, block duration)
+  - Work hours benchmarks (weekly, daily averages)
+  - Task management benchmarks (completion rate)
+  - Schedule quality benchmarks (fragmentation score)
+  - Color-coded status indicators (Excellent, AtStandard, NearStandard, BelowStandard)
+  - Context-aware recommendations for each metric
+  - Top 3 priority recommendations highlighted
+  - Variance calculations showing deviation from standards
+  - Multiple analysis periods (7, 30, 90 days)
+  - Actionable insights for productivity improvement
+  - Industry best practices integration
+  - Professional visualization with progress bars and charts
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -266,7 +283,6 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
-- 🔄 Benchmarking against industry standards and best practices
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
 - 🔄 Multi-language support (i18n)
@@ -606,6 +622,183 @@ Once events are selected, a toolbar appears with available actions:
 - Context menus show Edit/Duplicate/Delete options again
 
 This feature is particularly useful for calendar maintenance, project management, and handling recurring tasks efficiently.
+
+### Using Industry Benchmarks
+
+The Industry Benchmarks feature compares your time management practices against established industry standards and best practices:
+
+#### Accessing Benchmarks
+
+1. Navigate to **Benchmarks** from the sidebar
+2. View your overall performance score (0-100)
+3. Review detailed comparisons across 5 categories
+4. Select analysis period: 7 Days, 30 Days, or 90 Days
+5. Click **Refresh** to update data
+
+#### Understanding Your Performance Score
+
+Your overall score is calculated based on 9 key metrics:
+
+**Score Ranges:**
+- **85-100 (Excellent)**: Outstanding time management practices
+- **70-84 (Good)**: Solid performance with minor improvements possible
+- **60-69 (Fair)**: Acceptable but needs attention in some areas
+- **0-59 (Needs Improvement)**: Significant changes recommended
+
+#### Benchmark Categories
+
+**1. Meetings (3 Metrics)**
+
+- **Meeting Time Percentage**
+  - Industry Standard: 35% of work time
+  - Maximum Healthy: 50%
+  - Too many meetings reduce productivity and focus time
+  - Too few may indicate lack of collaboration
+
+- **Average Meeting Duration**
+  - Optimal: 30 minutes
+  - Maximum Effective: 60 minutes
+  - Longer meetings tend to lose engagement
+  - Consider breaking long meetings into focused sessions
+
+- **Average Meeting Size**
+  - Optimal: 7 attendees
+  - Maximum Productive: 12 attendees
+  - Smaller groups make better decisions
+  - Large meetings reduce individual contribution
+
+**2. Focus Time (2 Metrics)**
+
+- **Focus Time Percentage**
+  - Minimum: 20% of work time
+  - Optimal: 40% of work time
+  - Critical for deep work and complex tasks
+  - Protected time for concentrated effort
+
+- **Average Focus Block Duration**
+  - Minimum Effective: 90 minutes
+  - Optimal: 120 minutes (2 hours)
+  - Brain needs time to enter deep work state
+  - Short blocks don't allow for meaningful progress
+
+**3. Work Hours (2 Metrics)**
+
+- **Weekly Work Hours**
+  - Standard: 40 hours per week
+  - Maximum Healthy: 50 hours per week
+  - Excessive hours increase burnout risk
+  - Diminishing returns beyond 50 hours
+
+- **Daily Work Hours**
+  - Minimum Full-Time: 6 hours per day
+  - Maximum Productive: 10 hours per day
+  - Very long days reduce next-day performance
+  - Consistent moderate days beat sporadic marathons
+
+**4. Task Management (1 Metric)**
+
+- **Task Completion Rate**
+  - Optimal: 80% completion
+  - Healthy commitment vs. completion balance
+  - Lower rates suggest over-commitment
+  - Higher rates indicate good task sizing
+
+**5. Schedule Quality (1 Metric)**
+
+- **Schedule Fragmentation**
+  - Target: ≤3.0 fragmentation score
+  - Measures context switching frequency
+  - High fragmentation reduces efficiency
+  - Add buffers between different activity types
+
+#### Status Indicators
+
+Each metric shows a color-coded status:
+
+- 🟢 **Excellent**: Meeting or exceeding industry standards
+- 🔵 **At Standard**: Within acceptable range for the metric
+- 🟠 **Near Standard**: Close to target but needs attention
+- 🔴 **Below Standard**: Requires immediate improvement
+
+#### Using Recommendations
+
+**Top 3 Recommendations**
+- Highlighted in yellow box at the top
+- Focus on worst-performing metrics first
+- Actionable advice for each metric
+- Prioritized by impact potential
+
+**Metric-Specific Recommendations**
+- Each metric includes contextual advice
+- Consider your role and responsibilities
+- Not all standards apply equally to all jobs
+- Use as guidelines, not strict rules
+
+**Example Recommendations:**
+- "Consider declining unnecessary meetings or consolidating similar meetings"
+- "Protect more time for deep work. Block 2-4 hour chunks for focused tasks"
+- "You're working excessive hours, which increases burnout risk"
+- "Low completion rate suggests overcommitment. Reduce concurrent tasks"
+- "High fragmentation indicates too many context switches. Batch similar activities"
+
+#### How to Use Benchmarks Effectively
+
+1. **Establish Baseline**
+   - Run initial 30-day benchmark
+   - Identify your weakest areas
+   - Note your overall score
+
+2. **Set Priorities**
+   - Focus on Red (Below Standard) metrics first
+   - Pick 1-2 metrics to improve
+   - Don't try to fix everything at once
+
+3. **Implement Changes**
+   - Follow specific recommendations
+   - Make incremental adjustments
+   - Track changes over time
+
+4. **Monitor Progress**
+   - Re-run benchmarks weekly or monthly
+   - Watch for score improvements
+   - Celebrate metrics moving to green
+
+5. **Maintain Standards**
+   - Once at standard, maintain practices
+   - Don't let metrics slip
+   - Build sustainable habits
+
+#### Context Matters
+
+**Consider Your Role:**
+- **Managers**: Naturally have more meetings (40-50%)
+- **Individual Contributors**: Need more focus time (50%+)
+- **Executives**: Higher meeting percentages are normal
+- **Developers**: Require longer focus blocks (2-4 hours)
+
+**Industry Variations:**
+- Sales roles: More meetings expected
+- Research roles: More focus time required
+- Support roles: Higher fragmentation acceptable
+- Creative roles: Longer focus blocks essential
+
+**Company Culture:**
+- Startup pace may differ from enterprise
+- Remote work affects meeting patterns
+- Company size impacts collaboration needs
+- Team dynamics influence optimal metrics
+
+#### Best Practices
+
+- **Regular Review**: Check benchmarks monthly
+- **Trend Analysis**: Look for patterns over time
+- **Team Discussion**: Share insights with manager
+- **Goal Setting**: Set realistic improvement targets
+- **Habit Formation**: Implement changes gradually
+- **Balance**: Don't optimize one metric at expense of others
+- **Flexibility**: Adjust for busy periods or special projects
+
+The benchmarking feature helps you make data-driven decisions about your time management and identify opportunities for productivity improvements based on proven industry standards.
 
 ### Using Calendar Analytics
 
