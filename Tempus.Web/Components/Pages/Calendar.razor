@@ -142,6 +142,12 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
+                            ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
+                            Click="ToggleSelectionMode"
+                            Size="ButtonSize.Medium"
+                            Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
+                            title="Toggle event selection mode" />
                 <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
                 <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
                 @if (_isSearchActive)
@@ -152,6 +158,17 @@
         </RadzenStack>
     </RadzenCard>
 </div>
+
+@if (_selectedEventIds.Any())
+{
+    <div class="calendar-bulk-section">
+        <BulkOperationsToolbar SelectedCount="@_selectedEventIds.Count"
+                             OnClearSelection="@ClearSelection"
+                             OnShowBulkDialog="@OpenBulkActionsDialog"
+                             OnBulkComplete="@BulkComplete"
+                             OnBulkDelete="@ConfirmBulkDelete" />
+    </div>
+}
 
 <div class="calendar-templates-section">
     <RadzenCard Style="margin-bottom: 2rem;">
@@ -259,6 +276,10 @@
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
     private bool _isSearchActive = false;
     private List<Event> _allEvents = new(); // Store all events when search is active
+
+    // Bulk operations
+    private bool _selectionMode = false;
+    private HashSet<Guid> _selectedEventIds = new();
 
     // Helper classes
     private CalendarEventManager? _eventManager;
@@ -407,7 +428,15 @@
         var appointment = args.Data;
         if (appointment?.Event != null)
         {
-            await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+            // If in selection mode, toggle selection instead of opening dialog
+            if (_selectionMode)
+            {
+                ToggleEventSelection(appointment.Event.Id);
+            }
+            else
+            {
+                await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+            }
         }
     }
 
@@ -421,12 +450,27 @@
         var evt = args.Data.Event;
         if (evt != null && _formatter != null)
         {
+            // Check if event is selected
+            var isSelected = _selectedEventIds.Contains(evt.Id);
+
             // Apply event color
             var backgroundColor = _formatter.GetEventBackgroundColor(evt);
-            args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+
+            // Add selection styling if selected
+            if (isSelected)
+            {
+                args.Attributes["style"] = $"background-color: {backgroundColor}; border: 3px solid #FFD700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);";
+            }
+            else
+            {
+                args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+            }
 
             // Add icon based on event type
             var icon = _formatter.GetEventIcon(evt.EventType);
+
+            // Add selection indicator
+            var selectionIndicator = isSelected ? "✓ " : "";
 
             // Add timezone indicator if event is in a different timezone
             var timeZoneIndicator = "";
@@ -444,7 +488,7 @@
                 }
             }
 
-            args.Data.Text = $"{icon} {evt.Title}{timeZoneIndicator}";
+            args.Data.Text = $"{selectionIndicator}{icon} {evt.Title}{timeZoneIndicator}";
         }
 
         // Add context menu to appointment
@@ -596,19 +640,32 @@
         var evt = data.Event;
         if (evt == null) return;
 
-        var menuItems = new List<ContextMenuItem>
-        {
-            new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" }
-        };
+        var menuItems = new List<ContextMenuItem>();
 
-        // Add "Edit Series" option if this is a recurring event
-        if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
+        // Add selection option if in selection mode
+        if (_selectionMode)
         {
-            menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+            var isSelected = _selectedEventIds.Contains(evt.Id);
+            menuItems.Add(new ContextMenuItem
+            {
+                Text = isSelected ? "Deselect" : "Select",
+                Value = data,
+                Icon = isSelected ? "check_box_outline_blank" : "check_box"
+            });
         }
+        else
+        {
+            menuItems.Add(new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" });
 
-        menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
-        menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+            // Add "Edit Series" option if this is a recurring event
+            if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
+            {
+                menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+            }
+
+            menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+            menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+        }
 
         ContextMenuService.Open(args, menuItems, OnMenuItemClick);
     }
@@ -622,6 +679,11 @@
 
         switch (item.Text)
         {
+            case "Select":
+            case "Deselect":
+                ToggleEventSelection(data.Event.Id);
+                break;
+
             case "Edit":
                 await OpenEventDialogAsync(data.Event.Id);
                 break;
@@ -864,5 +926,177 @@
 
         _loading = false;
         StateHasChanged();
+    }
+
+    // Bulk Operations
+    private void ToggleSelectionMode()
+    {
+        _selectionMode = !_selectionMode;
+
+        if (!_selectionMode)
+        {
+            // Clear selection when exiting selection mode
+            _selectedEventIds.Clear();
+        }
+
+        StateHasChanged();
+    }
+
+    private void ToggleEventSelection(Guid eventId)
+    {
+        if (_selectedEventIds.Contains(eventId))
+        {
+            _selectedEventIds.Remove(eventId);
+        }
+        else
+        {
+            _selectedEventIds.Add(eventId);
+        }
+
+        StateHasChanged();
+    }
+
+    private void ClearSelection()
+    {
+        _selectedEventIds.Clear();
+        StateHasChanged();
+    }
+
+    private async Task OpenBulkActionsDialog(string actionType)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "ActionType", actionType },
+            { "SelectedCount", _selectedEventIds.Count }
+        };
+
+        var result = await DialogService.OpenAsync<BulkActionsDialog>($"Bulk {actionType.ToUpper()}",
+            parameters,
+            new DialogOptions() { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await ApplyBulkAction(actionType, result);
+        }
+    }
+
+    private async Task ApplyBulkAction(string actionType, object value)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            int affectedCount = 0;
+
+            switch (actionType)
+            {
+                case "type":
+                    affectedCount = await EventRepository.BulkUpdateEventTypeAsync(selectedIds, (EventType)value, _userId);
+                    break;
+
+                case "priority":
+                    affectedCount = await EventRepository.BulkUpdatePriorityAsync(selectedIds, (Priority)value, _userId);
+                    break;
+
+                case "color":
+                    affectedCount = await EventRepository.BulkUpdateColorAsync(selectedIds, (string)value, _userId);
+                    break;
+
+                case "move":
+                    affectedCount = await EventRepository.BulkMoveAsync(selectedIds, (TimeSpan)value, _userId);
+                    break;
+            }
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            // Show success message
+            Console.WriteLine($"Successfully updated {affectedCount} event(s)");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing bulk action: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task BulkComplete(bool isCompleted)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            var affectedCount = await EventRepository.BulkCompleteAsync(selectedIds, isCompleted, _userId);
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            Console.WriteLine($"Successfully marked {affectedCount} event(s) as {(isCompleted ? "complete" : "incomplete")}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking events: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConfirmBulkDelete()
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete {_selectedEventIds.Count} selected event(s)? This action cannot be undone.",
+            "Confirm Bulk Delete",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            await BulkDelete();
+        }
+    }
+
+    private async Task BulkDelete()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            var affectedCount = await EventRepository.BulkDeleteAsync(selectedIds, _userId);
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            Console.WriteLine($"Successfully deleted {affectedCount} event(s)");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting events: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
     }
 }

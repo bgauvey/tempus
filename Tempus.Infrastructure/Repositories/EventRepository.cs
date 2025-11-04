@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
+using Tempus.Core.Enums;
 using Tempus.Core.Helpers;
 using Tempus.Infrastructure.Data;
 
@@ -289,5 +290,118 @@ public class EventRepository : IEventRepository
         }
 
         return await query.ToListAsync();
+    }
+
+    // Bulk operations
+    public async Task<List<Event>> GetByIdsAsync(List<Guid> ids, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Events
+            .Include(e => e.Attendees)
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+    }
+
+    public async Task<int> BulkDeleteAsync(List<Guid> ids, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        if (events.Any())
+        {
+            context.Events.RemoveRange(events);
+            return await context.SaveChangesAsync();
+        }
+
+        return 0;
+    }
+
+    public async Task<int> BulkUpdatePriorityAsync(List<Guid> ids, Priority priority, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        foreach (var evt in events)
+        {
+            evt.Priority = priority;
+            evt.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+    public async Task<int> BulkUpdateEventTypeAsync(List<Guid> ids, EventType eventType, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        foreach (var evt in events)
+        {
+            evt.EventType = eventType;
+            evt.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+    public async Task<int> BulkUpdateColorAsync(List<Guid> ids, string color, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        foreach (var evt in events)
+        {
+            evt.Color = color;
+            evt.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+    public async Task<int> BulkCompleteAsync(List<Guid> ids, bool isCompleted, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        foreach (var evt in events)
+        {
+            evt.IsCompleted = isCompleted;
+            evt.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+    public async Task<int> BulkMoveAsync(List<Guid> ids, TimeSpan offset, string userId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var events = await context.Events
+            .Where(e => ids.Contains(e.Id) && e.UserId == userId)
+            .ToListAsync();
+
+        foreach (var evt in events)
+        {
+            evt.StartTime = evt.StartTime.Add(offset);
+            evt.EndTime = evt.EndTime.Add(offset);
+            evt.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return await context.SaveChangesAsync();
     }
 }

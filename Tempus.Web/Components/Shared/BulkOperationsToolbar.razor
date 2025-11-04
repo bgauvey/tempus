@@ -1,0 +1,59 @@
+@using Tempus.Core.Enums
+
+<RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600; margin: 0;">
+                @SelectedCount event@(SelectedCount != 1 ? "s" : "") selected
+            </RadzenText>
+            <RadzenButton Text="Clear Selection" Click="@OnClearSelection" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton Icon="event" Text="Change Type" Click="@(() => OnShowBulkDialog.InvokeAsync("type"))"
+                        ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        title="Change event type for selected events" />
+
+            <RadzenButton Icon="priority_high" Text="Set Priority" Click="@(() => OnShowBulkDialog.InvokeAsync("priority"))"
+                        ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        title="Set priority for selected events" />
+
+            <RadzenButton Icon="palette" Text="Set Color" Click="@(() => OnShowBulkDialog.InvokeAsync("color"))"
+                        ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        title="Change color for selected events" />
+
+            <RadzenButton Icon="schedule" Text="Move Events" Click="@(() => OnShowBulkDialog.InvokeAsync("move"))"
+                        ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        title="Move selected events by time offset" />
+
+            <RadzenButton Icon="check_circle" Text="Mark Complete" Click="@(() => OnBulkComplete.InvokeAsync(true))"
+                        ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                        title="Mark selected events as complete" />
+
+            <RadzenButton Icon="radio_button_unchecked" Text="Mark Incomplete" Click="@(() => OnBulkComplete.InvokeAsync(false))"
+                        ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                        title="Mark selected events as incomplete" />
+
+            <RadzenButton Icon="delete" Text="Delete" Click="@(() => OnBulkDelete.InvokeAsync())"
+                        ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                        title="Delete selected events" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int SelectedCount { get; set; }
+
+    [Parameter]
+    public EventCallback OnClearSelection { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnShowBulkDialog { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnBulkComplete { get; set; }
+
+    [Parameter]
+    public EventCallback OnBulkDelete { get; set; }
+}
