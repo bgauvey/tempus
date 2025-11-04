@@ -5,12 +5,13 @@
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@using Tempus.Web.Components.Account
 @attribute [Authorize]
 @inject IAnalyticsService AnalyticsService
 @inject IAnalyticsReportService ReportService
 @inject ITrendForecastService TrendForecastService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Analytics - Tempus</PageTitle>
@@ -771,7 +772,7 @@
 
         if (user?.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;

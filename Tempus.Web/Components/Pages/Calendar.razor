@@ -16,7 +16,7 @@
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject Tempus.Web.Components.Account.IdentityUserAccessor IdentityUserAccessor
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject IEmailNotificationService EmailNotificationService
@@ -142,11 +142,33 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
+                            ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
+                            Click="ToggleSelectionMode"
+                            Size="ButtonSize.Medium"
+                            Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
+                            title="Toggle event selection mode" />
+                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
                 <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
+                @if (_isSearchActive)
+                {
+                    <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Warning" Click="ClearSearch" Size="ButtonSize.Medium" Text="Clear Search" title="Show all events" />
+                }
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
 </div>
+
+@if (_selectedEventIds.Any())
+{
+    <div class="calendar-bulk-section">
+        <BulkOperationsToolbar SelectedCount="@_selectedEventIds.Count"
+                             OnClearSelection="@ClearSelection"
+                             OnShowBulkDialog="@OpenBulkActionsDialog"
+                             OnBulkComplete="@BulkComplete"
+                             OnBulkDelete="@ConfirmBulkDelete" />
+    </div>
+}
 
 <div class="calendar-templates-section">
     <RadzenCard Style="margin-bottom: 2rem;">
@@ -252,6 +274,12 @@
     private string _userTimeZone = TimeZoneInfo.Local.Id;
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
+    private bool _isSearchActive = false;
+    private List<Event> _allEvents = new(); // Store all events when search is active
+
+    // Bulk operations
+    private bool _selectionMode = false;
+    private HashSet<Guid> _selectedEventIds = new();
 
     // Helper classes
     private CalendarEventManager? _eventManager;
@@ -264,7 +292,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;
@@ -272,14 +300,19 @@
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
                 // Load saved view preference
-                _selectedViewIndex = GetSchedulerIndexFromCalendarView(_settings.DefaultCalendarView);
+                // If RememberLastView is enabled and there's a LastUsedView, use it; otherwise use DefaultCalendarView
+                var viewToLoad = _settings.RememberLastView && _settings.LastUsedView.HasValue
+                    ? _settings.LastUsedView.Value
+                    : _settings.DefaultCalendarView;
+
+                _selectedViewIndex = GetSchedulerIndexFromCalendarView(viewToLoad);
             }
         }
 
         // Initialize helper classes
         _eventManager = new CalendarEventManager(
             EventRepository, DialogService, EmailNotificationService,
-            AuthenticationStateProvider, UserManager);
+            AuthenticationStateProvider, IdentityUserAccessor);
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _formatter = new CalendarFormatter(_settings);
 
@@ -337,7 +370,7 @@
             var userName = "User";
             if (user.Identity?.IsAuthenticated == true)
             {
-                var appUser = await UserManager.GetUserAsync(user);
+                var appUser = await IdentityUserAccessor.GetUserAsync(user);
                 if (appUser != null)
                 {
                     userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
@@ -395,7 +428,15 @@
         var appointment = args.Data;
         if (appointment?.Event != null)
         {
-            await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+            // If in selection mode, toggle selection instead of opening dialog
+            if (_selectionMode)
+            {
+                ToggleEventSelection(appointment.Event.Id);
+            }
+            else
+            {
+                await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+            }
         }
     }
 
@@ -409,13 +450,45 @@
         var evt = args.Data.Event;
         if (evt != null && _formatter != null)
         {
+            // Check if event is selected
+            var isSelected = _selectedEventIds.Contains(evt.Id);
+
             // Apply event color
             var backgroundColor = _formatter.GetEventBackgroundColor(evt);
-            args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+
+            // Add selection styling if selected
+            if (isSelected)
+            {
+                args.Attributes["style"] = $"background-color: {backgroundColor}; border: 3px solid #FFD700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);";
+            }
+            else
+            {
+                args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+            }
 
             // Add icon based on event type
             var icon = _formatter.GetEventIcon(evt.EventType);
-            args.Data.Text = $"{icon} {evt.Title}";
+
+            // Add selection indicator
+            var selectionIndicator = isSelected ? "✓ " : "";
+
+            // Add timezone indicator if event is in a different timezone
+            var timeZoneIndicator = "";
+            if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+            {
+                try
+                {
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
+                    var abbreviation = GetTimeZoneAbbreviation(tz);
+                    timeZoneIndicator = $" 🌍 {abbreviation}";
+                }
+                catch
+                {
+                    timeZoneIndicator = " 🌍";
+                }
+            }
+
+            args.Data.Text = $"{selectionIndicator}{icon} {evt.Title}{timeZoneIndicator}";
         }
 
         // Add context menu to appointment
@@ -423,6 +496,31 @@
         {
             ShowContextMenu(mouseArgs, args.Data);
         };
+    }
+
+    private string GetTimeZoneAbbreviation(TimeZoneInfo tz)
+    {
+        var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
+            ? tz.DaylightName
+            : tz.StandardName;
+
+        // Try to get a shorter abbreviation
+        if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
+        {
+            var words = abbreviation.Split(' ');
+            if (words.Length > 1)
+            {
+                abbreviation = string.Join("", words.Select(w => char.IsLetter(w.FirstOrDefault()) ? w.First() : ' ')).Trim();
+            }
+        }
+
+        // If abbreviation is still long, use UTC offset instead
+        if (abbreviation.Length > 5)
+        {
+            abbreviation = $"UTC{tz.BaseUtcOffset:hh\\:mm}";
+        }
+
+        return abbreviation;
     }
 
 
@@ -542,19 +640,32 @@
         var evt = data.Event;
         if (evt == null) return;
 
-        var menuItems = new List<ContextMenuItem>
-        {
-            new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" }
-        };
+        var menuItems = new List<ContextMenuItem>();
 
-        // Add "Edit Series" option if this is a recurring event
-        if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
+        // Add selection option if in selection mode
+        if (_selectionMode)
         {
-            menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+            var isSelected = _selectedEventIds.Contains(evt.Id);
+            menuItems.Add(new ContextMenuItem
+            {
+                Text = isSelected ? "Deselect" : "Select",
+                Value = data,
+                Icon = isSelected ? "check_box_outline_blank" : "check_box"
+            });
         }
+        else
+        {
+            menuItems.Add(new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" });
 
-        menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
-        menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+            // Add "Edit Series" option if this is a recurring event
+            if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
+            {
+                menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+            }
+
+            menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+            menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+        }
 
         ContextMenuService.Open(args, menuItems, OnMenuItemClick);
     }
@@ -568,6 +679,11 @@
 
         switch (item.Text)
         {
+            case "Select":
+            case "Deselect":
+                ToggleEventSelection(data.Event.Id);
+                break;
+
             case "Edit":
                 await OpenEventDialogAsync(data.Event.Id);
                 break;
@@ -647,6 +763,15 @@
         if (_settings != null)
         {
             var newView = GetCalendarViewFromSchedulerIndex(newIndex);
+
+            // Update last used view if RememberLastView is enabled
+            if (_settings.RememberLastView)
+            {
+                _settings.LastUsedView = newView;
+                _settings.LastViewChangeDate = DateTime.UtcNow;
+            }
+
+            // Also update default view
             _settings.DefaultCalendarView = newView;
             _settings.UpdatedAt = DateTime.UtcNow;
 
@@ -655,7 +780,7 @@
             try
             {
                 var savedSettings = await SettingsService.CreateOrUpdateSettingsAsync(_settings);
-                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView in DB: {savedSettings.DefaultCalendarView}");
+                await JSRuntime.InvokeVoidAsync("console.log", $"[Calendar ChangeView] Saved successfully. DefaultCalendarView: {savedSettings.DefaultCalendarView}, LastUsedView: {savedSettings.LastUsedView}");
             }
             catch (Exception ex)
             {
@@ -670,11 +795,14 @@
     {
         return view switch
         {
-            CalendarView.Month => 0,      // RadzenMonthView
-            CalendarView.Week => 1,       // RadzenWeekView
-            CalendarView.Day => 2,        // RadzenDayView
-            CalendarView.WorkWeek => 1,   // RadzenWeekView (no separate WorkWeek view in scheduler)
-            _ => 1                        // Default to Week
+            CalendarView.Month => 0,         // RadzenMonthView
+            CalendarView.Week => 1,          // RadzenWeekView
+            CalendarView.Day => 2,           // RadzenDayView
+            CalendarView.Year => 3,          // RadzenYearView
+            CalendarView.YearPlanner => 4,   // RadzenYearPlannerView
+            CalendarView.YearTimeline => 5,  // RadzenYearTimelineView
+            CalendarView.WorkWeek => 1,      // RadzenWeekView (no separate WorkWeek view in scheduler)
+            _ => 1                           // Default to Week
         };
     }
 
@@ -682,10 +810,293 @@
     {
         return index switch
         {
-            0 => CalendarView.Month,      // RadzenMonthView
-            1 => CalendarView.Week,       // RadzenWeekView
-            2 => CalendarView.Day,        // RadzenDayView
+            0 => CalendarView.Month,         // RadzenMonthView
+            1 => CalendarView.Week,          // RadzenWeekView
+            2 => CalendarView.Day,           // RadzenDayView
+            3 => CalendarView.Year,          // RadzenYearView
+            4 => CalendarView.YearPlanner,   // RadzenYearPlannerView
+            5 => CalendarView.YearTimeline,  // RadzenYearTimelineView
             _ => CalendarView.Week        // Default to Week
         };
+    }
+
+    // Advanced Search
+    private async Task OpenAdvancedSearch()
+    {
+        var result = await DialogService.OpenAsync<AdvancedSearchDialog>("Advanced Search",
+            new Dictionary<string, object>(),
+            new DialogOptions() { Width = "700px", Height = "600px", Resizable = true, Draggable = true });
+
+        if (result is AdvancedSearchFilter filter)
+        {
+            await PerformSearch(filter);
+        }
+    }
+
+    private async Task PerformSearch(AdvancedSearchFilter filter)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Store all events if this is the first search
+            if (!_isSearchActive)
+            {
+                _allEvents = new List<Event>(_events);
+            }
+
+            // Perform the search
+            var searchResults = await EventRepository.AdvancedSearchAsync(filter, _userId);
+
+            // Update the events list with search results
+            _events = searchResults;
+
+            // Convert search results to appointments
+            _appointments = _events.Select(e =>
+            {
+                var displayEvent = e;
+
+                // If event has a timezone different from user's, convert it
+                if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+                {
+                    displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+                }
+
+                return new AppointmentData
+                {
+                    Start = displayEvent.StartTime,
+                    End = displayEvent.EndTime,
+                    Text = displayEvent.Title,
+                    Event = e
+                };
+            }).ToList();
+
+            _isSearchActive = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing search: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        // Restore all events
+        if (_allEvents.Any())
+        {
+            _events = new List<Event>(_allEvents);
+        }
+        else
+        {
+            // If no stored events, reload from database
+            await LoadEvents();
+        }
+
+        // Convert back to appointments
+        _appointments = _events.Select(e =>
+        {
+            var displayEvent = e;
+
+            // If event has a timezone different from user's, convert it
+            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+            {
+                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+            }
+
+            return new AppointmentData
+            {
+                Start = displayEvent.StartTime,
+                End = displayEvent.EndTime,
+                Text = displayEvent.Title,
+                Event = e
+            };
+        }).ToList();
+
+        _isSearchActive = false;
+        _allEvents.Clear();
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    // Bulk Operations
+    private void ToggleSelectionMode()
+    {
+        _selectionMode = !_selectionMode;
+
+        if (!_selectionMode)
+        {
+            // Clear selection when exiting selection mode
+            _selectedEventIds.Clear();
+        }
+
+        StateHasChanged();
+    }
+
+    private void ToggleEventSelection(Guid eventId)
+    {
+        if (_selectedEventIds.Contains(eventId))
+        {
+            _selectedEventIds.Remove(eventId);
+        }
+        else
+        {
+            _selectedEventIds.Add(eventId);
+        }
+
+        StateHasChanged();
+    }
+
+    private void ClearSelection()
+    {
+        _selectedEventIds.Clear();
+        StateHasChanged();
+    }
+
+    private async Task OpenBulkActionsDialog(string actionType)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "ActionType", actionType },
+            { "SelectedCount", _selectedEventIds.Count }
+        };
+
+        var result = await DialogService.OpenAsync<BulkActionsDialog>($"Bulk {actionType.ToUpper()}",
+            parameters,
+            new DialogOptions() { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await ApplyBulkAction(actionType, result);
+        }
+    }
+
+    private async Task ApplyBulkAction(string actionType, object value)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            int affectedCount = 0;
+
+            switch (actionType)
+            {
+                case "type":
+                    affectedCount = await EventRepository.BulkUpdateEventTypeAsync(selectedIds, (EventType)value, _userId);
+                    break;
+
+                case "priority":
+                    affectedCount = await EventRepository.BulkUpdatePriorityAsync(selectedIds, (Priority)value, _userId);
+                    break;
+
+                case "color":
+                    affectedCount = await EventRepository.BulkUpdateColorAsync(selectedIds, (string)value, _userId);
+                    break;
+
+                case "move":
+                    affectedCount = await EventRepository.BulkMoveAsync(selectedIds, (TimeSpan)value, _userId);
+                    break;
+            }
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            // Show success message
+            Console.WriteLine($"Successfully updated {affectedCount} event(s)");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing bulk action: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task BulkComplete(bool isCompleted)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            var affectedCount = await EventRepository.BulkCompleteAsync(selectedIds, isCompleted, _userId);
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            Console.WriteLine($"Successfully marked {affectedCount} event(s) as {(isCompleted ? "complete" : "incomplete")}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking events: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConfirmBulkDelete()
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete {_selectedEventIds.Count} selected event(s)? This action cannot be undone.",
+            "Confirm Bulk Delete",
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            await BulkDelete();
+        }
+    }
+
+    private async Task BulkDelete()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedIds = _selectedEventIds.ToList();
+            var affectedCount = await EventRepository.BulkDeleteAsync(selectedIds, _userId);
+
+            // Reload events
+            await LoadEvents();
+
+            // Clear selection
+            _selectedEventIds.Clear();
+
+            Console.WriteLine($"Successfully deleted {affectedCount} event(s)");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting events: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
     }
 }

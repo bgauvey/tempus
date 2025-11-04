@@ -12,26 +12,26 @@ namespace Tempus.Web.Helpers;
 /// <summary>
 /// Manages event operations for the Calendar component
 /// </summary>
-public class CalendarEventManager
+internal class CalendarEventManager
 {
     private readonly IEventRepository _eventRepository;
     private readonly DialogService _dialogService;
     private readonly IEmailNotificationService _emailNotificationService;
     private readonly AuthenticationStateProvider _authStateProvider;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly Tempus.Web.Components.Account.IdentityUserAccessor _identityAccessor;
 
     public CalendarEventManager(
         IEventRepository eventRepository,
         DialogService dialogService,
         IEmailNotificationService emailNotificationService,
         AuthenticationStateProvider authStateProvider,
-        UserManager<ApplicationUser> userManager)
+        Tempus.Web.Components.Account.IdentityUserAccessor identityAccessor)
     {
         _eventRepository = eventRepository;
         _dialogService = dialogService;
         _emailNotificationService = emailNotificationService;
         _authStateProvider = authStateProvider;
-        _userManager = userManager;
+        _identityAccessor = identityAccessor;
     }
 
     public async Task<bool> OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
@@ -305,7 +305,7 @@ public class CalendarEventManager
     {
         var authState = await _authStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var appUser = await _userManager.GetUserAsync(user);
+        var appUser = await _identityAccessor.GetUserAsync(user);
         var organizerName = appUser != null ? $"{appUser.FirstName} {appUser.LastName}".Trim() : "Unknown";
         if (string.IsNullOrWhiteSpace(organizerName)) organizerName = appUser?.Email ?? "Unknown";
         return organizerName;

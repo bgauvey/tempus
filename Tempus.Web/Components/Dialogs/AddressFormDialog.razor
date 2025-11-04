@@ -2,10 +2,11 @@
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@using Tempus.Web.Components.Account
 @inject IContactRepository ContactRepository
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 
 <RadzenStack Gap="1.5rem">
     <!-- Contact Information Section -->
@@ -107,7 +108,7 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;

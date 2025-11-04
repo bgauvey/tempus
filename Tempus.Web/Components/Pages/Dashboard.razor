@@ -7,13 +7,15 @@
 @using Tempus.Core.Models
 @using Tempus.Web.Services
 @using Microsoft.JSInterop
+@using Tempus.Web.Components.Account
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor IdentityUserAccessor
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
+@inject ITimeZoneConversionService TimeZoneConversionService
 
 <PageTitle>Dashboard - Tempus</PageTitle>
 
@@ -84,9 +86,11 @@
                                                     <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
                                                 </div>
                                                 <RadzenStack Gap="0.25rem">
-                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@evt.Title</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                                        @evt.Title @GetTimeZoneIndicator(evt)
+                                                    </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
-                                                        @evt.StartTime.ToString("MMM dd, yyyy • hh:mm tt")
+                                                        @GetDisplayTime(evt).ToString("MMM dd, yyyy • hh:mm tt")
                                                     </RadzenText>
                                                 </RadzenStack>
                                             </RadzenStack>
@@ -209,6 +213,7 @@
     private List<Event> _recentEvents = new();
 
     private string _userId = string.Empty;
+    private string _userTimeZone = TimeZoneInfo.Local.Id;
 
     protected override async Task OnInitializedAsync()
     {
@@ -216,10 +221,11 @@
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
-            var appUser = await UserManager.GetUserAsync(user);
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userTimeZone = appUser.TimeZone;
             }
         }
         await LoadDashboardData();
@@ -268,7 +274,7 @@
             var userName = "User";
             if (user.Identity?.IsAuthenticated == true)
             {
-                var appUser = await UserManager.GetUserAsync(user);
+                var appUser = await IdentityUserAccessor.GetUserAsync(user);
                 if (appUser != null)
                 {
                     userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
@@ -310,5 +316,60 @@
         {
             Console.WriteLine($"Error generating PDF: {ex.Message}");
         }
+    }
+
+    // Timezone helper methods
+    private DateTime GetDisplayTime(Event evt)
+    {
+        // If event has a timezone different from user's, convert it
+        if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+        {
+            var convertedEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(evt, _userTimeZone);
+            return convertedEvent.StartTime;
+        }
+        return evt.StartTime;
+    }
+
+    private string GetTimeZoneIndicator(Event evt)
+    {
+        if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+        {
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
+                var abbreviation = GetTimeZoneAbbreviation(tz);
+                return $" 🌍 ({abbreviation})";
+            }
+            catch
+            {
+                return " 🌍";
+            }
+        }
+        return string.Empty;
+    }
+
+    private string GetTimeZoneAbbreviation(TimeZoneInfo tz)
+    {
+        var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
+            ? tz.DaylightName
+            : tz.StandardName;
+
+        // Try to get a shorter abbreviation
+        if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
+        {
+            var words = abbreviation.Split(' ');
+            if (words.Length > 1)
+            {
+                abbreviation = string.Join("", words.Select(w => char.IsLetter(w.FirstOrDefault()) ? w.First() : ' ')).Trim();
+            }
+        }
+
+        // If abbreviation is still long, use UTC offset instead
+        if (abbreviation.Length > 5)
+        {
+            abbreviation = $"UTC{tz.BaseUtcOffset:hh\\:mm}";
+        }
+
+        return abbreviation;
     }
 }

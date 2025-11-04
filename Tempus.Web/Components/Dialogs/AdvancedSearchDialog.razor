@@ -1,0 +1,222 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Text Search</RadzenText>
+        <RadzenTextBox @bind-Value="@Filter.SearchTerm" Placeholder="Search term..." Style="width: 100%;" />
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenCheckBox @bind-Value="@Filter.SearchInTitle" Name="searchTitle" />
+            <RadzenLabel Text="Title" Component="searchTitle" Style="margin-right: 1rem;" />
+
+            <RadzenCheckBox @bind-Value="@Filter.SearchInDescription" Name="searchDesc" />
+            <RadzenLabel Text="Description" Component="searchDesc" Style="margin-right: 1rem;" />
+
+            <RadzenCheckBox @bind-Value="@Filter.SearchInLocation" Name="searchLoc" />
+            <RadzenLabel Text="Location" Component="searchLoc" Style="margin-right: 1rem;" />
+
+            <RadzenCheckBox @bind-Value="@Filter.SearchInAttendees" Name="searchAtt" />
+            <RadzenLabel Text="Attendees" Component="searchAtt" />
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Date Range</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="6">
+                <RadzenLabel Text="Start Date" />
+                <RadzenDatePicker @bind-Value="@Filter.StartDate" ShowTime="false" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenLabel Text="End Date" />
+                <RadzenDatePicker @bind-Value="@Filter.EndDate" ShowTime="false" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Event Type</RadzenText>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+            @foreach (EventType eventType in Enum.GetValues(typeof(EventType)))
+            {
+                var isSelected = Filter.EventTypes?.Contains(eventType) ?? false;
+                <RadzenCheckBox Value="@isSelected"
+                              TValue="bool"
+                              Change="@((bool value) => ToggleEventType(eventType, value))"
+                              Name="@($"eventType_{eventType}")" />
+                <RadzenLabel Text="@eventType.ToString()" Component="@($"eventType_{eventType}")" Style="margin-right: 1rem;" />
+            }
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Priority</RadzenText>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+            @foreach (Priority priority in Enum.GetValues(typeof(Priority)))
+            {
+                var isSelected = Filter.Priorities?.Contains(priority) ?? false;
+                <RadzenCheckBox Value="@isSelected"
+                              TValue="bool"
+                              Change="@((bool value) => TogglePriority(priority, value))"
+                              Name="@($"priority_{priority}")" />
+                <RadzenLabel Text="@priority.ToString()" Component="@($"priority_{priority}")" Style="margin-right: 1rem;" />
+            }
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Status & Options</RadzenText>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenSelectBar @bind-Value="@CompletionFilter" TValue="string" Style="margin-bottom: 0.5rem;">
+                <Items>
+                    <RadzenSelectBarItem Text="All" Value="@("all")" />
+                    <RadzenSelectBarItem Text="Completed" Value="@("completed")" />
+                    <RadzenSelectBarItem Text="Incomplete" Value="@("incomplete")" />
+                </Items>
+            </RadzenSelectBar>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenCheckBox @bind-Value="@Filter.IncludeRecurring" Name="includeRecurring" />
+            <RadzenLabel Text="Include Recurring Events" Component="includeRecurring" />
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Time of Day</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="6">
+                <RadzenLabel Text="Earliest Start Time" />
+                <RadzenDatePicker @bind-Value="@EarliestStartTimeTemp"
+                                ShowTime="true"
+                                TimeOnly="true"
+                                DateFormat="HH:mm"
+                                Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenLabel Text="Latest End Time" />
+                <RadzenDatePicker @bind-Value="@LatestEndTimeTemp"
+                                ShowTime="true"
+                                TimeOnly="true"
+                                DateFormat="HH:mm"
+                                Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Sorting</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="8">
+                <RadzenLabel Text="Sort By" />
+                <RadzenDropDown @bind-Value="@Filter.SortBy"
+                              Data="@(Enum.GetValues(typeof(SearchSortBy)).Cast<SearchSortBy>())"
+                              Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenLabel Text="Order" />
+                <RadzenSelectBar @bind-Value="@Filter.SortDescending" TValue="bool">
+                    <Items>
+                        <RadzenSelectBarItem Text="Asc" Value="false" />
+                        <RadzenSelectBarItem Text="Desc" Value="true" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenLabel Text="Max Results (leave empty for all)" />
+        <RadzenNumeric @bind-Value="@Filter.MaxResults" Min="1" Style="width: 100%;" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Reset" Click="@ResetFilter" ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Cancel" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Search" Click="@Search" ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    private AdvancedSearchFilter Filter { get; set; } = new();
+    private string CompletionFilter { get; set; } = "all";
+    private DateTime? EarliestStartTimeTemp { get; set; }
+    private DateTime? LatestEndTimeTemp { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ResetFilter();
+    }
+
+    private void ToggleEventType(EventType eventType, bool isSelected)
+    {
+        Filter.EventTypes ??= new List<EventType>();
+
+        if (isSelected && !Filter.EventTypes.Contains(eventType))
+        {
+            Filter.EventTypes.Add(eventType);
+        }
+        else if (!isSelected && Filter.EventTypes.Contains(eventType))
+        {
+            Filter.EventTypes.Remove(eventType);
+        }
+    }
+
+    private void TogglePriority(Priority priority, bool isSelected)
+    {
+        Filter.Priorities ??= new List<Priority>();
+
+        if (isSelected && !Filter.Priorities.Contains(priority))
+        {
+            Filter.Priorities.Add(priority);
+        }
+        else if (!isSelected && Filter.Priorities.Contains(priority))
+        {
+            Filter.Priorities.Remove(priority);
+        }
+    }
+
+    private void Search()
+    {
+        // Apply completion filter
+        Filter.IsCompleted = CompletionFilter switch
+        {
+            "completed" => true,
+            "incomplete" => false,
+            _ => null
+        };
+
+        // Convert time-only DateTimes to TimeSpan
+        if (EarliestStartTimeTemp.HasValue)
+        {
+            Filter.EarliestStartTime = EarliestStartTimeTemp.Value.TimeOfDay;
+        }
+
+        if (LatestEndTimeTemp.HasValue)
+        {
+            Filter.LatestEndTime = LatestEndTimeTemp.Value.TimeOfDay;
+        }
+
+        DialogService.Close(Filter);
+    }
+
+    private void ResetFilter()
+    {
+        Filter = new AdvancedSearchFilter
+        {
+            SearchInTitle = true,
+            SearchInDescription = true,
+            SearchInLocation = true,
+            SearchInAttendees = false,
+            IncludeRecurring = true,
+            SortBy = SearchSortBy.StartTime,
+            SortDescending = false
+        };
+        CompletionFilter = "all";
+        EarliestStartTimeTemp = null;
+        LatestEndTimeTemp = null;
+    }
+}

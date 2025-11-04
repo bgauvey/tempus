@@ -7,7 +7,7 @@ namespace Tempus.Web.Helpers;
 /// Manages appointment move operations for the Calendar component,
 /// including handling recurring events with user confirmation
 /// </summary>
-public class CalendarDragDropManager
+internal class CalendarDragDropManager
 {
     private readonly DialogService _dialogService;
     private readonly CalendarEventManager _eventManager;

@@ -28,10 +28,26 @@ builder.Services.AddRadzenCookieThemeService(options =>
     options.Duration = TimeSpan.FromDays(365);
 });
 
-// Add database context (use SQL Server)
-builder.Services.AddDbContext<TempusDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True"));
+// Get connection string
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=localhost;Database=TempusDb;Trusted_Connection=True;TrustServerCertificate=True";
+
+// Add pooled DbContextFactory for better performance in Blazor Server
+// This creates a pool of reusable contexts to avoid concurrency issues
+builder.Services.AddPooledDbContextFactory<TempusDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Some libraries (like Identity's EF stores) expect TempusDbContext to be resolvable
+// from DI. We register a scoped TempusDbContext that uses the pooled factory to
+// create a context per scope so existing code that requests TempusDbContext will
+// be satisfied while still benefiting from the pooled factory for manual usage.
+// Use transient DbContext so each injection resolves a new instance. In Blazor Server
+// circuits multiple threads can use services from the same scope concurrently; a
+// transient DbContext reduces the chance the same instance is used concurrently.
+// For best safety, refactor services/repositories to take IDbContextFactory and
+// create a DbContext per operation.
+builder.Services.AddTransient<TempusDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<TempusDbContext>>().CreateDbContext());
 
 // Add Identity services
 builder.Services.AddCascadingAuthenticationState();
@@ -75,6 +91,7 @@ builder.Services.AddScoped<IAnalyticsReportService, AnalyticsReportService>();
 builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
 builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
 builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
+builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
 
 var app = builder.Build();
 

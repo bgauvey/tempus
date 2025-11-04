@@ -1,0 +1,161 @@
+@using Tempus.Core.Enums
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    @if (ActionType == "type")
+    {
+        <RadzenText TextStyle="TextStyle.H6">Change Event Type</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2">Select the new event type for @SelectedCount selected event@(SelectedCount != 1 ? "s" : ""):</RadzenText>
+
+        <RadzenDropDown @bind-Value="@SelectedEventType"
+                      Data="@(Enum.GetValues(typeof(EventType)).Cast<EventType>())"
+                      Style="width: 100%;"
+                      Placeholder="Select event type..." />
+    }
+    else if (ActionType == "priority")
+    {
+        <RadzenText TextStyle="TextStyle.H6">Set Priority</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2">Select the priority level for @SelectedCount selected event@(SelectedCount != 1 ? "s" : ""):</RadzenText>
+
+        <RadzenDropDown @bind-Value="@SelectedPriority"
+                      Data="@(Enum.GetValues(typeof(Priority)).Cast<Priority>())"
+                      Style="width: 100%;"
+                      Placeholder="Select priority..." />
+    }
+    else if (ActionType == "color")
+    {
+        <RadzenText TextStyle="TextStyle.H6">Set Color</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2">Select a color for @SelectedCount selected event@(SelectedCount != 1 ? "s" : ""):</RadzenText>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap" Style="margin-top: 1rem;">
+            @foreach (var color in PredefinedColors)
+            {
+                var isSelected = SelectedColor == color.Value;
+                <RadzenButton Click="@(() => SelectedColor = color.Value)"
+                            Style="@($"width: 80px; height: 80px; background: {color.Value}; border: {(isSelected ? "3px solid #000" : "1px solid #ccc")}; border-radius: 8px;")"
+                            title="@color.Name" />
+            }
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-top: 1rem;">
+            <RadzenText TextStyle="TextStyle.Body2">Or enter custom color:</RadzenText>
+            <RadzenColorPicker @bind-Value="@SelectedColor" Style="width: 100px;" ShowButton="true" />
+        </RadzenStack>
+    }
+    else if (ActionType == "move")
+    {
+        <RadzenText TextStyle="TextStyle.H6">Move Events</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2">Move @SelectedCount selected event@(SelectedCount != 1 ? "s" : "") by a time offset:</RadzenText>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="margin-top: 1rem;">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Days" />
+                    <RadzenNumeric @bind-Value="@OffsetDays" Style="width: 100%;" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Hours" />
+                    <RadzenNumeric @bind-Value="@OffsetHours" Style="width: 100%;" Min="-23" Max="23" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Minutes" />
+                    <RadzenNumeric @bind-Value="@OffsetMinutes" Style="width: 100%;" Min="-59" Max="59" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: #666;">
+                @if (GetTotalOffset() != TimeSpan.Zero)
+                {
+                    <span>Events will be moved @FormatOffset(GetTotalOffset())</span>
+                }
+                else
+                {
+                    <span>No offset specified</span>
+                }
+            </RadzenText>
+        </RadzenStack>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Apply" Click="@Apply" ButtonStyle="ButtonStyle.Primary" Disabled="@(!IsValid())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string ActionType { get; set; } = "type";
+
+    [Parameter]
+    public int SelectedCount { get; set; }
+
+    private EventType SelectedEventType { get; set; } = EventType.Meeting;
+    private Priority SelectedPriority { get; set; } = Priority.Medium;
+    private string SelectedColor { get; set; } = "#3788d8";
+
+    private int OffsetDays { get; set; } = 0;
+    private int OffsetHours { get; set; } = 0;
+    private int OffsetMinutes { get; set; } = 0;
+
+    private List<(string Name, string Value)> PredefinedColors = new()
+    {
+        ("Blue", "#3788d8"),
+        ("Green", "#43A047"),
+        ("Orange", "#FB8C00"),
+        ("Red", "#E53935"),
+        ("Purple", "#8E24AA"),
+        ("Pink", "#D81B60"),
+        ("Teal", "#00897B"),
+        ("Indigo", "#3949AB"),
+        ("Brown", "#6D4C41"),
+        ("Grey", "#757575")
+    };
+
+    private bool IsValid()
+    {
+        return ActionType switch
+        {
+            "type" => true,
+            "priority" => true,
+            "color" => !string.IsNullOrWhiteSpace(SelectedColor),
+            "move" => GetTotalOffset() != TimeSpan.Zero,
+            _ => false
+        };
+    }
+
+    private TimeSpan GetTotalOffset()
+    {
+        return new TimeSpan(OffsetDays, OffsetHours, OffsetMinutes, 0);
+    }
+
+    private string FormatOffset(TimeSpan offset)
+    {
+        var parts = new List<string>();
+
+        if (offset.Days != 0)
+            parts.Add($"{Math.Abs(offset.Days)} day{(Math.Abs(offset.Days) != 1 ? "s" : "")}");
+
+        if (offset.Hours != 0)
+            parts.Add($"{Math.Abs(offset.Hours)} hour{(Math.Abs(offset.Hours) != 1 ? "s" : "")}");
+
+        if (offset.Minutes != 0)
+            parts.Add($"{Math.Abs(offset.Minutes)} minute{(Math.Abs(offset.Minutes) != 1 ? "s" : "")}");
+
+        var direction = offset.TotalMilliseconds > 0 ? "forward" : "backward";
+        return $"{string.Join(", ", parts)} {direction}";
+    }
+
+    private void Apply()
+    {
+        var result = ActionType switch
+        {
+            "type" => (object)SelectedEventType,
+            "priority" => (object)SelectedPriority,
+            "color" => (object)SelectedColor,
+            "move" => (object)GetTotalOffset(),
+            _ => null
+        };
+
+        DialogService.Close(result);
+    }
+}

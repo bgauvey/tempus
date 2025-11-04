@@ -174,6 +174,74 @@ dotnet ef database update --startup-project ../Tempus.Web
 - ✅ PDF export capabilities (daily agenda via QuestPDF)
 - ✅ Organizer designation and protection in meetings
 - ✅ User avatar menu with profile management
+- ✅ Time zone support for multi-location meetings
+  - Selectable timezone for each event (supports all IANA timezones)
+  - Automatic timezone conversion to user's local timezone in calendar and dashboard
+  - Visual timezone indicators (🌍) when event is in different timezone
+  - Common timezone quick-select list for easy selection
+  - Original event timezone preserved for multi-location coordination
+- ✅ Calendar view preferences and saved layouts
+  - Remember and restore last used calendar view across sessions
+  - Support for all 6 calendar views (Month, Week, Day, Year, Year Planner, Year Timeline)
+  - Automatic view preference saving when user switches views
+  - Customizable hour range for day/week views (start/end hours)
+  - Event display filters (show/hide completed tasks, cancelled events)
+  - Display customization (event icons, colors, compact view mode)
+  - Per-user personalized calendar experience
+- ✅ Advanced search and filtering
+  - Comprehensive search dialog with organized filter sections
+  - Full-text search across titles, descriptions, locations, and attendees
+  - Selectable search scope (search in title, description, location, attendees)
+  - Date range filtering with flexible start/end dates
+  - Multi-select event type and priority filtering with checkboxes
+  - Status-based filtering (all, completed, incomplete events)
+  - Recurring event inclusion toggle
+  - Time-of-day filtering (earliest start, latest end times)
+  - Flexible sorting options (StartTime, EndTime, Title, Priority, CreatedDate, UpdatedDate)
+  - Ascending/descending sort order control
+  - Configurable result limiting (max results)
+  - Reset filter functionality to quickly clear all criteria
+  - Visual search state indicator in calendar header
+  - Clear search button to restore full calendar view
+  - Case-insensitive search capabilities
+  - Efficient database querying with EF Core
+  - Resizable, draggable search dialog (700x600px)
+  - Search results seamlessly replace calendar view
+  - Timezone-aware search results display
+- ✅ Bulk event operations
+  - Selection mode for multi-event selection on calendar
+  - Visual selection indicators (golden border, glow effect, checkmark)
+  - Dynamic bulk operations toolbar appearing when events selected
+  - Real-time selection counter with grammar-aware pluralization
+  - Bulk event type changes (Meeting, Task, Reminder, Appointment, etc.)
+  - Bulk priority updates (Low, Medium, High, Critical)
+  - Bulk color changes with 10 predefined colors + custom color picker
+  - Bulk event movement with configurable time offset (days, hours, minutes)
+  - Bulk completion status toggling (mark complete/incomplete)
+  - Bulk event deletion with confirmation dialog
+  - Click-to-select in selection mode
+  - Context menu integration for select/deselect operations
+  - Auto-clear selection after successful operations
+  - Efficient database operations using batched updates
+  - Safe user ID filtering ensures data isolation
+  - Loading states and error handling for all operations
+- ✅ Industry benchmarking and best practices
+  - Compare time management metrics against industry standards
+  - Overall performance score (0-100) with visual arc gauge
+  - 9 key benchmark comparisons across 5 categories
+  - Meeting benchmarks (percentage, duration, attendee count)
+  - Focus time benchmarks (percentage, block duration)
+  - Work hours benchmarks (weekly, daily averages)
+  - Task management benchmarks (completion rate)
+  - Schedule quality benchmarks (fragmentation score)
+  - Color-coded status indicators (Excellent, AtStandard, NearStandard, BelowStandard)
+  - Context-aware recommendations for each metric
+  - Top 3 priority recommendations highlighted
+  - Variance calculations showing deviation from standards
+  - Multiple analysis periods (7, 30, 90 days)
+  - Actionable insights for productivity improvement
+  - Industry best practices integration
+  - Professional visualization with progress bars and charts
 - ✅ Comprehensive notification system
   - Email notifications for meeting updates (created, updated, cancelled)
   - Browser/desktop push notifications with real-time alerts
@@ -215,17 +283,12 @@ dotnet ef database update --startup-project ../Tempus.Web
 - 🔄 Microsoft Outlook integration
 - 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
-- 🔄 Benchmarking against industry standards and best practices
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
 - 🔄 Multi-language support (i18n)
 - 🔄 Mobile native app (MAUI)
 - 🔄 Team collaboration features
 - 🔄 Calendar sharing and permissions
-- 🔄 Time zone support for multi-location meetings
-- 🔄 Calendar view preferences and saved layouts
-- 🔄 Bulk event operations
-- 🔄 Advanced search and filtering
 
 ## Using the Application
 
@@ -275,6 +338,35 @@ For meeting-type events, Tempus includes a powerful cost calculator:
 
 This feature helps organizations understand the true cost of meetings and make informed decisions about scheduling.
 
+### Using Time Zones for Multi-Location Meetings
+
+Tempus supports time zone selection for events, making it easy to coordinate meetings across different locations:
+
+1. **Setting Event Time Zone:**
+   - When creating or editing an event, look for the **Time Zone** field in the Details tab
+   - By default, events use your profile timezone (set in Settings)
+   - Use the dropdown to search and select a different timezone
+   - The dropdown includes a quick-select list of common timezones at the top
+   - Click the refresh button (🔄) to reset to your default timezone
+
+2. **How Time Zones Work:**
+   - The event is stored with its original timezone (e.g., "America/New_York")
+   - When viewing in Calendar or Dashboard, times are automatically converted to YOUR timezone
+   - Events in different timezones show a 🌍 indicator with the timezone abbreviation
+   - The original timezone is preserved, so all participants see the correct local time
+
+3. **Example Scenario:**
+   - You're in Los Angeles (PST) and create a meeting set for New York (EST) at 2:00 PM
+   - Your calendar will show the event at 11:00 AM PST with 🌍 EST indicator
+   - Colleagues in New York will see it at 2:00 PM EST
+   - The meeting is correctly coordinated across time zones
+
+4. **Best Practices:**
+   - Set timezone for any meeting with participants in different locations
+   - Your default timezone is set in **Settings** → **General** → **Time Zone**
+   - Use common timezone names (Pacific, Eastern, Central, Mountain, UTC, etc.)
+   - The system handles daylight saving time changes automatically
+
 ### Customizing Calendar Settings
 
 1. Navigate to **Settings** from the user menu (top-right avatar)
@@ -305,6 +397,408 @@ The Calendar page supports multiple viewing modes:
 - Download daily agenda as PDF
 
 Navigate views using the toolbar buttons and customize settings in real-time.
+
+### Using Advanced Search and Filtering
+
+The Advanced Search feature allows you to quickly find specific events using multiple filter criteria:
+
+1. **Opening Advanced Search:**
+   - Navigate to the **Calendar** page
+   - Click the **Advanced Search** button in the calendar header (next to Day Agenda)
+   - A comprehensive search dialog will open (700x600px, resizable and draggable)
+
+2. **Text Search Options:**
+   - Enter search terms in the **Search term** field
+   - Select which fields to search:
+     - ✅ **Title** (default: enabled)
+     - ✅ **Description** (default: enabled)
+     - ✅ **Location** (default: enabled)
+     - ✅ **Attendees** (default: disabled)
+   - Search is case-insensitive for better results
+
+3. **Date Range Filtering:**
+   - Set **Start Date** to filter events starting from a specific date
+   - Set **End Date** to filter events ending before a specific date
+   - Leave either field empty for open-ended ranges
+
+4. **Event Type Filtering:**
+   - Select one or more event types to narrow results:
+     - Meeting, Appointment, Task, TimeBlock, Reminder, Deadline, Other
+   - Leave all unchecked to search across all event types
+
+5. **Priority Filtering:**
+   - Filter by priority levels: Low, Medium, High, Critical
+   - Select multiple priorities to include all matching events
+
+6. **Status and Options:**
+   - Choose completion status:
+     - **All**: Show both completed and incomplete events
+     - **Completed**: Only show completed events
+     - **Incomplete**: Only show incomplete events
+   - Toggle **Include Recurring Events** to include/exclude recurring events
+
+7. **Time of Day Filtering:**
+   - Set **Earliest Start Time** to find events starting after a specific time
+   - Set **Latest End Time** to find events ending before a specific time
+   - Useful for finding morning meetings, afternoon tasks, etc.
+
+8. **Sorting Results:**
+   - **Sort By**: Choose from 6 sort options
+     - StartTime (default), EndTime, Title, Priority, CreatedDate, UpdatedDate
+   - **Order**: Select Ascending (Asc) or Descending (Desc)
+
+9. **Result Limiting:**
+   - Set **Max Results** to limit the number of events returned
+   - Leave empty to show all matching events
+
+10. **Using Search Results:**
+    - Click **Search** to apply filters and view results
+    - The calendar view updates to show only matching events
+    - A **Clear Search** button appears in the header
+    - Search results maintain timezone conversion and event formatting
+    - Click **Clear Search** to restore the full calendar view
+
+11. **Resetting Filters:**
+    - Click **Reset** in the dialog to clear all filter criteria
+    - Default settings are restored (search in title, description, location enabled)
+
+**Example Use Cases:**
+- Find all High priority Meetings in the next 30 days
+- Search for events containing "Project Alpha" in any field
+- Locate all Tasks completed in the last week
+- Find afternoon meetings (start time after 1:00 PM)
+- Search for events with specific attendees
+- Identify all events at a particular location
+
+**Tips:**
+- Combine multiple filters for precise results
+- Use date ranges to focus on specific time periods
+- Sort by Priority to find urgent items quickly
+- Use time-of-day filters to find scheduling conflicts
+- The search is timezone-aware and respects your local timezone
+
+### Using Bulk Event Operations
+
+The Bulk Operations feature allows you to efficiently manage multiple events at once, saving time on repetitive tasks:
+
+#### Entering Selection Mode
+
+1. **Activate Selection Mode:**
+   - Navigate to the **Calendar** page
+   - Click the **Select Events** button in the calendar header
+   - The button changes to **Exit Selection** with a warning style
+   - Calendar enters selection mode
+
+2. **Visual Changes:**
+   - Events can now be selected by clicking
+   - Context menu shows Select/Deselect options
+   - Selected events display with golden border and glow effect
+   - Checkmark (✓) appears before selected event titles
+
+#### Selecting Events
+
+1. **Click to Select:**
+   - Simply click any event to select it
+   - Click again to deselect
+   - Selection state persists across view changes
+
+2. **Context Menu Selection:**
+   - Right-click any event
+   - Choose **Select** or **Deselect** from context menu
+   - Useful for precise selection control
+
+3. **Selection Indicators:**
+   - Selected events have 3px golden border (#FFD700)
+   - Glowing shadow effect around selected events
+   - Checkmark prefix in event title
+   - Selection count shown in bulk toolbar
+
+#### Using the Bulk Operations Toolbar
+
+Once events are selected, a toolbar appears with available actions:
+
+1. **Toolbar Display:**
+   - Appears between calendar header and content
+   - Shows "X event(s) selected" with real-time count
+   - **Clear Selection** button to deselect all events
+   - Action buttons for bulk operations
+
+2. **Available Bulk Actions:**
+
+   **Change Event Type:**
+   - Click **Change Type** button
+   - Select new event type from dropdown (Meeting, Task, Reminder, etc.)
+   - Apply to all selected events
+
+   **Set Priority:**
+   - Click **Set Priority** button
+   - Choose priority level (Low, Medium, High, Critical)
+   - Updates all selected events
+
+   **Set Color:**
+   - Click **Set Color** button
+   - Choose from 10 predefined colors (Blue, Green, Orange, Red, etc.)
+   - Or use custom color picker for any color
+   - Visual color swatches make selection easy
+
+   **Move Events:**
+   - Click **Move Events** button
+   - Configure time offset using three fields:
+     * **Days**: Number of days to move (positive = forward, negative = backward)
+     * **Hours**: Hour adjustment (-23 to +23)
+     * **Minutes**: Minute adjustment (-59 to +59)
+   - Preview shows direction and amount (e.g., "2 days, 3 hours forward")
+   - All selected events move by the same offset
+
+   **Mark Complete:**
+   - Click **Mark Complete** button (green)
+   - Instantly marks all selected events as complete
+   - No dialog confirmation needed
+
+   **Mark Incomplete:**
+   - Click **Mark Incomplete** button (gray)
+   - Marks all selected events as incomplete
+   - Useful for resetting completed tasks
+
+   **Delete:**
+   - Click **Delete** button (red)
+   - Confirmation dialog appears showing event count
+   - Confirm to permanently delete all selected events
+   - Operation cannot be undone
+
+#### Workflow Example
+
+**Scenario: Reschedule all meetings from Monday to Tuesday**
+
+1. Click **Select Events** to enter selection mode
+2. Click all Monday meetings on the calendar
+3. Bulk toolbar shows "5 events selected"
+4. Click **Move Events** button
+5. Enter **Days: 1** (leave hours and minutes at 0)
+6. Preview shows "1 day forward"
+7. Click **Apply**
+8. All 5 meetings move to Tuesday at same times
+9. Selection automatically clears
+10. Click **Exit Selection** to return to normal mode
+
+#### Best Practices
+
+1. **Review Selection:**
+   - Check selection count matches expectations
+   - Selected events have clear visual indicators
+   - Use Clear Selection if you made mistakes
+
+2. **Use Bulk Operations For:**
+   - Rescheduling multiple events (team meetings, deadlines)
+   - Color-coding events by project or category
+   - Changing priority for a group of tasks
+   - Converting events to different types
+   - Mass deletion of old or duplicate events
+   - Marking multiple tasks complete at once
+
+3. **Safety Features:**
+   - Delete operations require confirmation
+   - Cannot modify events from other users
+   - Operations are transactional (all or nothing)
+   - Loading states prevent accidental double-clicks
+   - Automatic event refresh shows changes immediately
+
+4. **Performance:**
+   - Efficient database batching reduces server load
+   - Works well with large selections (100+ events)
+   - Operations complete quickly with instant feedback
+
+5. **After Operations:**
+   - Selection automatically clears on success
+   - Calendar refreshes to show updated events
+   - Console logs confirm operation completion
+   - Stay in selection mode to perform more operations
+
+#### Exiting Selection Mode
+
+- Click **Exit Selection** button in calendar header
+- Selection automatically clears
+- Calendar returns to normal interaction mode
+- Context menus show Edit/Duplicate/Delete options again
+
+This feature is particularly useful for calendar maintenance, project management, and handling recurring tasks efficiently.
+
+### Using Industry Benchmarks
+
+The Industry Benchmarks feature compares your time management practices against established industry standards and best practices:
+
+#### Accessing Benchmarks
+
+1. Navigate to **Benchmarks** from the sidebar
+2. View your overall performance score (0-100)
+3. Review detailed comparisons across 5 categories
+4. Select analysis period: 7 Days, 30 Days, or 90 Days
+5. Click **Refresh** to update data
+
+#### Understanding Your Performance Score
+
+Your overall score is calculated based on 9 key metrics:
+
+**Score Ranges:**
+- **85-100 (Excellent)**: Outstanding time management practices
+- **70-84 (Good)**: Solid performance with minor improvements possible
+- **60-69 (Fair)**: Acceptable but needs attention in some areas
+- **0-59 (Needs Improvement)**: Significant changes recommended
+
+#### Benchmark Categories
+
+**1. Meetings (3 Metrics)**
+
+- **Meeting Time Percentage**
+  - Industry Standard: 35% of work time
+  - Maximum Healthy: 50%
+  - Too many meetings reduce productivity and focus time
+  - Too few may indicate lack of collaboration
+
+- **Average Meeting Duration**
+  - Optimal: 30 minutes
+  - Maximum Effective: 60 minutes
+  - Longer meetings tend to lose engagement
+  - Consider breaking long meetings into focused sessions
+
+- **Average Meeting Size**
+  - Optimal: 7 attendees
+  - Maximum Productive: 12 attendees
+  - Smaller groups make better decisions
+  - Large meetings reduce individual contribution
+
+**2. Focus Time (2 Metrics)**
+
+- **Focus Time Percentage**
+  - Minimum: 20% of work time
+  - Optimal: 40% of work time
+  - Critical for deep work and complex tasks
+  - Protected time for concentrated effort
+
+- **Average Focus Block Duration**
+  - Minimum Effective: 90 minutes
+  - Optimal: 120 minutes (2 hours)
+  - Brain needs time to enter deep work state
+  - Short blocks don't allow for meaningful progress
+
+**3. Work Hours (2 Metrics)**
+
+- **Weekly Work Hours**
+  - Standard: 40 hours per week
+  - Maximum Healthy: 50 hours per week
+  - Excessive hours increase burnout risk
+  - Diminishing returns beyond 50 hours
+
+- **Daily Work Hours**
+  - Minimum Full-Time: 6 hours per day
+  - Maximum Productive: 10 hours per day
+  - Very long days reduce next-day performance
+  - Consistent moderate days beat sporadic marathons
+
+**4. Task Management (1 Metric)**
+
+- **Task Completion Rate**
+  - Optimal: 80% completion
+  - Healthy commitment vs. completion balance
+  - Lower rates suggest over-commitment
+  - Higher rates indicate good task sizing
+
+**5. Schedule Quality (1 Metric)**
+
+- **Schedule Fragmentation**
+  - Target: ≤3.0 fragmentation score
+  - Measures context switching frequency
+  - High fragmentation reduces efficiency
+  - Add buffers between different activity types
+
+#### Status Indicators
+
+Each metric shows a color-coded status:
+
+- 🟢 **Excellent**: Meeting or exceeding industry standards
+- 🔵 **At Standard**: Within acceptable range for the metric
+- 🟠 **Near Standard**: Close to target but needs attention
+- 🔴 **Below Standard**: Requires immediate improvement
+
+#### Using Recommendations
+
+**Top 3 Recommendations**
+- Highlighted in yellow box at the top
+- Focus on worst-performing metrics first
+- Actionable advice for each metric
+- Prioritized by impact potential
+
+**Metric-Specific Recommendations**
+- Each metric includes contextual advice
+- Consider your role and responsibilities
+- Not all standards apply equally to all jobs
+- Use as guidelines, not strict rules
+
+**Example Recommendations:**
+- "Consider declining unnecessary meetings or consolidating similar meetings"
+- "Protect more time for deep work. Block 2-4 hour chunks for focused tasks"
+- "You're working excessive hours, which increases burnout risk"
+- "Low completion rate suggests overcommitment. Reduce concurrent tasks"
+- "High fragmentation indicates too many context switches. Batch similar activities"
+
+#### How to Use Benchmarks Effectively
+
+1. **Establish Baseline**
+   - Run initial 30-day benchmark
+   - Identify your weakest areas
+   - Note your overall score
+
+2. **Set Priorities**
+   - Focus on Red (Below Standard) metrics first
+   - Pick 1-2 metrics to improve
+   - Don't try to fix everything at once
+
+3. **Implement Changes**
+   - Follow specific recommendations
+   - Make incremental adjustments
+   - Track changes over time
+
+4. **Monitor Progress**
+   - Re-run benchmarks weekly or monthly
+   - Watch for score improvements
+   - Celebrate metrics moving to green
+
+5. **Maintain Standards**
+   - Once at standard, maintain practices
+   - Don't let metrics slip
+   - Build sustainable habits
+
+#### Context Matters
+
+**Consider Your Role:**
+- **Managers**: Naturally have more meetings (40-50%)
+- **Individual Contributors**: Need more focus time (50%+)
+- **Executives**: Higher meeting percentages are normal
+- **Developers**: Require longer focus blocks (2-4 hours)
+
+**Industry Variations:**
+- Sales roles: More meetings expected
+- Research roles: More focus time required
+- Support roles: Higher fragmentation acceptable
+- Creative roles: Longer focus blocks essential
+
+**Company Culture:**
+- Startup pace may differ from enterprise
+- Remote work affects meeting patterns
+- Company size impacts collaboration needs
+- Team dynamics influence optimal metrics
+
+#### Best Practices
+
+- **Regular Review**: Check benchmarks monthly
+- **Trend Analysis**: Look for patterns over time
+- **Team Discussion**: Share insights with manager
+- **Goal Setting**: Set realistic improvement targets
+- **Habit Formation**: Implement changes gradually
+- **Balance**: Don't optimize one metric at expense of others
+- **Flexibility**: Adjust for busy periods or special projects
+
+The benchmarking feature helps you make data-driven decisions about your time management and identify opportunities for productivity improvements based on proven industry standards.
 
 ### Using Calendar Analytics
 
@@ -453,7 +947,41 @@ dotnet restore
 
 ## Recent Improvements
 
-### Version 1.3 - Comprehensive Notification System
+### Version 1.4 - Calendar View Preferences & Saved Layouts
+- ✅ **Remember Last View**: Automatically save and restore user's preferred calendar view
+  - RememberLastView setting to enable/disable automatic view restoration
+  - LastUsedView tracks the most recently selected view
+  - Seamless experience across sessions
+- ✅ **Expanded Calendar View Support**: Complete support for all 6 calendar views
+  - Month, Week, Day views
+  - Year, Year Planner, Year Timeline views
+  - Updated CalendarView enum with explicit indices
+  - Proper mapping between settings and scheduler views
+- ✅ **Layout Customization Options**: Foundation for personalized calendar display
+  - Customizable hour range (CalendarStartHour, CalendarEndHour)
+  - Event display filters (HiddenEventTypes, ShowCompletedTasks, ShowCancelledEvents)
+  - Visual customization (ShowEventIcons, ShowEventColors, CompactView)
+  - Per-user preferences stored in database
+- ✅ **Automatic Preference Persistence**: No manual saving required
+  - View changes automatically saved to user settings
+  - LastViewChangeDate timestamp for tracking
+  - Integrated with existing SettingsService
+- ✅ **Enhanced User Experience**: Personalized calendar interface
+  - Calendar opens to user's preferred view
+  - Consistent experience across sessions
+  - Foundation for advanced filtering and display options
+  - Better workflow for power users
+
+### Version 1.3 - Notifications & Time Zone Support
+- ✅ **Time Zone Support for Multi-Location Meetings**: Complete timezone management system
+  - Selectable timezone for each event with full IANA timezone database support
+  - Automatic timezone conversion to user's local timezone in calendar and dashboard
+  - Visual timezone indicators (🌍) with abbreviation when event is in different timezone
+  - Common timezone quick-select dropdown with searchable full timezone list
+  - Original event timezone preservation for accurate multi-location coordination
+  - Timezone conversion service with proper daylight saving time handling
+  - Reset button to quickly revert to user's default timezone
+  - Timezone display in event tooltips showing both original and converted times
 - ✅ **Browser Push Notifications**: Real-time desktop alerts for upcoming events and reminders
   - Native browser notification API integration
   - Support for Chrome, Firefox, Edge, and Safari
