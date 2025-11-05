@@ -215,6 +215,7 @@
                            SlotSelect="@OnSlotSelect"
                            AppointmentRender="@OnAppointmentRender"
                            AppointmentMove="@OnAppointmentMove"
+                           LoadData="@OnLoadData"
                            @oncontextmenu:preventDefault>
                 <ChildContent>
                     <RadzenMonthView />
@@ -316,29 +317,41 @@
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _formatter = new CalendarFormatter(_settings);
 
-        await LoadEvents();
+        // Don't call LoadEvents here - the scheduler will automatically call OnLoadData when it initializes
     }
 
 
 
-    private async Task LoadEvents()
+    private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
-        _loading = true;
-        StateHasChanged();
+        Console.WriteLine($"[Calendar.OnLoadData] Loading events for date range: {args.Start:yyyy-MM-dd} to {args.End:yyyy-MM-dd}");
 
-        Console.WriteLine("[Calendar.LoadEvents] Loading events...");
+        // Load events for the visible date range in the scheduler
+        _events = await EventRepository.GetEventsByDateRangeAsync(args.Start, args.End, _userId);
 
-        // Load ALL events for the user (no date filter)
-        // This ensures imported PST events from any date range are visible
-        _events = await EventRepository.GetAllAsync(_userId);
-
-        Console.WriteLine($"[Calendar.LoadEvents] Loaded {_events.Count} total events");
+        Console.WriteLine($"[Calendar.OnLoadData] Loaded {_events.Count} events");
         if (_events.Any())
         {
             var minDate = _events.Min(e => e.StartTime);
             var maxDate = _events.Max(e => e.StartTime);
-            Console.WriteLine($"[Calendar.LoadEvents] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+            Console.WriteLine($"[Calendar.OnLoadData] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
         }
+
+        ConvertEventsToAppointments();
+    }
+
+    private async Task LoadEvents()
+    {
+        // Trigger the scheduler to reload data for the current visible date range
+        // This will call OnLoadData with the appropriate date range
+        if (_scheduler != null)
+        {
+            await _scheduler.Reload();
+        }
+    }
+
+    private void ConvertEventsToAppointments()
+    {
 
         // Convert events to appointments for RadzenScheduler
         // If event has a timezone, convert it to user's timezone for display
