@@ -56,12 +56,14 @@
                     <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">Connection Details</RadzenText>
 
                     <RadzenFormField Text="CalDAV Server URL" Variant="Variant.Outlined" Style="width: 100%;">
-                        <RadzenTextBox @bind-Value="_serverUrl" Placeholder="https://caldav.icloud.com" Style="width: 100%;" />
                         <ChildContent>
+                            <RadzenTextBox @bind-Value="_serverUrl" Placeholder="https://caldav.icloud.com" Style="width: 100%;" />
+                        </ChildContent>
+                        <Helper>
                             <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
                                 Default for iCloud: https://caldav.icloud.com
                             </RadzenText>
-                        </ChildContent>
+                        </Helper>
                     </RadzenFormField>
 
                     <RadzenFormField Text="Apple ID Email" Variant="Variant.Outlined" Style="width: 100%;">
@@ -69,12 +71,14 @@
                     </RadzenFormField>
 
                     <RadzenFormField Text="App-Specific Password" Variant="Variant.Outlined" Style="width: 100%;">
-                        <RadzenPassword @bind-Value="_appSpecificPassword" Placeholder="xxxx-xxxx-xxxx-xxxx" Style="width: 100%;" />
                         <ChildContent>
+                            <RadzenPassword @bind-Value="_appSpecificPassword" Placeholder="xxxx-xxxx-xxxx-xxxx" Style="width: 100%;" />
+                        </ChildContent>
+                        <Helper>
                             <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
                                 The 16-character password generated from Apple ID settings
                             </RadzenText>
-                        </ChildContent>
+                        </Helper>
                     </RadzenFormField>
 
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
@@ -86,16 +90,16 @@
                                       Icon="check_circle"
                                       ButtonStyle="ButtonStyle.Light"
                                       Click="@TestConnection"
-                                      Disabled="_isTesting || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword)" />
+                                      Disabled="@(_isTesting || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword))" />
                         <RadzenButton Text="Connect"
                                       Icon="link"
                                       ButtonStyle="ButtonStyle.Primary"
                                       Click="@ConnectCalendar"
-                                      Disabled="!_connectionTested || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword)" />
+                                      Disabled="@(!_connectionTested || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword))" />
                         <RadzenButton Text="Cancel"
                                       Icon="cancel"
                                       ButtonStyle="ButtonStyle.Light"
-                                      Click="@(() => NavigationManager.NavigateTo(\"/integrations\"))" />
+                                      Click="@CancelConnection" />
                     </RadzenStack>
 
                     @if (_isTesting)
@@ -214,5 +218,10 @@
             _isConnecting = false;
             StateHasChanged();
         }
+    }
+
+    private void CancelConnection()
+    {
+        NavigationManager.NavigateTo("/integrations");
     }
 }
