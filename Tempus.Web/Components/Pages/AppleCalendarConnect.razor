@@ -1,0 +1,218 @@
+@page "/apple-calendar-connect"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@attribute [Authorize]
+@inject IAppleCalendarService AppleCalendarService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+
+<PageTitle>Connect Apple Calendar - Tempus</PageTitle>
+
+<div style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem;">
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M 16.125 1 C 14.972 1.067 13.648328 1.7093438 12.861328 2.5273438 C 12.150328 3.2713438 11.589359 4.3763125 11.818359 5.4453125 C 13.071359 5.4783125 14.329031 4.8193281 15.082031 3.9863281 C 15.785031 3.2073281 16.318 2.12 16.125 1 z M 16.193359 5.4433594 C 14.384359 5.4433594 13.628 6.5546875 12.375 6.5546875 C 11.086 6.5546875 9.9076562 5.5136719 8.3476562 5.5136719 C 6.2256562 5.5146719 3 7.4803281 3 12.111328 C 3 16.324328 6.8176563 21 8.9726562 21 C 10.281656 21.013 10.599 20.176969 12.375 20.167969 C 14.153 20.154969 14.536656 21.011 15.847656 21 C 17.323656 20.989 18.476359 19.367031 19.318359 18.082031 C 19.922359 17.162031 20.170672 16.692344 20.638672 15.652344 C 17.165672 14.772344 16.474672 9.1716719 20.638672 8.0136719 C 19.852672 6.6726719 17.558359 5.4433594 16.193359 5.4433594 z"/>
+                    </svg>
+                    <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Connect Apple Calendar</RadzenText>
+                </RadzenStack>
+                <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
+                    Sync your Apple iCloud calendar with Tempus using CalDAV protocol
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (!_isConnecting)
+        {
+            <!-- Instructions -->
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600;">Setup Instructions</RadzenText>
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">Step 1: Generate App-Specific Password</RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText Style="opacity: 0.8;">1. Go to <a href="https://appleid.apple.com" target="_blank" style="color: var(--rz-primary);">appleid.apple.com</a></RadzenText>
+                        <RadzenText Style="opacity: 0.8;">2. Sign in with your Apple ID</RadzenText>
+                        <RadzenText Style="opacity: 0.8;">3. In the Security section, click "Generate Password" under App-Specific Passwords</RadzenText>
+                        <RadzenText Style="opacity: 0.8;">4. Enter a label (e.g., "Tempus Calendar") and click "Create"</RadzenText>
+                        <RadzenText Style="opacity: 0.8;">5. Copy the generated password</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600; margin-top: 1rem;">Step 2: Enter Connection Details</RadzenText>
+                    <RadzenText Style="opacity: 0.8;">Fill in the form below with your iCloud credentials</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+
+            <!-- Connection Form -->
+            <RadzenCard>
+                <RadzenStack Gap="1.5rem">
+                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">Connection Details</RadzenText>
+
+                    <RadzenFormField Text="CalDAV Server URL" Variant="Variant.Outlined" Style="width: 100%;">
+                        <RadzenTextBox @bind-Value="_serverUrl" Placeholder="https://caldav.icloud.com" Style="width: 100%;" />
+                        <ChildContent>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
+                                Default for iCloud: https://caldav.icloud.com
+                            </RadzenText>
+                        </ChildContent>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Apple ID Email" Variant="Variant.Outlined" Style="width: 100%;">
+                        <RadzenTextBox @bind-Value="_username" Placeholder="your.email@icloud.com" Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="App-Specific Password" Variant="Variant.Outlined" Style="width: 100%;">
+                        <RadzenPassword @bind-Value="_appSpecificPassword" Placeholder="xxxx-xxxx-xxxx-xxxx" Style="width: 100%;" />
+                        <ChildContent>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
+                                The 16-character password generated from Apple ID settings
+                            </RadzenText>
+                        </ChildContent>
+                    </RadzenFormField>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        Your credentials are securely stored and never shared with third parties.
+                    </RadzenAlert>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                        <RadzenButton Text="Test Connection"
+                                      Icon="check_circle"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@TestConnection"
+                                      Disabled="_isTesting || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword)" />
+                        <RadzenButton Text="Connect"
+                                      Icon="link"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@ConnectCalendar"
+                                      Disabled="!_connectionTested || string.IsNullOrWhiteSpace(_serverUrl) || string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_appSpecificPassword)" />
+                        <RadzenButton Text="Cancel"
+                                      Icon="cancel"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => NavigationManager.NavigateTo(\"/integrations\"))" />
+                    </RadzenStack>
+
+                    @if (_isTesting)
+                    {
+                        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenCard Style="padding: 3rem; text-align: center;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    <RadzenText Style="opacity: 0.7;">Connecting to Apple Calendar...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+    </RadzenStack>
+</div>
+
+@code {
+    private string _serverUrl = "https://caldav.icloud.com";
+    private string _username = string.Empty;
+    private string _appSpecificPassword = string.Empty;
+    private bool _isConnecting = false;
+    private bool _isTesting = false;
+    private bool _connectionTested = false;
+    private string _userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private async Task TestConnection()
+    {
+        _isTesting = true;
+        _connectionTested = false;
+        StateHasChanged();
+
+        try
+        {
+            var isValid = await AppleCalendarService.TestConnectionAsync(_serverUrl, _username, _appSpecificPassword);
+
+            if (isValid)
+            {
+                _connectionTested = true;
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Connection Successful",
+                    Detail = "Successfully connected to Apple Calendar server!",
+                    Duration = 5000
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Connection Failed",
+                    Detail = "Could not connect to Apple Calendar. Please check your credentials.",
+                    Duration = 5000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Error",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            _isTesting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConnectCalendar()
+    {
+        _isConnecting = true;
+        StateHasChanged();
+
+        try
+        {
+            await AppleCalendarService.ConnectAsync(_userId, _serverUrl, _username, _appSpecificPassword);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Connected Successfully",
+                Detail = "Your Apple Calendar has been connected to Tempus!",
+                Duration = 5000
+            });
+
+            // Redirect to integrations page
+            NavigationManager.NavigateTo("/integrations");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+
+            _isConnecting = false;
+            StateHasChanged();
+        }
+    }
+}
