@@ -6,6 +6,7 @@
 @using Tempus.Core.Models
 @attribute [Authorize]
 @inject IGoogleCalendarService GoogleCalendarService
+@inject IAppleCalendarService AppleCalendarService
 @inject ICalendarIntegrationRepository IntegrationRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -85,13 +86,38 @@
                         <path d="M 16.125 1 C 14.972 1.067 13.648328 1.7093438 12.861328 2.5273438 C 12.150328 3.2713438 11.589359 4.3763125 11.818359 5.4453125 C 13.071359 5.4783125 14.329031 4.8193281 15.082031 3.9863281 C 15.785031 3.2073281 16.318 2.12 16.125 1 z M 16.193359 5.4433594 C 14.384359 5.4433594 13.628 6.5546875 12.375 6.5546875 C 11.086 6.5546875 9.9076562 5.5136719 8.3476562 5.5136719 C 6.2256562 5.5146719 3 7.4803281 3 12.111328 C 3 16.324328 6.8176563 21 8.9726562 21 C 10.281656 21.013 10.599 20.176969 12.375 20.167969 C 14.153 20.154969 14.536656 21.011 15.847656 21 C 17.323656 20.989 18.476359 19.367031 19.318359 18.082031 C 19.922359 17.162031 20.170672 16.692344 20.638672 15.652344 C 17.165672 14.772344 16.474672 9.1716719 20.638672 8.0136719 C 19.852672 6.6726719 17.558359 5.4433594 16.193359 5.4433594 z"/>
                     </svg>
                     <RadzenText TextStyle="TextStyle.H6">Apple Calendar</RadzenText>
+                    @if (_appleIntegration != null && _appleIntegration.IsEnabled)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Connected" />
+                    }
                 </RadzenStack>
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
                     Sync with Apple Calendar using CalDAV protocol for iCloud calendar integration.
                 </RadzenText>
-                <RadzenButton ButtonStyle="ButtonStyle.Light" Disabled="true">
-                    Coming Soon
-                </RadzenButton>
+
+                @if (_appleIntegration != null && _appleIntegration.IsEnabled)
+                {
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            <strong>Calendar:</strong> @_appleIntegration.CalendarName
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            <strong>Last synced:</strong> @(_appleIntegration.LastSyncedAt?.ToLocalTime().ToString("g") ?? "Never")
+                        </RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Icon="sync" Text="Sync Now" Click="@SyncAppleCalendar" Disabled="_isSyncingApple" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Icon="link_off" Text="Disconnect" Click="@DisconnectAppleCalendar" />
+                        </RadzenStack>
+                        @if (_isSyncingApple)
+                        {
+                            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                        }
+                    </RadzenStack>
+                }
+                else
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="link" Text="Connect Apple Calendar" Click="@ConnectAppleCalendar" />
+                }
             </RadzenStack>
         </RadzenCard>
     </RadzenColumn>
@@ -121,16 +147,18 @@
     </RadzenStack>
 </RadzenCard>
 
-@if (_googleIntegration == null || !_googleIntegration.IsEnabled)
+@if ((_googleIntegration == null || !_googleIntegration.IsEnabled) && (_appleIntegration == null || !_appleIntegration.IsEnabled))
 {
     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-4">
-        Connect your Google Calendar to enable two-way synchronization. You can also use the ICS import feature to bring in events from your existing calendars.
+        Connect your Google Calendar or Apple Calendar to enable two-way synchronization. You can also use the ICS import feature to bring in events from your existing calendars.
     </RadzenAlert>
 }
 
 @code {
     private CalendarIntegration? _googleIntegration;
+    private CalendarIntegration? _appleIntegration;
     private bool _isSyncing = false;
+    private bool _isSyncingApple = false;
     private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -147,6 +175,7 @@
     private async Task LoadIntegrations()
     {
         _googleIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Google");
+        _appleIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Apple");
         StateHasChanged();
     }
 
@@ -226,6 +255,86 @@
                     Severity = NotificationSeverity.Info,
                     Summary = "Google Calendar Disconnected",
                     Detail = "Your Google Calendar has been disconnected from Tempus",
+                    Duration = 5000
+                });
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Disconnect Failed",
+                    Detail = ex.Message,
+                    Duration = 5000
+                });
+            }
+        }
+    }
+
+    // Apple Calendar methods
+    private void ConnectAppleCalendar()
+    {
+        NavigationManager.NavigateTo("/apple-calendar-connect");
+    }
+
+    private async Task SyncAppleCalendar()
+    {
+        _isSyncingApple = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await AppleCalendarService.SyncBothWaysAsync(_userId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Sync Complete",
+                Detail = $"Imported {result.imported} events from Apple Calendar, exported {result.exported} events to Apple Calendar",
+                Duration = 5000
+            });
+
+            await LoadIntegrations();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Sync Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            _isSyncingApple = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DisconnectAppleCalendar()
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to disconnect Apple Calendar? This will stop synchronization but won't delete any existing events.",
+            "Disconnect Apple Calendar",
+            new ConfirmOptions { OkButtonText = "Disconnect", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true && _appleIntegration != null)
+        {
+            try
+            {
+                await IntegrationRepository.DeleteAsync(_appleIntegration.Id);
+                _appleIntegration = null;
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Apple Calendar Disconnected",
+                    Detail = "Your Apple Calendar has been disconnected from Tempus",
                     Duration = 5000
                 });
 

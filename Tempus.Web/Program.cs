@@ -94,6 +94,7 @@ builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService
 builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
 builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
+builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
 
 var app = builder.Build();
 
