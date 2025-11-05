@@ -364,9 +364,6 @@
         Console.WriteLine($"[Calendar.OnLoadData] Date range: {args.Start:yyyy-MM-dd} to {args.End:yyyy-MM-dd}");
         Console.WriteLine($"[Calendar.OnLoadData] User ID: {_userId}");
 
-        _loading = true;
-        StateHasChanged();
-
         try
         {
             // Load events for the visible date range in the scheduler
@@ -392,11 +389,6 @@
             _appointments = new List<AppointmentData>();
             _events = new List<Event>();
         }
-        finally
-        {
-            _loading = false;
-            StateHasChanged();
-        }
 
         Console.WriteLine($"[Calendar.OnLoadData] === COMPLETE ===");
     }
@@ -421,7 +413,6 @@
 
     private void ConvertEventsToAppointments()
     {
-
         // Convert events to appointments for RadzenScheduler
         // If event has a timezone, convert it to user's timezone for display
         _appointments = _events.Select(e =>
@@ -442,9 +433,6 @@
                 Event = e // Keep original event for editing
             };
         }).ToList();
-
-        _loading = false;
-        StateHasChanged();
     }
 
     private async Task DownloadDailyAgenda()
