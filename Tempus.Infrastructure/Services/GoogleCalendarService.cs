@@ -154,12 +154,7 @@ public class GoogleCalendarService : IGoogleCalendarService
                 DataStore = null
             });
 
-            var token = new TokenResponse
-            {
-                RefreshToken = integration.RefreshToken
-            };
-
-            await flow.RefreshTokenAsync(integration.UserId, token, CancellationToken.None);
+            var token = await flow.RefreshTokenAsync(integration.UserId, integration.RefreshToken, CancellationToken.None);
 
             integration.AccessToken = token.AccessToken;
             integration.TokenExpiry = DateTime.UtcNow.AddSeconds(token.ExpiresInSeconds ?? 3600);
@@ -302,7 +297,7 @@ public class GoogleCalendarService : IGoogleCalendarService
         }
     }
 
-    private async Task ImportGoogleEventAsync(Event googleEvent, string userId)
+    private async Task ImportGoogleEventAsync(Google.Apis.Calendar.v3.Data.Event googleEvent, string userId)
     {
         // Check if event already exists (by checking for Google event ID in notes/description)
         var existingEvents = await _eventRepository.SearchAsync($"GoogleId:{googleEvent.Id}", userId);
@@ -346,7 +341,7 @@ public class GoogleCalendarService : IGoogleCalendarService
 
     private async Task ExportToGoogleAsync(CalendarService service, string calendarId, Core.Models.Event tempusEvent)
     {
-        var googleEvent = new Event
+        var googleEvent = new Google.Apis.Calendar.v3.Data.Event
         {
             Summary = tempusEvent.Title,
             Description = tempusEvent.Description,
@@ -355,13 +350,13 @@ public class GoogleCalendarService : IGoogleCalendarService
             {
                 DateTime = tempusEvent.IsAllDay ? null : tempusEvent.StartTime,
                 Date = tempusEvent.IsAllDay ? tempusEvent.StartTime.ToString("yyyy-MM-dd") : null,
-                TimeZone = tempusEvent.TimeZone
+                TimeZone = tempusEvent.TimeZoneId
             },
             End = new EventDateTime
             {
                 DateTime = tempusEvent.IsAllDay ? null : tempusEvent.EndTime,
                 Date = tempusEvent.IsAllDay ? tempusEvent.EndTime.ToString("yyyy-MM-dd") : null,
-                TimeZone = tempusEvent.TimeZone
+                TimeZone = tempusEvent.TimeZoneId
             }
         };
 
