@@ -32,9 +32,11 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **Entity Framework Core 9**: ORM for database access
 - **SQLite**: Default database provider (with SQL Server support available)
 - **Radzen Blazor**: Modern UI component library (v5.9.0)
-- **Ical.Net**: iCalendar format parsing and generation (v4.2.0)
+- **Ical.Net**: iCalendar format parsing and generation (v4.3.1)
 - **Aspose.Email**: PST/OST file parsing for Outlook integration (v24.12.0)
 - **QuestPDF**: PDF generation capabilities (v2025.7.3)
+- **Google.Apis.Calendar.v3**: Google Calendar API client (v1.68.0.3536)
+- **HaemmerElectronics.SeppPenner.CalDAVNet**: CalDAV protocol client for Apple Calendar (v1.0.3)
 - **ASP.NET Core Identity**: Authentication and authorization
 
 ## Project Structure
@@ -277,11 +279,28 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Hover tooltips with detailed information
   - Responsive chart sizing and layout
   - Color-coded trends (green=increasing, red=decreasing, blue=stable, orange=volatile)
+- ✅ Google Calendar integration (OAuth2)
+  - Secure OAuth2 authentication flow
+  - Two-way event synchronization (import from Google, export to Google)
+  - Automatic sync token management for incremental updates
+  - Connection testing and validation
+  - Calendar selection and management
+  - Integration status tracking with last sync timestamps
+  - Sync on demand or automatic background sync
+  - Event deduplication using Google Event IDs
+- ✅ Apple Calendar integration (CalDAV)
+  - CalDAV protocol support for iCloud calendars
+  - App-specific password authentication
+  - Two-way event synchronization
+  - Connection testing before saving credentials
+  - Support for all-day and timed events
+  - Event deduplication using CalDAV UIDs
+  - Multiple calendar support
+  - Secure credential storage
+  - Step-by-step setup instructions
 
 ### Planned Features
-- 🔄 Google Calendar integration (OAuth2 sync)
 - 🔄 Microsoft Outlook integration
-- 🔄 Apple Calendar (CalDAV) integration
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
@@ -366,6 +385,65 @@ Tempus supports time zone selection for events, making it easy to coordinate mee
    - Your default timezone is set in **Settings** → **General** → **Time Zone**
    - Use common timezone names (Pacific, Eastern, Central, Mountain, UTC, etc.)
    - The system handles daylight saving time changes automatically
+
+### Connecting External Calendars
+
+Tempus supports two-way synchronization with Google Calendar and Apple Calendar (iCloud), allowing you to keep all your calendars in sync.
+
+#### Google Calendar Integration
+
+1. **Connect Your Google Calendar:**
+   - Navigate to **Settings** → **Integrations** tab (or use the Integrations page from the sidebar)
+   - Click **Connect Google Calendar** in the Google Calendar card
+   - You'll be redirected to Google's authorization page
+   - Sign in with your Google account and grant calendar access permissions
+   - You'll be redirected back to Tempus with the connection established
+
+2. **Sync Events:**
+   - Click **Sync Now** to perform two-way synchronization:
+     - Events from Google Calendar are imported to Tempus
+     - Events from Tempus are exported to Google Calendar
+   - The last sync timestamp is displayed on the integration card
+   - Sync tokens are used for efficient incremental updates
+
+3. **Disconnect:**
+   - Click **Disconnect** to stop synchronization
+   - A confirmation dialog will appear
+   - Your existing events in Tempus remain unchanged
+
+#### Apple Calendar Integration (CalDAV)
+
+1. **Generate App-Specific Password:**
+   - Go to [appleid.apple.com](https://appleid.apple.com) and sign in
+   - Navigate to **Security** → **App-Specific Passwords**
+   - Click **Generate Password**
+   - Enter a label (e.g., "Tempus Calendar") and click **Create**
+   - Copy the generated 16-character password (format: xxxx-xxxx-xxxx-xxxx)
+
+2. **Connect Your Apple Calendar:**
+   - Navigate to **Settings** → **Integrations** tab
+   - Click **Connect Apple Calendar**
+   - Fill in the connection form:
+     - **CalDAV Server URL**: `https://caldav.icloud.com` (default for iCloud)
+     - **Apple ID Email**: Your iCloud email address
+     - **App-Specific Password**: The password you generated in step 1
+   - Click **Test Connection** to verify credentials
+   - Once test succeeds, click **Connect** to save the integration
+
+3. **Sync Events:**
+   - Click **Sync Now** on the Apple Calendar card
+   - Two-way synchronization runs:
+     - Events from Apple Calendar are imported to Tempus
+     - Events from Tempus are exported to Apple Calendar
+   - Both all-day and timed events are supported
+   - Event updates are tracked using CalDAV UIDs
+
+4. **Disconnect:**
+   - Click **Disconnect** to stop synchronization
+   - Confirm the action in the dialog
+   - Existing events remain in Tempus
+
+**Security Note:** Your calendar credentials are securely stored and never shared with third parties. Google uses OAuth2 tokens (no password storage), and Apple uses app-specific passwords (not your main iCloud password).
 
 ### Customizing Calendar Settings
 
