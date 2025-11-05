@@ -107,9 +107,43 @@ public class EventRepository : IEventRepository
 
     public async Task<Event> CreateAsync(Event @event)
     {
+        Console.WriteLine($"[EventRepository.CreateAsync] Starting for event: {@event.Title}");
+        Console.WriteLine($"[EventRepository.CreateAsync] Event ID: {@event.Id}");
+        Console.WriteLine($"[EventRepository.CreateAsync] User ID: {@event.UserId}");
+
         await using var context = await _contextFactory.CreateDbContextAsync();
+        Console.WriteLine($"[EventRepository.CreateAsync] DbContext created");
+
+        // Handle attendees - ensure they have proper IDs and EventId set
+        if (@event.Attendees != null && @event.Attendees.Any())
+        {
+            Console.WriteLine($"[EventRepository.CreateAsync] Processing {@event.Attendees.Count} attendees");
+            foreach (var attendee in @event.Attendees)
+            {
+                // Ensure attendee has an ID
+                if (attendee.Id == Guid.Empty)
+                {
+                    attendee.Id = Guid.NewGuid();
+                    Console.WriteLine($"[EventRepository.CreateAsync]   Generated new attendee ID: {attendee.Id}");
+                }
+                // Set the EventId to link the attendee to this event
+                attendee.EventId = @event.Id;
+                Console.WriteLine($"[EventRepository.CreateAsync]   Attendee: {attendee.Name} ({attendee.Email}), EventId: {attendee.EventId}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[EventRepository.CreateAsync] No attendees to process");
+        }
+
+        Console.WriteLine($"[EventRepository.CreateAsync] Adding event to context...");
         context.Events.Add(@event);
-        await context.SaveChangesAsync();
+
+        Console.WriteLine($"[EventRepository.CreateAsync] Calling SaveChangesAsync...");
+        var changeCount = await context.SaveChangesAsync();
+        Console.WriteLine($"[EventRepository.CreateAsync] SaveChangesAsync completed. Changes saved: {changeCount}");
+
+        Console.WriteLine($"[EventRepository.CreateAsync] Returning event with ID: {@event.Id}");
         return @event;
     }
 
