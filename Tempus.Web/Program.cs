@@ -81,6 +81,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ICalendarIntegrationRepository, CalendarIntegrationRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 builder.Services.AddScoped<IPstImportService, PstImportService>();
 builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
@@ -92,6 +93,7 @@ builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
 builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
 builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
 builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,119 @@
+@page "/google-callback"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@attribute [Authorize]
+@inject IGoogleCalendarService GoogleCalendarService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+
+<PageTitle>Connecting Google Calendar - Tempus</PageTitle>
+
+<RadzenStack Gap="2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 50vh;">
+    @if (_isProcessing)
+    {
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.H5">Connecting to Google Calendar...</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">Please wait while we complete the authorization</RadzenText>
+        </RadzenStack>
+    }
+    else if (_hasError)
+    {
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon="error" Style="font-size: 4rem; color: var(--rz-danger);" />
+            <RadzenText TextStyle="TextStyle.H5">Connection Failed</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@_errorMessage</RadzenText>
+            <RadzenButton Text="Back to Integrations" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavigationManager.NavigateTo("/integrations"))" />
+        </RadzenStack>
+    }
+    else if (_isSuccess)
+    {
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon="check_circle" Style="font-size: 4rem; color: var(--rz-success);" />
+            <RadzenText TextStyle="TextStyle.H5">Successfully Connected!</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">Your Google Calendar is now connected to Tempus</RadzenText>
+            <RadzenButton Text="Go to Calendar" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavigationManager.NavigateTo("/calendar"))" />
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    private bool _isProcessing = true;
+    private bool _hasError = false;
+    private bool _isSuccess = false;
+    private string _errorMessage = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? Code { get; set; }
+
+    [SupplyParameterFromQuery(Name = "state")]
+    public string? State { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Error))
+        {
+            _isProcessing = false;
+            _hasError = true;
+            _errorMessage = "Authorization was denied or cancelled.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(Code))
+        {
+            _isProcessing = false;
+            _hasError = true;
+            _errorMessage = "Invalid callback - authorization code not found.";
+            return;
+        }
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                _isProcessing = false;
+                _hasError = true;
+                _errorMessage = "User not authenticated.";
+                return;
+            }
+
+            var redirectUri = $"{NavigationManager.BaseUri}google-callback";
+            await GoogleCalendarService.ExchangeCodeForTokensAsync(Code, userId, redirectUri);
+
+            _isProcessing = false;
+            _isSuccess = true;
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Google Calendar Connected",
+                Detail = "Your Google Calendar has been successfully connected to Tempus.",
+                Duration = 5000
+            });
+        }
+        catch (Exception ex)
+        {
+            _isProcessing = false;
+            _hasError = true;
+            _errorMessage = $"Failed to connect: {ex.Message}";
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+    }
+}

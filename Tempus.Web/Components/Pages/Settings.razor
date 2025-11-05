@@ -11,6 +11,10 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NotificationService NotificationService
+@inject IGoogleCalendarService GoogleCalendarService
+@inject ICalendarIntegrationRepository IntegrationRepository
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
 
 <PageTitle>Settings - Tempus</PageTitle>
 
@@ -249,13 +253,45 @@
                                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                                     <RadzenIcon Icon="cloud" Style="font-size: 2rem;" />
                                                     <RadzenText TextStyle="TextStyle.H6">Google Calendar</RadzenText>
+                                                    @if (_googleIntegration != null && _googleIntegration.IsEnabled)
+                                                    {
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Connected" />
+                                                    }
                                                 </RadzenStack>
                                                 <RadzenText TextStyle="TextStyle.Body2">
                                                     Sync your Google Calendar events with Tempus. Two-way synchronization keeps everything up to date.
                                                 </RadzenText>
-                                                <RadzenButton ButtonStyle="ButtonStyle.Light" Disabled="true">
-                                                    Coming Soon
-                                                </RadzenButton>
+
+                                                @if (_googleIntegration != null && _googleIntegration.IsEnabled)
+                                                {
+                                                    <RadzenStack Gap="0.75rem">
+                                                        <RadzenText TextStyle="TextStyle.Caption">
+                                                            <strong>Calendar:</strong> @_googleIntegration.CalendarName
+                                                        </RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption">
+                                                            <strong>Last synced:</strong> @(_googleIntegration.LastSyncedAt?.ToLocalTime().ToString("g") ?? "Never")
+                                                        </RadzenText>
+
+                                                        <!-- Sync options -->
+                                                        <RadzenStack Gap="0.5rem" Style="margin-top: 0.5rem;">
+                                                            <RadzenCheckBox @bind-Value="_googleIntegration.SyncEnabled" Name="syncEnabled" />
+                                                            <RadzenLabel Text="Enable automatic synchronization" Component="syncEnabled" />
+                                                        </RadzenStack>
+
+                                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 0.5rem;">
+                                                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Icon="sync" Text="Sync Now" Click="@SyncGoogleCalendar" Disabled="_isSyncing" />
+                                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Icon="link_off" Text="Disconnect" Click="@DisconnectGoogleCalendar" />
+                                                        </RadzenStack>
+                                                        @if (_isSyncing)
+                                                        {
+                                                            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                                                        }
+                                                    </RadzenStack>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="link" Text="Connect Google Calendar" Click="@ConnectGoogleCalendar" />
+                                                }
                                             </RadzenStack>
                                         </RadzenCard>
                                     </RadzenColumn>
@@ -297,9 +333,33 @@
                                     </RadzenColumn>
                                 </RadzenRow>
 
-                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Style="margin-top: 1rem;">
-                                    Calendar integrations are currently under development. In the meantime, you can use the ICS import feature to bring in events from your existing calendars.
-                                </RadzenAlert>
+                                <!-- Integration Features -->
+                                <RadzenCard Style="margin-top: 1rem; background-color: var(--rz-info-lighter);">
+                                    <RadzenStack Gap="1rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Integration Features</RadzenText>
+                                        <RadzenStack Gap="0.75rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                                <RadzenIcon Icon="sync" />
+                                                <RadzenText><strong>Two-way synchronization</strong> - Changes in Tempus reflect in your connected calendars and vice versa</RadzenText>
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                                <RadzenIcon Icon="security" />
+                                                <RadzenText><strong>Secure OAuth2 authentication</strong> - Your credentials are never stored, only secure access tokens</RadzenText>
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                                <RadzenIcon Icon="cloud_queue" />
+                                                <RadzenText><strong>Real-time updates</strong> - Events sync automatically when enabled</RadzenText>
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+
+                                @if (_googleIntegration == null || !_googleIntegration.IsEnabled)
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                        Connect your Google Calendar to enable two-way synchronization. You can also use the ICS import feature to bring in events from your existing calendars.
+                                    </RadzenAlert>
+                                }
                             </RadzenStack>
                         </RadzenCard>
                     </RadzenTabsItem>
@@ -350,6 +410,11 @@
     private DateTime? _lunchStartDateTime;
     private DateTime? _lunchEndDateTime;
 
+    // Google integration
+    private CalendarIntegration? _googleIntegration;
+    private bool _isSyncing = false;
+    private string _userId = string.Empty;
+
     private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwelveHour ? "hh:mm tt" : "HH:mm";
 
     protected override async Task OnInitializedAsync()
@@ -363,6 +428,8 @@
             var appUser = await UserManager.GetUserAsync(user);
             if (appUser != null)
             {
+                _userId = appUser.Id;
+
                 // Load or create settings
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(appUser.Id);
 
@@ -375,6 +442,9 @@
 
                 if (_settings.LunchBreakEnd.HasValue)
                     _lunchEndDateTime = DateTime.Today.Add(_settings.LunchBreakEnd.Value);
+
+                // Load Google integration
+                await LoadIntegrations();
             }
         }
     }
@@ -391,6 +461,12 @@
 
         await SettingsService.CreateOrUpdateSettingsAsync(_settings);
 
+        // Save Google integration sync settings if changed
+        if (_googleIntegration != null)
+        {
+            await IntegrationRepository.UpdateAsync(_googleIntegration);
+        }
+
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
@@ -403,5 +479,106 @@
     private void OnTabChange(int index)
     {
         // Handle tab change if needed
+    }
+
+    // Google Calendar Integration Methods
+    private async Task LoadIntegrations()
+    {
+        _googleIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Google");
+        StateHasChanged();
+    }
+
+    private void ConnectGoogleCalendar()
+    {
+        try
+        {
+            var redirectUri = $"{NavigationManager.BaseUri}google-callback";
+            var authUrl = GoogleCalendarService.GetAuthorizationUrl(_userId, redirectUri);
+            NavigationManager.NavigateTo(authUrl, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+    }
+
+    private async Task SyncGoogleCalendar()
+    {
+        _isSyncing = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await GoogleCalendarService.SyncBothWaysAsync(_userId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Sync Complete",
+                Detail = $"Imported {result.imported} events from Google, exported {result.exported} events to Google",
+                Duration = 5000
+            });
+
+            await LoadIntegrations();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Sync Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            _isSyncing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DisconnectGoogleCalendar()
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to disconnect Google Calendar? This will stop synchronization but won't delete any existing events.",
+            "Disconnect Google Calendar",
+            new ConfirmOptions { OkButtonText = "Disconnect", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true && _googleIntegration != null)
+        {
+            try
+            {
+                await IntegrationRepository.DeleteAsync(_googleIntegration.Id);
+                _googleIntegration = null;
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Google Calendar Disconnected",
+                    Detail = "Your Google Calendar has been disconnected from Tempus",
+                    Duration = 5000
+                });
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Disconnect Failed",
+                    Detail = ex.Message,
+                    Duration = 5000
+                });
+            }
+        }
     }
 }
