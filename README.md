@@ -37,6 +37,8 @@ Tempus is a comprehensive time management application built with .NET 9 and Blaz
 - **QuestPDF**: PDF generation capabilities (v2025.7.3)
 - **Google.Apis.Calendar.v3**: Google Calendar API client (v1.68.0.3536)
 - **HaemmerElectronics.SeppPenner.CalDAVNet**: CalDAV protocol client for Apple Calendar (v1.0.3)
+- **Microsoft.Graph**: Microsoft Graph API client for Outlook/Office 365 integration (v5.77.0)
+- **Microsoft.Identity.Client**: MSAL library for Microsoft OAuth2 authentication (v4.67.1)
 - **ASP.NET Core Identity**: Authentication and authorization
 
 ## Project Structure
@@ -298,9 +300,18 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Multiple calendar support
   - Secure credential storage
   - Step-by-step setup instructions
+- ✅ Microsoft Outlook/Office 365 integration (Microsoft Graph API)
+  - Secure OAuth2 authentication with Microsoft accounts
+  - Two-way event synchronization (import from Outlook, export to Outlook)
+  - Support for both personal and work/school accounts
+  - Multiple calendar support
+  - Connection testing and validation
+  - Integration status tracking with last sync timestamps
+  - Sync on demand or automatic background sync
+  - Event deduplication using Outlook Event IDs
+  - Automatic token refresh for seamless authentication
 
 ### Planned Features
-- 🔄 Microsoft Outlook integration
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
@@ -388,7 +399,7 @@ Tempus supports time zone selection for events, making it easy to coordinate mee
 
 ### Connecting External Calendars
 
-Tempus supports two-way synchronization with Google Calendar and Apple Calendar (iCloud), allowing you to keep all your calendars in sync.
+Tempus supports two-way synchronization with Google Calendar, Microsoft Outlook/Office 365, and Apple Calendar (iCloud), allowing you to keep all your calendars in sync.
 
 #### Google Calendar Integration
 
@@ -443,7 +454,48 @@ Tempus supports two-way synchronization with Google Calendar and Apple Calendar 
    - Confirm the action in the dialog
    - Existing events remain in Tempus
 
-**Security Note:** Your calendar credentials are securely stored and never shared with third parties. Google uses OAuth2 tokens (no password storage), and Apple uses app-specific passwords (not your main iCloud password).
+#### Microsoft Outlook/Office 365 Integration
+
+1. **Register Azure AD Application (One-Time Setup):**
+   - This step must be completed by the system administrator
+   - Go to [Azure Portal](https://portal.azure.com) and sign in
+   - Navigate to **Azure Active Directory** → **App registrations**
+   - Click **New registration**
+   - Enter application name (e.g., "Tempus Calendar Integration")
+   - Select supported account types (personal, work, or both)
+   - Add redirect URI: `https://your-domain/outlook-callback`
+   - After registration, note the **Application (client) ID** and **Directory (tenant) ID**
+   - Go to **Certificates & secrets** → **New client secret**
+   - Copy the secret value immediately (it won't be shown again)
+   - Go to **API permissions** → **Add permission** → **Microsoft Graph** → **Delegated permissions**
+   - Add permissions: `Calendars.ReadWrite`, `offline_access`
+   - Click **Grant admin consent** (if required by your organization)
+   - Update your Tempus configuration with:
+     - `Outlook:ClientId` = Application (client) ID
+     - `Outlook:ClientSecret` = Client secret value
+     - `Outlook:TenantId` = Directory (tenant) ID (or "common" for multi-tenant)
+
+2. **Connect Your Outlook Calendar:**
+   - Navigate to **Settings** → **Integrations** tab (or use the Integrations page from the sidebar)
+   - Click **Connect Outlook Calendar** in the Outlook card
+   - You'll be redirected to Microsoft's authorization page
+   - Sign in with your Microsoft account (personal or work/school)
+   - Grant calendar access permissions
+   - You'll be redirected back to Tempus with the connection established
+
+3. **Sync Events:**
+   - Click **Sync Now** to perform two-way synchronization:
+     - Events from Outlook Calendar are imported to Tempus
+     - Events from Tempus are exported to Outlook Calendar
+   - The last sync timestamp is displayed on the integration card
+   - Access tokens are automatically refreshed when needed
+
+4. **Disconnect:**
+   - Click **Disconnect** to stop synchronization
+   - A confirmation dialog will appear
+   - Your existing events in Tempus remain unchanged
+
+**Security Note:** Your calendar credentials are securely stored and never shared with third parties. Google and Outlook use OAuth2 tokens (no password storage), and Apple uses app-specific passwords (not your main iCloud password).
 
 ### Customizing Calendar Settings
 

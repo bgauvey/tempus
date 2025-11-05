@@ -7,6 +7,7 @@
 @attribute [Authorize]
 @inject IGoogleCalendarService GoogleCalendarService
 @inject IAppleCalendarService AppleCalendarService
+@inject IOutlookCalendarService OutlookCalendarService
 @inject ICalendarIntegrationRepository IntegrationRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -67,13 +68,38 @@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="mail" Style="font-size: 2rem;" />
                     <RadzenText TextStyle="TextStyle.H6">Microsoft Outlook</RadzenText>
+                    @if (_outlookIntegration != null && _outlookIntegration.IsEnabled)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Connected" />
+                    }
                 </RadzenStack>
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2">
                     Connect your Outlook or Office 365 calendar for seamless event synchronization.
                 </RadzenText>
-                <RadzenButton ButtonStyle="ButtonStyle.Light" Disabled="true">
-                    Coming Soon
-                </RadzenButton>
+
+                @if (_outlookIntegration != null && _outlookIntegration.IsEnabled)
+                {
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            <strong>Calendar:</strong> @_outlookIntegration.CalendarName
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            <strong>Last synced:</strong> @(_outlookIntegration.LastSyncedAt?.ToLocalTime().ToString("g") ?? "Never")
+                        </RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Icon="sync" Text="Sync Now" Click="@SyncOutlookCalendar" Disabled="_isSyncingOutlook" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Icon="link_off" Text="Disconnect" Click="@DisconnectOutlookCalendar" />
+                        </RadzenStack>
+                        @if (_isSyncingOutlook)
+                        {
+                            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                        }
+                    </RadzenStack>
+                }
+                else
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="link" Text="Connect Outlook Calendar" Click="@ConnectOutlookCalendar" />
+                }
             </RadzenStack>
         </RadzenCard>
     </RadzenColumn>
@@ -147,18 +173,20 @@
     </RadzenStack>
 </RadzenCard>
 
-@if ((_googleIntegration == null || !_googleIntegration.IsEnabled) && (_appleIntegration == null || !_appleIntegration.IsEnabled))
+@if ((_googleIntegration == null || !_googleIntegration.IsEnabled) && (_appleIntegration == null || !_appleIntegration.IsEnabled) && (_outlookIntegration == null || !_outlookIntegration.IsEnabled))
 {
     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-4">
-        Connect your Google Calendar or Apple Calendar to enable two-way synchronization. You can also use the ICS import feature to bring in events from your existing calendars.
+        Connect your Google Calendar, Outlook Calendar, or Apple Calendar to enable two-way synchronization. You can also use the ICS import feature to bring in events from your existing calendars.
     </RadzenAlert>
 }
 
 @code {
     private CalendarIntegration? _googleIntegration;
     private CalendarIntegration? _appleIntegration;
+    private CalendarIntegration? _outlookIntegration;
     private bool _isSyncing = false;
     private bool _isSyncingApple = false;
+    private bool _isSyncingOutlook = false;
     private string _userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -176,6 +204,7 @@
     {
         _googleIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Google");
         _appleIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Apple");
+        _outlookIntegration = await IntegrationRepository.GetByProviderAsync(_userId, "Outlook");
         StateHasChanged();
     }
 
@@ -335,6 +364,101 @@
                     Severity = NotificationSeverity.Info,
                     Summary = "Apple Calendar Disconnected",
                     Detail = "Your Apple Calendar has been disconnected from Tempus",
+                    Duration = 5000
+                });
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Disconnect Failed",
+                    Detail = ex.Message,
+                    Duration = 5000
+                });
+            }
+        }
+    }
+
+    // Outlook Calendar methods
+    private void ConnectOutlookCalendar()
+    {
+        try
+        {
+            var redirectUri = $"{NavigationManager.BaseUri}outlook-callback";
+            var authUrl = OutlookCalendarService.GetAuthorizationUrl(_userId, redirectUri);
+            NavigationManager.NavigateTo(authUrl, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+    }
+
+    private async Task SyncOutlookCalendar()
+    {
+        _isSyncingOutlook = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await OutlookCalendarService.SyncBothWaysAsync(_userId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Sync Complete",
+                Detail = $"Imported {result.imported} events from Outlook, exported {result.exported} events to Outlook",
+                Duration = 5000
+            });
+
+            await LoadIntegrations();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Sync Failed",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            _isSyncingOutlook = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DisconnectOutlookCalendar()
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to disconnect Outlook Calendar? This will stop synchronization but won't delete any existing events.",
+            "Disconnect Outlook Calendar",
+            new ConfirmOptions { OkButtonText = "Disconnect", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true && _outlookIntegration != null)
+        {
+            try
+            {
+                await IntegrationRepository.DeleteAsync(_outlookIntegration.Id);
+                _outlookIntegration = null;
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Outlook Calendar Disconnected",
+                    Detail = "Your Outlook Calendar has been disconnected from Tempus",
                     Duration = 5000
                 });
 

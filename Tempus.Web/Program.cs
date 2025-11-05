@@ -95,6 +95,7 @@ builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationServi
 builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
+builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
 
 var app = builder.Build();
 
