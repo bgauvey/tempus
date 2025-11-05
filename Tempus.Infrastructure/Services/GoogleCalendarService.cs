@@ -181,8 +181,8 @@ public class GoogleCalendarService : IGoogleCalendarService
         var service = await CreateCalendarServiceAsync(integration);
 
         var request = service.Events.List(integration.CalendarId);
-        request.TimeMin = DateTime.UtcNow.AddMonths(-1);
-        request.TimeMax = DateTime.UtcNow.AddMonths(6);
+        request.TimeMinDateTimeOffset = DateTimeOffset.UtcNow.AddMonths(-1);
+        request.TimeMaxDateTimeOffset = DateTimeOffset.UtcNow.AddMonths(6);
         request.ShowDeleted = false;
         request.SingleEvents = true;
         request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
@@ -278,15 +278,17 @@ public class GoogleCalendarService : IGoogleCalendarService
             .ToList();
     }
 
-    private async Task<CalendarService> CreateCalendarServiceAsync(CalendarIntegration integration)
+    private Task<CalendarService> CreateCalendarServiceAsync(CalendarIntegration integration)
     {
         var credential = GoogleCredential.FromAccessToken(integration.AccessToken);
 
-        return new CalendarService(new BaseClientService.Initializer
+        var service = new CalendarService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
             ApplicationName = "Tempus Calendar"
         });
+
+        return Task.FromResult(service);
     }
 
     private async Task EnsureValidTokenAsync(CalendarIntegration integration)
@@ -311,10 +313,10 @@ public class GoogleCalendarService : IGoogleCalendarService
         tempusEvent.Description = $"GoogleId:{googleEvent.Id}\n{googleEvent.Description}";
         tempusEvent.Location = googleEvent.Location;
 
-        if (googleEvent.Start?.DateTime.HasValue == true)
+        if (googleEvent.Start?.DateTimeDateTimeOffset.HasValue == true)
         {
-            tempusEvent.StartTime = googleEvent.Start.DateTime.Value;
-            tempusEvent.EndTime = googleEvent.End?.DateTime ?? tempusEvent.StartTime.AddHours(1);
+            tempusEvent.StartTime = googleEvent.Start.DateTimeDateTimeOffset.Value.DateTime;
+            tempusEvent.EndTime = googleEvent.End?.DateTimeDateTimeOffset?.DateTime ?? tempusEvent.StartTime.AddHours(1);
             tempusEvent.IsAllDay = false;
         }
         else if (googleEvent.Start?.Date != null)
@@ -348,13 +350,13 @@ public class GoogleCalendarService : IGoogleCalendarService
             Location = tempusEvent.Location,
             Start = new EventDateTime
             {
-                DateTime = tempusEvent.IsAllDay ? null : tempusEvent.StartTime,
+                DateTimeDateTimeOffset = tempusEvent.IsAllDay ? null : new DateTimeOffset(tempusEvent.StartTime),
                 Date = tempusEvent.IsAllDay ? tempusEvent.StartTime.ToString("yyyy-MM-dd") : null,
                 TimeZone = tempusEvent.TimeZoneId
             },
             End = new EventDateTime
             {
-                DateTime = tempusEvent.IsAllDay ? null : tempusEvent.EndTime,
+                DateTimeDateTimeOffset = tempusEvent.IsAllDay ? null : new DateTimeOffset(tempusEvent.EndTime),
                 Date = tempusEvent.IsAllDay ? tempusEvent.EndTime.ToString("yyyy-MM-dd") : null,
                 TimeZone = tempusEvent.TimeZoneId
             }
