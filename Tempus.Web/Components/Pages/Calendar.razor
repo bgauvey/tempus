@@ -317,36 +317,105 @@
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _formatter = new CalendarFormatter(_settings);
 
-        // Don't call LoadEvents here - the scheduler will automatically call OnLoadData when it initializes
+        Console.WriteLine($"[Calendar.OnInitializedAsync] Initialization complete. User ID: {_userId}");
+
+        // Load initial events as fallback if OnLoadData doesn't trigger
+        // OnLoadData should override this once scheduler is ready
+        await LoadInitialEvents();
+    }
+
+    private async Task LoadInitialEvents()
+    {
+        Console.WriteLine($"[Calendar.LoadInitialEvents] Loading initial events...");
+        try
+        {
+            // Load events for current month +/- 1 month
+            var startDate = DateTime.Today.AddMonths(-1);
+            var endDate = DateTime.Today.AddMonths(2);
+
+            Console.WriteLine($"[Calendar.LoadInitialEvents] Date range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+            Console.WriteLine($"[Calendar.LoadInitialEvents] User ID: {_userId}");
+
+            _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
+
+            Console.WriteLine($"[Calendar.LoadInitialEvents] Loaded {_events.Count} events");
+
+            ConvertEventsToAppointments();
+
+            _loading = false;
+            StateHasChanged();
+
+            Console.WriteLine($"[Calendar.LoadInitialEvents] Complete. Appointments: {_appointments.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Calendar.LoadInitialEvents] ERROR: {ex.Message}");
+            Console.WriteLine($"[Calendar.LoadInitialEvents] Stack: {ex.StackTrace}");
+            _loading = false;
+            StateHasChanged();
+        }
     }
 
 
 
     private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
-        Console.WriteLine($"[Calendar.OnLoadData] Loading events for date range: {args.Start:yyyy-MM-dd} to {args.End:yyyy-MM-dd}");
+        Console.WriteLine($"[Calendar.OnLoadData] === CALLED ===");
+        Console.WriteLine($"[Calendar.OnLoadData] Date range: {args.Start:yyyy-MM-dd} to {args.End:yyyy-MM-dd}");
+        Console.WriteLine($"[Calendar.OnLoadData] User ID: {_userId}");
 
-        // Load events for the visible date range in the scheduler
-        _events = await EventRepository.GetEventsByDateRangeAsync(args.Start, args.End, _userId);
+        _loading = true;
+        StateHasChanged();
 
-        Console.WriteLine($"[Calendar.OnLoadData] Loaded {_events.Count} events");
-        if (_events.Any())
+        try
         {
-            var minDate = _events.Min(e => e.StartTime);
-            var maxDate = _events.Max(e => e.StartTime);
-            Console.WriteLine($"[Calendar.OnLoadData] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+            // Load events for the visible date range in the scheduler
+            _events = await EventRepository.GetEventsByDateRangeAsync(args.Start, args.End, _userId);
+
+            Console.WriteLine($"[Calendar.OnLoadData] Loaded {_events.Count} events");
+            if (_events.Any())
+            {
+                var minDate = _events.Min(e => e.StartTime);
+                var maxDate = _events.Max(e => e.StartTime);
+                Console.WriteLine($"[Calendar.OnLoadData] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+            }
+
+            ConvertEventsToAppointments();
+            Console.WriteLine($"[Calendar.OnLoadData] Converted to {_appointments.Count} appointments");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Calendar.OnLoadData] ERROR: {ex.Message}");
+            Console.WriteLine($"[Calendar.OnLoadData] Stack: {ex.StackTrace}");
+
+            // Set empty appointments on error
+            _appointments = new List<AppointmentData>();
+            _events = new List<Event>();
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
 
-        ConvertEventsToAppointments();
+        Console.WriteLine($"[Calendar.OnLoadData] === COMPLETE ===");
     }
 
     private async Task LoadEvents()
     {
+        Console.WriteLine($"[Calendar.LoadEvents] Reloading events...");
+
         // Trigger the scheduler to reload data for the current visible date range
         // This will call OnLoadData with the appropriate date range
         if (_scheduler != null)
         {
+            Console.WriteLine($"[Calendar.LoadEvents] Calling scheduler.Reload()");
             await _scheduler.Reload();
+        }
+        else
+        {
+            Console.WriteLine($"[Calendar.LoadEvents] Scheduler not ready, using LoadInitialEvents");
+            await LoadInitialEvents();
         }
     }
 
