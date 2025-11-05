@@ -326,11 +326,19 @@
         _loading = true;
         StateHasChanged();
 
-        // Load events for a wide range (3 months back, 3 months forward)
-        var startDate = DateTime.Today.AddMonths(-3);
-        var endDate = DateTime.Today.AddMonths(3);
+        Console.WriteLine("[Calendar.LoadEvents] Loading events...");
 
-        _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
+        // Load ALL events for the user (no date filter)
+        // This ensures imported PST events from any date range are visible
+        _events = await EventRepository.GetAllAsync(_userId);
+
+        Console.WriteLine($"[Calendar.LoadEvents] Loaded {_events.Count} total events");
+        if (_events.Any())
+        {
+            var minDate = _events.Min(e => e.StartTime);
+            var maxDate = _events.Max(e => e.StartTime);
+            Console.WriteLine($"[Calendar.LoadEvents] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+        }
 
         // Convert events to appointments for RadzenScheduler
         // If event has a timezone, convert it to user's timezone for display

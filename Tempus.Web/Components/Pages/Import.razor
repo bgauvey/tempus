@@ -253,6 +253,14 @@
         Console.WriteLine($"Total events to save: {_importedEvents.Count}");
         Console.WriteLine($"Current user ID: {_userId}");
 
+        // Log date range of events being imported
+        if (_importedEvents.Any())
+        {
+            var minDate = _importedEvents.Min(e => e.StartTime);
+            var maxDate = _importedEvents.Max(e => e.StartTime);
+            Console.WriteLine($"Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+        }
+
         try
         {
             int savedCount = 0;
@@ -308,6 +316,33 @@
 
             Console.WriteLine($"\n=== SAVE COMPLETE ===");
             Console.WriteLine($"Total saved: {savedCount} of {_importedEvents.Count}");
+
+            // Verify events are in database
+            Console.WriteLine($"\n=== VERIFYING DATABASE ===");
+            try
+            {
+                var allUserEvents = await EventRepository.GetAllAsync(_userId);
+                Console.WriteLine($"Total events in database for user: {allUserEvents.Count}");
+
+                if (allUserEvents.Any())
+                {
+                    var dbMinDate = allUserEvents.Min(e => e.StartTime);
+                    var dbMaxDate = allUserEvents.Max(e => e.StartTime);
+                    Console.WriteLine($"Database event date range: {dbMinDate:yyyy-MM-dd} to {dbMaxDate:yyyy-MM-dd}");
+
+                    // Show a few sample events
+                    Console.WriteLine("Sample events from database:");
+                    foreach (var evt in allUserEvents.Take(5))
+                    {
+                        Console.WriteLine($"  - {evt.Title}: {evt.StartTime:yyyy-MM-dd HH:mm} to {evt.EndTime:yyyy-MM-dd HH:mm}");
+                    }
+                }
+            }
+            catch (Exception verifyEx)
+            {
+                Console.WriteLine($"Error verifying database: {verifyEx.Message}");
+            }
+            Console.WriteLine($"=== VERIFICATION COMPLETE ===\n");
 
             if (savedCount > 0)
             {

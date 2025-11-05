@@ -180,6 +180,14 @@ public class PstImportService : IPstImportService
                 endTime = startTime.AddHours(1);
             }
 
+            // Ensure events have at least some duration (fix zero-duration events)
+            // Zero-duration events may not render properly in the calendar
+            if (endTime == startTime)
+            {
+                endTime = startTime.AddHours(1); // Default 1 hour duration
+                Console.WriteLine($"[PstImportService.ConvertToEvent] Fixed zero-duration event '{subject}': added 1 hour duration");
+            }
+
             // Create event object
             var evt = new Event
             {
