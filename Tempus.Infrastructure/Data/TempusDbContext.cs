@@ -55,8 +55,20 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<CalendarIntegration>(entity =>
         {
             entity.HasKey(c => c.Id);
+            entity.Property(c => c.UserId).IsRequired();
             entity.Property(c => c.Provider).IsRequired().HasMaxLength(50);
             entity.Property(c => c.CalendarName).HasMaxLength(200);
+            entity.Property(c => c.CalendarId).HasMaxLength(200);
+            entity.Property(c => c.AccessToken).HasMaxLength(2000);
+            entity.Property(c => c.RefreshToken).HasMaxLength(2000);
+            entity.Property(c => c.SyncToken).HasMaxLength(2000);
+
+            entity.HasOne(c => c.User)
+                  .WithMany()
+                  .HasForeignKey(c => c.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(c => new { c.UserId, c.Provider });
         });
 
         modelBuilder.Entity<CustomCalendarRange>(entity =>
