@@ -313,185 +313,184 @@ dotnet ef database update --startup-project ../Tempus.Web
 
 ### Planned Features
 
-#### High Priority
-- 🔄 **Multiple Calendar Support**
-  - Support for multiple personal calendars within a single account
-  - Color-coding and filtering by calendar
-  - Toggle visibility of individual calendars
-  - Calendar-specific default settings
+Listed in priority order from highest to lowest:
 
-- 🔄 **Meeting Responses & RSVP**
-  - Accept/Decline/Tentative responses for meeting invitations
-  - Track attendee responses and send reminders to non-responders
-  - Propose alternative meeting times
-  - Guest list visibility controls
+1. **Multiple Calendar Support**
+   - Support for multiple personal calendars within a single account
+   - Color-coding and filtering by calendar
+   - Toggle visibility of individual calendars
+   - Calendar-specific default settings
 
-- 🔄 **Video Conferencing Integration**
-  - Automatic Zoom/Teams/Google Meet link generation
-  - One-click join buttons for video meetings
-  - Virtual meeting room management
-  - Phone dial-in number support
+2. **Meeting Responses & RSVP**
+   - Accept/Decline/Tentative responses for meeting invitations
+   - Track attendee responses and send reminders to non-responders
+   - Propose alternative meeting times
+   - Guest list visibility controls
 
-- 🔄 **Scheduling Assistant / Find a Time**
-  - Visual availability grid showing when all attendees are free
-  - Smart scheduling suggestions based on attendee availability
-  - Automatic conflict detection and resolution
-  - Meeting polls (Doodle-style integration)
+3. **Video Conferencing Integration**
+   - Automatic Zoom/Teams/Google Meet link generation
+   - One-click join buttons for video meetings
+   - Virtual meeting room management
+   - Phone dial-in number support
 
-- 🔄 **Room & Resource Booking**
-  - Conference room finder and booking system
-  - Equipment/resource reservation (projectors, vehicles, etc.)
-  - Room availability checking
-  - Capacity management and tracking
+4. **Calendar Sharing & Advanced Permissions**
+   - Share calendars with specific people with granular permissions
+   - Delegate calendar management to assistants
+   - Permission levels (view free/busy, view details, make changes, etc.)
+   - Subscribe to public calendars (holidays, sports schedules, school calendars)
 
-- 🔄 **Natural Language Event Creation**
-  - Create events with natural language ("Meeting with John tomorrow at 2pm")
-  - Voice command support
-  - Quick add via keyboard shortcuts
+5. **Scheduling Assistant / Find a Time**
+   - Visual availability grid showing when all attendees are free
+   - Smart scheduling suggestions based on attendee availability
+   - Automatic conflict detection and resolution
+   - Meeting polls (Doodle-style integration)
 
-- 🔄 **Calendar Sharing & Advanced Permissions**
-  - Share calendars with specific people with granular permissions
-  - Delegate calendar management to assistants
-  - Permission levels (view free/busy, view details, make changes, etc.)
-  - Subscribe to public calendars (holidays, sports schedules, school calendars)
+6. **Natural Language Event Creation**
+   - Create events with natural language ("Meeting with John tomorrow at 2pm")
+   - Voice command support
+   - Quick add via keyboard shortcuts
 
-- 🔄 **Appointment Booking Pages**
-  - Create public booking pages (like Calendly)
-  - Let others schedule time with you automatically
-  - Buffer time between appointments
-  - Booking limits and rules
+7. **Appointment Booking Pages**
+   - Create public booking pages (like Calendly)
+   - Let others schedule time with you automatically
+   - Buffer time between appointments
+   - Booking limits and rules
 
-- 🔄 **Event Attachments & Rich Content**
-  - Attach files and documents to events
-  - Add images to calendar events
-  - Link to notes (OneNote, Evernote, Google Docs)
-  - Meeting agendas as attachments
+8. **Room & Resource Booking**
+   - Conference room finder and booking system
+   - Equipment/resource reservation (projectors, vehicles, etc.)
+   - Room availability checking
+   - Capacity management and tracking
 
-- 🔄 **Out of Office / Availability Status**
-  - Set out-of-office status with auto-responders
-  - Define working hours and availability windows
-  - Automatic meeting declination during blocked times
-  - Focus time protection (auto-decline meetings)
+9. **Out of Office / Availability Status**
+   - Set out-of-office status with auto-responders
+   - Define working hours and availability windows
+   - Automatic meeting declination during blocked times
+   - Focus time protection (auto-decline meetings)
 
-#### Medium Priority
-- 🔄 **Working Location Management**
-  - Set location status (Office, Home, Remote, Traveling)
-  - Show location in calendar view
-  - Location-based notifications and reminders
+10. **Event Attachments & Rich Content**
+    - Attach files and documents to events
+    - Add images to calendar events
+    - Link to notes (OneNote, Evernote, Google Docs)
+    - Meeting agendas as attachments
 
-- 🔄 **Travel Time Calculation**
-  - Automatic travel time insertion between events
-  - Interactive maps for event locations
-  - Directions and real-time traffic updates
-  - Location suggestions based on history
+11. **Keyboard Shortcuts**
+    - Quick navigation (j/k for prev/next day)
+    - Fast event creation (c for create)
+    - View switching shortcuts
+    - Search activation and filtering
 
-- 🔄 **Keyboard Shortcuts**
-  - Quick navigation (j/k for prev/next day)
-  - Fast event creation (c for create)
-  - View switching shortcuts
-  - Search activation and filtering
+12. **Mobile Native App (MAUI)**
+    - Native iOS and Android applications
+    - Mobile-optimized UI and gestures
+    - Push notifications
+    - Widget support on mobile devices
 
-- 🔄 **Weather Integration**
-  - Show weather forecast on calendar days
-  - Weather-aware event planning
-  - Severe weather alerts for outdoor events
+13. **AI-Powered Smart Scheduling**
+    - AI-suggested meeting times based on habits and patterns
+    - Optimal scheduling recommendations
+    - Automatic lunch break protection
+    - Learning from scheduling preferences
 
-- 🔄 **Event Proposals & Polling**
-  - Suggest multiple time options to attendees
-  - Collect votes on preferred meeting times
-  - Automatic scheduling when consensus reached
+14. **Third-Party Integrations**
+    - Slack integration (schedule meetings, view calendar)
+    - Microsoft Teams deep integration
+    - Task management apps (Todoist, Asana, Trello)
+    - CRM integrations (Salesforce, HubSpot)
+    - Email platform integrations
 
-- 🔄 **AI-Powered Smart Scheduling**
-  - AI-suggested meeting times based on habits and patterns
-  - Optimal scheduling recommendations
-  - Automatic lunch break protection
-  - Learning from scheduling preferences
+15. **Working Location Management**
+    - Set location status (Office, Home, Remote, Traveling)
+    - Show location in calendar view
+    - Location-based notifications and reminders
 
-- 🔄 **World Clock / Multiple Timezone View**
-  - Side-by-side timezone comparison
-  - World clock widget for global teams
-  - Meeting time translator across timezones
+16. **Free/Busy Information Sharing**
+    - Publish free/busy times
+    - View others' availability without seeing event details
+    - Privacy-respecting availability sharing
 
-- 🔄 **Offline Mode & Sync**
-  - Work without internet connection
-  - Sync when connection restored
-  - Offline event creation and editing
-  - Cached data management
+17. **Event Proposals & Polling**
+    - Suggest multiple time options to attendees
+    - Collect votes on preferred meeting times
+    - Automatic scheduling when consensus reached
 
-- 🔄 **Birthday & Special Occasion Calendar**
-  - Auto-import birthdays from contacts
-  - Automatic yearly recurrence
-  - Birthday and anniversary reminders
+18. **Travel Time Calculation**
+    - Automatic travel time insertion between events
+    - Interactive maps for event locations
+    - Directions and real-time traffic updates
+    - Location suggestions based on history
 
-- 🔄 **Third-Party Integrations**
-  - Slack integration (schedule meetings, view calendar)
-  - Microsoft Teams deep integration
-  - Task management apps (Todoist, Asana, Trello)
-  - CRM integrations (Salesforce, HubSpot)
-  - Email platform integrations
+19. **Offline Mode & Sync**
+    - Work without internet connection
+    - Sync when connection restored
+    - Offline event creation and editing
+    - Cached data management
 
-#### Additional Features
-- 🔄 **Event History & Audit Trail**
-  - Track who made changes to events
-  - Change history log with timestamps
-  - Restore previous event versions
-  - Compliance and accountability features
+20. **Event Templates**
+    - Save recurring event configurations
+    - One-click event creation from templates
+    - Template sharing across team
 
-- 🔄 **Speedy Meetings**
-  - End meetings 5-10 minutes early automatically
-  - Build in buffer time between meetings
-  - Prevent back-to-back scheduling
+21. **Email to Calendar**
+    - Create events from email (forward to calendar)
+    - Send meeting invitations via email with ICS attachments
+    - Email threading with event discussions
 
-- 🔄 **Goals & Habits Tracking**
-  - Set recurring goals (exercise 3x/week)
-  - Smart scheduling of goal time
-  - Progress tracking and analytics
+22. **Birthday & Special Occasion Calendar**
+    - Auto-import birthdays from contacts
+    - Automatic yearly recurrence
+    - Birthday and anniversary reminders
 
-- 🔄 **Email to Calendar**
-  - Create events from email (forward to calendar)
-  - Send meeting invitations via email with ICS attachments
-  - Email threading with event discussions
+23. **Desktop & Mobile Widgets**
+    - Today's agenda widget
+    - Upcoming events widget
+    - Quick event creation widget
 
-- 🔄 **Desktop & Mobile Widgets**
-  - Today's agenda widget
-  - Upcoming events widget
-  - Quick event creation widget
+24. **Event History & Audit Trail**
+    - Track who made changes to events
+    - Change history log with timestamps
+    - Restore previous event versions
+    - Compliance and accountability features
 
-- 🔄 **Free/Busy Information Sharing**
-  - Publish free/busy times
-  - View others' availability without seeing event details
-  - Privacy-respecting availability sharing
+25. **World Clock / Multiple Timezone View**
+    - Side-by-side timezone comparison
+    - World clock widget for global teams
+    - Meeting time translator across timezones
 
-- 🔄 **Event Templates**
-  - Save recurring event configurations
-  - One-click event creation from templates
-  - Template sharing across team
+26. **Weather Integration**
+    - Show weather forecast on calendar days
+    - Weather-aware event planning
+    - Severe weather alerts for outdoor events
 
-- 🔄 **Enhanced Print & Export**
-  - Formatted print layouts with custom templates
-  - Print range selection and customization
-  - Calendar snapshots for presentations
+27. **Speedy Meetings**
+    - End meetings 5-10 minutes early automatically
+    - Build in buffer time between meetings
+    - Prevent back-to-back scheduling
 
-- 🔄 **Mobile Native App (MAUI)**
-  - Native iOS and Android applications
-  - Mobile-optimized UI and gestures
-  - Push notifications
-  - Widget support on mobile devices
+28. **Team & Organizational Analytics**
+    - Team-wide calendar analytics
+    - Organizational meeting metrics
+    - Department-level insights
 
-- 🔄 **Team & Organizational Analytics**
-  - Team-wide calendar analytics
-  - Organizational meeting metrics
-  - Department-level insights
+29. **Goals & Habits Tracking**
+    - Set recurring goals (exercise 3x/week)
+    - Smart scheduling of goal time
+    - Progress tracking and analytics
 
-- 🔄 **Additional Custom Themes**
-  - Theme editor for custom color schemes
-  - Dark mode variants
-  - Accessibility-focused themes
+30. **Enhanced Print & Export**
+    - Formatted print layouts with custom templates
+    - Print range selection and customization
+    - Calendar snapshots for presentations
 
-- 🔄 **Multi-language Support (i18n)**
-  - Localization for multiple languages
-  - Date/time format localization
-  - RTL language support
+31. **Additional Custom Themes**
+    - Theme editor for custom color schemes
+    - Dark mode variants
+    - Accessibility-focused themes
+
+32. **Multi-language Support (i18n)**
+    - Localization for multiple languages
+    - Date/time format localization
+    - RTL language support
 
 ## Using the Application
 
