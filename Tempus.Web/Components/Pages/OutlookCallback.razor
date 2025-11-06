@@ -1,0 +1,105 @@
+@page "/outlook-callback"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Tempus.Core.Interfaces
+@attribute [Authorize]
+@inject IOutlookCalendarService OutlookCalendarService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<PageTitle>Connecting Outlook Calendar - Tempus</PageTitle>
+
+<div style="max-width: 600px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <RadzenStack Gap="2rem" AlignItems="AlignItems.Center">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <RadzenText TextStyle="TextStyle.H4">Connecting to Outlook Calendar...</RadzenText>
+        <RadzenText Style="opacity: 0.7;">Please wait while we complete the authorization</RadzenText>
+    </RadzenStack>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? Code { get; set; }
+
+    [SupplyParameterFromQuery(Name = "state")]
+    public string? State { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error_description")]
+    public string? ErrorDescription { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HandleCallbackAsync();
+        }
+    }
+
+    private async Task HandleCallbackAsync()
+    {
+        try
+        {
+            // Check for errors from OAuth provider
+            if (!string.IsNullOrEmpty(Error))
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Authorization Failed",
+                    Detail = ErrorDescription ?? Error,
+                    Duration = 8000
+                });
+
+                NavigationManager.NavigateTo("/integrations");
+                return;
+            }
+
+            // Validate code and state
+            if (string.IsNullOrEmpty(Code) || string.IsNullOrEmpty(State))
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Invalid Callback",
+                    Detail = "Missing authorization code or state parameter",
+                    Duration = 5000
+                });
+
+                NavigationManager.NavigateTo("/integrations");
+                return;
+            }
+
+            var userId = State; // State contains userId
+            var redirectUri = $"{NavigationManager.BaseUri}outlook-callback";
+
+            // Exchange code for tokens
+            var integration = await OutlookCalendarService.ExchangeCodeForTokensAsync(Code, redirectUri, userId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Outlook Calendar Connected",
+                Detail = $"Successfully connected to {integration.CalendarName}",
+                Duration = 5000
+            });
+
+            // Redirect to integrations page
+            NavigationManager.NavigateTo("/integrations");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Connection Failed",
+                Detail = $"Failed to connect Outlook Calendar: {ex.Message}",
+                Duration = 8000
+            });
+
+            NavigationManager.NavigateTo("/integrations");
+        }
+    }
+}
