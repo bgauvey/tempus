@@ -21,8 +21,8 @@
     width: 550px !important;
     max-width: 90vw !important;
     height: 100vh !important;
-    background: var(--rz-base-background-color, #ffffff) !important;
-    background-color: var(--rz-base-background-color, #ffffff) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     z-index: 9999 !important;
     display: flex;
@@ -41,8 +41,8 @@
 .help-popover-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
-    background: var(--rz-base-background-color, #ffffff) !important;
-    background-color: var(--rz-base-background-color, #ffffff) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     opacity: 1 !important;
 }
 
@@ -51,8 +51,8 @@
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
-    background: var(--rz-base-background-color, #ffffff) !important;
-    background-color: var(--rz-base-background-color, #ffffff) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     opacity: 1 !important;
 }
 
@@ -108,7 +108,8 @@
     border: 1px solid var(--rz-border-color, #e0e0e0);
     cursor: pointer;
     transition: all 0.2s ease;
-    background: var(--rz-base-background-color, #ffffff);
+    background: #ffffff !important;
+    background-color: #ffffff !important;
 }
 
 .help-related-item:hover {
