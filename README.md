@@ -312,18 +312,186 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Automatic token refresh for seamless authentication
 
 ### Planned Features
-- 🔄 Multiple Calendar Support
+
+#### High Priority
+- 🔄 **Multiple Calendar Support**
   - Support for multiple personal calendars within a single account
   - Color-coding and filtering by calendar
   - Toggle visibility of individual calendars
   - Calendar-specific default settings
-- 🔄 AI-powered smart scheduling suggestions
-- 🔄 Team and organizational analytics
-- 🔄 Additional custom themes and theme editor
-- 🔄 Multi-language support (i18n)
-- 🔄 Mobile native app (MAUI)
-- 🔄 Team collaboration features
-- 🔄 Calendar sharing and permissions
+
+- 🔄 **Meeting Responses & RSVP**
+  - Accept/Decline/Tentative responses for meeting invitations
+  - Track attendee responses and send reminders to non-responders
+  - Propose alternative meeting times
+  - Guest list visibility controls
+
+- 🔄 **Video Conferencing Integration**
+  - Automatic Zoom/Teams/Google Meet link generation
+  - One-click join buttons for video meetings
+  - Virtual meeting room management
+  - Phone dial-in number support
+
+- 🔄 **Scheduling Assistant / Find a Time**
+  - Visual availability grid showing when all attendees are free
+  - Smart scheduling suggestions based on attendee availability
+  - Automatic conflict detection and resolution
+  - Meeting polls (Doodle-style integration)
+
+- 🔄 **Room & Resource Booking**
+  - Conference room finder and booking system
+  - Equipment/resource reservation (projectors, vehicles, etc.)
+  - Room availability checking
+  - Capacity management and tracking
+
+- 🔄 **Natural Language Event Creation**
+  - Create events with natural language ("Meeting with John tomorrow at 2pm")
+  - Voice command support
+  - Quick add via keyboard shortcuts
+
+- 🔄 **Calendar Sharing & Advanced Permissions**
+  - Share calendars with specific people with granular permissions
+  - Delegate calendar management to assistants
+  - Permission levels (view free/busy, view details, make changes, etc.)
+  - Subscribe to public calendars (holidays, sports schedules, school calendars)
+
+- 🔄 **Appointment Booking Pages**
+  - Create public booking pages (like Calendly)
+  - Let others schedule time with you automatically
+  - Buffer time between appointments
+  - Booking limits and rules
+
+- 🔄 **Event Attachments & Rich Content**
+  - Attach files and documents to events
+  - Add images to calendar events
+  - Link to notes (OneNote, Evernote, Google Docs)
+  - Meeting agendas as attachments
+
+- 🔄 **Out of Office / Availability Status**
+  - Set out-of-office status with auto-responders
+  - Define working hours and availability windows
+  - Automatic meeting declination during blocked times
+  - Focus time protection (auto-decline meetings)
+
+#### Medium Priority
+- 🔄 **Working Location Management**
+  - Set location status (Office, Home, Remote, Traveling)
+  - Show location in calendar view
+  - Location-based notifications and reminders
+
+- 🔄 **Travel Time Calculation**
+  - Automatic travel time insertion between events
+  - Interactive maps for event locations
+  - Directions and real-time traffic updates
+  - Location suggestions based on history
+
+- 🔄 **Keyboard Shortcuts**
+  - Quick navigation (j/k for prev/next day)
+  - Fast event creation (c for create)
+  - View switching shortcuts
+  - Search activation and filtering
+
+- 🔄 **Weather Integration**
+  - Show weather forecast on calendar days
+  - Weather-aware event planning
+  - Severe weather alerts for outdoor events
+
+- 🔄 **Event Proposals & Polling**
+  - Suggest multiple time options to attendees
+  - Collect votes on preferred meeting times
+  - Automatic scheduling when consensus reached
+
+- 🔄 **AI-Powered Smart Scheduling**
+  - AI-suggested meeting times based on habits and patterns
+  - Optimal scheduling recommendations
+  - Automatic lunch break protection
+  - Learning from scheduling preferences
+
+- 🔄 **World Clock / Multiple Timezone View**
+  - Side-by-side timezone comparison
+  - World clock widget for global teams
+  - Meeting time translator across timezones
+
+- 🔄 **Offline Mode & Sync**
+  - Work without internet connection
+  - Sync when connection restored
+  - Offline event creation and editing
+  - Cached data management
+
+- 🔄 **Birthday & Special Occasion Calendar**
+  - Auto-import birthdays from contacts
+  - Automatic yearly recurrence
+  - Birthday and anniversary reminders
+
+- 🔄 **Third-Party Integrations**
+  - Slack integration (schedule meetings, view calendar)
+  - Microsoft Teams deep integration
+  - Task management apps (Todoist, Asana, Trello)
+  - CRM integrations (Salesforce, HubSpot)
+  - Email platform integrations
+
+#### Additional Features
+- 🔄 **Event History & Audit Trail**
+  - Track who made changes to events
+  - Change history log with timestamps
+  - Restore previous event versions
+  - Compliance and accountability features
+
+- 🔄 **Speedy Meetings**
+  - End meetings 5-10 minutes early automatically
+  - Build in buffer time between meetings
+  - Prevent back-to-back scheduling
+
+- 🔄 **Goals & Habits Tracking**
+  - Set recurring goals (exercise 3x/week)
+  - Smart scheduling of goal time
+  - Progress tracking and analytics
+
+- 🔄 **Email to Calendar**
+  - Create events from email (forward to calendar)
+  - Send meeting invitations via email with ICS attachments
+  - Email threading with event discussions
+
+- 🔄 **Desktop & Mobile Widgets**
+  - Today's agenda widget
+  - Upcoming events widget
+  - Quick event creation widget
+
+- 🔄 **Free/Busy Information Sharing**
+  - Publish free/busy times
+  - View others' availability without seeing event details
+  - Privacy-respecting availability sharing
+
+- 🔄 **Event Templates**
+  - Save recurring event configurations
+  - One-click event creation from templates
+  - Template sharing across team
+
+- 🔄 **Enhanced Print & Export**
+  - Formatted print layouts with custom templates
+  - Print range selection and customization
+  - Calendar snapshots for presentations
+
+- 🔄 **Mobile Native App (MAUI)**
+  - Native iOS and Android applications
+  - Mobile-optimized UI and gestures
+  - Push notifications
+  - Widget support on mobile devices
+
+- 🔄 **Team & Organizational Analytics**
+  - Team-wide calendar analytics
+  - Organizational meeting metrics
+  - Department-level insights
+
+- 🔄 **Additional Custom Themes**
+  - Theme editor for custom color schemes
+  - Dark mode variants
+  - Accessibility-focused themes
+
+- 🔄 **Multi-language Support (i18n)**
+  - Localization for multiple languages
+  - Date/time format localization
+  - RTL language support
 
 ## Using the Application
 
