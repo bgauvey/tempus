@@ -4,8 +4,8 @@
 
 @if (_isVisible)
 {
-    <div class="help-popover-backdrop" @onclick="Close"></div>
-    <div class="help-popover @(_isClosing ? "closing" : "")">
+    <div class="help-popover-backdrop" @onclick="Close" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9998;"></div>
+    <div class="help-popover @(_isClosing ? "closing" : "")" style="position: fixed; top: 0; right: 0; width: 550px; height: 100vh; z-index: 9999;">
         <div class="help-popover-header">
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="0.5rem">
                 @if (_currentView == HelpView.Topic && _currentTopic != null)
@@ -204,7 +204,7 @@
             .ToList();
     }
 
-    public async Task Show()
+    public Task Show()
     {
         _isVisible = true;
         _isClosing = false;
@@ -212,6 +212,7 @@
         _searchQuery = string.Empty;
         _isSearching = false;
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
     public async Task Close()
