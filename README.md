@@ -312,6 +312,11 @@ dotnet ef database update --startup-project ../Tempus.Web
   - Automatic token refresh for seamless authentication
 
 ### Planned Features
+- 🔄 Multiple Calendar Support
+  - Support for multiple personal calendars within a single account
+  - Color-coding and filtering by calendar
+  - Toggle visibility of individual calendars
+  - Calendar-specific default settings
 - 🔄 AI-powered smart scheduling suggestions
 - 🔄 Team and organizational analytics
 - 🔄 Additional custom themes and theme editor
