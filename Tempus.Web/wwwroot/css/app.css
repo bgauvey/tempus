@@ -733,4 +733,70 @@ html, body {
     background-color: transparent !important;
 }
 
+/* Help Popover Styles */
+.help-popover-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 9998 !important;
+}
+
+.help-popover {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 550px !important;
+    max-width: 90vw !important;
+    height: 100vh !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-left: 2px solid #d0d0d0;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    z-index: 9999 !important;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+}
+
+.help-popover-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #d0d0d0;
+    background: #4a5568 !important;
+    background-color: #4a5568 !important;
+    opacity: 1 !important;
+    color: #ffffff;
+}
+
+.help-popover-header * {
+    color: #ffffff !important;
+}
+
+.help-popover-header .rz-button,
+.help-popover-header .rz-button *,
+.help-popover-header button,
+.help-popover-header button * {
+    color: #ffffff !important;
+}
+
+.help-popover-header .rz-button:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.help-popover-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
 
