@@ -1,7 +1,49 @@
 @using Tempus.Web.Components.Shared
+@inject DialogService DialogService
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
     <RadzenButton Icon="notifications" ButtonStyle="ButtonStyle.Light"
                   Style="border-radius: 10px;" />
+
+    <!-- Help Icon with Dropdown -->
+    <RadzenSplitButton Icon="help_outline" ButtonStyle="ButtonStyle.Light"
+                       Click="@ShowHelp" Style="border-radius: 10px;">
+        <RadzenSplitButtonItem Text="Help Center" Icon="help" Value="help" />
+        <RadzenSplitButtonItem Text="Contact Support" Icon="support_agent" Value="support" />
+    </RadzenSplitButton>
+
     <UserAvatar />
 </RadzenStack>
+
+@code {
+    [CascadingParameter]
+    public HelpPopover? HelpPopover { get; set; }
+
+    private async Task ShowHelp(RadzenSplitButtonItem item)
+    {
+        if (item.Value?.ToString() == "help")
+        {
+            if (HelpPopover != null)
+            {
+                await HelpPopover.Show();
+            }
+        }
+        else if (item.Value?.ToString() == "support")
+        {
+            await ShowContactSupport();
+        }
+    }
+
+    private async Task ShowContactSupport()
+    {
+        await DialogService.Alert(
+            @"<p>Need help? We're here to support you!</p>
+              <p><strong>Email:</strong> support@tempus-app.com</p>
+              <p><strong>Hours:</strong> Monday-Friday, 9 AM - 5 PM EST</p>
+              <p>For urgent issues, please email us with ""URGENT"" in the subject line.</p>
+              <p>We typically respond within 24 hours during business days.</p>",
+            "Contact Support",
+            new AlertOptions { OkButtonText = "Close" }
+        );
+    }
+}
