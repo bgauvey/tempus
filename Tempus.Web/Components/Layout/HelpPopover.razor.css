@@ -91,12 +91,8 @@
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid var(--rz-border-color, #e0e0e0);
-    cursor: pointer !important;
+    cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.help-topic-item * {
-    cursor: pointer !important;
 }
 
 .help-topic-item:hover {
@@ -110,12 +106,8 @@
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid var(--rz-border-color, #e0e0e0);
-    cursor: pointer !important;
+    cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.help-category-item * {
-    cursor: pointer !important;
 }
 
 .help-category-item:hover {
@@ -128,14 +120,10 @@
     padding: 0.75rem 1rem;
     border-radius: 6px;
     border: 1px solid var(--rz-border-color, #e0e0e0);
-    cursor: pointer !important;
+    cursor: pointer;
     transition: all 0.2s ease;
     background: #ffffff !important;
     background-color: #ffffff !important;
-}
-
-.help-related-item * {
-    cursor: pointer !important;
 }
 
 .help-related-item:hover {
