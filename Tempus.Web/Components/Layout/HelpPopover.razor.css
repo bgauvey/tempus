@@ -1,0 +1,44 @@
+/* Gmail-style Animations */
+.help-popover-backdrop {
+    animation: fadeIn 0.2s ease;
+}
+
+.help-popover {
+    animation: slideInScale 0.2s cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+
+.help-popover.closing {
+    animation: slideOutScale 0.15s cubic-bezier(0.4, 0.0, 1, 1);
+}
+
+/* Keyframes */
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes slideOutScale {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

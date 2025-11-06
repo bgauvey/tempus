@@ -15,7 +15,8 @@
 <RadzenContextMenu @rendermode="InteractiveServer" />
 <ScrollToTopHandler />
 
-<RadzenLayout>
+<CascadingValue Value="@_helpPopover">
+    <RadzenLayout>
     <!-- Public Header for Unauthenticated Users -->
     <AuthorizeView>
         <NotAuthorized>
@@ -128,8 +129,13 @@
         </AuthorizeView>
     </RadzenBody>
 </RadzenLayout>
+</CascadingValue>
+
+<!-- Help Popover Component -->
+<HelpPopover @ref="_helpPopover" />
 
 @code {
+    private HelpPopover? _helpPopover;
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 

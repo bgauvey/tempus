@@ -1,0 +1,278 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IHelpService HelpService
+
+@if (_isVisible)
+{
+    <div class="help-popover-backdrop" @onclick="Close"></div>
+    <div class="help-popover @(_isClosing ? "closing" : "")">
+        <div class="help-popover-header">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="0.5rem">
+                @if (_currentView == HelpView.Topic && _currentTopic != null)
+                {
+                    <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@BackToIndex" />
+                }
+                <RadzenText TextStyle="TextStyle.H6" Style="flex: 1; margin: 0;">
+                    @if (_currentView == HelpView.Index)
+                    {
+                        <text>Help Center</text>
+                    }
+                    else if (_currentTopic != null)
+                    {
+                        @_currentTopic.Title
+                    }
+                </RadzenText>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@Close" />
+            </RadzenStack>
+        </div>
+
+        <div class="help-popover-content">
+            @if (_currentView == HelpView.Index)
+            {
+                <!-- Search Bar -->
+                <div class="help-search-section">
+                    <RadzenTextBox @bind-Value="_searchQuery" Placeholder="Search help topics..." Style="width: 100%;"
+                                   @onkeyup="HandleSearchKeyPress" />
+                    @if (!string.IsNullOrWhiteSpace(_searchQuery))
+                    {
+                        <RadzenButton Text="Clear" Icon="clear" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                      Click="@ClearSearch" Style="margin-top: 0.5rem;" />
+                    }
+                </div>
+
+                @if (_isSearching && !string.IsNullOrWhiteSpace(_searchQuery))
+                {
+                    <!-- Search Results -->
+                    <div class="help-section">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 1rem;">
+                            <strong>Search Results (@_searchResults.Count)</strong>
+                        </RadzenText>
+                        @if (_searchResults.Any())
+                        {
+                            <RadzenStack Gap="0.5rem">
+                                @foreach (var topic in _searchResults)
+                                {
+                                    <div class="help-topic-item" @onclick="() => ShowTopic(topic.Id)">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@topic.Title</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@topic.Category</RadzenText>
+                                        </RadzenStack>
+                                    </div>
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenText Style="opacity: 0.7;">No results found for "@_searchQuery"</RadzenText>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- Frequent Topics -->
+                    <div class="help-section">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 1rem;">
+                            <strong>Frequently Accessed Topics</strong>
+                        </RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var topic in _frequentTopics)
+                            {
+                                <div class="help-topic-item" @onclick="() => ShowTopic(topic.Id)">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@topic.Title</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@topic.Category</RadzenText>
+                                    </RadzenStack>
+                                </div>
+                            }
+                        </RadzenStack>
+                    </div>
+
+                    <!-- Browse by Category -->
+                    <div class="help-section">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 1rem;">
+                            <strong>Browse by Category</strong>
+                        </RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var category in _categories)
+                            {
+                                <div class="help-category-item" @onclick="() => ShowCategory(category)">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <RadzenText>@category</RadzenText>
+                                        <RadzenIcon Icon="arrow_forward" Style="font-size: 1rem;" />
+                                    </RadzenStack>
+                                </div>
+                            }
+                        </RadzenStack>
+                    </div>
+                }
+            }
+            else if (_currentView == HelpView.Topic && _currentTopic != null)
+            {
+                <!-- Topic Content -->
+                <div class="help-topic-content">
+                    <div class="help-category-badge">
+                        <RadzenBadge Text="@_currentTopic.Category" BadgeStyle="BadgeStyle.Info" />
+                    </div>
+                    <div class="help-content-html">
+                        @((MarkupString)_currentTopic.Content)
+                    </div>
+                </div>
+
+                <!-- Related Topics -->
+                @if (_relatedTopics.Any())
+                {
+                    <div class="help-section related-topics">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.75rem;">
+                            <strong>Related Topics</strong>
+                        </RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var topic in _relatedTopics)
+                            {
+                                <div class="help-related-item" @onclick="() => ShowTopic(topic.Id)">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="help_outline" Style="font-size: 1.2rem; opacity: 0.7;" />
+                                        <RadzenText Style="flex: 1;">@topic.Title</RadzenText>
+                                        <RadzenIcon Icon="arrow_forward" Style="font-size: 1rem; opacity: 0.5;" />
+                                    </RadzenStack>
+                                </div>
+                            }
+                        </RadzenStack>
+                    </div>
+                }
+            }
+            else if (_currentView == HelpView.Category)
+            {
+                <!-- Category Topics -->
+                <div class="help-section">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 1rem;">
+                        <strong>@_currentCategory Topics</strong>
+                    </RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        @foreach (var topic in _categoryTopics)
+                        {
+                            <div class="help-topic-item" @onclick="() => ShowTopic(topic.Id)">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@topic.Title</RadzenText>
+                                    @if (topic.Tags.Any())
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">
+                                            @string.Join(", ", topic.Tags.Take(3))
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </div>
+                        }
+                    </RadzenStack>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private enum HelpView
+    {
+        Index,
+        Topic,
+        Category
+    }
+
+    private bool _isVisible = false;
+    private bool _isClosing = false;
+    private HelpView _currentView = HelpView.Index;
+
+    private string _searchQuery = string.Empty;
+    private bool _isSearching = false;
+    private List<HelpTopic> _frequentTopics = new();
+    private List<HelpTopic> _searchResults = new();
+    private List<HelpTopic> _relatedTopics = new();
+    private List<HelpTopic> _categoryTopics = new();
+    private List<string> _categories = new();
+
+    private HelpTopic? _currentTopic;
+    private string _currentCategory = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _frequentTopics = await HelpService.GetFrequentTopicsAsync(5);
+
+        var allTopics = await HelpService.GetAllTopicsAsync();
+        _categories = allTopics
+            .Select(t => t.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+    }
+
+    public Task Show()
+    {
+        _isVisible = true;
+        _isClosing = false;
+        _currentView = HelpView.Index;
+        _searchQuery = string.Empty;
+        _isSearching = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    public async Task Close()
+    {
+        _isClosing = true;
+        StateHasChanged();
+        await Task.Delay(150); // Wait for Gmail-style animation
+        _isVisible = false;
+        _isClosing = false;
+        StateHasChanged();
+    }
+
+    private async Task ShowTopic(string topicId)
+    {
+        _currentTopic = await HelpService.GetTopicByIdAsync(topicId);
+        if (_currentTopic != null)
+        {
+            _relatedTopics = await HelpService.GetRelatedTopicsAsync(topicId);
+            _currentView = HelpView.Topic;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ShowCategory(string category)
+    {
+        _currentCategory = category;
+        _categoryTopics = await HelpService.GetTopicsByCategoryAsync(category);
+        _currentView = HelpView.Category;
+        StateHasChanged();
+    }
+
+    private void BackToIndex()
+    {
+        _currentView = HelpView.Index;
+        _currentTopic = null;
+        _searchQuery = string.Empty;
+        _isSearching = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            _isSearching = false;
+            _searchResults.Clear();
+        }
+        else
+        {
+            _isSearching = true;
+            _searchResults = await HelpService.SearchTopicsAsync(_searchQuery);
+        }
+        StateHasChanged();
+    }
+
+    private void ClearSearch()
+    {
+        _searchQuery = string.Empty;
+        _isSearching = false;
+        _searchResults.Clear();
+        StateHasChanged();
+    }
+}
