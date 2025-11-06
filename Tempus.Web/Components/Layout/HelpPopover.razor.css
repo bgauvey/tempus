@@ -23,6 +23,7 @@
     height: 100vh !important;
     background: #ffffff !important;
     background-color: #ffffff !important;
+    border-left: 2px solid #d0d0d0;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     z-index: 9999 !important;
     display: flex;
@@ -40,10 +41,23 @@
 /* Help Popover Header */
 .help-popover-header {
     padding: 1.5rem;
-    border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
-    background: #ffffff !important;
-    background-color: #ffffff !important;
+    border-bottom: 1px solid #d0d0d0;
+    background: #4a5568 !important;
+    background-color: #4a5568 !important;
     opacity: 1 !important;
+    color: #ffffff;
+}
+
+.help-popover-header * {
+    color: #ffffff !important;
+}
+
+.help-popover-header .rz-button {
+    color: #ffffff !important;
+}
+
+.help-popover-header .rz-button:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Help Popover Content */
