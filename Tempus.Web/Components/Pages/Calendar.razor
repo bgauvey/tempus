@@ -733,16 +733,22 @@
         }
         else
         {
-            menuItems.Add(new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" });
-
-            // Add "Edit Series" option if this is a recurring event
+            // For recurring events, show options for both single occurrence and series
             if (evt.IsRecurring || evt.RecurrenceParentId.HasValue)
             {
+                menuItems.Add(new ContextMenuItem { Text = "Edit This Occurrence", Value = data, Icon = "edit" });
                 menuItems.Add(new ContextMenuItem { Text = "Edit Series", Value = data, Icon = "event_repeat" });
+                menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+                menuItems.Add(new ContextMenuItem { Text = "Delete This Occurrence", Value = data, Icon = "delete_outline" });
+                menuItems.Add(new ContextMenuItem { Text = "Delete Series", Value = data, Icon = "delete_forever" });
             }
-
-            menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
-            menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+            else
+            {
+                // For non-recurring events, show standard options
+                menuItems.Add(new ContextMenuItem { Text = "Edit", Value = data, Icon = "edit" });
+                menuItems.Add(new ContextMenuItem { Text = "Duplicate", Value = data, Icon = "content_copy" });
+                menuItems.Add(new ContextMenuItem { Text = "Delete", Value = data, Icon = "delete" });
+            }
         }
 
         ContextMenuService.Open(args, menuItems, OnMenuItemClick);
@@ -763,11 +769,17 @@
                 break;
 
             case "Edit":
+                // For non-recurring events
                 await OpenEventDialogAsync(data.Event.Id);
                 break;
 
+            case "Edit This Occurrence":
+                // For recurring events, edit only this occurrence
+                await EditSingleOccurrenceAsync(data.Event);
+                break;
+
             case "Edit Series":
-                // For recurring events, edit the parent event
+                // For recurring events, edit the parent event (all occurrences)
                 var eventIdToEdit = data.Event.RecurrenceParentId ?? data.Event.Id;
                 await OpenEventDialogAsync(eventIdToEdit);
                 break;
@@ -777,7 +789,19 @@
                 break;
 
             case "Delete":
+                // For non-recurring events
                 await DeleteEventAsync(data.Event.Id);
+                break;
+
+            case "Delete This Occurrence":
+                // For recurring events, delete only this occurrence
+                await DeleteSingleOccurrenceAsync(data.Event);
+                break;
+
+            case "Delete Series":
+                // For recurring events, delete the parent event (all occurrences)
+                var eventIdToDelete = data.Event.RecurrenceParentId ?? data.Event.Id;
+                await DeleteEventAsync(eventIdToDelete);
                 break;
         }
     }
