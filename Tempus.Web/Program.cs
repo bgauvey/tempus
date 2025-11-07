@@ -97,6 +97,10 @@ builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
 builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
 builder.Services.AddScoped<IHelpService, HelpService>();
+builder.Services.AddScoped<INotificationSchedulerService, NotificationSchedulerService>();
+
+// Register background service for notification checking
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 var app = builder.Build();
 

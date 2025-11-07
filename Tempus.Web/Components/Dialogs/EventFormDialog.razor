@@ -562,11 +562,15 @@
                     IsOrganizer = a.IsOrganizer,
                     Status = a.Status
                 }).ToList(),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                ReminderMinutes = InstanceEvent.ReminderMinutes // Copy reminders from parent
             };
             // Calculate duration from existing event
             _eventDuration = _event.EndTime - _event.StartTime;
             _isExistingEvent = true;
+
+            // Load reminders from instance
+            LoadReminders();
         }
         else if (EventId.HasValue)
         {
@@ -578,6 +582,9 @@
                 // Calculate duration from existing event
                 _eventDuration = _event.EndTime - _event.StartTime;
                 _isExistingEvent = true;
+
+                // Load existing reminders
+                LoadReminders();
             }
         }
         else
@@ -625,6 +632,9 @@
             {
                 _event.MeetingCost = CalculateMeetingCost();
             }
+
+            // Save reminder selections
+            SaveReminders();
 
             if (EditSingleOccurrence)
             {
@@ -726,6 +736,34 @@
             10080 => "1 week",
             _ => $"{minutes} minutes"
         };
+    }
+
+    private void LoadReminders()
+    {
+        if (!string.IsNullOrEmpty(_event.ReminderMinutes))
+        {
+            _selectedReminders = _event.ReminderMinutes
+                .Split(',')
+                .Select(s => int.TryParse(s.Trim(), out var minutes) ? minutes : 0)
+                .Where(m => m > 0)
+                .ToList();
+        }
+        else
+        {
+            _selectedReminders = new List<int>();
+        }
+    }
+
+    private void SaveReminders()
+    {
+        if (_selectedReminders != null && _selectedReminders.Any())
+        {
+            _event.ReminderMinutes = string.Join(",", _selectedReminders.OrderBy(r => r));
+        }
+        else
+        {
+            _event.ReminderMinutes = null;
+        }
     }
 
     private void Cancel()

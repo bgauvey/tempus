@@ -40,6 +40,9 @@ public class Event
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
 
+    // Reminders/Notifications
+    public string? ReminderMinutes { get; set; } // Comma-separated: "15,60,1440" (15min, 1hr, 1day)
+
     // Meeting cost tracking
     public decimal HourlyCostPerAttendee { get; set; } = 75.00m;
     public decimal? MeetingCost { get; set; }
