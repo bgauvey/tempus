@@ -18,7 +18,12 @@ public class NotificationBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Notification Background Service started");
+        _logger.LogInformation("========================================");
+        _logger.LogInformation("NOTIFICATION BACKGROUND SERVICE STARTED");
+        _logger.LogInformation("========================================");
+        Console.WriteLine("========================================");
+        Console.WriteLine("NOTIFICATION BACKGROUND SERVICE STARTED");
+        Console.WriteLine("========================================");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -44,7 +49,8 @@ public class NotificationBackgroundService : BackgroundService
         var schedulerService = scope.ServiceProvider.GetRequiredService<INotificationSchedulerService>();
 
         var now = DateTime.UtcNow;
-        _logger.LogDebug("Checking for pending notifications at {Time}", now);
+        _logger.LogInformation("Checking for pending notifications at {Time}", now);
+        Console.WriteLine($"[{now:HH:mm:ss}] Checking for pending notifications...");
 
         // Get all notifications that should be sent now
         var pendingNotifications = await schedulerService.GetPendingNotificationsAsync(now);
@@ -52,6 +58,7 @@ public class NotificationBackgroundService : BackgroundService
         if (pendingNotifications.Any())
         {
             _logger.LogInformation("Found {Count} pending notifications to send", pendingNotifications.Count);
+            Console.WriteLine($"[{now:HH:mm:ss}] Found {pendingNotifications.Count} pending notifications!");
         }
 
         foreach (var pending in pendingNotifications)
