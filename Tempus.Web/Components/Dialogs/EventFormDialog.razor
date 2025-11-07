@@ -281,6 +281,52 @@
                 </RadzenStack>
             </RadzenTabsItem>
         }
+
+        <!-- Reminders Tab -->
+        <RadzenTabsItem Text="Reminders" Icon="notifications">
+            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0.5rem;">
+                    Choose when you want to be reminded about this event
+                </RadzenText>
+
+                <RadzenFormField Text="Reminder Times" Variant="Variant.Outlined">
+                    <RadzenCheckBoxList @bind-Value="@_selectedReminders"
+                                        TValue="int"
+                                        Orientation="Orientation.Vertical"
+                                        Data="@_reminderOptions"
+                                        TextProperty="Text"
+                                        ValueProperty="Value" />
+                </RadzenFormField>
+
+                @if (_selectedReminders != null && _selectedReminders.Any())
+                {
+                    <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                        <RadzenIcon Icon="notifications_active" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                        <strong>Active Reminders:</strong>
+                        <div style="margin-top: 0.5rem;">
+                            @foreach (var minutes in _selectedReminders.OrderBy(m => m))
+                            {
+                                <div style="margin-left: 1.5rem; color: #718096;">
+                                    • @GetReminderDescription(minutes) before event start
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div style="padding: 0.75rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
+                        <RadzenIcon Icon="notifications_off" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                        No reminders set. You won't receive notifications for this event.
+                    </div>
+                }
+
+                <div style="padding: 0.75rem; background: #e7f3ff; border-radius: 8px; font-size: 0.85rem; color: #0c5394; margin-top: 1rem;">
+                    <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                    <strong>Note:</strong> Notifications will be delivered via browser push notifications. Make sure your browser has notification permissions enabled.
+                </div>
+            </RadzenStack>
+        </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 
@@ -413,6 +459,19 @@
         }
     }
 
+    // Reminder management
+    private IEnumerable<int> _selectedReminders = new List<int>();
+    private readonly List<ReminderOption> _reminderOptions = new()
+    {
+        new ReminderOption { Text = "15 minutes before", Value = 15 },
+        new ReminderOption { Text = "30 minutes before", Value = 30 },
+        new ReminderOption { Text = "1 hour before", Value = 60 },
+        new ReminderOption { Text = "2 hours before", Value = 120 },
+        new ReminderOption { Text = "1 day before", Value = 1440 },
+        new ReminderOption { Text = "2 days before", Value = 2880 },
+        new ReminderOption { Text = "1 week before", Value = 10080 }
+    };
+
     private readonly List<DayOfWeekOption> _daysOfWeek = new()
     {
         new DayOfWeekOption { Text = "Sun", Value = 0 },
@@ -434,6 +493,12 @@
     {
         public string Id { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
+    }
+
+    private class ReminderOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public int Value { get; set; }
     }
 
     // Timezone property that binds to event's TimeZoneId
@@ -646,6 +711,21 @@
             return "Update";
         else
             return "Create";
+    }
+
+    private string GetReminderDescription(int minutes)
+    {
+        return minutes switch
+        {
+            15 => "15 minutes",
+            30 => "30 minutes",
+            60 => "1 hour",
+            120 => "2 hours",
+            1440 => "1 day",
+            2880 => "2 days",
+            10080 => "1 week",
+            _ => $"{minutes} minutes"
+        };
     }
 
     private void Cancel()
