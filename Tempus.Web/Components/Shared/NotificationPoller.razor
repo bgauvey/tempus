@@ -1,0 +1,136 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Enums
+@using Tempus.Web.Services
+@inject INotificationRepository NotificationRepository
+@inject IBrowserNotificationService BrowserNotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<NotificationPoller> Logger
+@implements IAsyncDisposable
+
+@code {
+    private Timer? _timer;
+    private string _userId = string.Empty;
+    private bool _isPolling = false;
+    private bool _permissionRequested = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                _userId = userIdClaim.Value;
+
+                // Request browser notification permission
+                await RequestNotificationPermission();
+
+                // Start polling every 15 seconds
+                _timer = new Timer(async _ => await PollForNotifications(), null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+
+                Logger.LogInformation("NotificationPoller started for user {UserId}", _userId);
+            }
+        }
+    }
+
+    private async Task RequestNotificationPermission()
+    {
+        try
+        {
+            if (!_permissionRequested)
+            {
+                var isSupported = await BrowserNotificationService.IsSupportedAsync();
+                if (isSupported)
+                {
+                    var permission = await BrowserNotificationService.GetPermissionStatusAsync();
+                    if (permission == "default")
+                    {
+                        await BrowserNotificationService.RequestPermissionAsync();
+                        _permissionRequested = true;
+                        Logger.LogInformation("Requested browser notification permission for user {UserId}", _userId);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error requesting notification permission");
+        }
+    }
+
+    private async Task PollForNotifications()
+    {
+        if (_isPolling || string.IsNullOrEmpty(_userId))
+            return;
+
+        try
+        {
+            _isPolling = true;
+
+            // Get unsent notifications (notifications created by backend but not yet displayed to user)
+            var notifications = await NotificationRepository.GetAllAsync(_userId);
+
+            // Filter for event reminders that haven't been shown in browser yet
+            var unshownNotifications = notifications
+                .Where(n => n.Type == NotificationType.EventReminder &&
+                           n.IsSent && // Backend created it
+                           !n.IsRead) // Not yet shown to user
+                .OrderBy(n => n.CreatedAt)
+                .ToList();
+
+            if (unshownNotifications.Any())
+            {
+                Logger.LogInformation("Found {Count} notifications to display for user {UserId}",
+                    unshownNotifications.Count, _userId);
+            }
+
+            foreach (var notification in unshownNotifications)
+            {
+                try
+                {
+                    // Show browser notification
+                    await BrowserNotificationService.ShowNotificationAsync(
+                        notification.Title,
+                        notification.Message,
+                        notification.EventId.HasValue ? $"/calendar?eventId={notification.EventId}" : null
+                    );
+
+                    // Mark as read (displayed)
+                    await NotificationRepository.MarkAsReadAsync(notification.Id, _userId);
+
+                    Logger.LogInformation(
+                        "Displayed notification '{Title}' for user {UserId}",
+                        notification.Title,
+                        _userId
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error displaying notification {NotificationId}", notification.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error polling for notifications");
+        }
+        finally
+        {
+            _isPolling = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_timer != null)
+        {
+            await _timer.DisposeAsync();
+            Logger.LogInformation("NotificationPoller stopped for user {UserId}", _userId);
+        }
+    }
+}
