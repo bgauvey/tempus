@@ -17,6 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add controllers for API endpoints
+builder.Services.AddControllers();
+
 // Add HTTP context accessor
 builder.Services.AddHttpContextAccessor();
 
@@ -133,6 +136,9 @@ app.MapRazorComponents<App>()
 
 // Add Identity endpoints for login/logout
 app.MapAdditionalIdentityEndpoints();
+
+// Map API controllers
+app.MapControllers();
 
 app.Run();
 
