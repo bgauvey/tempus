@@ -110,6 +110,9 @@ public class EventRepository : IEventRepository
         Console.WriteLine($"[EventRepository.CreateAsync] Starting for event: {@event.Title}");
         Console.WriteLine($"[EventRepository.CreateAsync] Event ID: {@event.Id}");
         Console.WriteLine($"[EventRepository.CreateAsync] User ID: {@event.UserId}");
+        Console.WriteLine($"[EventRepository.CreateAsync] StartTime: {@event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.StartTime.Kind})");
+        Console.WriteLine($"[EventRepository.CreateAsync] EndTime: {@event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.EndTime.Kind})");
+        Console.WriteLine($"[EventRepository.CreateAsync] TimeZoneId: '{@event.TimeZoneId}'");
 
         await using var context = await _contextFactory.CreateDbContextAsync();
         Console.WriteLine($"[EventRepository.CreateAsync] DbContext created");

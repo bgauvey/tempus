@@ -17,6 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add controllers for API endpoints
+builder.Services.AddControllers();
+
 // Add HTTP context accessor
 builder.Services.AddHttpContextAccessor();
 
@@ -97,6 +100,10 @@ builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
 builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
 builder.Services.AddScoped<IHelpService, HelpService>();
+builder.Services.AddScoped<INotificationSchedulerService, NotificationSchedulerService>();
+
+// Register background service for notification checking
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 var app = builder.Build();
 
@@ -129,6 +136,9 @@ app.MapRazorComponents<App>()
 
 // Add Identity endpoints for login/logout
 app.MapAdditionalIdentityEndpoints();
+
+// Map API controllers
+app.MapControllers();
 
 app.Run();
 

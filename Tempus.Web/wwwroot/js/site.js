@@ -49,46 +49,65 @@ window.downloadFile = function(filename, base64Data, contentType) {
 
 // Check if browser notifications are supported
 window.notificationsSupported = function() {
-    return 'Notification' in window;
+    console.log('[Tempus.Notifications] Checking if notifications are supported...');
+    const supported = 'Notification' in window;
+    console.log('[Tempus.Notifications] Notifications supported:', supported);
+    return supported;
 };
 
 // Request notification permission
 window.requestNotificationPermission = async function() {
+    console.log('[Tempus.Notifications] requestNotificationPermission called');
+
     if (!window.notificationsSupported()) {
-        console.warn('Browser notifications are not supported');
+        console.warn('[Tempus.Notifications] Browser notifications are not supported');
         return 'denied';
     }
 
+    console.log('[Tempus.Notifications] Current permission:', Notification.permission);
+
     if (Notification.permission === 'granted') {
+        console.log('[Tempus.Notifications] Permission already granted');
         return 'granted';
     }
 
     if (Notification.permission !== 'denied') {
         try {
+            console.log('[Tempus.Notifications] Requesting permission from user...');
             const permission = await Notification.requestPermission();
+            console.log('[Tempus.Notifications] User response:', permission);
             return permission;
         } catch (error) {
-            console.error('Error requesting notification permission:', error);
+            console.error('[Tempus.Notifications] Error requesting notification permission:', error);
             return 'denied';
         }
     }
 
+    console.log('[Tempus.Notifications] Permission denied');
     return Notification.permission;
 };
 
 // Show a browser notification
 window.showNotification = function(title, options) {
+    console.log('[Tempus.Notifications] showNotification called');
+    console.log('[Tempus.Notifications]   Title:', title);
+    console.log('[Tempus.Notifications]   Options:', options);
+
     if (!window.notificationsSupported()) {
-        console.warn('Browser notifications are not supported');
+        console.warn('[Tempus.Notifications] Browser notifications are not supported');
         return null;
     }
 
+    console.log('[Tempus.Notifications]   Current permission:', Notification.permission);
+
     if (Notification.permission !== 'granted') {
-        console.warn('Notification permission not granted');
+        console.warn('[Tempus.Notifications] ❌ Notification permission not granted!');
+        console.warn('[Tempus.Notifications]   Permission status:', Notification.permission);
         return null;
     }
 
     try {
+        console.log('[Tempus.Notifications] ✅ Creating notification...');
         const notification = new Notification(title, {
             body: options?.body || '',
             icon: options?.icon || '/favicon-192.png',
@@ -99,9 +118,12 @@ window.showNotification = function(title, options) {
             data: options?.data || null
         });
 
+        console.log('[Tempus.Notifications] ✅ Notification created successfully!');
+
         // Handle notification click
         if (options?.clickUrl) {
             notification.onclick = function() {
+                console.log('[Tempus.Notifications] Notification clicked, navigating to:', options.clickUrl);
                 window.focus();
                 window.location.href = options.clickUrl;
                 notification.close();
@@ -110,7 +132,7 @@ window.showNotification = function(title, options) {
 
         return notification;
     } catch (error) {
-        console.error('Error showing notification:', error);
+        console.error('[Tempus.Notifications] ❌ Error showing notification:', error);
         return null;
     }
 };
@@ -118,7 +140,10 @@ window.showNotification = function(title, options) {
 // Get current notification permission status
 window.getNotificationPermission = function() {
     if (!window.notificationsSupported()) {
+        console.log('[Tempus.Notifications] getNotificationPermission: unsupported');
         return 'unsupported';
     }
-    return Notification.permission;
+    const permission = Notification.permission;
+    console.log('[Tempus.Notifications] getNotificationPermission:', permission);
+    return permission;
 };

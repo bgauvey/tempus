@@ -15,6 +15,13 @@
 <RadzenContextMenu @rendermode="InteractiveServer" />
 <ScrollToTopHandler />
 
+<!-- Notification Poller for logged-in users -->
+<AuthorizeView>
+    <Authorized>
+        <NotificationPoller @rendermode="InteractiveServer" />
+    </Authorized>
+</AuthorizeView>
+
 <CascadingValue Value="@_helpPopover">
     <RadzenLayout>
     <!-- Public Header for Unauthenticated Users -->
