@@ -10,6 +10,7 @@
 @using Tempus.Web.Components.Account
 @attribute [Authorize]
 @inject IEventRepository EventRepository
+@inject ISettingsService SettingsService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
@@ -90,7 +91,7 @@
                                                         @evt.Title @GetTimeZoneIndicator(evt)
                                                     </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
-                                                        @GetDisplayTime(evt).ToString("MMM dd, yyyy • hh:mm tt")
+                                                        @GetDisplayTime(evt).ToString(DateTimeFormatString)
                                                     </RadzenText>
                                                 </RadzenStack>
                                             </RadzenStack>
@@ -214,6 +215,11 @@
 
     private string _userId = string.Empty;
     private string _userTimeZone = TimeZoneInfo.Local.Id;
+    private CalendarSettings? _settings;
+
+    private string DateTimeFormatString => _settings?.TimeFormat == Core.Enums.TimeFormat.TwentyFourHour
+        ? "MMM dd, yyyy • HH:mm"
+        : "MMM dd, yyyy • hh:mm tt";
 
     protected override async Task OnInitializedAsync()
     {
@@ -226,6 +232,8 @@
             {
                 _userId = appUser.Id;
                 _userTimeZone = appUser.TimeZone;
+                // Load user's calendar settings for time format preference
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
             }
         }
         await LoadDashboardData();

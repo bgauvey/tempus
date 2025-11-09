@@ -10,6 +10,7 @@
 @inject IIcsImportService IcsImportService
 @inject IPstImportService PstImportService
 @inject IEventRepository EventRepository
+@inject ISettingsService SettingsService
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
@@ -74,7 +75,7 @@
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                 <RadzenIcon Icon="event" />
                                 <RadzenText TextStyle="TextStyle.Body2">
-                                    <strong>@evt.Title</strong> - @evt.StartTime.ToString("MMM dd, yyyy hh:mm tt")
+                                    <strong>@evt.Title</strong> - @evt.StartTime.ToString(DateTimeFormatString)
                                 </RadzenText>
                             </RadzenStack>
                         }
@@ -175,6 +176,11 @@
     private bool _saving;
     private List<Event> _importedEvents = new();
     private string _userId = string.Empty;
+    private CalendarSettings? _settings;
+
+    private string DateTimeFormatString => _settings?.TimeFormat == Core.Enums.TimeFormat.TwentyFourHour
+        ? "MMM dd, yyyy HH:mm"
+        : "MMM dd, yyyy hh:mm tt";
 
     protected override async Task OnInitializedAsync()
     {
@@ -186,6 +192,8 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                // Load user's calendar settings for time format preference
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
             }
         }
     }

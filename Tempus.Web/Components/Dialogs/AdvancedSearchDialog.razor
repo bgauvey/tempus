@@ -1,6 +1,13 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Web.Components.Account
 @inject DialogService DialogService
+@inject ISettingsService SettingsService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IdentityUserAccessor IdentityUserAccessor
 
 <RadzenStack Gap="1rem">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
@@ -92,7 +99,8 @@
                 <RadzenDatePicker @bind-Value="@EarliestStartTimeTemp"
                                 ShowTime="true"
                                 TimeOnly="true"
-                                DateFormat="HH:mm"
+                                DateFormat="@TimeFormatString"
+                                HourFormat="@HourFormat"
                                 Style="width: 100%;" />
             </RadzenColumn>
             <RadzenColumn Size="6">
@@ -100,7 +108,8 @@
                 <RadzenDatePicker @bind-Value="@LatestEndTimeTemp"
                                 ShowTime="true"
                                 TimeOnly="true"
-                                DateFormat="HH:mm"
+                                DateFormat="@TimeFormatString"
+                                HourFormat="@HourFormat"
                                 Style="width: 100%;" />
             </RadzenColumn>
         </RadzenRow>
@@ -144,11 +153,27 @@
     private string CompletionFilter { get; set; } = "all";
     private DateTime? EarliestStartTimeTemp { get; set; }
     private DateTime? LatestEndTimeTemp { get; set; }
+    private CalendarSettings? _settings;
 
-    protected override void OnInitialized()
+    private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwentyFourHour ? "HH:mm" : "hh:mm tt";
+    private string HourFormat => _settings?.TimeFormat == TimeFormat.TwentyFourHour ? "24" : "12";
+
+    protected override async Task OnInitializedAsync()
     {
         base.OnInitialized();
         ResetFilter();
+
+        // Load user's calendar settings for time format preference
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(appUser.Id);
+            }
+        }
     }
 
     private void ToggleEventType(EventType eventType, bool isSelected)
