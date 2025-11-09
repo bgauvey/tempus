@@ -11,6 +11,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Event> Events { get; set; }
+    public DbSet<Calendar> Calendars { get; set; }
     public DbSet<Attendee> Attendees { get; set; }
     public DbSet<CalendarIntegration> CalendarIntegrations { get; set; }
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
@@ -43,6 +44,33 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .WithMany(u => u.Events)
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Calendar)
+                  .WithMany(c => c.Events)
+                  .HasForeignKey(e => e.CalendarId)
+                  .OnDelete(DeleteBehavior.NoAction); // NoAction to avoid cascade path conflicts
+
+            entity.HasIndex(e => new { e.UserId, e.CalendarId });
+        });
+
+        modelBuilder.Entity<Calendar>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            entity.Property(c => c.Description).HasMaxLength(500);
+            entity.Property(c => c.Color).IsRequired().HasMaxLength(50);
+            entity.Property(c => c.UserId).IsRequired();
+            entity.Property(c => c.DefaultEventColor).HasMaxLength(50);
+            entity.Property(c => c.DefaultLocation).HasMaxLength(500);
+            entity.Property(c => c.DefaultReminderTimes).HasMaxLength(100);
+
+            entity.HasOne(c => c.User)
+                  .WithMany(u => u.Calendars)
+                  .HasForeignKey(c => c.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(c => new { c.UserId, c.SortOrder });
+            entity.HasIndex(c => new { c.UserId, c.IsDefault });
         });
 
         modelBuilder.Entity<Attendee>(entity =>

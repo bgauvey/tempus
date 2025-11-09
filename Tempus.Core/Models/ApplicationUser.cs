@@ -18,5 +18,6 @@ public class ApplicationUser : IdentityUser
 
     // Navigation properties
     public ICollection<Event> Events { get; set; } = new List<Event>();
+    public ICollection<Calendar> Calendars { get; set; } = new List<Calendar>();
     public ICollection<CustomCalendarRange> CustomCalendarRanges { get; set; } = new List<CustomCalendarRange>();
 }

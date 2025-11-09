@@ -50,4 +50,8 @@ public class Event
     // User ownership
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser? User { get; set; }
+
+    // Calendar ownership - which calendar this event belongs to
+    public Guid? CalendarId { get; set; }
+    public Calendar? Calendar { get; set; }
 }
