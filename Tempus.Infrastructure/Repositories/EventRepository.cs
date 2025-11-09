@@ -102,6 +102,16 @@ public class EventRepository : IEventRepository
             .OrderBy(e => e.StartTime)
             .ToList();
 
+        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync] Found {allEvents.Count} total events");
+        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Non-recurring: {nonRecurringEvents.Count}");
+        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Recurring instances: {recurringInstances.Count}");
+        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Exceptions: {visibleExceptions.Count}");
+
+        // Log calendar info
+        var withCalendar = allEvents.Count(e => e.CalendarId.HasValue);
+        var withoutCalendar = allEvents.Count(e => !e.CalendarId.HasValue);
+        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   With CalendarId: {withCalendar}, Without CalendarId (NULL): {withoutCalendar}");
+
         return allEvents;
     }
 
@@ -110,6 +120,7 @@ public class EventRepository : IEventRepository
         Console.WriteLine($"[EventRepository.CreateAsync] Starting for event: {@event.Title}");
         Console.WriteLine($"[EventRepository.CreateAsync] Event ID: {@event.Id}");
         Console.WriteLine($"[EventRepository.CreateAsync] User ID: {@event.UserId}");
+        Console.WriteLine($"[EventRepository.CreateAsync] CalendarId: {@event.CalendarId}");
         Console.WriteLine($"[EventRepository.CreateAsync] StartTime: {@event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.StartTime.Kind})");
         Console.WriteLine($"[EventRepository.CreateAsync] EndTime: {@event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.EndTime.Kind})");
         Console.WriteLine($"[EventRepository.CreateAsync] TimeZoneId: '{@event.TimeZoneId}'");
