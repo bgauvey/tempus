@@ -219,8 +219,8 @@
                            @oncontextmenu:preventDefault>
                 <ChildContent>
                     <RadzenMonthView />
-                    <RadzenWeekView />
-                    <RadzenDayView />
+                    <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                    <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
                     <RadzenYearView />
                     <RadzenYearPlannerView />
                     <RadzenYearTimelineView />
@@ -297,7 +297,15 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
-                _userTimeZone = appUser.TimeZone;
+
+                // Get timezone from user settings, or fallback to system/browser timezone
+                _userTimeZone = !string.IsNullOrEmpty(appUser.TimeZone)
+                    ? appUser.TimeZone
+                    : TimeZoneInfo.Local.Id;
+
+                Console.WriteLine($"[Calendar.Init] User ID: {_userId}");
+                Console.WriteLine($"[Calendar.Init] User timezone: {_userTimeZone}");
+
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
                 // Load saved view preference
@@ -414,15 +422,39 @@
     private void ConvertEventsToAppointments()
     {
         // Convert events to appointments for RadzenScheduler
-        // If event has a timezone, convert it to user's timezone for display
+        // All events are stored in UTC, so always convert to user's timezone for display
+        Console.WriteLine($"[ConvertEventsToAppointments] Converting {_events.Count} events to appointments");
+        Console.WriteLine($"[ConvertEventsToAppointments] User timezone: {_userTimeZone}");
+
         _appointments = _events.Select(e =>
         {
+            Console.WriteLine($"[ConvertEventsToAppointments] Event: {e.Title}");
+            Console.WriteLine($"[ConvertEventsToAppointments]   Original StartTime: {e.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {e.StartTime.Kind})");
+            Console.WriteLine($"[ConvertEventsToAppointments]   Original EndTime: {e.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {e.EndTime.Kind})");
+            Console.WriteLine($"[ConvertEventsToAppointments]   TimeZoneId: {e.TimeZoneId}");
+
+            // CRITICAL FIX: Events from database may have DateTimeKind.Unspecified
+            // We need to explicitly mark them as UTC since we store everything in UTC
+            if (e.StartTime.Kind == DateTimeKind.Unspecified && e.TimeZoneId == "UTC")
+            {
+                e.StartTime = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
+                e.EndTime = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
+                Console.WriteLine($"[ConvertEventsToAppointments]   Fixed DateTimeKind to UTC");
+            }
+
             var displayEvent = e;
 
-            // If event has a timezone different from user's, convert it
-            if (!string.IsNullOrEmpty(e.TimeZoneId) && e.TimeZoneId != _userTimeZone)
+            // Convert from UTC to user's timezone for display
+            // Events are always stored in UTC (TimeZoneId = "UTC")
+            if (!string.IsNullOrEmpty(e.TimeZoneId))
             {
                 displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+                Console.WriteLine($"[ConvertEventsToAppointments]   Converted StartTime: {displayEvent.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {displayEvent.StartTime.Kind})");
+                Console.WriteLine($"[ConvertEventsToAppointments]   Converted EndTime: {displayEvent.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {displayEvent.EndTime.Kind})");
+            }
+            else
+            {
+                Console.WriteLine($"[ConvertEventsToAppointments]   WARNING: No TimeZoneId, skipping conversion!");
             }
 
             return new AppointmentData
@@ -433,6 +465,8 @@
                 Event = e // Keep original event for editing
             };
         }).ToList();
+
+        Console.WriteLine($"[ConvertEventsToAppointments] Created {_appointments.Count} appointments");
     }
 
     private async Task DownloadDailyAgenda()

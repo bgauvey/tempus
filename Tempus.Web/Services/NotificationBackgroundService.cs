@@ -74,10 +74,15 @@ public class NotificationBackgroundService : BackgroundService
                 );
 
                 // Create the notification record in the database
+                // Events are already stored in UTC, so no conversion needed
+                var eventStartUtc = pending.Event.StartTime.Kind == DateTimeKind.Utc
+                    ? pending.Event.StartTime
+                    : DateTime.SpecifyKind(pending.Event.StartTime, DateTimeKind.Utc);
+
                 await schedulerService.CreateNotificationRecordAsync(
                     pending.Event.Id,
                     pending.ReminderMinutes,
-                    pending.Event.StartTime.ToUniversalTime(),
+                    eventStartUtc,
                     pending.UserId
                 );
 

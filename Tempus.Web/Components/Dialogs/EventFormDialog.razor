@@ -463,6 +463,8 @@
     private IEnumerable<int> _selectedReminders = new List<int>();
     private readonly List<ReminderOption> _reminderOptions = new()
     {
+        new ReminderOption { Text = "1 minute before", Value = 1 },
+        new ReminderOption { Text = "5 minutes before", Value = 5 },
         new ReminderOption { Text = "15 minutes before", Value = 15 },
         new ReminderOption { Text = "30 minutes before", Value = 30 },
         new ReminderOption { Text = "1 hour before", Value = 60 },
@@ -519,7 +521,13 @@
             {
                 _userId = appUser.Id;
                 _userEmail = appUser.Email ?? string.Empty;
-                _userTimeZone = appUser.TimeZone;
+
+                // Get timezone from user settings, or fallback to system timezone
+                _userTimeZone = !string.IsNullOrEmpty(appUser.TimeZone)
+                    ? appUser.TimeZone
+                    : TimeZoneInfo.Local.Id;
+
+                Console.WriteLine($"[EventFormDialog.Init] User timezone: {_userTimeZone}");
 
                 // Get user's display name from claims or use email
                 var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
@@ -563,8 +571,19 @@
                     Status = a.Status
                 }).ToList(),
                 CreatedAt = DateTime.UtcNow,
-                ReminderMinutes = InstanceEvent.ReminderMinutes // Copy reminders from parent
+                ReminderMinutes = InstanceEvent.ReminderMinutes, // Copy reminders from parent
+                TimeZoneId = InstanceEvent.TimeZoneId
             };
+
+            // Convert event times from UTC to user's timezone for display in form
+            // The InstanceEvent may already be converted, but check if it's UTC
+            if (!string.IsNullOrEmpty(_event.TimeZoneId) && _event.TimeZoneId == "UTC")
+            {
+                _event.StartTime = TimeZoneService.ConvertTime(_event.StartTime, "UTC", _userTimeZone);
+                _event.EndTime = TimeZoneService.ConvertTime(_event.EndTime, "UTC", _userTimeZone);
+                _event.TimeZoneId = _userTimeZone;
+            }
+
             // Calculate duration from existing event
             _eventDuration = _event.EndTime - _event.StartTime;
             _isExistingEvent = true;
@@ -579,6 +598,16 @@
             if (existingEvent != null)
             {
                 _event = existingEvent;
+
+                // Convert event times from UTC to user's timezone for display in form
+                if (!string.IsNullOrEmpty(_event.TimeZoneId) && _event.TimeZoneId == "UTC")
+                {
+                    _event.StartTime = TimeZoneService.ConvertTime(_event.StartTime, "UTC", _userTimeZone);
+                    _event.EndTime = TimeZoneService.ConvertTime(_event.EndTime, "UTC", _userTimeZone);
+                    // Temporarily set to user's timezone for editing
+                    _event.TimeZoneId = _userTimeZone;
+                }
+
                 // Calculate duration from existing event
                 _eventDuration = _event.EndTime - _event.StartTime;
                 _isExistingEvent = true;
@@ -617,12 +646,30 @@
     {
         try
         {
-            // Timezone is already set via the SelectedTimeZoneId property binding
-            // If not set, default to user's timezone
-            if (string.IsNullOrEmpty(_event.TimeZoneId))
-            {
-                _event.TimeZoneId = _userTimeZone;
-            }
+            // Convert event times from user's local timezone to UTC for storage
+            // The StartTime and EndTime are in the user's timezone (from the browser's DateTimePicker)
+            // We need to convert them to UTC before saving to the database
+            var userTimeZoneId = string.IsNullOrEmpty(_event.TimeZoneId) ? _userTimeZone : _event.TimeZoneId;
+
+            Console.WriteLine($"[EventFormDialog.Save] Converting event '{_event.Title}' to UTC");
+            Console.WriteLine($"[EventFormDialog.Save]   Original StartTime: {_event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.StartTime.Kind})");
+            Console.WriteLine($"[EventFormDialog.Save]   Original EndTime: {_event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.EndTime.Kind})");
+            Console.WriteLine($"[EventFormDialog.Save]   User TimeZone: {userTimeZoneId}");
+
+            // Convert StartTime and EndTime to UTC
+            _event.StartTime = TimeZoneService.ConvertTime(_event.StartTime, userTimeZoneId, "UTC");
+            _event.EndTime = TimeZoneService.ConvertTime(_event.EndTime, userTimeZoneId, "UTC");
+
+            // CRITICAL: Mark the DateTime as UTC so Entity Framework and the database know it's UTC
+            _event.StartTime = DateTime.SpecifyKind(_event.StartTime, DateTimeKind.Utc);
+            _event.EndTime = DateTime.SpecifyKind(_event.EndTime, DateTimeKind.Utc);
+
+            Console.WriteLine($"[EventFormDialog.Save]   Converted StartTime: {_event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.StartTime.Kind})");
+            Console.WriteLine($"[EventFormDialog.Save]   Converted EndTime: {_event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.EndTime.Kind})");
+
+            // Always store events in UTC timezone
+            _event.TimeZoneId = "UTC";
+            Console.WriteLine($"[EventFormDialog.Save]   Set TimeZoneId to: '{_event.TimeZoneId}'");
 
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
@@ -727,6 +774,8 @@
     {
         return minutes switch
         {
+            1 => "1 minute",
+            5 => "5 minutes",
             15 => "15 minutes",
             30 => "30 minutes",
             60 => "1 hour",

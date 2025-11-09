@@ -67,6 +67,9 @@ public class NotificationSchedulerService : INotificationSchedulerService
                 if (string.IsNullOrEmpty(evt.ReminderMinutes))
                     continue;
 
+                Console.WriteLine($"[NotificationScheduler] Event '{evt.Title}' (ID: {evt.Id}) has reminders: {evt.ReminderMinutes}");
+                Console.WriteLine($"[NotificationScheduler]   Event StartTime: {evt.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {evt.StartTime.Kind})");
+
                 var reminderMinutes = evt.ReminderMinutes
                     .Split(',')
                     .Select(s => int.TryParse(s.Trim(), out var minutes) ? minutes : 0)
@@ -76,14 +79,25 @@ public class NotificationSchedulerService : INotificationSchedulerService
                 foreach (var reminderMin in reminderMinutes)
                 {
                     // Calculate when this reminder should trigger (in UTC)
-                    var eventStartUtc = evt.StartTime.ToUniversalTime();
+                    // Events are now stored in UTC, so no conversion needed
+                    var eventStartUtc = evt.StartTime.Kind == DateTimeKind.Utc
+                        ? evt.StartTime
+                        : DateTime.SpecifyKind(evt.StartTime, DateTimeKind.Utc);
                     var reminderTriggerTime = eventStartUtc.AddMinutes(-reminderMin);
+
+                    Console.WriteLine($"[NotificationScheduler]   Reminder: {reminderMin} min before");
+                    Console.WriteLine($"[NotificationScheduler]   Event Start (UTC): {eventStartUtc:yyyy-MM-dd HH:mm:ss}");
+                    Console.WriteLine($"[NotificationScheduler]   Trigger Time: {reminderTriggerTime:yyyy-MM-dd HH:mm:ss}");
+                    Console.WriteLine($"[NotificationScheduler]   Check Time: {checkTimeUtc:yyyy-MM-dd HH:mm:ss}");
 
                     // Check if we're within the tolerance window
                     var timeDifference = Math.Abs((checkTimeUtc - reminderTriggerTime).TotalSeconds);
+                    Console.WriteLine($"[NotificationScheduler]   Time Difference: {timeDifference:F1} seconds (Tolerance: {toleranceSeconds} seconds)");
 
                     if (timeDifference <= toleranceSeconds)
                     {
+                        Console.WriteLine($"[NotificationScheduler]   ✓ Within tolerance! Checking if already sent...");
+
                         // Check if this notification has already been sent
                         var alreadySent = await HasNotificationBeenSentAsync(
                             evt.Id,
@@ -94,6 +108,7 @@ public class NotificationSchedulerService : INotificationSchedulerService
 
                         if (!alreadySent)
                         {
+                            Console.WriteLine($"[NotificationScheduler]   ✓ Not sent yet! Adding to pending notifications.");
                             pendingNotifications.Add(new PendingNotification
                             {
                                 Event = evt,
@@ -102,6 +117,14 @@ public class NotificationSchedulerService : INotificationSchedulerService
                                 UserId = user.Id
                             });
                         }
+                        else
+                        {
+                            Console.WriteLine($"[NotificationScheduler]   ✗ Already sent. Skipping.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[NotificationScheduler]   ✗ Outside tolerance window. Skipping.");
                     }
                 }
             }
@@ -175,6 +198,8 @@ public class NotificationSchedulerService : INotificationSchedulerService
     {
         var timeDescription = reminderMinutes switch
         {
+            1 => "in 1 minute",
+            5 => "in 5 minutes",
             15 => "in 15 minutes",
             30 => "in 30 minutes",
             60 => "in 1 hour",

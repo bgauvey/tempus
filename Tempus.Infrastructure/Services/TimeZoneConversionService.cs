@@ -88,6 +88,11 @@ public class TimeZoneConversionService : ITimeZoneConversionService
         if (string.IsNullOrEmpty(toTimeZoneId))
             throw new ArgumentException("Target timezone ID cannot be null or empty", nameof(toTimeZoneId));
 
+        Console.WriteLine($"[TimeZoneConversion] Converting time:");
+        Console.WriteLine($"[TimeZoneConversion]   Input: {dateTime:yyyy-MM-dd HH:mm:ss} (Kind: {dateTime.Kind})");
+        Console.WriteLine($"[TimeZoneConversion]   From: {fromTimeZoneId}");
+        Console.WriteLine($"[TimeZoneConversion]   To: {toTimeZoneId}");
+
         try
         {
             // Get the timezone info objects
@@ -100,21 +105,28 @@ public class TimeZoneConversionService : ITimeZoneConversionService
             // If the datetime has DateTimeKind.Utc, use it directly
             if (dateTime.Kind == DateTimeKind.Utc)
             {
+                Console.WriteLine($"[TimeZoneConversion]   DateTime is already UTC");
                 utcTime = dateTime;
             }
             // If DateTimeKind.Local, convert to UTC
             else if (dateTime.Kind == DateTimeKind.Local)
             {
+                Console.WriteLine($"[TimeZoneConversion]   DateTime is Local, converting to UTC");
                 utcTime = dateTime.ToUniversalTime();
             }
             // Otherwise, treat as unspecified and convert from source timezone
             else
             {
+                Console.WriteLine($"[TimeZoneConversion]   DateTime is Unspecified, treating as {fromTimeZoneId}");
                 utcTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, sourceTimeZone);
             }
 
+            Console.WriteLine($"[TimeZoneConversion]   UTC time: {utcTime:yyyy-MM-dd HH:mm:ss}");
+
             // Convert from UTC to target timezone
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, targetTimeZone);
+
+            Console.WriteLine($"[TimeZoneConversion]   Result: {convertedTime:yyyy-MM-dd HH:mm:ss} (Kind: {convertedTime.Kind})");
 
             return convertedTime;
         }

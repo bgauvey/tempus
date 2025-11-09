@@ -16,25 +16,52 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get current user
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        Console.WriteLine("========================================");
+        Console.WriteLine("[NotificationPoller] OnInitializedAsync called");
+        Console.WriteLine("========================================");
 
-        if (user.Identity?.IsAuthenticated == true)
+        try
         {
-            var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            if (userIdClaim != null)
+            // Get current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            Console.WriteLine($"[NotificationPoller] User authenticated: {user.Identity?.IsAuthenticated}");
+
+            if (user.Identity?.IsAuthenticated == true)
             {
-                _userId = userIdClaim.Value;
+                var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    _userId = userIdClaim.Value;
+                    Console.WriteLine($"[NotificationPoller] User ID: {_userId}");
 
-                // Request browser notification permission
-                await RequestNotificationPermission();
+                    // Request browser notification permission
+                    Console.WriteLine($"[NotificationPoller] Requesting notification permission...");
+                    await RequestNotificationPermission();
 
-                // Start polling every 15 seconds
-                _timer = new Timer(async _ => await PollForNotifications(), null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+                    // Start polling every 15 seconds
+                    Console.WriteLine($"[NotificationPoller] Starting polling timer (15 second interval)...");
+                    _timer = new Timer(async _ => await PollForNotifications(), null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
 
-                Logger.LogInformation("NotificationPoller started for user {UserId}", _userId);
+                    Console.WriteLine($"[NotificationPoller] NotificationPoller fully initialized!");
+                    Logger.LogInformation("NotificationPoller started for user {UserId}", _userId);
+                }
+                else
+                {
+                    Console.WriteLine($"[NotificationPoller] ERROR: User ID claim not found");
+                }
             }
+            else
+            {
+                Console.WriteLine($"[NotificationPoller] User not authenticated, skipping initialization");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NotificationPoller] EXCEPTION during initialization: {ex.Message}");
+            Console.WriteLine($"[NotificationPoller] Stack: {ex.StackTrace}");
+            Logger.LogError(ex, "Error initializing NotificationPoller");
         }
     }
 
@@ -45,35 +72,71 @@
             if (!_permissionRequested)
             {
                 var isSupported = await BrowserNotificationService.IsSupportedAsync();
+                Console.WriteLine($"[NotificationPoller] Browser notifications supported: {isSupported}");
+
                 if (isSupported)
                 {
                     var permission = await BrowserNotificationService.GetPermissionStatusAsync();
+                    Console.WriteLine($"[NotificationPoller] Current permission status: {permission}");
+
                     if (permission == "default")
                     {
-                        await BrowserNotificationService.RequestPermissionAsync();
+                        var result = await BrowserNotificationService.RequestPermissionAsync();
+                        Console.WriteLine($"[NotificationPoller] Permission request result: {result}");
                         _permissionRequested = true;
-                        Logger.LogInformation("Requested browser notification permission for user {UserId}", _userId);
+                        Logger.LogInformation("Requested browser notification permission for user {UserId}. Result: {Result}", _userId, result);
+                    }
+                    else if (permission == "granted")
+                    {
+                        Console.WriteLine($"[NotificationPoller] Permission already granted");
+                        Logger.LogInformation("Browser notification permission already granted for user {UserId}", _userId);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[NotificationPoller] Permission denied or unsupported");
+                        Logger.LogWarning("Browser notification permission denied for user {UserId}", _userId);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[NotificationPoller] Error requesting permission: {ex.Message}");
             Logger.LogError(ex, "Error requesting notification permission");
         }
     }
 
     private async Task PollForNotifications()
     {
-        if (_isPolling || string.IsNullOrEmpty(_userId))
+        Console.WriteLine($"[NotificationPoller.Poll] Poll triggered at {DateTime.Now:HH:mm:ss}");
+
+        if (_isPolling)
+        {
+            Console.WriteLine($"[NotificationPoller.Poll] Already polling, skipping...");
             return;
+        }
+
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Console.WriteLine($"[NotificationPoller.Poll] User ID empty, skipping...");
+            return;
+        }
 
         try
         {
             _isPolling = true;
+            Console.WriteLine($"[NotificationPoller.Poll] Fetching notifications for user: {_userId}");
 
             // Get unsent notifications (notifications created by backend but not yet displayed to user)
             var notifications = await NotificationRepository.GetAllAsync(_userId);
+            Console.WriteLine($"[NotificationPoller.Poll] Retrieved {notifications.Count} total notifications");
+
+            // Log what we retrieved
+            Console.WriteLine($"[NotificationPoller.Poll] Notification breakdown:");
+            foreach (var n in notifications)
+            {
+                Console.WriteLine($"[NotificationPoller.Poll]   - {n.Title} | Type: {n.Type} | IsSent: {n.IsSent} | IsRead: {n.IsRead}");
+            }
 
             // Filter for event reminders that haven't been shown in browser yet
             var unshownNotifications = notifications
@@ -83,22 +146,45 @@
                 .OrderBy(n => n.CreatedAt)
                 .ToList();
 
+            Console.WriteLine($"[NotificationPoller.Poll] Filtered to {unshownNotifications.Count} unshown event reminders");
+
             if (unshownNotifications.Any())
             {
                 Logger.LogInformation("Found {Count} notifications to display for user {UserId}",
                     unshownNotifications.Count, _userId);
+            }
+            else
+            {
+                Console.WriteLine($"[NotificationPoller.Poll] No notifications to show (all already read or not event reminders)");
             }
 
             foreach (var notification in unshownNotifications)
             {
                 try
                 {
+                    Console.WriteLine($"[NotificationPoller] Attempting to show notification: {notification.Title}");
+                    Console.WriteLine($"[NotificationPoller]   Message: {notification.Message}");
+                    Console.WriteLine($"[NotificationPoller]   EventId: {notification.EventId}");
+
+                    // Check permission before showing
+                    var permission = await BrowserNotificationService.GetPermissionStatusAsync();
+                    Console.WriteLine($"[NotificationPoller]   Current permission: {permission}");
+
+                    if (permission != "granted")
+                    {
+                        Logger.LogWarning("Cannot show notification - permission not granted. Status: {Status}", permission);
+                        Console.WriteLine($"[NotificationPoller]   ERROR: Permission not granted!");
+                        continue;
+                    }
+
                     // Show browser notification
                     await BrowserNotificationService.ShowNotificationAsync(
                         notification.Title,
                         notification.Message,
                         notification.EventId.HasValue ? $"/calendar?eventId={notification.EventId}" : null
                     );
+
+                    Console.WriteLine($"[NotificationPoller]   Notification shown successfully!");
 
                     // Mark as read (displayed)
                     await NotificationRepository.MarkAsReadAsync(notification.Id, _userId);
@@ -111,6 +197,8 @@
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[NotificationPoller] Exception showing notification: {ex.Message}");
+                    Console.WriteLine($"[NotificationPoller] Stack: {ex.StackTrace}");
                     Logger.LogError(ex, "Error displaying notification {NotificationId}", notification.Id);
                 }
             }
