@@ -618,8 +618,13 @@
         }
         else
         {
-            // Set userId for new event
+            // Set userId and timezone for new event
             _event.UserId = _userId;
+            // IMPORTANT: Times in the form are in user's local timezone
+            // This will be converted to UTC when saving
+            _event.TimeZoneId = _userTimeZone;
+
+            Console.WriteLine($"[EventFormDialog.Init] New event - setting TimeZoneId to user timezone: {_userTimeZone}");
 
             if (PrefilledDate.HasValue)
             {

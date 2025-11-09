@@ -188,6 +188,22 @@ public class PstImportService : IPstImportService
                 Console.WriteLine($"[PstImportService.ConvertToEvent] Fixed zero-duration event '{subject}': added 1 hour duration");
             }
 
+            // CRITICAL: Ensure imported times are in UTC for consistent storage
+            // PST files typically store times in local timezone
+            if (startTime.Kind == DateTimeKind.Local)
+            {
+                startTime = startTime.ToUniversalTime();
+                endTime = endTime.ToUniversalTime();
+                Console.WriteLine($"[PstImportService.ConvertToEvent] Converted times from Local to UTC");
+            }
+            else if (startTime.Kind == DateTimeKind.Unspecified)
+            {
+                // Treat unspecified times as UTC to be safe
+                startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+                endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+                Console.WriteLine($"[PstImportService.ConvertToEvent] Marked unspecified times as UTC");
+            }
+
             // Create event object
             var evt = new Event
             {
@@ -200,7 +216,8 @@ public class PstImportService : IPstImportService
                 EventType = EventType.Meeting,
                 Priority = Priority.Medium,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                TimeZoneId = "UTC" // All imported events stored in UTC
             };
 
             // Extract attendees if present - using recipients from the mapiMessage
