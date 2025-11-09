@@ -108,17 +108,14 @@ public class TimeZoneConversionService : ITimeZoneConversionService
                 Console.WriteLine($"[TimeZoneConversion]   DateTime is already UTC");
                 utcTime = dateTime;
             }
-            // If DateTimeKind.Local, convert to UTC
-            else if (dateTime.Kind == DateTimeKind.Local)
-            {
-                Console.WriteLine($"[TimeZoneConversion]   DateTime is Local, converting to UTC");
-                utcTime = dateTime.ToUniversalTime();
-            }
-            // Otherwise, treat as unspecified and convert from source timezone
+            // For Local or Unspecified, ALWAYS use the explicit fromTimeZoneId parameter
+            // This ensures we respect the user's timezone, not the server's timezone
             else
             {
-                Console.WriteLine($"[TimeZoneConversion]   DateTime is Unspecified, treating as {fromTimeZoneId}");
-                utcTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, sourceTimeZone);
+                Console.WriteLine($"[TimeZoneConversion]   DateTime is {dateTime.Kind}, treating as {fromTimeZoneId}");
+                // First, ensure the DateTime is treated as Unspecified to avoid double conversion
+                var unspecifiedTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified);
+                utcTime = TimeZoneInfo.ConvertTimeToUtc(unspecifiedTime, sourceTimeZone);
             }
 
             Console.WriteLine($"[TimeZoneConversion]   UTC time: {utcTime:yyyy-MM-dd HH:mm:ss}");

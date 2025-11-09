@@ -67,6 +67,20 @@ public class IcsImportService : IIcsImportService
                 }
             }
 
+            // CRITICAL: Ensure imported times are in UTC for consistent storage
+            // If the times have timezone info, convert to UTC; otherwise assume UTC
+            if (startTime.Kind == DateTimeKind.Local)
+            {
+                startTime = startTime.ToUniversalTime();
+                endTime = endTime.ToUniversalTime();
+            }
+            else if (startTime.Kind == DateTimeKind.Unspecified)
+            {
+                // Treat unspecified times as UTC (common in ICS files)
+                startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+                endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+            }
+
             var tempusEvent = new Event
             {
                 Id = Guid.NewGuid(),
@@ -78,7 +92,8 @@ public class IcsImportService : IIcsImportService
                 IsAllDay = calendarEvent.IsAllDay,
                 EventType = EventType.Appointment,
                 ExternalCalendarId = calendarEvent.Uid,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                TimeZoneId = "UTC" // All imported events stored in UTC
             };
 
             // Import attendees if present

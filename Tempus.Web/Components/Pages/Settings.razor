@@ -103,6 +103,7 @@
                                                               ShowTime="true"
                                                               TimeOnly="true"
                                                               DateFormat="@TimeFormatString"
+                                                              HourFormat="@HourFormat"
                                                               Style="width: 100%;" />
                                         </RadzenFormField>
                                     </RadzenColumn>
@@ -113,6 +114,7 @@
                                                               ShowTime="true"
                                                               TimeOnly="true"
                                                               DateFormat="@TimeFormatString"
+                                                              HourFormat="@HourFormat"
                                                               Style="width: 100%;" />
                                         </RadzenFormField>
                                     </RadzenColumn>
@@ -123,6 +125,7 @@
                                                               ShowTime="true"
                                                               TimeOnly="true"
                                                               DateFormat="@TimeFormatString"
+                                                              HourFormat="@HourFormat"
                                                               AllowClear="true"
                                                               Style="width: 100%;" />
                                         </RadzenFormField>
@@ -134,6 +137,7 @@
                                                               ShowTime="true"
                                                               TimeOnly="true"
                                                               DateFormat="@TimeFormatString"
+                                                              HourFormat="@HourFormat"
                                                               AllowClear="true"
                                                               Style="width: 100%;" />
                                         </RadzenFormField>
@@ -488,6 +492,7 @@
     private string _userId = string.Empty;
 
     private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwelveHour ? "hh:mm tt" : "HH:mm";
+    private string HourFormat => _settings?.TimeFormat == TimeFormat.TwelveHour ? "12" : "24";
 
     protected override async Task OnInitializedAsync()
     {

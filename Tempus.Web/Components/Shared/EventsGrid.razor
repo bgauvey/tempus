@@ -72,7 +72,7 @@
                 <Template Context="evt">
                     <div class="event-time-cell">
                         <div class="event-date">@evt.StartTime.ToString("MMM dd, yyyy")</div>
-                        <div class="event-time">@evt.StartTime.ToString("hh:mm tt")</div>
+                        <div class="event-time">@evt.StartTime.ToString(TimeFormatString)</div>
                     </div>
                 </Template>
             </RadzenDataGridColumn>
@@ -80,7 +80,7 @@
                 <Template Context="evt">
                     <div class="event-time-cell">
                         <div class="event-date">@evt.EndTime.ToString("MMM dd, yyyy")</div>
-                        <div class="event-time">@evt.EndTime.ToString("hh:mm tt")</div>
+                        <div class="event-time">@evt.EndTime.ToString(TimeFormatString)</div>
                     </div>
                 </Template>
             </RadzenDataGridColumn>
@@ -334,7 +334,12 @@
     [Parameter]
     public EventCallback OnCreateEvent { get; set; }
 
+    [Parameter]
+    public TimeFormat TimeFormat { get; set; } = TimeFormat.TwelveHour;
+
     private string _searchTerm = string.Empty;
+
+    private string TimeFormatString => TimeFormat == TimeFormat.TwentyFourHour ? "HH:mm" : "hh:mm tt";
 
     private async Task HandleSearch()
     {
