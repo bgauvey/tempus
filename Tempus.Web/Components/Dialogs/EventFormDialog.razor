@@ -6,6 +6,7 @@
 @using Tempus.Core.Helpers
 @using Tempus.Web.Components.Account
 @inject IEventRepository EventRepository
+@inject ICalendarRepository CalendarRepository
 @inject IContactRepository ContactRepository
 @inject ITimeZoneConversionService TimeZoneService
 @inject ISettingsService SettingsService
@@ -21,6 +22,15 @@
 
     <RadzenFormField Text="Description" Variant="Variant.Outlined">
         <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Calendar" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@_selectedCalendarId"
+                        Data="@_calendars"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        Style="width: 100%;"
+                        Placeholder="Select a calendar..." />
     </RadzenFormField>
 
     <RadzenTabs>
@@ -382,6 +392,10 @@
     private string DateTimeFormatString => _settings?.TimeFormat == TimeFormat.TwentyFourHour ? "MM/dd/yyyy HH:mm" : "MM/dd/yyyy hh:mm tt";
     private string HourFormat => _settings?.TimeFormat == TimeFormat.TwentyFourHour ? "24" : "12";
 
+    // Calendar management
+    private List<Calendar> _calendars = new();
+    private Guid? _selectedCalendarId;
+
     // Timezone management
     private List<TimeZoneOption> _availableTimeZones = new();
 
@@ -544,6 +558,11 @@
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
                 Console.WriteLine($"[EventFormDialog.Init] Time format: {_settings.TimeFormat}");
 
+                // Ensure user has at least one calendar and load all calendars
+                await CalendarRepository.EnsureDefaultCalendarExistsAsync(_userId, _userEmail);
+                _calendars = await CalendarRepository.GetAllAsync(_userId);
+                Console.WriteLine($"[EventFormDialog.Init] Loaded {_calendars.Count} calendars");
+
                 // Get user's display name from claims or use email
                 var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                 _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
@@ -627,6 +646,9 @@
                 _eventDuration = _event.EndTime - _event.StartTime;
                 _isExistingEvent = true;
 
+                // Set selected calendar
+                _selectedCalendarId = _event.CalendarId;
+
                 // Load existing reminders
                 LoadReminders();
             }
@@ -640,6 +662,14 @@
             _event.TimeZoneId = _userTimeZone;
 
             Console.WriteLine($"[EventFormDialog.Init] New event - setting TimeZoneId to user timezone: {_userTimeZone}");
+
+            // Set default calendar
+            var defaultCalendar = _calendars.FirstOrDefault(c => c.IsDefault) ?? _calendars.FirstOrDefault();
+            if (defaultCalendar != null)
+            {
+                _selectedCalendarId = defaultCalendar.Id;
+                Console.WriteLine($"[EventFormDialog.Init] Set default calendar: {defaultCalendar.Name}");
+            }
 
             if (PrefilledDate.HasValue)
             {
@@ -690,6 +720,10 @@
             // Always store events in UTC timezone
             _event.TimeZoneId = "UTC";
             Console.WriteLine($"[EventFormDialog.Save]   Set TimeZoneId to: '{_event.TimeZoneId}'");
+
+            // Set the calendar ID from the dropdown selection
+            _event.CalendarId = _selectedCalendarId;
+            Console.WriteLine($"[EventFormDialog.Save]   Set CalendarId to: '{_event.CalendarId}'");
 
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
