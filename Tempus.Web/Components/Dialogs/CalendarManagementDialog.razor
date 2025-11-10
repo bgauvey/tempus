@@ -1,0 +1,220 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Interfaces
+@inject ICalendarRepository CalendarRepository
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H6">Manage Calendars</RadzenText>
+
+        @if (_calendars.Any())
+        {
+            <RadzenStack Gap="0.5rem">
+                @foreach (var calendar in _calendars.OrderBy(c => c.SortOrder))
+                {
+                    <RadzenCard Style="padding: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="width: 100%;">
+                            <!-- Color indicator -->
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background-color: @calendar.Color; flex-shrink: 0;"></div>
+
+                            <!-- Calendar info -->
+                            <RadzenStack Gap="0.25rem" Style="flex-grow: 1; min-width: 0;">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">
+                                        @calendar.Name
+                                    </RadzenText>
+                                    @if (calendar.IsDefault)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="Default" Style="font-size: 0.75rem;" />
+                                    }
+                                </RadzenStack>
+                                @if (!string.IsNullOrEmpty(calendar.Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                        @calendar.Description
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+
+                            <!-- Visibility toggle -->
+                            <RadzenCheckBox @bind-Value="calendar.IsVisible"
+                                          Change="@(async (bool value) => await ToggleVisibilityAsync(calendar))"
+                                          Style="flex-shrink: 0;" />
+
+                            <!-- Action buttons -->
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="flex-shrink: 0;">
+                                @if (!calendar.IsDefault)
+                                {
+                                    <RadzenButton Icon="star_border"
+                                                Size="ButtonSize.Small"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Click="@(async () => await SetDefaultAsync(calendar.Id))"
+                                                title="Set as default" />
+                                }
+                                <RadzenButton Icon="edit"
+                                            Size="ButtonSize.Small"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Click="@(() => EditCalendar(calendar))" />
+                                <RadzenButton Icon="delete"
+                                            Size="ButtonSize.Small"
+                                            ButtonStyle="ButtonStyle.Danger"
+                                            Click="@(async () => await DeleteCalendarAsync(calendar.Id))"
+                                            Disabled="@(_calendars.Count <= 1)" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        }
+
+        <RadzenButton Text="Add Calendar"
+                     Icon="add"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Click="@AddCalendar"
+                     Style="margin-top: 1rem;" />
+</RadzenStack>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnCalendarsChanged { get; set; }
+
+    private List<Calendar> _calendars = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCalendarsAsync();
+    }
+
+    private async Task LoadCalendarsAsync()
+    {
+        _calendars = await CalendarRepository.GetAllAsync(UserId);
+    }
+
+    private async Task ToggleVisibilityAsync(Calendar calendar)
+    {
+        // The @bind-Value already updated calendar.IsVisible
+        // We just need to save it
+        await CalendarRepository.UpdateAsync(calendar);
+        await OnCalendarsChanged.InvokeAsync();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Calendar Updated",
+            Detail = $"{calendar.Name} is now {(calendar.IsVisible ? "visible" : "hidden")}",
+            Duration = 3000
+        });
+    }
+
+    private async Task SetDefaultAsync(Guid calendarId)
+    {
+        var success = await CalendarRepository.SetDefaultCalendarAsync(calendarId, UserId);
+        if (success)
+        {
+            await LoadCalendarsAsync();
+            await OnCalendarsChanged.InvokeAsync();
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Default Calendar Set",
+                Detail = "Default calendar updated successfully",
+                Duration = 3000
+            });
+        }
+    }
+
+    private async Task DeleteCalendarAsync(Guid calendarId)
+    {
+        if (_calendars.Count <= 1)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Cannot Delete",
+                Detail = "You must have at least one calendar",
+                Duration = 3000
+            });
+            return;
+        }
+
+        var calendar = _calendars.FirstOrDefault(c => c.Id == calendarId);
+        if (calendar == null) return;
+
+        var eventCount = await CalendarRepository.GetEventCountAsync(calendarId, UserId);
+
+        var confirmMessage = eventCount > 0
+            ? $"Delete '{calendar.Name}'? This will also delete {eventCount} event(s)."
+            : $"Delete '{calendar.Name}'?";
+
+        var confirmed = await DialogService.Confirm(confirmMessage, "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await CalendarRepository.DeleteAsync(calendarId, UserId);
+                await LoadCalendarsAsync();
+                await OnCalendarsChanged.InvokeAsync();
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Calendar Deleted",
+                    Detail = $"{calendar.Name} has been deleted",
+                    Duration = 3000
+                });
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Delete Failed",
+                    Detail = ex.Message,
+                    Duration = 5000
+                });
+            }
+        }
+    }
+
+    private async Task AddCalendar()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "UserId", UserId }
+        };
+        // CalendarId is null for new calendars, will be handled in CalendarEditDialog
+
+        var result = await DialogService.OpenAsync<CalendarEditDialog>("Add Calendar",
+            parameters,
+            new DialogOptions { Width = "500px" });
+
+        // If the dialog was saved, reload calendars
+        if (result is bool saved && saved)
+        {
+            await LoadCalendarsAsync();
+            await OnCalendarsChanged.InvokeAsync();
+        }
+    }
+
+    private async Task EditCalendar(Calendar calendar)
+    {
+        var result = await DialogService.OpenAsync<CalendarEditDialog>("Edit Calendar",
+            new Dictionary<string, object>
+            {
+                { "UserId", UserId },
+                { "CalendarId", (Guid?)calendar.Id }
+            },
+            new DialogOptions { Width = "500px" });
+
+        // If the dialog was saved, reload calendars
+        if (result is bool saved && saved)
+        {
+            await LoadCalendarsAsync();
+            await OnCalendarsChanged.InvokeAsync();
+        }
+    }
+
+    [Inject] private DialogService DialogService { get; set; } = default!;
+}

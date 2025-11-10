@@ -5,6 +5,7 @@ using Ical.Net.Serialization;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Core.Enums;
+using IcsCalendar = Ical.Net.Calendar;
 
 namespace Tempus.Infrastructure.Services;
 
@@ -21,7 +22,7 @@ public class IcsImportService : IIcsImportService
             throw new InvalidOperationException("ICS file is empty or could not be read.");
         }
 
-        var calendar = Calendar.Load(icsContent);
+        var calendar = IcsCalendar.Load(icsContent);
         if (calendar == null)
         {
             throw new InvalidOperationException("Failed to parse ICS file.");
@@ -131,7 +132,7 @@ public class IcsImportService : IIcsImportService
 
     public async Task<string> ExportToIcsAsync(List<Event> events)
     {
-        var calendar = new Calendar();
+        var calendar = new IcsCalendar();
         calendar.ProductId = "-//Tempus//Tempus Calendar//EN";
 
         foreach (var tempusEvent in events)

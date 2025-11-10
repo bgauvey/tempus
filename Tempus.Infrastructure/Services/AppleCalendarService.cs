@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Core.Enums;
+using IcsCalendar = Ical.Net.Calendar;
 
 namespace Tempus.Infrastructure.Services;
 
@@ -276,7 +277,7 @@ public class AppleCalendarService : IAppleCalendarService
 
     private async Task ExportToAppleAsync(Client client, Core.Models.Event tempusEvent)
     {
-        var calendar = new Calendar();
+        var calendar = new IcsCalendar();
         var calEvent = new CalendarEvent
         {
             Summary = tempusEvent.Title,

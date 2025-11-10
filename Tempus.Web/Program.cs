@@ -81,6 +81,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
 // Register repositories and services
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<ICalendarRepository, CalendarRepository>();
 builder.Services.AddScoped<ICustomRangeRepository, CustomRangeRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
