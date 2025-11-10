@@ -1,0 +1,142 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Interfaces
+@inject ICalendarRepository CalendarRepository
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_name" Style="width: 100%;" Placeholder="Calendar name" MaxLength="100" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_description" Style="width: 100%;" Placeholder="Optional description" Rows="3" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Color" Variant="Variant.Outlined">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenColorPicker @bind-Value="@_color" ShowButton="true" Style="width: 100px;" />
+            <div style="width: 48px; height: 48px; border-radius: 8px; background-color: @_color; border: 1px solid #ccc;"></div>
+        </RadzenStack>
+    </RadzenFormField>
+
+    <RadzenFormField Text="Visibility" Variant="Variant.Outlined">
+        <RadzenCheckBox @bind-Value="@_isVisible" />
+        <RadzenLabel Text="Show events from this calendar" Style="margin-left: 0.5rem;" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="@(_isEdit ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary" Click="@SaveAsync" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public Guid? CalendarId { get; set; }
+
+    private bool _isEdit => CalendarId.HasValue;
+    private string _name = string.Empty;
+    private string? _description;
+    private string _color = "#1E88E5"; // Default blue
+    private bool _isVisible = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isEdit && CalendarId.HasValue)
+        {
+            var calendar = await CalendarRepository.GetByIdAsync(CalendarId.Value, UserId);
+            if (calendar != null)
+            {
+                _name = calendar.Name;
+                _description = calendar.Description;
+                _color = calendar.Color;
+                _isVisible = calendar.IsVisible;
+            }
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Validation Error",
+                Detail = "Calendar name is required",
+                Duration = 3000
+            });
+            return;
+        }
+
+        try
+        {
+            if (_isEdit && CalendarId.HasValue)
+            {
+                // Update existing calendar
+                var calendar = await CalendarRepository.GetByIdAsync(CalendarId.Value, UserId);
+                if (calendar != null)
+                {
+                    calendar.Name = _name;
+                    calendar.Description = _description;
+                    calendar.Color = _color;
+                    calendar.IsVisible = _isVisible;
+
+                    await CalendarRepository.UpdateAsync(calendar);
+
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Calendar Updated",
+                        Detail = $"{_name} has been updated",
+                        Duration = 3000
+                    });
+                }
+            }
+            else
+            {
+                // Create new calendar
+                var calendar = new Calendar
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = UserId,
+                    Name = _name,
+                    Description = _description,
+                    Color = _color,
+                    IsVisible = _isVisible,
+                    IsDefault = false,
+                    SortOrder = 0,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await CalendarRepository.CreateAsync(calendar);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Calendar Created",
+                    Detail = $"{_name} has been created",
+                    Duration = 3000
+                });
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = ex.Message,
+                Duration = 5000
+            });
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

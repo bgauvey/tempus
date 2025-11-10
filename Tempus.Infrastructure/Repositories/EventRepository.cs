@@ -41,6 +41,7 @@ public class EventRepository : IEventRepository
         // Get all non-recurring events in the date range (excluding exceptions)
         var nonRecurringEvents = await context.Events
             .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
             .Where(e => e.UserId == userId &&
                        !e.IsRecurring &&
                        !e.IsRecurrenceException &&
@@ -51,6 +52,7 @@ public class EventRepository : IEventRepository
         // Get all recurring events that could have instances in this range
         var recurringEvents = await context.Events
             .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
             .Where(e => e.UserId == userId &&
                        e.IsRecurring &&
                        e.RecurrenceParentId == null && // Only get parent events, not instances
@@ -60,6 +62,7 @@ public class EventRepository : IEventRepository
         // Get all exception events (modified or deleted occurrences)
         var exceptionEvents = await context.Events
             .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
             .Where(e => e.UserId == userId &&
                        e.IsRecurrenceException &&
                        e.RecurrenceExceptionDate.HasValue &&
@@ -111,6 +114,12 @@ public class EventRepository : IEventRepository
         var withCalendar = allEvents.Count(e => e.CalendarId.HasValue);
         var withoutCalendar = allEvents.Count(e => !e.CalendarId.HasValue);
         Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   With CalendarId: {withCalendar}, Without CalendarId (NULL): {withoutCalendar}");
+
+        // Log each event's details
+        foreach (var evt in allEvents)
+        {
+            Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Event: '{evt.Title}' - CalendarId: {evt.CalendarId?.ToString() ?? "NULL"} - Start: {evt.StartTime:yyyy-MM-dd HH:mm}");
+        }
 
         return allEvents;
     }

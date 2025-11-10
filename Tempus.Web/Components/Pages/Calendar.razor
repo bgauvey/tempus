@@ -13,6 +13,7 @@
 @using Microsoft.JSInterop
 @attribute [Authorize]
 @inject IEventRepository EventRepository
+@inject ICalendarRepository CalendarRepository
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -22,6 +23,7 @@
 @inject IEmailNotificationService EmailNotificationService
 @inject ContextMenuService ContextMenuService
 @inject ITimeZoneConversionService TimeZoneConversionService
+@inject NotificationService NotificationService
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -45,8 +47,23 @@
     .calendar-main-section {
         flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        gap: 1rem;
         min-height: 0; /* Important for flex children */
+        overflow: hidden;
+    }
+
+    .calendar-sidebar {
+        flex-shrink: 0;
+        width: 280px;
+        overflow-y: auto;
+    }
+
+    .calendar-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
         overflow: hidden;
     }
 
@@ -133,6 +150,40 @@
     .template-btn.focus {
         background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%);
     }
+
+    /* Calendar Sidebar */
+    .calendar-item {
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .calendar-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-color-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .calendar-item-name {
+        flex: 1;
+        font-weight: 500;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .calendar-item-hidden {
+        opacity: 0.5;
+    }
 </style>
 
 <div class="calendar-page-container">
@@ -142,6 +193,12 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Icon="event_available"
+                            ButtonStyle="ButtonStyle.Secondary"
+                            Click="OpenCalendarManagement"
+                            Size="ButtonSize.Medium"
+                            Text="Manage Calendars"
+                            title="Manage your calendars" />
                 <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
                             ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
                             Click="ToggleSelectionMode"
@@ -199,16 +256,44 @@
 </div>
 
 <div class="calendar-main-section">
-    <RadzenCard class="calendar-scheduler-card">
-        @if (_loading)
-        {
-            <div class="loading-container">
-                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-            </div>
-        }
-        else
-        {
-            <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
+    <!-- Calendar Sidebar -->
+    <div class="calendar-sidebar">
+        <RadzenCard Style="height: 100%;">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; margin: 0;">My Calendars</RadzenText>
+
+                @foreach (var calendar in _calendars.OrderBy(c => c.SortOrder))
+                {
+                    <div class="calendar-item @(calendar.IsVisible ? "" : "calendar-item-hidden")">
+                        <div class="calendar-color-indicator" style="background-color: @calendar.Color;"></div>
+                        <div class="calendar-item-name">@calendar.Name</div>
+                        <RadzenCheckBox @bind-Value="@calendar.IsVisible"
+                                      Change="@((bool value) => UpdateCalendarVisibility(calendar, value))" />
+                    </div>
+                }
+
+                @if (!_calendars.Any())
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                        No calendars found
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+
+    <!-- Calendar Content -->
+    <div class="calendar-content">
+        <RadzenCard class="calendar-scheduler-card">
+            @if (_loading)
+            {
+                <div class="loading-container">
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                </div>
+            }
+            else
+            {
+                <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                            SelectedIndex="@_selectedViewIndex"
                            AppointmentSelect="@OnAppointmentSelect"
@@ -250,8 +335,8 @@
             </RadzenScheduler>
         }
     </RadzenCard>
+    </div>
 </div>
-
 
 </div>
 
@@ -272,11 +357,15 @@
     private bool _loading = true;
     private CalendarSettings? _settings;
     private string _userId = string.Empty;
+    private string _userEmail = string.Empty;
     private string _userTimeZone = TimeZoneInfo.Local.Id;
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
     private bool _isSearchActive = false;
     private List<Event> _allEvents = new(); // Store all events when search is active
+
+    // Calendar management
+    private List<Tempus.Core.Models.Calendar> _calendars = new();
 
     // Bulk operations
     private bool _selectionMode = false;
@@ -297,6 +386,7 @@
             if (appUser != null)
             {
                 _userId = appUser.Id;
+                _userEmail = appUser.Email ?? "";
 
                 // Get timezone from user settings, or fallback to system/browser timezone
                 _userTimeZone = !string.IsNullOrEmpty(appUser.TimeZone)
@@ -315,6 +405,11 @@
                     : _settings.DefaultCalendarView;
 
                 _selectedViewIndex = GetSchedulerIndexFromCalendarView(viewToLoad);
+
+                // Load user's calendars
+                await CalendarRepository.EnsureDefaultCalendarExistsAsync(_userId, _userEmail);
+                _calendars = await CalendarRepository.GetAllAsync(_userId);
+                Console.WriteLine($"[Calendar.Init] Loaded {_calendars.Count} calendars");
             }
         }
 
@@ -369,13 +464,46 @@
     private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
         Console.WriteLine($"[Calendar.OnLoadData] === CALLED ===");
-        Console.WriteLine($"[Calendar.OnLoadData] Date range: {args.Start:yyyy-MM-dd} to {args.End:yyyy-MM-dd}");
+        Console.WriteLine($"[Calendar.OnLoadData] args.Start: {args.Start:yyyy-MM-dd HH:mm:ss} (Kind: {args.Start.Kind})");
+        Console.WriteLine($"[Calendar.OnLoadData] args.End: {args.End:yyyy-MM-dd HH:mm:ss} (Kind: {args.End.Kind})");
+        Console.WriteLine($"[Calendar.OnLoadData] User timezone: {_userTimeZone}");
         Console.WriteLine($"[Calendar.OnLoadData] User ID: {_userId}");
 
         try
         {
+            // CRITICAL FIX: Convert date range from user's timezone to UTC for querying
+            // args.Start/End are date values that represent dates in the user's view
+            // We treat them as being in the user's configured timezone, then convert to UTC
+            //
+            // Example: User in EST viewing Nov 9
+            //   - args.Start = Nov 9 00:00 (treated as EST)
+            //   - Converts to Nov 9 05:00 UTC
+            //   - User creates event at 11:00 PM EST Nov 8 = 04:00 UTC Nov 9
+            //   - Without expansion, this event would be missed!
+            //
+            // Solution: Expand range by ±1 day, then convert to UTC using user's timezone
+
+            // Expand by 1 day on each side to catch timezone edge cases
+            var startLocal = args.Start.Date.AddDays(-1);
+            var endLocal = args.End.Date.AddDays(1);
+
+            // Treat these dates as being in the user's timezone and convert to UTC
+            var startUtc = TimeZoneConversionService.ConvertTime(
+                DateTime.SpecifyKind(startLocal, DateTimeKind.Unspecified),
+                _userTimeZone,
+                "UTC"
+            );
+            var endUtc = TimeZoneConversionService.ConvertTime(
+                DateTime.SpecifyKind(endLocal, DateTimeKind.Unspecified),
+                _userTimeZone,
+                "UTC"
+            );
+
+            Console.WriteLine($"[Calendar.OnLoadData] User timezone range - Start: {startLocal:yyyy-MM-dd}, End: {endLocal:yyyy-MM-dd}");
+            Console.WriteLine($"[Calendar.OnLoadData] Converted to UTC - Start: {startUtc:yyyy-MM-dd HH:mm:ss}, End: {endUtc:yyyy-MM-dd HH:mm:ss}");
+
             // Load events for the visible date range in the scheduler
-            _events = await EventRepository.GetEventsByDateRangeAsync(args.Start, args.End, _userId);
+            _events = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, _userId);
 
             Console.WriteLine($"[Calendar.OnLoadData] Loaded {_events.Count} events");
             if (_events.Any())
@@ -423,50 +551,42 @@
     {
         // Convert events to appointments for RadzenScheduler
         // All events are stored in UTC, so always convert to user's timezone for display
-        Console.WriteLine($"[ConvertEventsToAppointments] Converting {_events.Count} events to appointments");
-        Console.WriteLine($"[ConvertEventsToAppointments] User timezone: {_userTimeZone}");
+        // Filter events by calendar visibility
 
-        _appointments = _events.Select(e =>
-        {
-            Console.WriteLine($"[ConvertEventsToAppointments] Event: {e.Title}");
-            Console.WriteLine($"[ConvertEventsToAppointments]   Original StartTime: {e.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {e.StartTime.Kind})");
-            Console.WriteLine($"[ConvertEventsToAppointments]   Original EndTime: {e.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {e.EndTime.Kind})");
-            Console.WriteLine($"[ConvertEventsToAppointments]   TimeZoneId: {e.TimeZoneId}");
+        var visibleCalendarIds = _calendars
+            .Where(c => c.IsVisible)
+            .Select(c => c.Id)
+            .ToHashSet();
 
-            // CRITICAL FIX: Events from database may have DateTimeKind.Unspecified
-            // We need to explicitly mark them as UTC since we store everything in UTC
-            if (e.StartTime.Kind == DateTimeKind.Unspecified && e.TimeZoneId == "UTC")
+        _appointments = _events
+            .Where(e => !e.CalendarId.HasValue || visibleCalendarIds.Contains(e.CalendarId.Value))
+            .Select(e =>
             {
-                e.StartTime = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
-                e.EndTime = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
-                Console.WriteLine($"[ConvertEventsToAppointments]   Fixed DateTimeKind to UTC");
-            }
+                // CRITICAL FIX: Events from database may have DateTimeKind.Unspecified
+                // We need to explicitly mark them as UTC since we store everything in UTC
+                if (e.StartTime.Kind == DateTimeKind.Unspecified && e.TimeZoneId == "UTC")
+                {
+                    e.StartTime = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
+                    e.EndTime = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
+                }
 
-            var displayEvent = e;
+                var displayEvent = e;
 
-            // Convert from UTC to user's timezone for display
-            // Events are always stored in UTC (TimeZoneId = "UTC")
-            if (!string.IsNullOrEmpty(e.TimeZoneId))
-            {
-                displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
-                Console.WriteLine($"[ConvertEventsToAppointments]   Converted StartTime: {displayEvent.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {displayEvent.StartTime.Kind})");
-                Console.WriteLine($"[ConvertEventsToAppointments]   Converted EndTime: {displayEvent.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {displayEvent.EndTime.Kind})");
-            }
-            else
-            {
-                Console.WriteLine($"[ConvertEventsToAppointments]   WARNING: No TimeZoneId, skipping conversion!");
-            }
+                // Convert from UTC to user's timezone for display
+                // Events are always stored in UTC (TimeZoneId = "UTC")
+                if (!string.IsNullOrEmpty(e.TimeZoneId))
+                {
+                    displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+                }
 
-            return new AppointmentData
-            {
-                Start = displayEvent.StartTime,
-                End = displayEvent.EndTime,
-                Text = displayEvent.Title,
-                Event = e // Keep original event for editing
-            };
-        }).ToList();
-
-        Console.WriteLine($"[ConvertEventsToAppointments] Created {_appointments.Count} appointments");
+                return new AppointmentData
+                {
+                    Start = displayEvent.StartTime,
+                    End = displayEvent.EndTime,
+                    Text = displayEvent.Title,
+                    Event = e // Keep original event for editing
+                };
+            }).ToList();
     }
 
     private async Task DownloadDailyAgenda()
@@ -565,8 +685,10 @@
             // Check if event is selected
             var isSelected = _selectedEventIds.Contains(evt.Id);
 
-            // Apply event color
-            var backgroundColor = _formatter.GetEventBackgroundColor(evt);
+            // Get calendar color if event has a calendar, otherwise use event color
+            var backgroundColor = evt.CalendarId.HasValue
+                ? _calendars.FirstOrDefault(c => c.Id == evt.CalendarId.Value)?.Color ?? _formatter.GetEventBackgroundColor(evt)
+                : _formatter.GetEventBackgroundColor(evt);
 
             // Add selection styling if selected
             if (isSelected)
@@ -1234,5 +1356,49 @@
             _loading = false;
             StateHasChanged();
         }
+    }
+
+    // Calendar Management
+    private async Task OpenCalendarManagement()
+    {
+        var result = await DialogService.OpenAsync<CalendarManagementDialog>("Manage Calendars",
+            new Dictionary<string, object>
+            {
+                { "UserId", _userId },
+                { "OnCalendarsChanged", EventCallback.Factory.Create(this, OnCalendarsChanged) }
+            },
+            new DialogOptions { Width = "700px", Height = "auto", Resizable = true, Draggable = true });
+    }
+
+    private async Task OnCalendarsChanged()
+    {
+        // Reload calendars
+        _calendars = await CalendarRepository.GetAllAsync(_userId);
+
+        // Refresh the calendar view
+        ConvertEventsToAppointments();
+        StateHasChanged();
+
+        // Reload events to ensure any changes from calendar deletion are reflected
+        await LoadEvents();
+    }
+
+    private async Task UpdateCalendarVisibility(Tempus.Core.Models.Calendar calendar, bool isVisible)
+    {
+        // The @bind-Value already updated calendar.IsVisible
+        // We just need to save it and refresh the view
+        await CalendarRepository.UpdateAsync(calendar);
+
+        // Refresh the calendar view
+        ConvertEventsToAppointments();
+        StateHasChanged();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Calendar Visibility",
+            Detail = $"{calendar.Name} is now {(isVisible ? "visible" : "hidden")}",
+            Duration = 2000
+        });
     }
 }
