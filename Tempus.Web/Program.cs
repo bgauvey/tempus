@@ -124,6 +124,13 @@ builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
 builder.Services.AddScoped<IHelpService, HelpService>();
 builder.Services.AddScoped<INotificationSchedulerService, NotificationSchedulerService>();
 
+// Register calendar services for refactored Calendar component
+builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarStateService>();
+builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarEventService>();
+builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarViewService>();
+builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarFilterService>();
+builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarHelperService>();
+
 // Register background service for notification checking
 builder.Services.AddHostedService<NotificationBackgroundService>();
 
