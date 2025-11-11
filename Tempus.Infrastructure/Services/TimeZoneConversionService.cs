@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 
@@ -5,6 +6,13 @@ namespace Tempus.Infrastructure.Services;
 
 public class TimeZoneConversionService : ITimeZoneConversionService
 {
+    private readonly ILogger<TimeZoneConversionService> _logger;
+
+    public TimeZoneConversionService(ILogger<TimeZoneConversionService> logger)
+    {
+        _logger = logger;
+    }
+
     // Common timezones that are frequently used
     private static readonly string[] CommonTimeZoneIds = new[]
     {
@@ -88,10 +96,10 @@ public class TimeZoneConversionService : ITimeZoneConversionService
         if (string.IsNullOrEmpty(toTimeZoneId))
             throw new ArgumentException("Target timezone ID cannot be null or empty", nameof(toTimeZoneId));
 
-        Console.WriteLine($"[TimeZoneConversion] Converting time:");
-        Console.WriteLine($"[TimeZoneConversion]   Input: {dateTime:yyyy-MM-dd HH:mm:ss} (Kind: {dateTime.Kind})");
-        Console.WriteLine($"[TimeZoneConversion]   From: {fromTimeZoneId}");
-        Console.WriteLine($"[TimeZoneConversion]   To: {toTimeZoneId}");
+        _logger.LogDebug("Converting time:");
+        _logger.LogDebug("  Input: {DateTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", dateTime, dateTime.Kind);
+        _logger.LogDebug("  From: {FromTimeZone}", fromTimeZoneId);
+        _logger.LogDebug("  To: {ToTimeZone}", toTimeZoneId);
 
         try
         {
@@ -105,25 +113,25 @@ public class TimeZoneConversionService : ITimeZoneConversionService
             // If the datetime has DateTimeKind.Utc, use it directly
             if (dateTime.Kind == DateTimeKind.Utc)
             {
-                Console.WriteLine($"[TimeZoneConversion]   DateTime is already UTC");
+                _logger.LogDebug("  DateTime is already UTC");
                 utcTime = dateTime;
             }
             // For Local or Unspecified, ALWAYS use the explicit fromTimeZoneId parameter
             // This ensures we respect the user's timezone, not the server's timezone
             else
             {
-                Console.WriteLine($"[TimeZoneConversion]   DateTime is {dateTime.Kind}, treating as {fromTimeZoneId}");
+                _logger.LogDebug("  DateTime is {Kind}, treating as {TimeZone}", dateTime.Kind, fromTimeZoneId);
                 // First, ensure the DateTime is treated as Unspecified to avoid double conversion
                 var unspecifiedTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified);
                 utcTime = TimeZoneInfo.ConvertTimeToUtc(unspecifiedTime, sourceTimeZone);
             }
 
-            Console.WriteLine($"[TimeZoneConversion]   UTC time: {utcTime:yyyy-MM-dd HH:mm:ss}");
+            _logger.LogDebug("  UTC time: {UtcTime:yyyy-MM-dd HH:mm:ss}", utcTime);
 
             // Convert from UTC to target timezone
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, targetTimeZone);
 
-            Console.WriteLine($"[TimeZoneConversion]   Result: {convertedTime:yyyy-MM-dd HH:mm:ss} (Kind: {convertedTime.Kind})");
+            _logger.LogDebug("  Result: {Result:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", convertedTime, convertedTime.Kind);
 
             return convertedTime;
         }

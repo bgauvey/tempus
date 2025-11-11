@@ -14,6 +14,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
 @inject NotificationService NotificationService
+@inject ILogger<EventFormDialog> Logger
 
 <RadzenStack Gap="1rem">
     <RadzenFormField Text="Title" Variant="Variant.Outlined">
@@ -552,16 +553,16 @@
                     ? appUser.TimeZone
                     : TimeZoneInfo.Local.Id;
 
-                Console.WriteLine($"[EventFormDialog.Init] User timezone: {_userTimeZone}");
+                Logger.LogDebug("User timezone: {TimeZone}", _userTimeZone);
 
                 // Load user's calendar settings for time format preference
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
-                Console.WriteLine($"[EventFormDialog.Init] Time format: {_settings.TimeFormat}");
+                Logger.LogDebug("Time format: {TimeFormat}", _settings.TimeFormat);
 
                 // Ensure user has at least one calendar and load all calendars
                 await CalendarRepository.EnsureDefaultCalendarExistsAsync(_userId, _userEmail);
                 _calendars = await CalendarRepository.GetAllAsync(_userId);
-                Console.WriteLine($"[EventFormDialog.Init] Loaded {_calendars.Count} calendars");
+                Logger.LogDebug("Loaded {CalendarCount} calendars", _calendars.Count);
 
                 // Get user's display name from claims or use email
                 var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
@@ -661,14 +662,14 @@
             // This will be converted to UTC when saving
             _event.TimeZoneId = _userTimeZone;
 
-            Console.WriteLine($"[EventFormDialog.Init] New event - setting TimeZoneId to user timezone: {_userTimeZone}");
+            Logger.LogDebug("New event - setting TimeZoneId to user timezone: {TimeZone}", _userTimeZone);
 
             // Set default calendar
             var defaultCalendar = _calendars.FirstOrDefault(c => c.IsDefault) ?? _calendars.FirstOrDefault();
             if (defaultCalendar != null)
             {
                 _selectedCalendarId = defaultCalendar.Id;
-                Console.WriteLine($"[EventFormDialog.Init] Set default calendar: {defaultCalendar.Name}");
+                Logger.LogDebug("Set default calendar: {CalendarName}", defaultCalendar.Name);
             }
 
             if (PrefilledDate.HasValue)
@@ -701,10 +702,10 @@
             // We need to convert them to UTC before saving to the database
             var userTimeZoneId = string.IsNullOrEmpty(_event.TimeZoneId) ? _userTimeZone : _event.TimeZoneId;
 
-            Console.WriteLine($"[EventFormDialog.Save] Converting event '{_event.Title}' to UTC");
-            Console.WriteLine($"[EventFormDialog.Save]   Original StartTime: {_event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.StartTime.Kind})");
-            Console.WriteLine($"[EventFormDialog.Save]   Original EndTime: {_event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.EndTime.Kind})");
-            Console.WriteLine($"[EventFormDialog.Save]   User TimeZone: {userTimeZoneId}");
+            Logger.LogDebug("Converting event '{Title}' to UTC", _event.Title);
+            Logger.LogDebug("  Original StartTime: {StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", _event.StartTime, _event.StartTime.Kind);
+            Logger.LogDebug("  Original EndTime: {EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", _event.EndTime, _event.EndTime.Kind);
+            Logger.LogDebug("  User TimeZone: {TimeZone}", userTimeZoneId);
 
             // Convert StartTime and EndTime to UTC
             _event.StartTime = TimeZoneService.ConvertTime(_event.StartTime, userTimeZoneId, "UTC");
@@ -714,16 +715,16 @@
             _event.StartTime = DateTime.SpecifyKind(_event.StartTime, DateTimeKind.Utc);
             _event.EndTime = DateTime.SpecifyKind(_event.EndTime, DateTimeKind.Utc);
 
-            Console.WriteLine($"[EventFormDialog.Save]   Converted StartTime: {_event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.StartTime.Kind})");
-            Console.WriteLine($"[EventFormDialog.Save]   Converted EndTime: {_event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {_event.EndTime.Kind})");
+            Logger.LogDebug("  Converted StartTime: {StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", _event.StartTime, _event.StartTime.Kind);
+            Logger.LogDebug("  Converted EndTime: {EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", _event.EndTime, _event.EndTime.Kind);
 
             // Always store events in UTC timezone
             _event.TimeZoneId = "UTC";
-            Console.WriteLine($"[EventFormDialog.Save]   Set TimeZoneId to: '{_event.TimeZoneId}'");
+            Logger.LogDebug("  Set TimeZoneId to: '{TimeZoneId}'", _event.TimeZoneId);
 
             // Set the calendar ID from the dropdown selection
             _event.CalendarId = _selectedCalendarId;
-            Console.WriteLine($"[EventFormDialog.Save]   Set CalendarId to: '{_event.CalendarId}'");
+            Logger.LogDebug("  Set CalendarId to: '{CalendarId}'", _event.CalendarId);
 
             // Auto-create contacts for attendees not in address book
             await AutoCreateContactsForAttendeesAsync();
@@ -770,8 +771,7 @@
                 Detail = $"An error occurred while saving the event: {ex.Message}",
                 Duration = 4000
             });
-            Console.WriteLine($"Error saving event: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Logger.LogError(ex, "Error saving event");
         }
     }
 

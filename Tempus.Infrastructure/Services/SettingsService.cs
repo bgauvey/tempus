@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Infrastructure.Data;
@@ -8,10 +9,12 @@ namespace Tempus.Infrastructure.Services;
 public class SettingsService : ISettingsService
 {
     private readonly IDbContextFactory<TempusDbContext> _contextFactory;
+    private readonly ILogger<SettingsService> _logger;
 
-    public SettingsService(IDbContextFactory<TempusDbContext> contextFactory)
+    public SettingsService(IDbContextFactory<TempusDbContext> contextFactory, ILogger<SettingsService> logger)
     {
         _contextFactory = contextFactory;
+        _logger = logger;
     }
 
     public async Task<CalendarSettings?> GetUserSettingsAsync(string userId)
@@ -25,14 +28,14 @@ public class SettingsService : ISettingsService
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
 
-        Console.WriteLine($"[SettingsService] CreateOrUpdateSettingsAsync called for userId: {settings.UserId}, DefaultCalendarView: {settings.DefaultCalendarView}");
+        _logger.LogDebug("CreateOrUpdateSettingsAsync called for userId: {UserId}, DefaultCalendarView: {View}", settings.UserId, settings.DefaultCalendarView);
 
         var existingSettings = await context.CalendarSettings
             .FirstOrDefaultAsync(s => s.UserId == settings.UserId);
 
         if (existingSettings != null)
         {
-            Console.WriteLine($"[SettingsService] Found existing settings. Current DefaultCalendarView: {existingSettings.DefaultCalendarView}");
+            _logger.LogDebug("Found existing settings. Current DefaultCalendarView: {View}", existingSettings.DefaultCalendarView);
 
             // Update existing settings
             existingSettings.StartOfWeek = settings.StartOfWeek;
@@ -72,24 +75,24 @@ public class SettingsService : ISettingsService
             existingSettings.DefaultCalendarId = settings.DefaultCalendarId;
             existingSettings.UpdatedAt = DateTime.UtcNow;
 
-            Console.WriteLine($"[SettingsService] Updating DefaultCalendarView to: {existingSettings.DefaultCalendarView}");
+            _logger.LogDebug("Updating DefaultCalendarView to: {View}", existingSettings.DefaultCalendarView);
 
             context.CalendarSettings.Update(existingSettings);
             await context.SaveChangesAsync();
 
-            Console.WriteLine($"[SettingsService] Settings saved to database");
+            _logger.LogDebug("Settings saved to database");
 
             return existingSettings;
         }
         else
         {
-            Console.WriteLine($"[SettingsService] No existing settings found. Creating new settings.");
+            _logger.LogDebug("No existing settings found. Creating new settings.");
 
             // Create new settings
             context.CalendarSettings.Add(settings);
             await context.SaveChangesAsync();
 
-            Console.WriteLine($"[SettingsService] New settings created");
+            _logger.LogDebug("New settings created");
 
             return settings;
         }

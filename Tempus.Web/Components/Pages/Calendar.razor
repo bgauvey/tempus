@@ -24,6 +24,7 @@
 @inject ContextMenuService ContextMenuService
 @inject ITimeZoneConversionService TimeZoneConversionService
 @inject NotificationService NotificationService
+@inject ILogger<Calendar> Logger
 
 <PageTitle>Calendar - Tempus</PageTitle>
 
@@ -393,8 +394,8 @@
                     ? appUser.TimeZone
                     : TimeZoneInfo.Local.Id;
 
-                Console.WriteLine($"[Calendar.Init] User ID: {_userId}");
-                Console.WriteLine($"[Calendar.Init] User timezone: {_userTimeZone}");
+                Logger.LogDebug("User ID: {UserId}", _userId);
+                Logger.LogDebug("User timezone: {UserTimeZone}", _userTimeZone);
 
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
 
@@ -409,7 +410,7 @@
                 // Load user's calendars
                 await CalendarRepository.EnsureDefaultCalendarExistsAsync(_userId, _userEmail);
                 _calendars = await CalendarRepository.GetAllAsync(_userId);
-                Console.WriteLine($"[Calendar.Init] Loaded {_calendars.Count} calendars");
+                Logger.LogDebug("Loaded {CalendarCount} calendars", _calendars.Count);
             }
         }
 
@@ -420,7 +421,7 @@
         _dragDropManager = new CalendarDragDropManager(DialogService, _eventManager);
         _formatter = new CalendarFormatter(_settings);
 
-        Console.WriteLine($"[Calendar.OnInitializedAsync] Initialization complete. User ID: {_userId}");
+        Logger.LogDebug("Initialization complete. User ID: {UserId}", _userId);
 
         // Load initial events as fallback if OnLoadData doesn't trigger
         // OnLoadData should override this once scheduler is ready
@@ -429,31 +430,30 @@
 
     private async Task LoadInitialEvents()
     {
-        Console.WriteLine($"[Calendar.LoadInitialEvents] Loading initial events...");
+        Logger.LogDebug("Loading initial events...");
         try
         {
             // Load events for current month +/- 1 month
             var startDate = DateTime.Today.AddMonths(-1);
             var endDate = DateTime.Today.AddMonths(2);
 
-            Console.WriteLine($"[Calendar.LoadInitialEvents] Date range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
-            Console.WriteLine($"[Calendar.LoadInitialEvents] User ID: {_userId}");
+            Logger.LogDebug("Date range: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
+            Logger.LogDebug("User ID: {UserId}", _userId);
 
             _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
 
-            Console.WriteLine($"[Calendar.LoadInitialEvents] Loaded {_events.Count} events");
+            Logger.LogDebug("Loaded {EventCount} events", _events.Count);
 
             ConvertEventsToAppointments();
 
             _loading = false;
             StateHasChanged();
 
-            Console.WriteLine($"[Calendar.LoadInitialEvents] Complete. Appointments: {_appointments.Count}");
+            Logger.LogDebug("Complete. Appointments: {AppointmentCount}", _appointments.Count);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Calendar.LoadInitialEvents] ERROR: {ex.Message}");
-            Console.WriteLine($"[Calendar.LoadInitialEvents] Stack: {ex.StackTrace}");
+            Logger.LogError(ex, "ERROR loading initial events");
             _loading = false;
             StateHasChanged();
         }
@@ -463,11 +463,11 @@
 
     private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
-        Console.WriteLine($"[Calendar.OnLoadData] === CALLED ===");
-        Console.WriteLine($"[Calendar.OnLoadData] args.Start: {args.Start:yyyy-MM-dd HH:mm:ss} (Kind: {args.Start.Kind})");
-        Console.WriteLine($"[Calendar.OnLoadData] args.End: {args.End:yyyy-MM-dd HH:mm:ss} (Kind: {args.End.Kind})");
-        Console.WriteLine($"[Calendar.OnLoadData] User timezone: {_userTimeZone}");
-        Console.WriteLine($"[Calendar.OnLoadData] User ID: {_userId}");
+        Logger.LogDebug("=== CALLED ===");
+        Logger.LogDebug("args.Start: {ArgsStart:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", args.Start, args.Start.Kind);
+        Logger.LogDebug("args.End: {ArgsEnd:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", args.End, args.End.Kind);
+        Logger.LogDebug("User timezone: {UserTimeZone}", _userTimeZone);
+        Logger.LogDebug("User ID: {UserId}", _userId);
 
         try
         {
@@ -499,50 +499,49 @@
                 "UTC"
             );
 
-            Console.WriteLine($"[Calendar.OnLoadData] User timezone range - Start: {startLocal:yyyy-MM-dd}, End: {endLocal:yyyy-MM-dd}");
-            Console.WriteLine($"[Calendar.OnLoadData] Converted to UTC - Start: {startUtc:yyyy-MM-dd HH:mm:ss}, End: {endUtc:yyyy-MM-dd HH:mm:ss}");
+            Logger.LogDebug("User timezone range - Start: {StartLocal:yyyy-MM-dd}, End: {EndLocal:yyyy-MM-dd}", startLocal, endLocal);
+            Logger.LogDebug("Converted to UTC - Start: {StartUtc:yyyy-MM-dd HH:mm:ss}, End: {EndUtc:yyyy-MM-dd HH:mm:ss}", startUtc, endUtc);
 
             // Load events for the visible date range in the scheduler
             _events = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, _userId);
 
-            Console.WriteLine($"[Calendar.OnLoadData] Loaded {_events.Count} events");
+            Logger.LogDebug("Loaded {EventCount} events", _events.Count);
             if (_events.Any())
             {
                 var minDate = _events.Min(e => e.StartTime);
                 var maxDate = _events.Max(e => e.StartTime);
-                Console.WriteLine($"[Calendar.OnLoadData] Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+                Logger.LogDebug("Event date range: {MinDate:yyyy-MM-dd} to {MaxDate:yyyy-MM-dd}", minDate, maxDate);
             }
 
             ConvertEventsToAppointments();
-            Console.WriteLine($"[Calendar.OnLoadData] Converted to {_appointments.Count} appointments");
+            Logger.LogDebug("Converted to {AppointmentCount} appointments", _appointments.Count);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Calendar.OnLoadData] ERROR: {ex.Message}");
-            Console.WriteLine($"[Calendar.OnLoadData] Stack: {ex.StackTrace}");
+            Logger.LogError(ex, "ERROR in OnLoadData");
 
             // Set empty appointments on error
             _appointments = new List<AppointmentData>();
             _events = new List<Event>();
         }
 
-        Console.WriteLine($"[Calendar.OnLoadData] === COMPLETE ===");
+        Logger.LogDebug("=== COMPLETE ===");
     }
 
     private async Task LoadEvents()
     {
-        Console.WriteLine($"[Calendar.LoadEvents] Reloading events...");
+        Logger.LogDebug("Reloading events...");
 
         // Trigger the scheduler to reload data for the current visible date range
         // This will call OnLoadData with the appropriate date range
         if (_scheduler != null)
         {
-            Console.WriteLine($"[Calendar.LoadEvents] Calling scheduler.Reload()");
+            Logger.LogDebug("Calling scheduler.Reload()");
             await _scheduler.Reload();
         }
         else
         {
-            Console.WriteLine($"[Calendar.LoadEvents] Scheduler not ready, using LoadInitialEvents");
+            Logger.LogDebug("Scheduler not ready, using LoadInitialEvents");
             await LoadInitialEvents();
         }
     }
@@ -642,7 +641,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error generating PDF: {ex.Message}");
+            Logger.LogError(ex, "Error generating PDF");
         }
     }
 
@@ -863,7 +862,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in OnAppointmentMove: {ex.Message}");
+            Logger.LogError(ex, "Error in OnAppointmentMove");
         }
     }
 
@@ -1005,7 +1004,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error duplicating event: {ex.Message}");
+            Logger.LogError(ex, "Error duplicating event");
         }
     }
 
@@ -1134,7 +1133,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error performing search: {ex.Message}");
+            Logger.LogError(ex, "Error performing search");
         }
         finally
         {
@@ -1274,11 +1273,11 @@
             _selectedEventIds.Clear();
 
             // Show success message
-            Console.WriteLine($"Successfully updated {affectedCount} event(s)");
+            Logger.LogInformation("Successfully updated {AffectedCount} event(s)", affectedCount);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error performing bulk action: {ex.Message}");
+            Logger.LogError(ex, "Error performing bulk action");
         }
         finally
         {
@@ -1303,11 +1302,11 @@
             // Clear selection
             _selectedEventIds.Clear();
 
-            Console.WriteLine($"Successfully marked {affectedCount} event(s) as {(isCompleted ? "complete" : "incomplete")}");
+            Logger.LogInformation("Successfully marked {AffectedCount} event(s) as {Status}", affectedCount, isCompleted ? "complete" : "incomplete");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error marking events: {ex.Message}");
+            Logger.LogError(ex, "Error marking events");
         }
         finally
         {
@@ -1345,11 +1344,11 @@
             // Clear selection
             _selectedEventIds.Clear();
 
-            Console.WriteLine($"Successfully deleted {affectedCount} event(s)");
+            Logger.LogInformation("Successfully deleted {AffectedCount} event(s)", affectedCount);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting events: {ex.Message}");
+            Logger.LogError(ex, "Error deleting events");
         }
         finally
         {

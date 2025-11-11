@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Core.Enums;
@@ -10,10 +11,12 @@ namespace Tempus.Infrastructure.Repositories;
 public class EventRepository : IEventRepository
 {
     private readonly IDbContextFactory<TempusDbContext> _contextFactory;
+    private readonly ILogger<EventRepository> _logger;
 
-    public EventRepository(IDbContextFactory<TempusDbContext> contextFactory)
+    public EventRepository(IDbContextFactory<TempusDbContext> contextFactory, ILogger<EventRepository> logger)
     {
         _contextFactory = contextFactory;
+        _logger = logger;
     }
 
     public async Task<Event?> GetByIdAsync(Guid id, string userId)
@@ -105,20 +108,21 @@ public class EventRepository : IEventRepository
             .OrderBy(e => e.StartTime)
             .ToList();
 
-        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync] Found {allEvents.Count} total events");
-        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Non-recurring: {nonRecurringEvents.Count}");
-        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Recurring instances: {recurringInstances.Count}");
-        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Exceptions: {visibleExceptions.Count}");
+        _logger.LogDebug("Found {EventCount} total events", allEvents.Count);
+        _logger.LogDebug("  Non-recurring: {NonRecurringCount}", nonRecurringEvents.Count);
+        _logger.LogDebug("  Recurring instances: {RecurringCount}", recurringInstances.Count);
+        _logger.LogDebug("  Exceptions: {ExceptionCount}", visibleExceptions.Count);
 
         // Log calendar info
         var withCalendar = allEvents.Count(e => e.CalendarId.HasValue);
         var withoutCalendar = allEvents.Count(e => !e.CalendarId.HasValue);
-        Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   With CalendarId: {withCalendar}, Without CalendarId (NULL): {withoutCalendar}");
+        _logger.LogDebug("  With CalendarId: {WithCalendar}, Without CalendarId (NULL): {WithoutCalendar}", withCalendar, withoutCalendar);
 
         // Log each event's details
         foreach (var evt in allEvents)
         {
-            Console.WriteLine($"[EventRepository.GetEventsByDateRangeAsync]   Event: '{evt.Title}' - CalendarId: {evt.CalendarId?.ToString() ?? "NULL"} - Start: {evt.StartTime:yyyy-MM-dd HH:mm}");
+            _logger.LogDebug("  Event: '{Title}' - CalendarId: {CalendarId} - Start: {StartTime:yyyy-MM-dd HH:mm}",
+                evt.Title, evt.CalendarId?.ToString() ?? "NULL", evt.StartTime);
         }
 
         return allEvents;
@@ -126,47 +130,47 @@ public class EventRepository : IEventRepository
 
     public async Task<Event> CreateAsync(Event @event)
     {
-        Console.WriteLine($"[EventRepository.CreateAsync] Starting for event: {@event.Title}");
-        Console.WriteLine($"[EventRepository.CreateAsync] Event ID: {@event.Id}");
-        Console.WriteLine($"[EventRepository.CreateAsync] User ID: {@event.UserId}");
-        Console.WriteLine($"[EventRepository.CreateAsync] CalendarId: {@event.CalendarId}");
-        Console.WriteLine($"[EventRepository.CreateAsync] StartTime: {@event.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.StartTime.Kind})");
-        Console.WriteLine($"[EventRepository.CreateAsync] EndTime: {@event.EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {@event.EndTime.Kind})");
-        Console.WriteLine($"[EventRepository.CreateAsync] TimeZoneId: '{@event.TimeZoneId}'");
+        _logger.LogDebug("Starting for event: {Title}", @event.Title);
+        _logger.LogDebug("Event ID: {EventId}", @event.Id);
+        _logger.LogDebug("User ID: {UserId}", @event.UserId);
+        _logger.LogDebug("CalendarId: {CalendarId}", @event.CalendarId);
+        _logger.LogDebug("StartTime: {StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", @event.StartTime, @event.StartTime.Kind);
+        _logger.LogDebug("EndTime: {EndTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", @event.EndTime, @event.EndTime.Kind);
+        _logger.LogDebug("TimeZoneId: '{TimeZoneId}'", @event.TimeZoneId);
 
         await using var context = await _contextFactory.CreateDbContextAsync();
-        Console.WriteLine($"[EventRepository.CreateAsync] DbContext created");
+        _logger.LogDebug("DbContext created");
 
         // Handle attendees - ensure they have proper IDs and EventId set
         if (@event.Attendees != null && @event.Attendees.Any())
         {
-            Console.WriteLine($"[EventRepository.CreateAsync] Processing {@event.Attendees.Count} attendees");
+            _logger.LogDebug("Processing {AttendeeCount} attendees", @event.Attendees.Count);
             foreach (var attendee in @event.Attendees)
             {
                 // Ensure attendee has an ID
                 if (attendee.Id == Guid.Empty)
                 {
                     attendee.Id = Guid.NewGuid();
-                    Console.WriteLine($"[EventRepository.CreateAsync]   Generated new attendee ID: {attendee.Id}");
+                    _logger.LogDebug("  Generated new attendee ID: {AttendeeId}", attendee.Id);
                 }
                 // Set the EventId to link the attendee to this event
                 attendee.EventId = @event.Id;
-                Console.WriteLine($"[EventRepository.CreateAsync]   Attendee: {attendee.Name} ({attendee.Email}), EventId: {attendee.EventId}");
+                _logger.LogDebug("  Attendee: {Name} ({Email}), EventId: {EventId}", attendee.Name, attendee.Email, attendee.EventId);
             }
         }
         else
         {
-            Console.WriteLine($"[EventRepository.CreateAsync] No attendees to process");
+            _logger.LogDebug("No attendees to process");
         }
 
-        Console.WriteLine($"[EventRepository.CreateAsync] Adding event to context...");
+        _logger.LogDebug("Adding event to context...");
         context.Events.Add(@event);
 
-        Console.WriteLine($"[EventRepository.CreateAsync] Calling SaveChangesAsync...");
+        _logger.LogDebug("Calling SaveChangesAsync...");
         var changeCount = await context.SaveChangesAsync();
-        Console.WriteLine($"[EventRepository.CreateAsync] SaveChangesAsync completed. Changes saved: {changeCount}");
+        _logger.LogDebug("SaveChangesAsync completed. Changes saved: {ChangeCount}", changeCount);
 
-        Console.WriteLine($"[EventRepository.CreateAsync] Returning event with ID: {@event.Id}");
+        _logger.LogDebug("Returning event with ID: {EventId}", @event.Id);
         return @event;
     }
 

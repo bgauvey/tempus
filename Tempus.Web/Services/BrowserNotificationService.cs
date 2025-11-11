@@ -13,10 +13,12 @@ public interface IBrowserNotificationService
 public class BrowserNotificationService : IBrowserNotificationService
 {
     private readonly IJSRuntime _jsRuntime;
+    private readonly ILogger<BrowserNotificationService> _logger;
 
-    public BrowserNotificationService(IJSRuntime jsRuntime)
+    public BrowserNotificationService(IJSRuntime jsRuntime, ILogger<BrowserNotificationService> logger)
     {
         _jsRuntime = jsRuntime;
+        _logger = logger;
     }
 
     public async Task<bool> IsSupportedAsync()
@@ -74,7 +76,7 @@ public class BrowserNotificationService : IBrowserNotificationService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error showing browser notification: {ex.Message}");
+            _logger.LogError(ex, "Error showing browser notification");
         }
     }
 }

@@ -7,6 +7,7 @@
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
+@inject ILogger<AddressFormDialog> Logger
 
 <RadzenStack Gap="1.5rem">
     <!-- Contact Information Section -->
@@ -177,7 +178,7 @@
         catch (Exception ex)
         {
             // Handle error - could show a notification here
-            Console.WriteLine($"Error saving contact: {ex.Message}");
+            Logger.LogError(ex, "Error saving contact");
         }
     }
 
