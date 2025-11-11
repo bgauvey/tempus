@@ -8,5 +8,8 @@ public enum NotificationType
     EventInvitation,
     MeetingStartingSoon,
     TaskDue,
-    System
+    System,
+    ReminderSent,        // RSVP reminder was sent to attendee
+    RSVPResponse,        // Attendee responded to RSVP
+    ProposedTimeSubmitted // Alternative time was proposed
 }

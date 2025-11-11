@@ -40,6 +40,13 @@ public class Event
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
 
+    // RSVP Configuration
+    public bool RequireRSVP { get; set; } = false; // Whether attendees must RSVP
+    public DateTime? RSVPDeadline { get; set; } // Deadline for RSVP responses
+    public GuestListVisibility GuestListVisibility { get; set; } = GuestListVisibility.AllAttendees;
+    public bool AllowProposedTimes { get; set; } = true; // Allow attendees to propose alternative times
+    public bool SendReminderToNonResponders { get; set; } = true; // Auto-send reminders
+
     // Reminders/Notifications
     public string? ReminderMinutes { get; set; } // Comma-separated: "15,60,1440" (15min, 1hr, 1day)
 
