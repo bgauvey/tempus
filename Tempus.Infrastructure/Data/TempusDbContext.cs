@@ -13,6 +13,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Event> Events { get; set; }
     public DbSet<Calendar> Calendars { get; set; }
     public DbSet<Attendee> Attendees { get; set; }
+    public DbSet<ProposedTime> ProposedTimes { get; set; }
     public DbSet<CalendarIntegration> CalendarIntegrations { get; set; }
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
     public DbSet<Contact> Contacts { get; set; }
@@ -34,11 +35,6 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             // Configure decimal properties with precision and scale
             entity.Property(e => e.HourlyCostPerAttendee).HasPrecision(18, 2);
             entity.Property(e => e.MeetingCost).HasPrecision(18, 2);
-
-            entity.HasMany(e => e.Attendees)
-                  .WithOne()
-                  .HasForeignKey(a => a.EventId)
-                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.User)
                   .WithMany(u => u.Events)
@@ -78,6 +74,32 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(a => a.Id);
             entity.Property(a => a.Name).IsRequired().HasMaxLength(100);
             entity.Property(a => a.Email).IsRequired().HasMaxLength(200);
+            entity.Property(a => a.ResponseNotes).HasMaxLength(1000);
+
+            entity.HasOne(a => a.Event)
+                  .WithMany(e => e.Attendees)
+                  .HasForeignKey(a => a.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(a => a.ProposedTimes)
+                  .WithOne(p => p.Attendee)
+                  .HasForeignKey(p => p.AttendeeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(a => new { a.EventId, a.Email });
+        });
+
+        modelBuilder.Entity<ProposedTime>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Reason).HasMaxLength(500);
+
+            entity.HasOne(p => p.Attendee)
+                  .WithMany(a => a.ProposedTimes)
+                  .HasForeignKey(p => p.AttendeeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => p.AttendeeId);
         });
 
         modelBuilder.Entity<CalendarIntegration>(entity =>

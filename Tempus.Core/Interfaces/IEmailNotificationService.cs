@@ -29,6 +29,33 @@ public interface IEmailNotificationService
     /// <param name="organizerName">Name of the meeting organizer</param>
     /// <returns>Task representing the async operation</returns>
     Task SendMeetingCancellationAsync(Event meetingEvent, string organizerName);
+
+    /// <summary>
+    /// Sends an RSVP reminder to a non-responder
+    /// </summary>
+    /// <param name="meetingEvent">The meeting event</param>
+    /// <param name="attendee">The attendee to remind</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendRSVPReminderAsync(Event meetingEvent, Attendee attendee);
+
+    /// <summary>
+    /// Notifies organizer when an attendee responds to RSVP
+    /// </summary>
+    /// <param name="meetingEvent">The meeting event</param>
+    /// <param name="respondingAttendee">The attendee who responded</param>
+    /// <param name="organizer">The event organizer</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendRSVPResponseNotificationAsync(Event meetingEvent, Attendee respondingAttendee, Attendee organizer);
+
+    /// <summary>
+    /// Notifies organizer when an attendee proposes an alternative time
+    /// </summary>
+    /// <param name="meetingEvent">The meeting event</param>
+    /// <param name="attendee">The attendee proposing alternative time</param>
+    /// <param name="proposedTime">The proposed alternative time</param>
+    /// <param name="organizer">The event organizer</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendProposedTimeNotificationAsync(Event meetingEvent, Attendee attendee, ProposedTime proposedTime, Attendee organizer);
 }
 
 public enum MeetingUpdateType

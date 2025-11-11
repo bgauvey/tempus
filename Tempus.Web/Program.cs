@@ -123,6 +123,7 @@ builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
 builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
 builder.Services.AddScoped<IHelpService, HelpService>();
 builder.Services.AddScoped<INotificationSchedulerService, NotificationSchedulerService>();
+builder.Services.AddScoped<IRSVPService, RSVPService>();
 
 // Register calendar services for refactored Calendar component
 builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarStateService>();
