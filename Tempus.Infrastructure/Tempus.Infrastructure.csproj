@@ -21,9 +21,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Ical.Net" Version="4.3.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.10" />
     <PackageReference Include="Microsoft.Graph" Version="5.77.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.67.1" />
     <PackageReference Include="QuestPDF" Version="2024.10.3" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>

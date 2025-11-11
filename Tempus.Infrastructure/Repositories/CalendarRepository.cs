@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Infrastructure.Data;
@@ -8,10 +9,12 @@ namespace Tempus.Infrastructure.Repositories;
 public class CalendarRepository : ICalendarRepository
 {
     private readonly IDbContextFactory<TempusDbContext> _contextFactory;
+    private readonly ILogger<CalendarRepository> _logger;
 
-    public CalendarRepository(IDbContextFactory<TempusDbContext> contextFactory)
+    public CalendarRepository(IDbContextFactory<TempusDbContext> contextFactory, ILogger<CalendarRepository> logger)
     {
         _contextFactory = contextFactory;
+        _logger = logger;
     }
 
     public async Task<Calendar?> GetByIdAsync(Guid id, string userId)
@@ -182,7 +185,7 @@ public class CalendarRepository : ICalendarRepository
         context.Calendars.Add(defaultCalendar);
         await context.SaveChangesAsync();
 
-        Console.WriteLine($"[CalendarRepository] Created default calendar for user {userEmail}");
+        _logger.LogDebug("Created default calendar for user {UserEmail}", userEmail);
         return defaultCalendar;
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 using Tempus.Core.Enums;
@@ -11,16 +12,22 @@ namespace Tempus.Infrastructure.Services;
 /// </summary>
 public class PstImportService : IPstImportService
 {
+    private readonly ILogger<PstImportService> _logger;
+
+    public PstImportService(ILogger<PstImportService> logger)
+    {
+        _logger = logger;
+    }
     public async Task<List<Event>> ImportFromStreamAsync(Stream stream)
     {
-        Console.WriteLine("[PstImportService] Starting PST import...");
+        _logger.LogDebug("Starting PST import...");
         var events = new List<Event>();
 
         try
         {
             // Save stream to temporary file (PST reading requires file path)
             var tempFilePath = Path.GetTempFileName();
-            Console.WriteLine($"[PstImportService] Created temp file: {tempFilePath}");
+            _logger.LogDebug("Created temp file: {TempFile}", tempFilePath);
 
             try
             {
@@ -29,20 +36,20 @@ public class PstImportService : IPstImportService
                 {
                     await stream.CopyToAsync(fileStream);
                 }
-                Console.WriteLine($"[PstImportService] Copied stream to temp file. Size: {new FileInfo(tempFilePath).Length} bytes");
+                _logger.LogDebug("Copied stream to temp file. Size: {Size} bytes", new FileInfo(tempFilePath).Length);
 
                 // Open PST file with Aspose.Email
                 using (var pst = PersonalStorage.FromFile(tempFilePath))
                 {
-                    Console.WriteLine($"[PstImportService] Opened PST file successfully");
+                    _logger.LogDebug("Opened PST file successfully");
                     // Get the root folder
                     var rootFolder = pst.RootFolder;
-                    Console.WriteLine($"[PstImportService] Root folder: {rootFolder.DisplayName}");
+                    _logger.LogDebug("Root folder: {FolderName}", rootFolder.DisplayName);
 
                     // Recursively search for calendar folders and extract events
                     ExtractEventsFromFolder(pst, rootFolder, events);
                 }
-                Console.WriteLine($"[PstImportService] Extracted {events.Count} total events from PST");
+                _logger.LogDebug("Extracted {EventCount} total events from PST", events.Count);
             }
             finally
             {
@@ -50,32 +57,31 @@ public class PstImportService : IPstImportService
                 if (File.Exists(tempFilePath))
                 {
                     File.Delete(tempFilePath);
-                    Console.WriteLine($"[PstImportService] Deleted temp file");
+                    _logger.LogDebug("Deleted temp file");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[PstImportService] ERROR: {ex.Message}");
-            Console.WriteLine($"[PstImportService] Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "ERROR parsing PST file");
             throw new InvalidOperationException($"Error parsing PST file: {ex.Message}", ex);
         }
 
-        Console.WriteLine($"[PstImportService] Returning {events.Count} events");
+        _logger.LogDebug("Returning {EventCount} events", events.Count);
         return events;
     }
 
     private void ExtractEventsFromFolder(PersonalStorage pst, FolderInfo folder, List<Event> events)
     {
-        Console.WriteLine($"[PstImportService] Examining folder: {folder.DisplayName}");
+        _logger.LogDebug("Examining folder: {FolderName}", folder.DisplayName);
 
         // Check if this is a calendar folder
         if (IsCalendarFolder(folder))
         {
-            Console.WriteLine($"[PstImportService] ✓ Found calendar folder: {folder.DisplayName}");
+            _logger.LogDebug("✓ Found calendar folder: {FolderName}", folder.DisplayName);
             // Extract events from this folder
             var messageInfoCollection = folder.GetContents();
-            Console.WriteLine($"[PstImportService] Folder contains {messageInfoCollection.Count} items");
+            _logger.LogDebug("Folder contains {ItemCount} items", messageInfoCollection.Count);
 
             int eventCount = 0;
             int skippedCount = 0;
@@ -99,20 +105,20 @@ public class PstImportService : IPstImportService
                 catch (Exception ex)
                 {
                     // Skip messages that can't be converted
-                    Console.WriteLine($"[PstImportService] Failed to convert message: {ex.Message}");
+                    _logger.LogWarning(ex, "Failed to convert message");
                     skippedCount++;
                     continue;
                 }
             }
 
-            Console.WriteLine($"[PstImportService] Extracted {eventCount} events from this folder, skipped {skippedCount}");
+            _logger.LogDebug("Extracted {EventCount} events from this folder, skipped {SkippedCount}", eventCount, skippedCount);
         }
 
         // Recursively process subfolders
         if (folder.HasSubFolders)
         {
             var subFolders = folder.GetSubFolders();
-            Console.WriteLine($"[PstImportService] Processing {subFolders.Count} subfolders...");
+            _logger.LogDebug("Processing {SubFolderCount} subfolders...", subFolders.Count);
             foreach (var subfolder in subFolders)
             {
                 ExtractEventsFromFolder(pst, subfolder, events);
@@ -139,17 +145,17 @@ public class PstImportService : IPstImportService
             var messageClass = mapiMessage.MessageClass ?? "";
             if (!messageClass.StartsWith("IPM.Appointment", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine($"[PstImportService.ConvertToEvent] Skipping non-appointment: {messageClass}");
+                _logger.LogDebug("Skipping non-appointment: {MessageClass}", messageClass);
                 return null; // Not a calendar event
             }
 
-            Console.WriteLine($"[PstImportService.ConvertToEvent] Converting appointment: {mapiMessage.Subject}");
+            _logger.LogDebug("Converting appointment: {Subject}", mapiMessage.Subject);
 
             // Convert to MapiCalendar for easier access to appointment properties
             var appointment = mapiMessage.ToMapiMessageItem() as MapiCalendar;
             if (appointment == null)
             {
-                Console.WriteLine($"[PstImportService.ConvertToEvent] Failed to convert to MapiCalendar");
+                _logger.LogDebug("Failed to convert to MapiCalendar");
                 return null;
             }
 
@@ -185,7 +191,7 @@ public class PstImportService : IPstImportService
             if (endTime == startTime)
             {
                 endTime = startTime.AddHours(1); // Default 1 hour duration
-                Console.WriteLine($"[PstImportService.ConvertToEvent] Fixed zero-duration event '{subject}': added 1 hour duration");
+                _logger.LogDebug("Fixed zero-duration event '{Subject}': added 1 hour duration", subject);
             }
 
             // CRITICAL: Ensure imported times are in UTC for consistent storage
@@ -194,14 +200,14 @@ public class PstImportService : IPstImportService
             {
                 startTime = startTime.ToUniversalTime();
                 endTime = endTime.ToUniversalTime();
-                Console.WriteLine($"[PstImportService.ConvertToEvent] Converted times from Local to UTC");
+                _logger.LogDebug("Converted times from Local to UTC");
             }
             else if (startTime.Kind == DateTimeKind.Unspecified)
             {
                 // Treat unspecified times as UTC to be safe
                 startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
                 endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
-                Console.WriteLine($"[PstImportService.ConvertToEvent] Marked unspecified times as UTC");
+                _logger.LogDebug("Marked unspecified times as UTC");
             }
 
             // Create event object
@@ -244,12 +250,12 @@ public class PstImportService : IPstImportService
                 }
             }
 
-            Console.WriteLine($"[PstImportService.ConvertToEvent] ✓ Successfully converted: '{evt.Title}' with {evt.Attendees?.Count ?? 0} attendees");
+            _logger.LogDebug("✓ Successfully converted: '{Title}' with {AttendeeCount} attendees", evt.Title, evt.Attendees?.Count ?? 0);
             return evt;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[PstImportService.ConvertToEvent] ERROR during conversion: {ex.Message}");
+            _logger.LogError(ex, "ERROR during conversion");
             return null;
         }
     }

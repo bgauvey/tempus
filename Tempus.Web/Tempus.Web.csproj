@@ -13,6 +13,8 @@
     </PackageReference>
     <PackageReference Include="QuestPDF" Version="2025.7.3" />
     <PackageReference Include="Radzen.Blazor" Version="5.9.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

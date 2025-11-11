@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tempus.Core.Enums;
 using Tempus.Core.Helpers;
 using Tempus.Core.Interfaces;
@@ -10,10 +11,12 @@ namespace Tempus.Infrastructure.Services;
 public class NotificationSchedulerService : INotificationSchedulerService
 {
     private readonly IDbContextFactory<TempusDbContext> _contextFactory;
+    private readonly ILogger<NotificationSchedulerService> _logger;
 
-    public NotificationSchedulerService(IDbContextFactory<TempusDbContext> contextFactory)
+    public NotificationSchedulerService(IDbContextFactory<TempusDbContext> contextFactory, ILogger<NotificationSchedulerService> logger)
     {
         _contextFactory = contextFactory;
+        _logger = logger;
     }
 
     public async Task<List<PendingNotification>> GetPendingNotificationsAsync(DateTime checkTimeUtc, int toleranceSeconds = 30)
@@ -67,8 +70,8 @@ public class NotificationSchedulerService : INotificationSchedulerService
                 if (string.IsNullOrEmpty(evt.ReminderMinutes))
                     continue;
 
-                Console.WriteLine($"[NotificationScheduler] Event '{evt.Title}' (ID: {evt.Id}) has reminders: {evt.ReminderMinutes}");
-                Console.WriteLine($"[NotificationScheduler]   Event StartTime: {evt.StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {evt.StartTime.Kind})");
+                _logger.LogDebug("Event '{Title}' (ID: {EventId}) has reminders: {ReminderMinutes}", evt.Title, evt.Id, evt.ReminderMinutes);
+                _logger.LogDebug("  Event StartTime: {StartTime:yyyy-MM-dd HH:mm:ss} (Kind: {Kind})", evt.StartTime, evt.StartTime.Kind);
 
                 var reminderMinutes = evt.ReminderMinutes
                     .Split(',')
@@ -85,18 +88,18 @@ public class NotificationSchedulerService : INotificationSchedulerService
                         : DateTime.SpecifyKind(evt.StartTime, DateTimeKind.Utc);
                     var reminderTriggerTime = eventStartUtc.AddMinutes(-reminderMin);
 
-                    Console.WriteLine($"[NotificationScheduler]   Reminder: {reminderMin} min before");
-                    Console.WriteLine($"[NotificationScheduler]   Event Start (UTC): {eventStartUtc:yyyy-MM-dd HH:mm:ss}");
-                    Console.WriteLine($"[NotificationScheduler]   Trigger Time: {reminderTriggerTime:yyyy-MM-dd HH:mm:ss}");
-                    Console.WriteLine($"[NotificationScheduler]   Check Time: {checkTimeUtc:yyyy-MM-dd HH:mm:ss}");
+                    _logger.LogDebug("  Reminder: {ReminderMinutes} min before", reminderMin);
+                    _logger.LogDebug("  Event Start (UTC): {EventStart:yyyy-MM-dd HH:mm:ss}", eventStartUtc);
+                    _logger.LogDebug("  Trigger Time: {TriggerTime:yyyy-MM-dd HH:mm:ss}", reminderTriggerTime);
+                    _logger.LogDebug("  Check Time: {CheckTime:yyyy-MM-dd HH:mm:ss}", checkTimeUtc);
 
                     // Check if we're within the tolerance window
                     var timeDifference = Math.Abs((checkTimeUtc - reminderTriggerTime).TotalSeconds);
-                    Console.WriteLine($"[NotificationScheduler]   Time Difference: {timeDifference:F1} seconds (Tolerance: {toleranceSeconds} seconds)");
+                    _logger.LogDebug("  Time Difference: {TimeDifference:F1} seconds (Tolerance: {Tolerance} seconds)", timeDifference, toleranceSeconds);
 
                     if (timeDifference <= toleranceSeconds)
                     {
-                        Console.WriteLine($"[NotificationScheduler]   ✓ Within tolerance! Checking if already sent...");
+                        _logger.LogDebug("  ✓ Within tolerance! Checking if already sent...");
 
                         // Check if this notification has already been sent
                         var alreadySent = await HasNotificationBeenSentAsync(
@@ -108,7 +111,7 @@ public class NotificationSchedulerService : INotificationSchedulerService
 
                         if (!alreadySent)
                         {
-                            Console.WriteLine($"[NotificationScheduler]   ✓ Not sent yet! Adding to pending notifications.");
+                            _logger.LogDebug("  ✓ Not sent yet! Adding to pending notifications.");
                             pendingNotifications.Add(new PendingNotification
                             {
                                 Event = evt,
@@ -119,12 +122,12 @@ public class NotificationSchedulerService : INotificationSchedulerService
                         }
                         else
                         {
-                            Console.WriteLine($"[NotificationScheduler]   ✗ Already sent. Skipping.");
+                            _logger.LogDebug("  ✗ Already sent. Skipping.");
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"[NotificationScheduler]   ✗ Outside tolerance window. Skipping.");
+                        _logger.LogDebug("  ✗ Outside tolerance window. Skipping.");
                     }
                 }
             }

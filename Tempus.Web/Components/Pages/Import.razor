@@ -14,6 +14,7 @@
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
+@inject ILogger<Import> Logger
 
 <PageTitle>Import Calendar - Tempus</PageTitle>
 
@@ -257,16 +258,16 @@
     private async Task SaveImportedEvents()
     {
         _saving = true;
-        Console.WriteLine("=== STARTING SAVE IMPORTED EVENTS ===");
-        Console.WriteLine($"Total events to save: {_importedEvents.Count}");
-        Console.WriteLine($"Current user ID: {_userId}");
+        Logger.LogInformation("=== STARTING SAVE IMPORTED EVENTS ===");
+        Logger.LogInformation("Total events to save: {EventCount}", _importedEvents.Count);
+        Logger.LogInformation("Current user ID: {UserId}", _userId);
 
         // Log date range of events being imported
         if (_importedEvents.Any())
         {
             var minDate = _importedEvents.Min(e => e.StartTime);
             var maxDate = _importedEvents.Max(e => e.StartTime);
-            Console.WriteLine($"Event date range: {minDate:yyyy-MM-dd} to {maxDate:yyyy-MM-dd}");
+            Logger.LogInformation("Event date range: {MinDate:yyyy-MM-dd} to {MaxDate:yyyy-MM-dd}", minDate, maxDate);
         }
 
         try
@@ -277,80 +278,71 @@
             foreach (var evt in _importedEvents)
             {
                 eventIndex++;
-                Console.WriteLine($"\n--- Processing event {eventIndex}/{_importedEvents.Count} ---");
-                Console.WriteLine($"Event ID: {evt.Id}");
-                Console.WriteLine($"Title: {evt.Title}");
-                Console.WriteLine($"StartTime: {evt.StartTime}");
-                Console.WriteLine($"EndTime: {evt.EndTime}");
-                Console.WriteLine($"UserId (before): {evt.UserId}");
-                Console.WriteLine($"Attendees count: {evt.Attendees?.Count ?? 0}");
+                Logger.LogDebug("--- Processing event {EventIndex}/{TotalEvents} ---", eventIndex, _importedEvents.Count);
+                Logger.LogDebug("Event ID: {EventId}", evt.Id);
+                Logger.LogDebug("Title: {Title}", evt.Title);
+                Logger.LogDebug("StartTime: {StartTime}", evt.StartTime);
+                Logger.LogDebug("EndTime: {EndTime}", evt.EndTime);
+                Logger.LogDebug("UserId (before): {UserId}", evt.UserId);
+                Logger.LogDebug("Attendees count: {AttendeeCount}", evt.Attendees?.Count ?? 0);
 
                 try
                 {
                     evt.UserId = _userId; // Set the current user ID before saving
-                    Console.WriteLine($"UserId (after set): {evt.UserId}");
+                    Logger.LogDebug("UserId (after set): {UserId}", evt.UserId);
 
                     if (evt.Attendees != null && evt.Attendees.Any())
                     {
-                        Console.WriteLine("Attendee details:");
+                        Logger.LogDebug("Attendee details:");
                         foreach (var attendee in evt.Attendees)
                         {
-                            Console.WriteLine($"  - Attendee ID: {attendee.Id}, Name: {attendee.Name}, Email: {attendee.Email}, EventId: {attendee.EventId}");
+                            Logger.LogDebug("  - Attendee ID: {AttendeeId}, Name: {Name}, Email: {Email}, EventId: {EventId}", attendee.Id, attendee.Name, attendee.Email, attendee.EventId);
                         }
                     }
 
-                    Console.WriteLine($"Calling EventRepository.CreateAsync...");
+                    Logger.LogDebug("Calling EventRepository.CreateAsync...");
                     var result = await EventRepository.CreateAsync(evt);
-                    Console.WriteLine($"CreateAsync returned. Result ID: {result.Id}");
+                    Logger.LogDebug("CreateAsync returned. Result ID: {EventId}", result.Id);
 
                     savedCount++;
-                    Console.WriteLine($"✓ Event saved successfully. Total saved so far: {savedCount}");
+                    Logger.LogDebug("✓ Event saved successfully. Total saved so far: {SavedCount}", savedCount);
                 }
                 catch (Exception eventEx)
                 {
                     // Log individual event errors but continue
-                    Console.WriteLine($"✗ ERROR saving event '{evt.Title}':");
-                    Console.WriteLine($"  Exception Type: {eventEx.GetType().Name}");
-                    Console.WriteLine($"  Message: {eventEx.Message}");
-                    Console.WriteLine($"  Stack trace: {eventEx.StackTrace}");
-                    if (eventEx.InnerException != null)
-                    {
-                        Console.WriteLine($"  Inner exception Type: {eventEx.InnerException.GetType().Name}");
-                        Console.WriteLine($"  Inner exception Message: {eventEx.InnerException.Message}");
-                        Console.WriteLine($"  Inner exception Stack: {eventEx.InnerException.StackTrace}");
-                    }
+                    Logger.LogError(eventEx, "✗ ERROR saving event '{Title}'", evt.Title);
                 }
             }
 
-            Console.WriteLine($"\n=== SAVE COMPLETE ===");
-            Console.WriteLine($"Total saved: {savedCount} of {_importedEvents.Count}");
+            Logger.LogInformation("=== SAVE COMPLETE ===");
+            Logger.LogInformation("Total saved: {SavedCount} of {TotalCount}", savedCount, _importedEvents.Count);
 
             // Verify events are in database
-            Console.WriteLine($"\n=== VERIFYING DATABASE ===");
+            Logger.LogInformation("=== VERIFYING DATABASE ===");
             try
             {
                 var allUserEvents = await EventRepository.GetAllAsync(_userId);
-                Console.WriteLine($"Total events in database for user: {allUserEvents.Count}");
+                Logger.LogInformation("Total events in database for user: {EventCount}", allUserEvents.Count);
 
                 if (allUserEvents.Any())
                 {
                     var dbMinDate = allUserEvents.Min(e => e.StartTime);
                     var dbMaxDate = allUserEvents.Max(e => e.StartTime);
-                    Console.WriteLine($"Database event date range: {dbMinDate:yyyy-MM-dd} to {dbMaxDate:yyyy-MM-dd}");
+                    Logger.LogInformation("Database event date range: {MinDate:yyyy-MM-dd} to {MaxDate:yyyy-MM-dd}", dbMinDate, dbMaxDate);
 
                     // Show a few sample events
-                    Console.WriteLine("Sample events from database:");
+                    Logger.LogDebug("Sample events from database:");
                     foreach (var evt in allUserEvents.Take(5))
                     {
-                        Console.WriteLine($"  - {evt.Title}: {evt.StartTime:yyyy-MM-dd HH:mm} to {evt.EndTime:yyyy-MM-dd HH:mm}");
+                        Logger.LogDebug("  - {Title}: {StartTime:yyyy-MM-dd HH:mm} to {EndTime:yyyy-MM-dd HH:mm}", evt.Title, evt.StartTime, evt.EndTime);
                     }
                 }
             }
             catch (Exception verifyEx)
             {
-                Console.WriteLine($"Error verifying database: {verifyEx.Message}");
+                Logger.LogError(verifyEx, "Error verifying database");
             }
-            Console.WriteLine($"=== VERIFICATION COMPLETE ===\n");
+            Logger.LogInformation("=== VERIFICATION COMPLETE ===");
 
             if (savedCount > 0)
             {
@@ -378,9 +370,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"✗ CRITICAL ERROR in SaveImportedEvents:");
-            Console.WriteLine($"  Message: {ex.Message}");
-            Console.WriteLine($"  Stack trace: {ex.StackTrace}");
+            Logger.LogError(ex, "✗ CRITICAL ERROR in SaveImportedEvents");
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
@@ -392,7 +382,7 @@
         finally
         {
             _saving = false;
-            Console.WriteLine("=== SaveImportedEvents FINISHED ===\n");
+            Logger.LogInformation("=== SaveImportedEvents FINISHED ===");
         }
     }
 
