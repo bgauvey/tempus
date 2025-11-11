@@ -1,0 +1,173 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Interfaces
+@inject IRSVPService RSVPService
+@inject ILogger<ProposedTimesList> Logger
+@inject NotificationService NotificationService
+
+<RadzenCard Variant="Variant.Outlined" Style="@Style">
+    <RadzenStack Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                Proposed Alternative Times (@ProposedTimes.Count)
+            </RadzenText>
+            @if (CanPropose && !IsOrganizer)
+            {
+                <RadzenButton
+                    Click="@OnProposeNewTime"
+                    ButtonStyle="ButtonStyle.Primary"
+                    Size="ButtonSize.Small"
+                    Variant="Variant.Outlined"
+                    Text="Propose Time"
+                    Icon="add" />
+            }
+        </RadzenStack>
+
+        @if (!ProposedTimes.Any())
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center; padding: 2rem;">
+                No alternative times proposed yet
+            </RadzenText>
+        }
+        else
+        {
+            <RadzenDataList Data="@ProposedTimes" TItem="ProposedTime" WrapItems="false" AllowPaging="false">
+                <Template Context="proposedTime">
+                    <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem;">
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
+                                <RadzenStack Gap="0.5rem" Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="event" Style="color: var(--rz-primary);" />
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                            @proposedTime.ProposedStartTime.ToString("MMM dd, yyyy h:mm tt")
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="schedule" Style="color: var(--rz-text-secondary-color);" />
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                            to @proposedTime.ProposedEndTime.ToString("h:mm tt")
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="person" Style="color: var(--rz-text-secondary-color);" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Proposed by @proposedTime.Attendee?.Name
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    @if (!string.IsNullOrWhiteSpace(proposedTime.Reason))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-style: italic; color: var(--rz-text-tertiary-color); margin-top: 0.25rem;">
+                                            "@proposedTime.Reason"
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+
+                                <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Style="min-width: 100px;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="thumb_up" Style="color: var(--rz-success); font-size: 1.25rem;" />
+                                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">
+                                            @proposedTime.VoteCount
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                        @(proposedTime.VoteCount == 1 ? "vote" : "votes")
+                                    </RadzenText>
+                                    @if (!IsOrganizer && CanVote(proposedTime))
+                                    {
+                                        <RadzenButton
+                                            Click="@(() => VoteOnTime(proposedTime))"
+                                            ButtonStyle="@(HasVoted(proposedTime) ? ButtonStyle.Success : ButtonStyle.Secondary)"
+                                            Size="ButtonSize.Small"
+                                            Variant="Variant.Outlined"
+                                            Text="@(HasVoted(proposedTime) ? "Voted" : "Vote")"
+                                            Icon="@(HasVoted(proposedTime) ? "check" : "thumb_up")"
+                                            Disabled="@HasVoted(proposedTime)" />
+                                    }
+                                    @if (IsOrganizer && ShowAcceptButton)
+                                    {
+                                        <RadzenButton
+                                            Click="@(() => AcceptProposedTime(proposedTime))"
+                                            ButtonStyle="ButtonStyle.Success"
+                                            Size="ButtonSize.Small"
+                                            Text="Accept"
+                                            Icon="check_circle" />
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            @if (proposedTime.VotedByEmails.Any())
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                    Voted by: @string.Join(", ", proposedTime.VotedByEmails.Take(3))@(proposedTime.VotedByEmails.Count > 3 ? $" and {proposedTime.VotedByEmails.Count - 3} more" : "")
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public List<ProposedTime> ProposedTimes { get; set; } = new();
+    [Parameter] public string CurrentUserEmail { get; set; } = string.Empty;
+    [Parameter] public bool IsOrganizer { get; set; }
+    [Parameter] public bool CanPropose { get; set; } = true;
+    [Parameter] public bool AllowVoting { get; set; } = true;
+    [Parameter] public bool ShowAcceptButton { get; set; } = true;
+    [Parameter] public EventCallback OnProposeNewTime { get; set; }
+    [Parameter] public EventCallback<ProposedTime> OnAcceptProposedTime { get; set; }
+    [Parameter] public EventCallback OnVoteCast { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    private bool CanVote(ProposedTime proposedTime)
+    {
+        // Don't allow voting if user is the proposer
+        return AllowVoting && !string.IsNullOrWhiteSpace(CurrentUserEmail)
+            && proposedTime.Attendee?.Email != CurrentUserEmail;
+    }
+
+    private bool HasVoted(ProposedTime proposedTime)
+    {
+        return proposedTime.VotedByEmails.Contains(CurrentUserEmail);
+    }
+
+    private async Task VoteOnTime(ProposedTime proposedTime)
+    {
+        try
+        {
+            await RSVPService.VoteOnProposedTimeAsync(proposedTime.Id, CurrentUserEmail);
+
+            Logger.LogInformation("User {Email} voted for proposed time {ProposedTimeId}",
+                CurrentUserEmail, proposedTime.Id);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Vote Cast",
+                Detail = "Your vote has been recorded.",
+                Duration = 3000
+            });
+
+            // Refresh the list to show updated vote count
+            await OnVoteCast.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error voting on proposed time {ProposedTimeId}", proposedTime.Id);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to cast vote. Please try again.",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task AcceptProposedTime(ProposedTime proposedTime)
+    {
+        await OnAcceptProposedTime.InvokeAsync(proposedTime);
+    }
+}

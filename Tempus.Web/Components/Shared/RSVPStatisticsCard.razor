@@ -1,0 +1,181 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+
+<RadzenCard Variant="Variant.Outlined" Style="@Style">
+    <RadzenStack Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                RSVP Overview
+            </RadzenText>
+            @if (Statistics != null)
+            {
+                <RadzenBadge BadgeStyle="@GetResponseRateBadgeStyle()"
+                             Text="@($"{Statistics.ResponseRate:F0}%")"
+                             Style="font-size: 1.1rem; padding: 0.5rem 0.75rem;" />
+            }
+        </RadzenStack>
+
+        @if (Statistics != null)
+        {
+            <RadzenStack Gap="0.75rem">
+                <!-- Response Rate Progress -->
+                <RadzenStack Gap="0.25rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">Response Rate</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @(Statistics.TotalInvited - Statistics.Pending) / @Statistics.TotalInvited responded
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenProgressBar Value="@Statistics.ResponseRate"
+                                       Max="100"
+                                       ShowValue="false"
+                                       Style="height: 8px;"
+                                       ProgressBarStyle="@GetProgressBarStyle()" />
+                </RadzenStack>
+
+                <!-- Breakdown -->
+                <RadzenRow RowGap="0.75rem">
+                    <!-- Accepted -->
+                    <RadzenColumn Size="6" SizeMD="3">
+                        <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem; border-left: 4px solid var(--rz-success);">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1.25rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Accepted
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">
+                                    @Statistics.Accepted
+                                </RadzenText>
+                                @if (Statistics.TotalInvited > 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                        @((Statistics.Accepted * 100.0 / Statistics.TotalInvited).ToString("F0"))%
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <!-- Declined -->
+                    <RadzenColumn Size="6" SizeMD="3">
+                        <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem; border-left: 4px solid var(--rz-danger);">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); font-size: 1.25rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Declined
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">
+                                    @Statistics.Declined
+                                </RadzenText>
+                                @if (Statistics.TotalInvited > 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                        @((Statistics.Declined * 100.0 / Statistics.TotalInvited).ToString("F0"))%
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <!-- Tentative -->
+                    <RadzenColumn Size="6" SizeMD="3">
+                        <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem; border-left: 4px solid var(--rz-warning);">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="help" Style="color: var(--rz-warning); font-size: 1.25rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Tentative
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">
+                                    @Statistics.Tentative
+                                </RadzenText>
+                                @if (Statistics.TotalInvited > 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                        @((Statistics.Tentative * 100.0 / Statistics.TotalInvited).ToString("F0"))%
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <!-- Pending -->
+                    <RadzenColumn Size="6" SizeMD="3">
+                        <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem; border-left: 4px solid var(--rz-secondary);">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="schedule" Style="color: var(--rz-secondary); font-size: 1.25rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Pending
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">
+                                    @Statistics.Pending
+                                </RadzenText>
+                                @if (Statistics.TotalInvited > 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                        @((Statistics.Pending * 100.0 / Statistics.TotalInvited).ToString("F0"))%
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (ShowSendReminderButton && Statistics.Pending > 0)
+                {
+                    <RadzenButton
+                        Click="@OnSendReminders"
+                        ButtonStyle="ButtonStyle.Warning"
+                        Variant="Variant.Outlined"
+                        Text="@($"Send Reminder to {Statistics.Pending} Non-Responders")"
+                        Icon="mail_outline"
+                        Style="width: 100%;" />
+                }
+            </RadzenStack>
+        }
+        else
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center; padding: 2rem;">
+                No RSVP data available
+            </RadzenText>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public RSVPStatistics? Statistics { get; set; }
+    [Parameter] public bool ShowSendReminderButton { get; set; } = true;
+    [Parameter] public EventCallback OnSendReminders { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    private BadgeStyle GetResponseRateBadgeStyle()
+    {
+        if (Statistics == null) return BadgeStyle.Secondary;
+
+        return Statistics.ResponseRate switch
+        {
+            >= 80 => BadgeStyle.Success,
+            >= 50 => BadgeStyle.Warning,
+            _ => BadgeStyle.Danger
+        };
+    }
+
+    private ProgressBarStyle GetProgressBarStyle()
+    {
+        if (Statistics == null) return ProgressBarStyle.Secondary;
+
+        return Statistics.ResponseRate switch
+        {
+            >= 80 => ProgressBarStyle.Success,
+            >= 50 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+}

@@ -1,0 +1,201 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Interfaces
+@inject IRSVPService RSVPService
+@inject ILogger<RSVPResponseDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenDialog>
+    <RadzenStack Gap="1rem" Style="width: 500px;">
+        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+            RSVP: @EventTitle
+        </RadzenText>
+
+        @if (ShowDeadline && RSVPDeadline.HasValue)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="schedule" />
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        RSVP Deadline: @RSVPDeadline.Value.ToString("MMM dd, yyyy h:mm tt")
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+        }
+
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H4">Event Details</RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="event" />
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @StartTime.ToString("MMM dd, yyyy h:mm tt") - @EndTime.ToString("h:mm tt")
+                    </RadzenText>
+                </RadzenStack>
+                @if (!string.IsNullOrWhiteSpace(Location))
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="place" />
+                        <RadzenText TextStyle="TextStyle.Body2">@Location</RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H4">Your Response</RadzenText>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton
+                Click="@(() => SelectStatus(AttendeeStatus.Accepted))"
+                Variant="@(selectedStatus == AttendeeStatus.Accepted ? Variant.Filled : Variant.Outlined)"
+                ButtonStyle="ButtonStyle.Success"
+                Size="ButtonSize.Large"
+                Style="flex: 1; min-width: 140px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Accept</span>
+                </RadzenStack>
+            </RadzenButton>
+
+            <RadzenButton
+                Click="@(() => SelectStatus(AttendeeStatus.Tentative))"
+                Variant="@(selectedStatus == AttendeeStatus.Tentative ? Variant.Filled : Variant.Outlined)"
+                ButtonStyle="ButtonStyle.Warning"
+                Size="ButtonSize.Large"
+                Style="flex: 1; min-width: 140px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="help" />
+                    <span>Tentative</span>
+                </RadzenStack>
+            </RadzenButton>
+
+            <RadzenButton
+                Click="@(() => SelectStatus(AttendeeStatus.Declined))"
+                Variant="@(selectedStatus == AttendeeStatus.Declined ? Variant.Filled : Variant.Outlined)"
+                ButtonStyle="ButtonStyle.Danger"
+                Size="ButtonSize.Large"
+                Style="flex: 1; min-width: 140px;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="cancel" />
+                    <span>Decline</span>
+                </RadzenStack>
+            </RadzenButton>
+        </RadzenStack>
+
+        @if (selectedStatus.HasValue)
+        {
+            <RadzenTextArea
+                @bind-Value="@responseNotes"
+                Placeholder="Add a note (optional)..."
+                Rows="3"
+                Style="width: 100%;" />
+        }
+
+        @if (AllowProposedTimes && selectedStatus == AttendeeStatus.Declined)
+        {
+            <RadzenCheckBox @bind-Value="@proposeAlternativeTime" Name="proposeTime" />
+            <RadzenLabel Text="Propose an alternative time" Component="proposeTime" Style="cursor: pointer;" />
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+            <RadzenButton
+                Click="@Cancel"
+                Variant="Variant.Text"
+                ButtonStyle="ButtonStyle.Secondary"
+                Text="Cancel" />
+            <RadzenButton
+                Click="@Submit"
+                Variant="Variant.Filled"
+                ButtonStyle="ButtonStyle.Primary"
+                Disabled="@(!selectedStatus.HasValue || isSubmitting)"
+                Text="@(isSubmitting ? "Submitting..." : "Submit Response")" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenDialog>
+
+@code {
+    [Parameter] public Guid EventId { get; set; }
+    [Parameter] public string EventTitle { get; set; } = string.Empty;
+    [Parameter] public DateTime StartTime { get; set; }
+    [Parameter] public DateTime EndTime { get; set; }
+    [Parameter] public string? Location { get; set; }
+    [Parameter] public DateTime? RSVPDeadline { get; set; }
+    [Parameter] public bool ShowDeadline { get; set; } = true;
+    [Parameter] public bool AllowProposedTimes { get; set; } = true;
+    [Parameter] public string AttendeeEmail { get; set; } = string.Empty;
+    [Parameter] public AttendeeStatus? CurrentStatus { get; set; }
+
+    private AttendeeStatus? selectedStatus;
+    private string? responseNotes;
+    private bool proposeAlternativeTime = false;
+    private bool isSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        selectedStatus = CurrentStatus;
+    }
+
+    private void SelectStatus(AttendeeStatus status)
+    {
+        selectedStatus = status;
+        proposeAlternativeTime = false; // Reset when changing status
+    }
+
+    private async Task Submit()
+    {
+        if (!selectedStatus.HasValue)
+            return;
+
+        try
+        {
+            isSubmitting = true;
+
+            // Submit RSVP response
+            await RSVPService.SubmitResponseAsync(
+                EventId,
+                AttendeeEmail,
+                selectedStatus.Value,
+                responseNotes);
+
+            Logger.LogInformation("RSVP submitted: {Status} for event {EventId} by {Email}",
+                selectedStatus.Value, EventId, AttendeeEmail);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "RSVP Submitted",
+                Detail = $"Your response has been sent to the organizer.",
+                Duration = 4000
+            });
+
+            // If user wants to propose alternative time, keep dialog open and show proposal form
+            if (proposeAlternativeTime)
+            {
+                // TODO: Show alternative time proposal form
+                // For now, just close the dialog
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error submitting RSVP for event {EventId}", EventId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to submit RSVP. Please try again.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}
