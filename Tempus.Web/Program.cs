@@ -11,6 +11,10 @@ using Tempus.Web.Components;
 using Tempus.Web.Components.Account;
 using Tempus.Web.Services;
 using Serilog;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -122,6 +126,52 @@ builder.Services.AddScoped<INotificationSchedulerService, NotificationSchedulerS
 
 // Register background service for notification checking
 builder.Services.AddHostedService<NotificationBackgroundService>();
+
+// Configure OpenTelemetry
+const string serviceName = "Tempus";
+const string serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: serviceName,
+            serviceVersion: serviceVersion)
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName,
+            ["host.name"] = Environment.MachineName
+        }))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            // Record all incoming requests
+            options.RecordException = true;
+            // Enrich spans with additional info
+            options.EnrichWithHttpRequest = (activity, httpRequest) =>
+            {
+                activity.SetTag("http.request.user_agent", httpRequest.Headers.UserAgent.ToString());
+            };
+            options.EnrichWithHttpResponse = (activity, httpResponse) =>
+            {
+                activity.SetTag("http.response.status_code", httpResponse.StatusCode);
+            };
+        })
+        .AddHttpClientInstrumentation(options =>
+        {
+            options.RecordException = true;
+        })
+        .AddSource("Tempus.*") // Add custom activity sources
+        .SetSampler(new AlwaysOnSampler()) // Sample all traces in development
+        .AddConsoleExporter()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddProcessInstrumentation()
+        .AddMeter("Tempus.*") // Add custom meters
+        .AddConsoleExporter()
+        .AddOtlpExporter());
 
 var app = builder.Build();
 

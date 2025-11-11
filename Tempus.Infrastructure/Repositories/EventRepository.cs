@@ -5,6 +5,8 @@ using Tempus.Core.Models;
 using Tempus.Core.Enums;
 using Tempus.Core.Helpers;
 using Tempus.Infrastructure.Data;
+using System.Diagnostics;
+using Tempus.Core.Telemetry;
 
 namespace Tempus.Infrastructure.Repositories;
 
@@ -130,6 +132,12 @@ public class EventRepository : IEventRepository
 
     public async Task<Event> CreateAsync(Event @event)
     {
+        using var activity = TelemetryConfig.EventActivitySource.StartActivity("CreateEvent");
+        activity?.SetTag("event.id", @event.Id);
+        activity?.SetTag("event.title", @event.Title);
+        activity?.SetTag("event.type", @event.EventType.ToString());
+        activity?.SetTag("user.id", @event.UserId);
+
         _logger.LogDebug("Starting for event: {Title}", @event.Title);
         _logger.LogDebug("Event ID: {EventId}", @event.Id);
         _logger.LogDebug("User ID: {UserId}", @event.UserId);
@@ -170,12 +178,29 @@ public class EventRepository : IEventRepository
         var changeCount = await context.SaveChangesAsync();
         _logger.LogDebug("SaveChangesAsync completed. Changes saved: {ChangeCount}", changeCount);
 
+        // Record metrics
+        TelemetryConfig.EventsCreatedCounter.Add(1,
+            new KeyValuePair<string, object?>("event.type", @event.EventType.ToString()),
+            new KeyValuePair<string, object?>("user.id", @event.UserId));
+
+        // Record event duration
+        var durationHours = (@event.EndTime - @event.StartTime).TotalHours;
+        TelemetryConfig.EventDurationHistogram.Record(durationHours,
+            new KeyValuePair<string, object?>("event.type", @event.EventType.ToString()));
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
         _logger.LogDebug("Returning event with ID: {EventId}", @event.Id);
         return @event;
     }
 
     public async Task<Event> UpdateAsync(Event @event)
     {
+        using var activity = TelemetryConfig.EventActivitySource.StartActivity("UpdateEvent");
+        activity?.SetTag("event.id", @event.Id);
+        activity?.SetTag("event.title", @event.Title);
+        activity?.SetTag("event.type", @event.EventType.ToString());
+        activity?.SetTag("user.id", @event.UserId);
+
         await using var context = await _contextFactory.CreateDbContextAsync();
 
         @event.UpdatedAt = DateTime.UtcNow;
@@ -205,11 +230,22 @@ public class EventRepository : IEventRepository
         }
 
         await context.SaveChangesAsync();
+
+        // Record metrics
+        TelemetryConfig.EventsUpdatedCounter.Add(1,
+            new KeyValuePair<string, object?>("event.type", @event.EventType.ToString()),
+            new KeyValuePair<string, object?>("user.id", @event.UserId));
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return @event;
     }
 
     public async Task DeleteAsync(Guid id, string userId)
     {
+        using var activity = TelemetryConfig.EventActivitySource.StartActivity("DeleteEvent");
+        activity?.SetTag("event.id", id);
+        activity?.SetTag("user.id", userId);
+
         await using var context = await _contextFactory.CreateDbContextAsync();
         var @event = await context.Events
             .Include(e => e.Attendees)
@@ -217,8 +253,20 @@ public class EventRepository : IEventRepository
 
         if (@event != null)
         {
+            activity?.SetTag("event.type", @event.EventType.ToString());
             context.Events.Remove(@event);
             await context.SaveChangesAsync();
+
+            // Record metrics
+            TelemetryConfig.EventsDeletedCounter.Add(1,
+                new KeyValuePair<string, object?>("event.type", @event.EventType.ToString()),
+                new KeyValuePair<string, object?>("user.id", userId));
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
+        else
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, "Event not found");
         }
     }
 
