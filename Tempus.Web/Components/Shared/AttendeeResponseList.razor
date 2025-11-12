@@ -1,0 +1,169 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+
+<RadzenCard Variant="Variant.Outlined" Style="@Style">
+    <RadzenStack Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                Attendees (@Attendees.Count)
+            </RadzenText>
+            @if (ShowStatistics && statistics != null)
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@($"{statistics.ResponseRate:F0}% responded")" />
+            }
+        </RadzenStack>
+
+        @if (ShowStatistics && statistics != null)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.Body2">@statistics.Accepted Accepted</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger);" />
+                    <RadzenText TextStyle="TextStyle.Body2">@statistics.Declined Declined</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="help" Style="color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.Body2">@statistics.Tentative Tentative</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="schedule" Style="color: var(--rz-secondary);" />
+                    <RadzenText TextStyle="TextStyle.Body2">@statistics.Pending Pending</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        }
+
+        <RadzenDataList Data="@Attendees" TItem="Attendee" WrapItems="@WrapItems" AllowPaging="false">
+            <Template Context="attendee">
+                <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1;">
+                            @if (ShowStatusIcon)
+                            {
+                                <RadzenIcon Icon="@GetStatusIcon(attendee.Status)" Style="@GetStatusColor(attendee.Status)" />
+                            }
+                            <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                        @attendee.Name
+                                    </RadzenText>
+                                    @if (attendee.IsOrganizer)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Organizer" Variant="Variant.Flat" />
+                                    }
+                                    @if (attendee.IsOptional)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="Optional" Variant="Variant.Flat" />
+                                    }
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    @attendee.Email
+                                </RadzenText>
+                                @if (!string.IsNullOrWhiteSpace(attendee.ResponseNotes))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="font-style: italic; color: var(--rz-text-tertiary-color);">
+                                        "@attendee.ResponseNotes"
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Gap="0.25rem" Style="text-align: right;">
+                            <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(attendee.Status)"
+                                         Text="@GetStatusText(attendee.Status)"
+                                         Variant="Variant.Flat" />
+                            @if (attendee.ResponseDate.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                    @FormatResponseDate(attendee.ResponseDate.Value)
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>
+
+        @if (!Attendees.Any())
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center; padding: 2rem;">
+                No attendees yet
+            </RadzenText>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public List<Attendee> Attendees { get; set; } = new();
+    [Parameter] public RSVPStatistics? statistics { get; set; }
+    [Parameter] public bool ShowStatistics { get; set; } = true;
+    [Parameter] public bool ShowStatusIcon { get; set; } = true;
+    [Parameter] public bool WrapItems { get; set; } = false;
+    [Parameter] public string? Style { get; set; }
+
+    private string GetStatusIcon(AttendeeStatus status)
+    {
+        return status switch
+        {
+            AttendeeStatus.Accepted => "check_circle",
+            AttendeeStatus.Declined => "cancel",
+            AttendeeStatus.Tentative => "help",
+            AttendeeStatus.Pending => "schedule",
+            _ => "person"
+        };
+    }
+
+    private string GetStatusColor(AttendeeStatus status)
+    {
+        return status switch
+        {
+            AttendeeStatus.Accepted => "color: var(--rz-success);",
+            AttendeeStatus.Declined => "color: var(--rz-danger);",
+            AttendeeStatus.Tentative => "color: var(--rz-warning);",
+            AttendeeStatus.Pending => "color: var(--rz-secondary);",
+            _ => "color: var(--rz-text-secondary-color);"
+        };
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(AttendeeStatus status)
+    {
+        return status switch
+        {
+            AttendeeStatus.Accepted => BadgeStyle.Success,
+            AttendeeStatus.Declined => BadgeStyle.Danger,
+            AttendeeStatus.Tentative => BadgeStyle.Warning,
+            AttendeeStatus.Pending => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private string GetStatusText(AttendeeStatus status)
+    {
+        return status switch
+        {
+            AttendeeStatus.Accepted => "Accepted",
+            AttendeeStatus.Declined => "Declined",
+            AttendeeStatus.Tentative => "Tentative",
+            AttendeeStatus.Pending => "Pending",
+            _ => "Unknown"
+        };
+    }
+
+    private string FormatResponseDate(DateTime responseDate)
+    {
+        var timeSpan = DateTime.UtcNow - responseDate;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+
+        return responseDate.ToString("MMM dd");
+    }
+}

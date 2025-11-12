@@ -231,6 +231,57 @@
                 </div>
                         </RadzenStack>
                     </RadzenFieldset>
+
+                    <!-- RSVP Configuration Section -->
+                    <RadzenFieldset Text="RSVP Settings">
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenCheckBox @bind-Value="@_event.RequireRSVP" Name="requireRsvp" />
+                                <RadzenLabel Text="Require RSVP from attendees" Component="requireRsvp" Style="cursor: pointer;" />
+                            </RadzenStack>
+
+                            @if (_event.RequireRSVP)
+                            {
+                                <RadzenRow>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="RSVP Deadline (optional)" Variant="@Variant.Outlined">
+                                            <RadzenDatePicker @bind-Value="@_event.RSVPDeadline"
+                                                            ShowTime="true"
+                                                            DateFormat="MM/dd/yyyy"
+                                                            TimeFormat="h:mm tt"
+                                                            Style="width: 100%;"
+                                                            Name="rsvpDeadline"
+                                                            Placeholder="No deadline" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Guest List Visibility" Variant="@Variant.Outlined">
+                                            <RadzenDropDown @bind-Value="@_event.GuestListVisibility"
+                                                          Data="@_guestListVisibilityOptions"
+                                                          Style="width: 100%;"
+                                                          Name="guestListVisibility" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@_event.AllowProposedTimes" Name="allowProposedTimes" />
+                                    <RadzenLabel Text="Allow attendees to propose alternative times" Component="allowProposedTimes" Style="cursor: pointer;" />
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@_event.SendReminderToNonResponders" Name="sendReminder" />
+                                    <RadzenLabel Text="Send reminders to non-responders" Component="sendReminder" Style="cursor: pointer;" />
+                                </RadzenStack>
+
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        Attendees will receive an invitation email and can respond with Accept, Decline, or Tentative.
+                                    </RadzenText>
+                                </RadzenAlert>
+                            }
+                        </RadzenStack>
+                    </RadzenFieldset>
                 </RadzenStack>
             </RadzenTabsItem>
         }
@@ -382,6 +433,7 @@
     private readonly Priority[] _priorities = Enum.GetValues<Priority>();
     private readonly RecurrencePattern[] _recurrencePatterns = Enum.GetValues<RecurrencePattern>();
     private readonly RecurrenceEndType[] _recurrenceEndTypes = Enum.GetValues<RecurrenceEndType>();
+    private readonly GuestListVisibility[] _guestListVisibilityOptions = Enum.GetValues<GuestListVisibility>();
     private string _userId = string.Empty;
     private string _userEmail = string.Empty;
     private string _userName = string.Empty;
