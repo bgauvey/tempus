@@ -472,6 +472,159 @@ public class EmailNotificationService : IEmailNotificationService
 </html>";
     }
 
+    public async Task SendPollInvitationAsync(SchedulingPoll poll, string attendeeEmail)
+    {
+        var subject = $"Meeting Poll: {poll.Title}";
+        var body = GeneratePollInvitationEmailBody(poll);
+
+        await SendEmailAsync(attendeeEmail, attendeeEmail, subject, body);
+        _logger.LogInformation("Sent poll invitation to {Email} for poll {PollId}", attendeeEmail, poll.Id);
+    }
+
+    public async Task SendPollReminderAsync(SchedulingPoll poll, string attendeeEmail)
+    {
+        var subject = $"Reminder: Meeting Poll - {poll.Title}";
+        var body = GeneratePollReminderEmailBody(poll);
+
+        await SendEmailAsync(attendeeEmail, attendeeEmail, subject, body);
+        _logger.LogInformation("Sent poll reminder to {Email} for poll {PollId}", attendeeEmail, poll.Id);
+    }
+
+    public async Task SendPollFinalizedNotificationAsync(SchedulingPoll poll)
+    {
+        var subject = $"Meeting Scheduled: {poll.Title}";
+        var body = GeneratePollFinalizedEmailBody(poll);
+
+        await SendEmailAsync(poll.OrganizerEmail, poll.OrganizerName, subject, body);
+        _logger.LogInformation("Sent poll finalized notification for poll {PollId}", poll.Id);
+    }
+
+    private string GeneratePollInvitationEmailBody(SchedulingPoll poll)
+    {
+        var timeSlotsList = string.Join("", poll.TimeSlots.Select(ts =>
+            $"<li>{FormatDateTime(ts.StartTime)} ({poll.Duration} minutes)</li>"));
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }}
+        .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
+        .poll-info {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }}
+        ul {{ list-style: none; padding: 0; }}
+        li {{ padding: 10px; margin: 5px 0; background: white; border-radius: 5px; border-left: 3px solid #667eea; }}
+        .deadline {{ color: #e74c3c; font-weight: bold; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>📊 Meeting Poll Invitation</h1>
+        </div>
+        <div class='content'>
+            <p>Hi there,</p>
+            <p><strong>{poll.OrganizerName}</strong> has invited you to help choose the best time for a meeting:</p>
+
+            <div class='poll-info'>
+                <h3>{poll.Title}</h3>
+                {(!string.IsNullOrEmpty(poll.Description) ? $"<p>{poll.Description}</p>" : "")}
+                {(!string.IsNullOrEmpty(poll.Location) ? $"<p><strong>📍 Location:</strong> {poll.Location}</p>" : "")}
+                <p><strong>⏱️ Duration:</strong> {poll.Duration} minutes</p>
+                {(poll.Deadline.HasValue ? $"<p class='deadline'>⏰ Please respond by: {FormatDateTime(poll.Deadline.Value)}</p>" : "")}
+            </div>
+
+            <h4>Proposed Times:</h4>
+            <ul>{timeSlotsList}</ul>
+
+            <p>Please visit your Tempus calendar to indicate your availability for each time slot.</p>
+
+            <p>Best regards,<br>Tempus Calendar System</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private string GeneratePollReminderEmailBody(SchedulingPoll poll)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }}
+        .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
+        .urgent {{ background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>⏰ Poll Response Reminder</h1>
+        </div>
+        <div class='content'>
+            <div class='urgent'>
+                <p><strong>Reminder:</strong> {poll.OrganizerName} is waiting for your response to the meeting poll:</p>
+                <h3>{poll.Title}</h3>
+                {(poll.Deadline.HasValue ? $"<p><strong>Deadline:</strong> {FormatDateTime(poll.Deadline.Value)}</p>" : "")}
+            </div>
+
+            <p>Please take a moment to indicate your availability so we can schedule this meeting.</p>
+
+            <p>Best regards,<br>Tempus Calendar System</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private string GeneratePollFinalizedEmailBody(SchedulingPoll poll)
+    {
+        var selectedSlot = poll.TimeSlots.FirstOrDefault(ts => ts.Id == poll.SelectedTimeSlotId);
+        var timeInfo = selectedSlot != null
+            ? $"{FormatDateTime(selectedSlot.StartTime)} - {FormatTime(selectedSlot.EndTime)}"
+            : "Time slot information not available";
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }}
+        .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
+        .meeting-details {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2ecc71; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>✅ Meeting Scheduled</h1>
+        </div>
+        <div class='content'>
+            <p>Great news! The poll for <strong>{poll.Title}</strong> has been finalized.</p>
+
+            <div class='meeting-details'>
+                <h3>{poll.Title}</h3>
+                <p><strong>🗓️ When:</strong> {timeInfo}</p>
+                {(!string.IsNullOrEmpty(poll.Location) ? $"<p><strong>📍 Where:</strong> {poll.Location}</p>" : "")}
+            </div>
+
+            <p>An event has been created in your calendar. All participants will be notified.</p>
+
+            <p>Best regards,<br>Tempus Calendar System</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
     private string FormatDateTime(DateTime dt)
     {
         return dt.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt");

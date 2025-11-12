@@ -56,6 +56,29 @@ public interface IEmailNotificationService
     /// <param name="organizer">The event organizer</param>
     /// <returns>Task representing the async operation</returns>
     Task SendProposedTimeNotificationAsync(Event meetingEvent, Attendee attendee, ProposedTime proposedTime, Attendee organizer);
+
+    /// <summary>
+    /// Sends a scheduling poll invitation to an attendee
+    /// </summary>
+    /// <param name="poll">The scheduling poll</param>
+    /// <param name="attendeeEmail">Email address of the attendee</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendPollInvitationAsync(SchedulingPoll poll, string attendeeEmail);
+
+    /// <summary>
+    /// Sends a reminder to respond to a scheduling poll
+    /// </summary>
+    /// <param name="poll">The scheduling poll</param>
+    /// <param name="attendeeEmail">Email address of the attendee</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendPollReminderAsync(SchedulingPoll poll, string attendeeEmail);
+
+    /// <summary>
+    /// Notifies the poll organizer that a poll has been finalized
+    /// </summary>
+    /// <param name="poll">The finalized scheduling poll</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendPollFinalizedNotificationAsync(SchedulingPoll poll);
 }
 
 public enum MeetingUpdateType
