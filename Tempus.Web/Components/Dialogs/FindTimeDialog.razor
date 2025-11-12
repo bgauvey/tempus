@@ -1,0 +1,325 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject ISchedulingAssistantService SchedulingAssistant
+@inject ILogger<FindTimeDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenDialog>
+    <RadzenStack Gap="1rem" Style="width: 800px; max-height: 90vh;">
+        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+            Find Optimal Meeting Time
+        </RadzenText>
+
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Find Time">
+                    <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                        <!-- Attendees Selection -->
+                        <RadzenFieldset Text="Attendees">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Attendee Emails (one per line)" Style="font-weight: 500;" />
+                                <RadzenTextArea @bind-Value="@attendeeEmailsText"
+                                               Rows="5"
+                                               Placeholder="user1@example.com&#10;user2@example.com"
+                                               Style="width: 100%;" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                    @GetAttendeeEmailsList().Count email(s) entered
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenFieldset>
+
+                        <!-- Meeting Details -->
+                        <RadzenRow>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="Duration (minutes)" Style="font-weight: 500;" />
+                                <RadzenNumeric @bind-Value="@duration" Min="15" Max="480" Step="15" Style="width: 100%;" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="Search Window" Style="font-weight: 500;" />
+                                <RadzenNumeric @bind-Value="@searchDays" Min="1" Max="30" Style="width: 100%;" />
+                                <RadzenText TextStyle="TextStyle.Caption">Days ahead to search</RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Search Buttons -->
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                            <RadzenButton Click="@FindOptimalTimes"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Disabled="@(GetAttendeeEmailsList().Count == 0 || isSearching)"
+                                          Text="@(isSearching ? "Searching..." : "Find Optimal Times")"
+                                          Icon="search" />
+                            <RadzenButton Click="@ShowAvailabilityGrid"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Variant="Variant.Outlined"
+                                          Disabled="@(GetAttendeeEmailsList().Count == 0 || isSearching)"
+                                          Text="Show Availability Grid"
+                                          Icon="grid_on" />
+                        </RadzenStack>
+
+                        @if (suggestions != null && suggestions.Any())
+                        {
+                            <RadzenFieldset Text="@($"Found {suggestions.Count} Suggestions")">
+                                <RadzenDataList Data="@suggestions" TItem="SchedulingSuggestion" PageSize="5" AllowPaging="true">
+                                    <Template Context="suggestion">
+                                        <RadzenCard Style="margin-bottom: 0.5rem;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                                <RadzenStack Gap="0.25rem">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenBadge Text="@($"#{suggestion.Rank}")" BadgeStyle="BadgeStyle.Info" />
+                                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">
+                                                            @suggestion.StartTime.ToString("ddd, MMM dd, yyyy h:mm tt")
+                                                        </RadzenText>
+                                                        <RadzenBadge Text="@suggestion.GetQualityIndicator()"
+                                                                     BadgeStyle="@GetQualityBadgeStyle(suggestion.Score)" />
+                                                    </RadzenStack>
+                                                    <RadzenText TextStyle="TextStyle.Body2">
+                                                        @suggestion.GetDescription()
+                                                    </RadzenText>
+                                                    @if (!string.IsNullOrEmpty(suggestion.ReasonForSuggestion))
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                                                            @suggestion.ReasonForSuggestion
+                                                        </RadzenText>
+                                                    }
+                                                </RadzenStack>
+                                                <RadzenButton Click="@(() => SelectTime(suggestion))"
+                                                              ButtonStyle="ButtonStyle.Success"
+                                                              Variant="Variant.Flat"
+                                                              Size="ButtonSize.Small"
+                                                              Text="Select"
+                                                              Icon="check" />
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    </Template>
+                                </RadzenDataList>
+                            </RadzenFieldset>
+                        }
+
+                        @if (availabilityGrid != null && availabilityGrid.Any())
+                        {
+                            <RadzenFieldset Text="Availability Grid">
+                                <div style="max-height: 400px; overflow-y: auto;">
+                                    @foreach (var slot in availabilityGrid)
+                                    {
+                                        var bgColor = GetAvailabilityColor(slot);
+                                        <RadzenCard Style="@($"margin-bottom: 0.25rem; padding: 0.5rem; background: {bgColor};")">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">
+                                                    @slot.StartTime.ToString("ddd h:mm tt")
+                                                </RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2">
+                                                    @slot.AvailableAttendees/@slot.TotalAttendees available
+                                                </RadzenText>
+                                                <RadzenProgressBar Value="@slot.AvailabilityPercentage"
+                                                                   Max="100"
+                                                                   ShowValue="false"
+                                                                   Style="width: 100px; height: 6px;" />
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </div>
+                            </RadzenFieldset>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Create Poll">
+                    <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                            Create a Doodle-style poll to let attendees vote on their preferred times.
+                        </RadzenAlert>
+
+                        <RadzenButton Click="@CreatePoll"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Text="Create Meeting Poll"
+                                      Icon="poll"
+                                      Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+            <RadzenButton Click="@Cancel"
+                          Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Text="Cancel" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenDialog>
+
+@code {
+    [Parameter] public List<string>? InitialAttendeeEmails { get; set; }
+    [Parameter] public int DefaultDuration { get; set; } = 60;
+
+    private string attendeeEmailsText = string.Empty;
+    private int duration = 60;
+    private int searchDays = 7;
+    private bool isSearching = false;
+
+    private List<SchedulingSuggestion>? suggestions;
+    private List<AvailabilitySlot>? availabilityGrid;
+
+    protected override Task OnInitializedAsync()
+    {
+        duration = DefaultDuration;
+
+        if (InitialAttendeeEmails != null && InitialAttendeeEmails.Any())
+        {
+            attendeeEmailsText = string.Join(Environment.NewLine, InitialAttendeeEmails);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private List<string> GetAttendeeEmailsList()
+    {
+        return attendeeEmailsText
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => e.Trim())
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Distinct()
+            .ToList();
+    }
+
+    private async Task FindOptimalTimes()
+    {
+        var attendeeEmails = GetAttendeeEmailsList();
+        if (attendeeEmails.Count == 0) return;
+
+        try
+        {
+            isSearching = true;
+            availabilityGrid = null; // Clear grid when showing suggestions
+
+            var searchStart = DateTime.Now;
+            var searchEnd = searchStart.AddDays(searchDays);
+
+            suggestions = await SchedulingAssistant.FindOptimalTimesAsync(
+                attendeeEmails,
+                duration,
+                searchStart,
+                searchEnd,
+                maxSuggestions: 10);
+
+            Logger.LogInformation("Found {Count} optimal times for {Attendees} attendees",
+                suggestions.Count, attendeeEmails.Count);
+
+            if (!suggestions.Any())
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "No Times Found",
+                    Detail = "No suitable times found in the search window. Try extending the search period.",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error finding optimal times");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to find optimal times. Please try again.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSearching = false;
+        }
+    }
+
+    private async Task ShowAvailabilityGrid()
+    {
+        var attendeeEmails = GetAttendeeEmailsList();
+        if (attendeeEmails.Count == 0) return;
+
+        try
+        {
+            isSearching = true;
+            suggestions = null; // Clear suggestions when showing grid
+
+            var searchStart = DateTime.Now;
+            var searchEnd = searchStart.AddDays(Math.Min(searchDays, 3)); // Limit grid to 3 days
+
+            availabilityGrid = await SchedulingAssistant.GetAvailabilityGridAsync(
+                attendeeEmails,
+                searchStart,
+                searchEnd,
+                slotDurationMinutes: 30);
+
+            Logger.LogInformation("Generated availability grid with {Count} slots", availabilityGrid.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error generating availability grid");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to generate availability grid. Please try again.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSearching = false;
+        }
+    }
+
+    private void SelectTime(SchedulingSuggestion suggestion)
+    {
+        DialogService.Close(new
+        {
+            StartTime = suggestion.StartTime,
+            EndTime = suggestion.EndTime,
+            AttendeeEmails = GetAttendeeEmailsList()
+        });
+    }
+
+    private async Task CreatePoll()
+    {
+        // This will open the CreatePollDialog
+        var result = await DialogService.OpenAsync<CreatePollDialog>("Create Meeting Poll",
+            new Dictionary<string, object>
+            {
+                { "AttendeeEmails", GetAttendeeEmailsList() },
+                { "Duration", duration }
+            },
+            new DialogOptions { Width = "700px" });
+
+        if (result != null)
+        {
+            DialogService.Close(result);
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private BadgeStyle GetQualityBadgeStyle(double score)
+    {
+        return score switch
+        {
+            >= 90 => BadgeStyle.Success,
+            >= 70 => BadgeStyle.Info,
+            >= 50 => BadgeStyle.Warning,
+            _ => BadgeStyle.Danger
+        };
+    }
+
+    private string GetAvailabilityColor(AvailabilitySlot slot)
+    {
+        if (slot.AllAvailable) return "#e8f5e9";
+        if (slot.AvailabilityPercentage >= 80) return "#fff3e0";
+        if (slot.AvailabilityPercentage >= 50) return "#fff9c4";
+        return "#ffebee";
+    }
+}
