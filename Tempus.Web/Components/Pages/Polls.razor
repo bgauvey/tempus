@@ -1,0 +1,370 @@
+@page "/polls"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Shared
+@inject IPollService PollService
+@inject ILogger<Polls> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+<PageTitle>Meeting Polls - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1">
+            Meeting Polls
+        </RadzenText>
+        <RadzenButton Click="@CreateNewPoll"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Text="Create Poll"
+                      Icon="add_circle"
+                      Size="ButtonSize.Large" />
+    </RadzenStack>
+
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="My Polls">
+                <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                    @if (isLoading)
+                    {
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 2rem auto;" />
+                    }
+                    else if (!myPolls.Any())
+                    {
+                        <RadzenCard Style="text-align: center; padding: 3rem;">
+                            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="poll" Style="font-size: 4rem; color: var(--rz-text-tertiary-color);" />
+                                <RadzenText TextStyle="TextStyle.H6">No polls yet</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    Create your first poll to find the best meeting time.
+                                </RadzenText>
+                                <RadzenButton Click="@CreateNewPoll"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Text="Create Poll"
+                                              Icon="add_circle" />
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                    else
+                    {
+                        <RadzenDataList Data="@myPolls" TItem="SchedulingPoll" PageSize="10" AllowPaging="true">
+                            <Template Context="poll">
+                                <RadzenCard Style="margin-bottom: 1rem;">
+                                    <RadzenStack Gap="0.75rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                                                        @poll.Title
+                                                    </RadzenText>
+                                                    @if (poll.FinalizedAt.HasValue)
+                                                    {
+                                                        <RadzenBadge Text="Finalized" BadgeStyle="BadgeStyle.Success" />
+                                                    }
+                                                    else if (poll.IsActive)
+                                                    {
+                                                        <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Info" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenBadge Text="Inactive" BadgeStyle="BadgeStyle.Secondary" />
+                                                    }
+                                                </RadzenStack>
+                                                @if (!string.IsNullOrEmpty(poll.Description))
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                                        @poll.Description
+                                                    </RadzenText>
+                                                }
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        <RadzenIcon Icon="event" Style="font-size: 0.875rem;" /> Created @poll.CreatedAt.ToString("MMM dd, yyyy")
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        <RadzenIcon Icon="schedule" Style="font-size: 0.875rem;" /> @poll.Duration minutes
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        <RadzenIcon Icon="list" Style="font-size: 0.875rem;" /> @poll.TimeSlots.Count time slots
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        <RadzenIcon Icon="people" Style="font-size: 0.875rem;" /> @poll.Responses.Select(r => r.RespondentEmail).Distinct().Count() responses
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                <RadzenButton Click="@(() => ViewPollResults(poll))"
+                                                              ButtonStyle="ButtonStyle.Info"
+                                                              Variant="Variant.Flat"
+                                                              Size="ButtonSize.Small"
+                                                              Text="Results"
+                                                              Icon="assessment" />
+                                                @if (!poll.FinalizedAt.HasValue)
+                                                {
+                                                    <RadzenButton Click="@(() => FinalizePoll(poll))"
+                                                                  ButtonStyle="ButtonStyle.Success"
+                                                                  Variant="Variant.Flat"
+                                                                  Size="ButtonSize.Small"
+                                                                  Text="Finalize"
+                                                                  Icon="check_circle"
+                                                                  Disabled="@(poll.TimeSlots.All(ts => ts.ResponseCount == 0))" />
+                                                    <RadzenButton Click="@(() => CancelPoll(poll))"
+                                                                  ButtonStyle="ButtonStyle.Danger"
+                                                                  Variant="Variant.Text"
+                                                                  Size="ButtonSize.Small"
+                                                                  Icon="cancel" />
+                                                }
+                                            </RadzenStack>
+                                        </RadzenStack>
+
+                                        @if (poll.Deadline.HasValue)
+                                        {
+                                            <RadzenAlert AlertStyle="@(poll.IsExpired() ? AlertStyle.Danger : AlertStyle.Warning)"
+                                                         Shade="Shade.Lighter"
+                                                         Variant="Variant.Flat">
+                                                <RadzenText TextStyle="TextStyle.Body2">
+                                                    <strong>Deadline:</strong> @poll.Deadline.Value.ToString("MMM dd, yyyy h:mm tt")
+                                                    @if (poll.IsExpired())
+                                                    {
+                                                        <span> (Expired)</span>
+                                                    }
+                                                </RadzenText>
+                                            </RadzenAlert>
+                                        }
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </Template>
+                        </RadzenDataList>
+                    }
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Active Polls">
+                <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                    @if (activePolls.Any())
+                    {
+                        <RadzenDataList Data="@activePolls" TItem="SchedulingPoll" PageSize="10" AllowPaging="true">
+                            <Template Context="poll">
+                                <RadzenCard Style="margin-bottom: 1rem;">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                                            @poll.Title
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            Organized by @poll.OrganizerName
+                                        </RadzenText>
+                                        <RadzenButton Click="@(() => RespondToPoll(poll))"
+                                                      ButtonStyle="ButtonStyle.Primary"
+                                                      Text="Respond to Poll"
+                                                      Icon="how_to_vote"
+                                                      Style="width: 100%; margin-top: 0.5rem;" />
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </Template>
+                        </RadzenDataList>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center; padding: 2rem;">
+                            No active polls at this time.
+                        </RadzenText>
+                    }
+                </RadzenStack>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</RadzenStack>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    private string currentUserEmail = string.Empty;
+    private string currentUserName = string.Empty;
+    private List<SchedulingPoll> myPolls = new();
+    private List<SchedulingPoll> activePolls = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            var user = authState.User;
+            currentUserEmail = user.FindFirst(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty;
+            currentUserName = user.Identity?.Name ?? string.Empty;
+        }
+
+        await LoadPolls();
+    }
+
+    private async Task LoadPolls()
+    {
+        try
+        {
+            isLoading = true;
+
+            myPolls = await PollService.GetPollsByOrganizerAsync(currentUserEmail);
+            activePolls = await PollService.GetActivePollsAsync();
+
+            // Remove own polls from active polls list
+            activePolls = activePolls.Where(p => p.OrganizerEmail != currentUserEmail).ToList();
+
+            Logger.LogInformation("Loaded {MyCount} own polls and {ActiveCount} active polls",
+                myPolls.Count, activePolls.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading polls");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load polls. Please refresh the page.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateNewPoll()
+    {
+        var result = await DialogService.OpenAsync<CreatePollDialog>("Create Meeting Poll",
+            new Dictionary<string, object>
+            {
+                { "OrganizerEmail", currentUserEmail },
+                { "OrganizerName", currentUserName }
+            },
+            new DialogOptions { Width = "850px" });
+
+        if (result != null)
+        {
+            await LoadPolls();
+        }
+    }
+
+    private async Task ViewPollResults(SchedulingPoll poll)
+    {
+        await DialogService.OpenAsync<PollResultsCard>($"Poll Results: {poll.Title}",
+            new Dictionary<string, object>
+            {
+                { "Poll", poll },
+                { "IsOrganizer", true },
+                { "ShowActions", true }
+            },
+            new DialogOptions { Width = "800px", Height = "80vh" });
+    }
+
+    private async Task RespondToPoll(SchedulingPoll poll)
+    {
+        var result = await DialogService.OpenAsync<PollResponseDialog>($"Respond: {poll.Title}",
+            new Dictionary<string, object>
+            {
+                { "PollId", poll.Id },
+                { "RespondentEmail", currentUserEmail },
+                { "RespondentName", currentUserName }
+            },
+            new DialogOptions { Width = "650px" });
+
+        if (result != null && (bool)result)
+        {
+            await LoadPolls();
+        }
+    }
+
+    private async Task FinalizePoll(SchedulingPoll poll)
+    {
+        var mostPopular = poll.GetMostPopularTimeSlot();
+        if (mostPopular == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "No Responses",
+                Detail = "Cannot finalize poll without any responses.",
+                Duration = 3000
+            });
+            return;
+        }
+
+        var confirm = await DialogService.Confirm(
+            $"Finalize poll and select the time slot: {mostPopular.StartTime:MMM dd, yyyy h:mm tt}?",
+            "Finalize Poll",
+            new ConfirmOptions { OkButtonText = "Finalize", CancelButtonText = "Cancel" });
+
+        if (confirm == true)
+        {
+            try
+            {
+                await PollService.FinalizePollAsync(poll.Id, mostPopular.Id);
+                await PollService.CreateEventFromPollAsync(poll.Id);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Poll Finalized",
+                    Detail = "Event has been created from the poll results.",
+                    Duration = 4000
+                });
+
+                await LoadPolls();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error finalizing poll {PollId}", poll.Id);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to finalize poll. Please try again.",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+
+    private async Task CancelPoll(SchedulingPoll poll)
+    {
+        var confirm = await DialogService.Confirm(
+            $"Are you sure you want to cancel the poll '{poll.Title}'?",
+            "Cancel Poll",
+            new ConfirmOptions { OkButtonText = "Yes, Cancel", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            try
+            {
+                await PollService.CancelPollAsync(poll.Id);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Poll Cancelled",
+                    Detail = "The poll has been cancelled.",
+                    Duration = 3000
+                });
+
+                await LoadPolls();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error cancelling poll {PollId}", poll.Id);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to cancel poll. Please try again.",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+}

@@ -19,6 +19,9 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<CalendarSettings> CalendarSettings { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<SchedulingPoll> SchedulingPolls { get; set; }
+    public DbSet<PollTimeSlot> PollTimeSlots { get; set; }
+    public DbSet<PollResponse> PollResponses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -193,6 +196,67 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasIndex(n => new { n.UserId, n.IsRead });
+        });
+
+        modelBuilder.Entity<SchedulingPoll>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Title).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.Description).HasMaxLength(1000);
+            entity.Property(p => p.OrganizerEmail).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.OrganizerName).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Location).HasMaxLength(500);
+
+            entity.HasMany(p => p.TimeSlots)
+                  .WithOne(ts => ts.SchedulingPoll)
+                  .HasForeignKey(ts => ts.SchedulingPollId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(p => p.Responses)
+                  .WithOne(r => r.SchedulingPoll)
+                  .HasForeignKey(r => r.SchedulingPollId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => p.OrganizerEmail);
+            entity.HasIndex(p => p.CreatedAt);
+        });
+
+        modelBuilder.Entity<PollTimeSlot>(entity =>
+        {
+            entity.HasKey(ts => ts.Id);
+
+            entity.HasOne(ts => ts.SchedulingPoll)
+                  .WithMany(p => p.TimeSlots)
+                  .HasForeignKey(ts => ts.SchedulingPollId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(ts => ts.Responses)
+                  .WithOne(r => r.PollTimeSlot)
+                  .HasForeignKey(r => r.PollTimeSlotId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(ts => ts.SchedulingPollId);
+        });
+
+        modelBuilder.Entity<PollResponse>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.RespondentEmail).IsRequired().HasMaxLength(200);
+            entity.Property(r => r.RespondentName).IsRequired().HasMaxLength(100);
+            entity.Property(r => r.Comment).HasMaxLength(500);
+
+            entity.HasOne(r => r.SchedulingPoll)
+                  .WithMany(p => p.Responses)
+                  .HasForeignKey(r => r.SchedulingPollId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(r => r.PollTimeSlot)
+                  .WithMany(ts => ts.Responses)
+                  .HasForeignKey(r => r.PollTimeSlotId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => new { r.SchedulingPollId, r.RespondentEmail });
+            entity.HasIndex(r => r.PollTimeSlotId);
         });
     }
 }

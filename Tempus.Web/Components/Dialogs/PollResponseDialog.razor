@@ -1,0 +1,302 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IPollService PollService
+@inject ILogger<PollResponseDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem" Style="width: 650px; max-height: 90vh; overflow-y: auto;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        Meeting Poll Response
+    </RadzenText>
+
+        @if (poll != null)
+        {
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.H4">
+                        @poll.Title
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(poll.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @poll.Description
+                        </RadzenText>
+                    }
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                        @if (!string.IsNullOrEmpty(poll.Location))
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                <RadzenIcon Icon="place" Style="font-size: 1rem;" />
+                                <RadzenText TextStyle="TextStyle.Body2">@poll.Location</RadzenText>
+                            </RadzenStack>
+                        }
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <RadzenIcon Icon="schedule" Style="font-size: 1rem;" />
+                            <RadzenText TextStyle="TextStyle.Body2">@poll.Duration minutes</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                            <RadzenText TextStyle="TextStyle.Body2">Organized by @poll.OrganizerName</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                    @if (poll.Deadline.HasValue)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat" Style="margin-top: 0.5rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="alarm" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    <strong>Deadline:</strong> @poll.Deadline.Value.ToString("MMM dd, yyyy h:mm tt")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H4">
+                Indicate your availability for each time slot:
+            </RadzenText>
+
+            @if (poll.AllowMultipleResponses)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        You can select multiple times that work for you.
+                    </RadzenText>
+                </RadzenAlert>
+            }
+
+            <RadzenStack Gap="0.75rem">
+                @foreach (var slot in poll.TimeSlots.OrderBy(ts => ts.StartTime))
+                {
+                    <RadzenCard Variant="Variant.Outlined" Style="padding: 1rem;">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">
+                                        @slot.StartTime.ToString("dddd, MMMM dd, yyyy")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @slot.StartTime.ToString("h:mm tt") - @slot.EndTime.ToString("h:mm tt")
+                                    </RadzenText>
+                                </RadzenStack>
+                                @if (slot.ResponseCount > 0)
+                                {
+                                    <RadzenBadge Text="@($"{slot.YesCount} Yes, {slot.MaybeCount} Maybe, {slot.NoCount} No")"
+                                                 BadgeStyle="BadgeStyle.Secondary"
+                                                 Style="font-size: 0.75rem;" />
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.Center" Style="margin-top: 0.5rem;">
+                                <RadzenButton Click="@(() => SetResponse(slot.Id, PollResponseType.Yes))"
+                                              Variant="@(GetResponseForSlot(slot.Id) == PollResponseType.Yes ? Variant.Filled : Variant.Outlined)"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="check_circle" Style="font-size: 1.25rem;" />
+                                        <span>Yes</span>
+                                    </RadzenStack>
+                                </RadzenButton>
+
+                                <RadzenButton Click="@(() => SetResponse(slot.Id, PollResponseType.Maybe))"
+                                              Variant="@(GetResponseForSlot(slot.Id) == PollResponseType.Maybe ? Variant.Filled : Variant.Outlined)"
+                                              ButtonStyle="ButtonStyle.Warning"
+                                              Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="help" Style="font-size: 1.25rem;" />
+                                        <span>Maybe</span>
+                                    </RadzenStack>
+                                </RadzenButton>
+
+                                <RadzenButton Click="@(() => SetResponse(slot.Id, PollResponseType.No))"
+                                              Variant="@(GetResponseForSlot(slot.Id) == PollResponseType.No ? Variant.Filled : Variant.Outlined)"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.25rem">
+                                        <RadzenIcon Icon="cancel" Style="font-size: 1.25rem;" />
+                                        <span>No</span>
+                                    </RadzenStack>
+                                </RadzenButton>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+
+            @if (responses.Values.Any(r => r.HasValue))
+            {
+                <div>
+                    <RadzenLabel Text="Optional comment" Style="font-weight: 500;" />
+                    <RadzenTextArea @bind-Value="@comment"
+                                    Placeholder="Any additional notes..."
+                                    Rows="2"
+                                    Style="width: 100%;" />
+                </div>
+            }
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+            <RadzenButton Click="@Cancel"
+                          Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Text="Cancel" />
+            <RadzenButton Click="@SubmitResponses"
+                          Variant="Variant.Filled"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Disabled="@(!responses.Values.Any(r => r.HasValue) || isSubmitting)"
+                          Text="@(isSubmitting ? "Submitting..." : "Submit Responses")"
+                          Icon="send" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid PollId { get; set; }
+    [Parameter] public string RespondentEmail { get; set; } = string.Empty;
+    [Parameter] public string RespondentName { get; set; } = string.Empty;
+
+    private SchedulingPoll? poll;
+    private Dictionary<Guid, PollResponseType?> responses = new();
+    private string? comment;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            poll = await PollService.GetPollByIdAsync(PollId);
+
+            if (poll == null)
+            {
+                Logger.LogWarning("Poll {PollId} not found", PollId);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Poll Not Found",
+                    Detail = "The requested poll could not be found.",
+                    Duration = 4000
+                });
+                DialogService.Close(null);
+                return;
+            }
+
+            // Initialize response dictionary
+            foreach (var slot in poll.TimeSlots)
+            {
+                responses[slot.Id] = null;
+            }
+
+            // Load existing responses if any
+            var existingResponses = await PollService.GetUserPollResponsesAsync(PollId, RespondentEmail);
+            foreach (var existing in existingResponses)
+            {
+                responses[existing.PollTimeSlotId] = existing.Response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading poll {PollId}", PollId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load poll. Please try again.",
+                Duration = 4000
+            });
+        }
+    }
+
+    private void SetResponse(Guid slotId, PollResponseType responseType)
+    {
+        if (poll?.AllowMultipleResponses == true)
+        {
+            // Toggle response if already selected
+            if (responses[slotId] == responseType)
+            {
+                responses[slotId] = null;
+            }
+            else
+            {
+                responses[slotId] = responseType;
+            }
+        }
+        else
+        {
+            // Clear all other responses and set this one
+            foreach (var key in responses.Keys.ToList())
+            {
+                responses[key] = null;
+            }
+            responses[slotId] = responseType;
+        }
+    }
+
+    private PollResponseType? GetResponseForSlot(Guid slotId)
+    {
+        return responses.TryGetValue(slotId, out var response) ? response : null;
+    }
+
+    private async Task SubmitResponses()
+    {
+        if (!responses.Values.Any(r => r.HasValue))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "No Response",
+                Detail = "Please select at least one response.",
+                Duration = 3000
+            });
+            return;
+        }
+
+        try
+        {
+            isSubmitting = true;
+
+            var responsesToSubmit = responses
+                .Where(r => r.Value.HasValue)
+                .ToDictionary(r => r.Key, r => r.Value!.Value);
+
+            await PollService.SubmitMultipleResponsesAsync(
+                PollId,
+                RespondentEmail,
+                RespondentName,
+                responsesToSubmit);
+
+            Logger.LogInformation("Submitted {Count} responses to poll {PollId} from {Email}",
+                responsesToSubmit.Count, PollId, RespondentEmail);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Response Submitted",
+                Detail = "Your availability has been recorded. Thank you!",
+                Duration = 4000
+            });
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error submitting poll responses for poll {PollId}", PollId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to submit responses. Please try again.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

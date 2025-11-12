@@ -200,6 +200,12 @@
                             Size="ButtonSize.Medium"
                             Text="Manage Calendars"
                             title="Manage your calendars" />
+                <RadzenButton Icon="schedule"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Click="OpenFindTimeDialog"
+                            Size="ButtonSize.Medium"
+                            Text="Find Time"
+                            title="Find optimal meeting times" />
                 <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
                             ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
                             Click="ToggleSelectionMode"
@@ -1367,6 +1373,22 @@
                 { "OnCalendarsChanged", EventCallback.Factory.Create(this, OnCalendarsChanged) }
             },
             new DialogOptions { Width = "700px", Height = "auto", Resizable = true, Draggable = true });
+    }
+
+    // Scheduling Assistant
+    private async Task OpenFindTimeDialog()
+    {
+        var result = await DialogService.OpenAsync<FindTimeDialog>("Find Optimal Meeting Time",
+            new Dictionary<string, object>(),
+            new DialogOptions { Width = "850px", Height = "90vh", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            // Result contains StartTime from FindTimeDialog selection
+            // Open event dialog with pre-filled start time
+            dynamic selection = result;
+            await OpenEventDialogAsync(null, (DateTime)selection.StartTime);
+        }
     }
 
     private async Task OnCalendarsChanged()

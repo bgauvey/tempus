@@ -1,0 +1,303 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IPollService PollService
+@inject ILogger<CreatePollDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem" Style="max-height: 90vh;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        Create Meeting Poll
+    </RadzenText>
+
+    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body2">
+            Create a Doodle-style poll to let attendees vote on their preferred meeting times.
+        </RadzenText>
+    </RadzenAlert>
+
+    <RadzenTabs>
+        <Tabs>
+            <!-- Details Tab -->
+            <RadzenTabsItem Text="Details" Icon="info">
+                <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                    <div>
+                        <RadzenLabel Text="Title *" Style="font-weight: 500;" />
+                        <RadzenTextBox @bind-Value="@title" Placeholder="Team Standup" Style="width: 100%;" />
+                    </div>
+
+                    <div>
+                        <RadzenLabel Text="Description" Style="font-weight: 500;" />
+                        <RadzenTextArea @bind-Value="@description"
+                                        Placeholder="Weekly team standup meeting..."
+                                        Rows="3"
+                                        Style="width: 100%;" />
+                    </div>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Location" Style="font-weight: 500;" />
+                            <RadzenTextBox @bind-Value="@location" Placeholder="Conference Room A" Style="width: 100%;" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Duration (minutes) *" Style="font-weight: 500;" />
+                            <RadzenNumeric @bind-Value="@duration" Min="15" Max="480" Step="15" Style="width: 100%;" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <div>
+                        <RadzenLabel Text="RSVP Deadline" Style="font-weight: 500;" />
+                        <RadzenDatePicker @bind-Value="@deadline"
+                                          ShowTime="true"
+                                          DateFormat="MM/dd/yyyy"
+                                          TimeFormat="h:mm tt"
+                                          Style="width: 100%;"
+                                          Placeholder="Optional deadline" />
+                    </div>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <!-- Time Slots Tab -->
+            <RadzenTabsItem Text="Time Slots" Icon="schedule">
+                <RadzenStack Gap="0.75rem" Style="padding-top: 1rem; max-height: 60vh; overflow-y: auto;">
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat" Visible="@(proposedTimes.Count == 0)">
+                        Add at least 2 time slots for attendees to choose from.
+                    </RadzenAlert>
+
+                    @foreach (var (time, index) in proposedTimes.Select((t, i) => (t, i)))
+                    {
+                        <RadzenCard Variant="Variant.Outlined" Style="padding: 0.75rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="schedule" Style="color: var(--rz-primary);" />
+                                <RadzenDatePicker @bind-Value="@proposedTimes[index]"
+                                                  ShowTime="true"
+                                                  DateFormat="MM/dd/yyyy"
+                                                  TimeFormat="h:mm tt"
+                                                  Style="flex: 1;"
+                                                  Min="@DateTime.Now" />
+                                <RadzenButton Click="@(() => RemoveTimeSlot(index))"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Variant="Variant.Text"
+                                              Icon="delete"
+                                              Size="ButtonSize.Small" />
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+
+                    <RadzenButton Click="@AddTimeSlot"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Variant="Variant.Outlined"
+                                  Text="Add Time Slot"
+                                  Icon="add"
+                                  Style="width: 100%;" />
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <!-- Attendees & Settings Tab -->
+            <RadzenTabsItem Text="Attendees & Settings" Icon="people">
+                <RadzenStack Gap="1rem" Style="padding-top: 1rem;">
+                    <div>
+                        <RadzenLabel Text="Attendee Emails (one per line)" Style="font-weight: 500;" />
+                        <RadzenTextArea @bind-Value="@attendeeEmailsText"
+                                       Rows="8"
+                                       Placeholder="user1@example.com&#10;user2@example.com"
+                                       Style="width: 100%;" />
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                            @GetAttendeeEmailsList().Count email(s) entered
+                        </RadzenText>
+                    </div>
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-top: 1rem;">Poll Settings</RadzenText>
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@showParticipantNames" Name="showNames" />
+                            <RadzenLabel Text="Show participant names in results" Component="showNames" Style="cursor: pointer;" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@allowMultipleResponses" Name="multipleResponses" />
+                            <RadzenLabel Text="Allow attendees to select multiple times" Component="multipleResponses" Style="cursor: pointer;" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    @if (!string.IsNullOrWhiteSpace(validationError))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" Variant="Variant.Flat">
+            @validationError
+        </RadzenAlert>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Click="@Cancel"
+                      Variant="Variant.Text"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Text="Cancel" />
+        <RadzenButton Click="@CreatePoll"
+                      Variant="Variant.Filled"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Disabled="@isCreating"
+                      Text="@(isCreating ? "Creating..." : "Create Poll")"
+                      Icon="poll" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public List<string>? AttendeeEmails { get; set; }
+    [Parameter] public int Duration { get; set; } = 60;
+    [Parameter] public string OrganizerEmail { get; set; } = string.Empty;
+    [Parameter] public string OrganizerName { get; set; } = string.Empty;
+
+    private string title = string.Empty;
+    private string? description;
+    private string? location;
+    private int duration = 60;
+    private DateTime? deadline;
+    private bool showParticipantNames = true;
+    private bool allowMultipleResponses = true;
+
+    private List<DateTime> proposedTimes = new();
+    private string attendeeEmailsText = string.Empty;
+
+    private string? validationError;
+    private bool isCreating = false;
+
+    protected override Task OnInitializedAsync()
+    {
+        duration = Duration;
+
+        if (AttendeeEmails != null && AttendeeEmails.Any())
+        {
+            attendeeEmailsText = string.Join(Environment.NewLine, AttendeeEmails);
+        }
+
+        // Add default time slots (tomorrow at common meeting times)
+        var tomorrow = DateTime.Now.Date.AddDays(1);
+        proposedTimes.Add(tomorrow.AddHours(9)); // 9 AM
+        proposedTimes.Add(tomorrow.AddHours(14)); // 2 PM
+
+        return Task.CompletedTask;
+    }
+
+    private List<string> GetAttendeeEmailsList()
+    {
+        return attendeeEmailsText
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => e.Trim())
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Distinct()
+            .ToList();
+    }
+
+    private void AddTimeSlot()
+    {
+        var lastTime = proposedTimes.Any() ? proposedTimes.Last() : DateTime.Now.Date.AddDays(1).AddHours(9);
+        proposedTimes.Add(lastTime.AddHours(1));
+    }
+
+    private void RemoveTimeSlot(int index)
+    {
+        if (proposedTimes.Count > 1)
+        {
+            proposedTimes.RemoveAt(index);
+        }
+    }
+
+    private bool ValidatePoll()
+    {
+        validationError = null;
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            validationError = "Poll title is required.";
+            return false;
+        }
+
+        if (proposedTimes.Count < 2)
+        {
+            validationError = "Please add at least 2 time slots.";
+            return false;
+        }
+
+        if (proposedTimes.Any(t => t < DateTime.Now))
+        {
+            validationError = "All proposed times must be in the future.";
+            return false;
+        }
+
+        if (deadline.HasValue && deadline.Value < DateTime.Now)
+        {
+            validationError = "Deadline must be in the future.";
+            return false;
+        }
+
+        var attendeeEmails = GetAttendeeEmailsList();
+        if (attendeeEmails.Count == 0)
+        {
+            validationError = "Please enter at least one attendee email address.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task CreatePoll()
+    {
+        if (!ValidatePoll())
+            return;
+
+        try
+        {
+            isCreating = true;
+
+            var poll = await PollService.CreatePollAsync(
+                title,
+                OrganizerEmail,
+                OrganizerName,
+                proposedTimes,
+                duration,
+                description,
+                location,
+                deadline);
+
+            // Send invitations
+            var attendeeEmails = GetAttendeeEmailsList();
+            await PollService.SendPollInvitationsAsync(poll.Id, attendeeEmails);
+
+            Logger.LogInformation("Created poll {PollId} '{Title}' with {Slots} time slots",
+                poll.Id, poll.Title, poll.TimeSlots.Count);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Poll Created",
+                Detail = $"Poll '{poll.Title}' created and invitations sent to {attendeeEmails.Count} attendees.",
+                Duration = 4000
+            });
+
+            DialogService.Close(poll);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating poll");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to create poll. Please try again.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
