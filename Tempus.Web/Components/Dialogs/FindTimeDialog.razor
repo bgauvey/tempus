@@ -5,11 +5,10 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<RadzenDialog>
-    <RadzenStack Gap="1rem" Style="width: 800px; max-height: 90vh;">
-        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
-            Find Optimal Meeting Time
-        </RadzenText>
+<RadzenStack Gap="1rem" Style="width: 800px; max-height: 90vh;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        Find Optimal Meeting Time
+    </RadzenText>
 
         <RadzenTabs>
             <Tabs>
@@ -145,9 +144,8 @@
                           Variant="Variant.Text"
                           ButtonStyle="ButtonStyle.Secondary"
                           Text="Cancel" />
-        </RadzenStack>
     </RadzenStack>
-</RadzenDialog>
+</RadzenStack>
 
 @code {
     [Parameter] public List<string>? InitialAttendeeEmails { get; set; }

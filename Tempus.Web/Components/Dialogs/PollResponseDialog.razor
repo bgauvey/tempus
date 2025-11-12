@@ -5,11 +5,10 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<RadzenDialog>
-    <RadzenStack Gap="1rem" Style="width: 650px; max-height: 90vh; overflow-y: auto;">
-        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
-            Meeting Poll Response
-        </RadzenText>
+<RadzenStack Gap="1rem" Style="width: 650px; max-height: 90vh; overflow-y: auto;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        Meeting Poll Response
+    </RadzenText>
 
         @if (poll != null)
         {
@@ -149,9 +148,8 @@
                           Disabled="@(!responses.Values.Any(r => r.HasValue) || isSubmitting)"
                           Text="@(isSubmitting ? "Submitting..." : "Submit Responses")"
                           Icon="send" />
-        </RadzenStack>
     </RadzenStack>
-</RadzenDialog>
+</RadzenStack>
 
 @code {
     [Parameter] public Guid PollId { get; set; }

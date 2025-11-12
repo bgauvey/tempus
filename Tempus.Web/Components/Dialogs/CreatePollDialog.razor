@@ -5,11 +5,10 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<RadzenDialog>
-    <RadzenStack Gap="1rem" Style="width: 700px; max-height: 90vh; overflow-y: auto;">
-        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
-            Create Meeting Poll
-        </RadzenText>
+<RadzenStack Gap="1rem" Style="width: 700px; max-height: 90vh; overflow-y: auto;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        Create Meeting Poll
+    </RadzenText>
 
         <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
             <RadzenText TextStyle="TextStyle.Body2">
@@ -139,8 +138,7 @@
                           Text="@(isCreating ? "Creating..." : "Create Poll")"
                           Icon="poll" />
         </RadzenStack>
-    </RadzenStack>
-</RadzenDialog>
+</RadzenStack>
 
 @code {
     [Parameter] public List<string>? AttendeeEmails { get; set; }
