@@ -24,6 +24,9 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PollTimeSlot> PollTimeSlots { get; set; }
     public DbSet<PollResponse> PollResponses { get; set; }
     public DbSet<VideoConference> VideoConferences { get; set; }
+    public DbSet<Team> Teams { get; set; }
+    public DbSet<TeamMember> TeamMembers { get; set; }
+    public DbSet<TeamInvitation> TeamInvitations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -299,6 +302,80 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(v => v.EventId).IsUnique();
+        });
+
+        modelBuilder.Entity<Team>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Name).IsRequired().HasMaxLength(200);
+            entity.Property(t => t.Description).HasMaxLength(1000);
+            entity.Property(t => t.CreatedBy).IsRequired().HasMaxLength(450);
+
+            entity.HasOne(t => t.Creator)
+                  .WithMany()
+                  .HasForeignKey(t => t.CreatedBy)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasMany(t => t.Members)
+                  .WithOne(m => m.Team)
+                  .HasForeignKey(m => m.TeamId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.Invitations)
+                  .WithOne(i => i.Team)
+                  .HasForeignKey(i => i.TeamId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(t => t.CreatedBy);
+            entity.HasIndex(t => new { t.IsActive, t.CreatedAt });
+        });
+
+        modelBuilder.Entity<TeamMember>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(m => m.InvitedBy).HasMaxLength(450);
+
+            entity.HasOne(m => m.Team)
+                  .WithMany(t => t.Members)
+                  .HasForeignKey(m => m.TeamId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.User)
+                  .WithMany()
+                  .HasForeignKey(m => m.UserId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(m => m.Inviter)
+                  .WithMany()
+                  .HasForeignKey(m => m.InvitedBy)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            // Ensure a user can only be a member of a team once
+            entity.HasIndex(m => new { m.TeamId, m.UserId }).IsUnique();
+            entity.HasIndex(m => m.UserId);
+        });
+
+        modelBuilder.Entity<TeamInvitation>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.Email).IsRequired().HasMaxLength(200);
+            entity.Property(i => i.Token).IsRequired().HasMaxLength(100);
+            entity.Property(i => i.InvitedBy).IsRequired().HasMaxLength(450);
+
+            entity.HasOne(i => i.Team)
+                  .WithMany(t => t.Invitations)
+                  .HasForeignKey(i => i.TeamId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(i => i.Inviter)
+                  .WithMany()
+                  .HasForeignKey(i => i.InvitedBy)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasIndex(i => i.Token).IsUnique();
+            entity.HasIndex(i => new { i.TeamId, i.Email });
+            entity.HasIndex(i => new { i.Status, i.ExpiresAt });
         });
     }
 }
