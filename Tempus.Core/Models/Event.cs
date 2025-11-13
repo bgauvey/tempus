@@ -62,4 +62,7 @@ public class Event
     // Calendar ownership - which calendar this event belongs to
     public Guid? CalendarId { get; set; }
     public Calendar? Calendar { get; set; }
+
+    // Video conferencing
+    public VideoConference? VideoConference { get; set; }
 }

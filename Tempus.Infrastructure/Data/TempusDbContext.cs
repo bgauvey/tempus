@@ -23,6 +23,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SchedulingPoll> SchedulingPolls { get; set; }
     public DbSet<PollTimeSlot> PollTimeSlots { get; set; }
     public DbSet<PollResponse> PollResponses { get; set; }
+    public DbSet<VideoConference> VideoConferences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -278,6 +279,26 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(r => new { r.SchedulingPollId, r.RespondentEmail });
             entity.HasIndex(r => r.PollTimeSlotId);
+        });
+
+        modelBuilder.Entity<VideoConference>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.MeetingUrl).IsRequired().HasMaxLength(2000);
+            entity.Property(v => v.MeetingId).HasMaxLength(200);
+            entity.Property(v => v.Passcode).HasMaxLength(100);
+            entity.Property(v => v.DialInNumbers).HasMaxLength(5000); // JSON storage
+            entity.Property(v => v.DialInPasscode).HasMaxLength(100);
+            entity.Property(v => v.HostKey).HasMaxLength(100);
+            entity.Property(v => v.ExternalMeetingId).HasMaxLength(200);
+            entity.Property(v => v.CreatedBy).IsRequired().HasMaxLength(200);
+
+            entity.HasOne(v => v.Event)
+                  .WithOne(e => e.VideoConference)
+                  .HasForeignKey<VideoConference>(v => v.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(v => v.EventId).IsUnique();
         });
     }
 }

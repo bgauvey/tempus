@@ -1,0 +1,56 @@
+@using Tempus.Core.Models
+
+@if (VideoConference != null && VideoConference.HasDialIn())
+{
+    <RadzenFieldset Text="Phone Dial-In">
+        <RadzenStack Gap="0.5rem">
+            @foreach (var dialIn in VideoConference.GetDialInNumbers())
+            {
+                <RadzenCard Style="padding: 0.75rem; background: #f8f9fa;">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="phone" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @dialIn.Country
+                            </RadzenText>
+                            @if (dialIn.Type == "Toll-free")
+                            {
+                                <RadzenBadge Text="Toll-free" BadgeStyle="BadgeStyle.Success" Variant="Variant.Outlined" />
+                            }
+                            else
+                            {
+                                <RadzenBadge Text="Toll" BadgeStyle="BadgeStyle.Info" Variant="Variant.Outlined" />
+                            }
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #2d3748; font-family: monospace;">
+                            @dialIn.Number
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+
+            @if (!string.IsNullOrEmpty(VideoConference.DialInPasscode))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat" Style="margin-top: 0.5rem;">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Passcode:</strong> <span style="font-family: monospace;">@VideoConference.DialInPasscode</span>
+                    </RadzenText>
+                </RadzenAlert>
+            }
+
+            @if (!string.IsNullOrEmpty(VideoConference.MeetingId))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Meeting ID:</strong> <span style="font-family: monospace;">@VideoConference.MeetingId</span>
+                    </RadzenText>
+                </RadzenAlert>
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+}
+
+@code {
+    [Parameter]
+    public VideoConference? VideoConference { get; set; }
+}
