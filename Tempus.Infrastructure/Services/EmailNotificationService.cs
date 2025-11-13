@@ -625,6 +625,79 @@ public class EmailNotificationService : IEmailNotificationService
 </html>";
     }
 
+    public async Task SendTeamInvitationAsync(string teamName, string? teamDescription, string inviteeEmail,
+        string inviterName, string inviterEmail, string invitationToken, string invitationUrl,
+        DateTime expiresAt, string role)
+    {
+        _logger.LogInformation(
+            "Sending team invitation for {TeamName} to {InviteeEmail} from {InviterName}",
+            teamName, inviteeEmail, inviterName);
+
+        await SendEmailAsync(
+            toEmail: inviteeEmail,
+            toName: inviteeEmail, // We don't have the invitee's name yet
+            subject: $"You're invited to join {teamName} on Tempus",
+            body: GenerateTeamInvitationBody(teamName, teamDescription, inviterName, inviterEmail, invitationUrl, expiresAt, role)
+        );
+    }
+
+    private string GenerateTeamInvitationBody(string teamName, string? teamDescription,
+        string inviterName, string inviterEmail, string invitationUrl, DateTime expiresAt, string role)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }}
+        .team-details {{ background: white; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4299e1; }}
+        .invitation-info {{ background: #e6f7ff; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .cta-button {{ display: inline-block; background: #4299e1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 15px 0; font-weight: bold; }}
+        .cta-button:hover {{ background: #3182ce; }}
+        .role-badge {{ background: #48bb78; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.9em; }}
+        .expiry-notice {{ color: #718096; font-size: 0.9em; margin-top: 15px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>👥 Team Invitation</h2>
+        </div>
+        <div class='content'>
+            <p>Hello!</p>
+            <p><strong>{inviterName}</strong> ({inviterEmail}) has invited you to join their team on Tempus.</p>
+
+            <div class='team-details'>
+                <h3>{teamName}</h3>
+                {(!string.IsNullOrEmpty(teamDescription) ? $"<p>{teamDescription}</p>" : "")}
+            </div>
+
+            <div class='invitation-info'>
+                <p><strong>📧 Your Role:</strong> <span class='role-badge'>{role}</span></p>
+                <p><strong>👤 Invited by:</strong> {inviterName} ({inviterEmail})</p>
+            </div>
+
+            <p>Click the button below to accept this invitation and join the team:</p>
+
+            <a href='{invitationUrl}' class='cta-button'>Accept Invitation</a>
+
+            <p>Or copy and paste this link into your browser:</p>
+            <p style='word-break: break-all; color: #4299e1;'>{invitationUrl}</p>
+
+            <p class='expiry-notice'>⏰ This invitation will expire on {expiresAt:MMMM dd, yyyy 'at' h:mm tt}</p>
+
+            <p>If you don't want to join this team, you can safely ignore this email.</p>
+
+            <p>Best regards,<br>The Tempus Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
     private string FormatDateTime(DateTime dt)
     {
         return dt.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt");

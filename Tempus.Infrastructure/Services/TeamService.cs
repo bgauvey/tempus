@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Tempus.Core.Configuration;
 using Tempus.Core.Enums;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
@@ -11,13 +13,19 @@ public class TeamService : ITeamService
 {
     private readonly TempusDbContext _context;
     private readonly ILogger<TeamService> _logger;
+    private readonly IEmailNotificationService _emailService;
+    private readonly ApplicationSettings _appSettings;
 
     public TeamService(
         TempusDbContext context,
-        ILogger<TeamService> logger)
+        ILogger<TeamService> logger,
+        IEmailNotificationService emailService,
+        IOptions<ApplicationSettings> appSettings)
     {
         _context = context;
         _logger = logger;
+        _emailService = emailService;
+        _appSettings = appSettings.Value;
     }
 
     #region Team Management
@@ -291,9 +299,35 @@ public class TeamService : ITeamService
         _logger.LogInformation("Created invitation {InvitationId} for {Email} to team {TeamId} by {InvitedBy}",
             invitation.Id, email, teamId, invitedBy);
 
-        // TODO: Send invitation email
-        // For now, user will need to manually send the invitation link
-        // await SendInvitationEmailAsync(invitation, team);
+        // Send invitation email
+        try
+        {
+            // Get the inviter's information
+            var inviter = await _context.Users.FindAsync(invitedBy);
+            var inviterName = inviter?.UserName ?? "A team member";
+            var inviterEmail = inviter?.Email ?? "";
+
+            var invitationUrl = GetInvitationUrl(invitation.Token);
+
+            await _emailService.SendTeamInvitationAsync(
+                teamName: team.Name,
+                teamDescription: team.Description,
+                inviteeEmail: email,
+                inviterName: inviterName,
+                inviterEmail: inviterEmail,
+                invitationToken: invitation.Token,
+                invitationUrl: invitationUrl,
+                expiresAt: invitation.ExpiresAt,
+                role: invitation.Role.ToString()
+            );
+
+            _logger.LogInformation("Sent invitation email to {Email} for team {TeamId}", email, teamId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send invitation email for {InvitationId}. Invitation still created.", invitation.Id);
+            // Don't fail the invitation creation if email fails
+        }
 
         return invitation;
     }
@@ -456,8 +490,8 @@ public class TeamService : ITeamService
 
     public string GetInvitationUrl(string token)
     {
-        // TODO: Get base URL from configuration
-        return $"http://localhost:5000/teams/accept-invitation?token={token}";
+        var baseUrl = _appSettings.BaseUrl.TrimEnd('/');
+        return $"{baseUrl}/teams/accept-invitation?token={token}";
     }
 
     #endregion

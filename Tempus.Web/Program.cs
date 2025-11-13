@@ -47,6 +47,10 @@ builder.Services.AddControllers();
 // Add HTTP context accessor
 builder.Services.AddHttpContextAccessor();
 
+// Configure application settings
+builder.Services.Configure<Tempus.Core.Configuration.ApplicationSettings>(
+    builder.Configuration.GetSection("ApplicationSettings"));
+
 // Add Radzen services
 builder.Services.AddRadzenComponents();
 builder.Services.AddRadzenCookieThemeService(options =>
