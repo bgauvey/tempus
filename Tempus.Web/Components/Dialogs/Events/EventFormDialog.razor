@@ -8,6 +8,7 @@
 @inject IEventRepository EventRepository
 @inject ICalendarRepository CalendarRepository
 @inject IContactRepository ContactRepository
+@inject IAttachmentService AttachmentService
 @inject ITimeZoneConversionService TimeZoneService
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
@@ -394,6 +395,16 @@
                 </div>
             </RadzenStack>
         </RadzenTabsItem>
+
+        <!-- Attachments Tab -->
+        <RadzenTabsItem Text="Attachments" Icon="attach_file">
+            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                <EventAttachmentsManager EventId="@EventId"
+                                       Attachments="@_attachments"
+                                       OnAttachmentsChanged="@OnAttachmentsChanged"
+                                       UserId="@_userId" />
+            </RadzenStack>
+        </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 
@@ -552,6 +563,9 @@
         new ReminderOption { Text = "1 week before", Value = 10080 }
     };
 
+    // Attachment management
+    private List<EventAttachment> _attachments = new();
+
     private readonly List<DayOfWeekOption> _daysOfWeek = new()
     {
         new DayOfWeekOption { Text = "Sun", Value = 0 },
@@ -704,6 +718,9 @@
 
                 // Load existing reminders
                 LoadReminders();
+
+                // Load existing attachments
+                await LoadAttachments();
             }
         }
         else
@@ -1148,6 +1165,30 @@
         catch
         {
             return "UTC";
+        }
+    }
+
+    // Attachment management methods
+    private void OnAttachmentsChanged(List<EventAttachment> attachments)
+    {
+        _attachments = attachments;
+        StateHasChanged();
+    }
+
+    private async Task LoadAttachments()
+    {
+        try
+        {
+            if (EventId.HasValue)
+            {
+                _attachments = await AttachmentService.GetAttachmentsForEventAsync(EventId.Value);
+                Logger.LogDebug("Loaded {AttachmentCount} attachments for event {EventId}", _attachments.Count, EventId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading attachments for event {EventId}", EventId);
+            _attachments = new List<EventAttachment>();
         }
     }
 }

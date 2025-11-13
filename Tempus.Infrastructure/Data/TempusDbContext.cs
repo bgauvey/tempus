@@ -13,6 +13,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Event> Events { get; set; }
     public DbSet<Calendar> Calendars { get; set; }
     public DbSet<Attendee> Attendees { get; set; }
+    public DbSet<EventAttachment> EventAttachments { get; set; }
     public DbSet<ProposedTime> ProposedTimes { get; set; }
     public DbSet<CalendarIntegration> CalendarIntegrations { get; set; }
     public DbSet<CustomCalendarRange> CustomCalendarRanges { get; set; }
@@ -50,6 +51,26 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
                   .OnDelete(DeleteBehavior.NoAction); // NoAction to avoid cascade path conflicts
 
             entity.HasIndex(e => new { e.UserId, e.CalendarId });
+        });
+
+        modelBuilder.Entity<EventAttachment>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.FileName).HasMaxLength(255);
+            entity.Property(a => a.FilePath).HasMaxLength(500);
+            entity.Property(a => a.ContentType).HasMaxLength(100);
+            entity.Property(a => a.ExternalUrl).HasMaxLength(2000);
+            entity.Property(a => a.LinkTitle).HasMaxLength(200);
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.Property(a => a.UploadedBy).IsRequired().HasMaxLength(200);
+
+            entity.HasOne(a => a.Event)
+                  .WithMany(e => e.Attachments)
+                  .HasForeignKey(a => a.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(a => a.EventId);
+            entity.HasIndex(a => new { a.EventId, a.Type });
         });
 
         modelBuilder.Entity<Calendar>(entity =>

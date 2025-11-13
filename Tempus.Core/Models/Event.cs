@@ -36,6 +36,7 @@ public class Event
     public string? Color { get; set; }
     public List<Attendee> Attendees { get; set; } = new();
     public List<string> Tags { get; set; } = new();
+    public List<EventAttachment> Attachments { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
