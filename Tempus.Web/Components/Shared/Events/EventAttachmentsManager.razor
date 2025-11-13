@@ -1,0 +1,474 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Forms
+@using Radzen
+@inject IAttachmentService AttachmentService
+@inject NotificationService NotificationService
+@inject ILogger<EventAttachmentsManager> Logger
+@inject IJSRuntime JSRuntime
+
+<RadzenStack Gap="1rem">
+    <!-- File Upload Section -->
+    <RadzenFieldset Text="Upload Files">
+        <RadzenStack Gap="1rem">
+            <div class="rz-fileupload">
+                <InputFile OnChange="@OnFileSelected" multiple accept="*/*" id="fileUpload" style="display: none;" />
+                <RadzenButton Text="Choose Files" Icon="upload_file" Click="@TriggerFileInput" ButtonStyle="ButtonStyle.Light" Style="width: 100%;" />
+            </div>
+
+            @if (_selectedFiles.Any())
+            {
+                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin-bottom: 0.5rem;">
+                        Selected Files (@_selectedFiles.Count)
+                    </RadzenText>
+                    @foreach (var file in _selectedFiles)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0;">
+                            <RadzenText TextStyle="TextStyle.Body2">
+                                @file.Name (@FormatFileSize(file.Size))
+                            </RadzenText>
+                            <RadzenButton Icon="close"
+                                        ButtonStyle="ButtonStyle.Danger"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => RemoveSelectedFile(file))" />
+                        </div>
+                    }
+                    <RadzenButton Text="Upload Files"
+                                Icon="cloud_upload"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Click="@UploadFiles"
+                                Disabled="@_isUploading"
+                                Style="margin-top: 0.5rem;" />
+                </div>
+            }
+
+            @if (_isUploading)
+            {
+                <RadzenProgressBar Value="@_uploadProgress"
+                                 Max="100"
+                                 ShowValue="true"
+                                 Style="width: 100%;" />
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <!-- External Link Section -->
+    <RadzenFieldset Text="Add External Link">
+        <RadzenStack Gap="1rem">
+            <RadzenFormField Text="Link Title" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_newLinkTitle"
+                             Placeholder="Enter link title..."
+                             Style="width: 100%;" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="URL" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@_newLinkUrl"
+                             Placeholder="https://..."
+                             Style="width: 100%;" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Link Type" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@_newLinkType"
+                              Data="@_linkTypes"
+                              Style="width: 100%;"
+                              Placeholder="Select link type..." />
+            </RadzenFormField>
+
+            <RadzenButton Text="Add Link"
+                        Icon="add_link"
+                        ButtonStyle="ButtonStyle.Success"
+                        Click="@AddExternalLink"
+                        Disabled="@(!CanAddLink())" />
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <!-- Existing Attachments List -->
+    @if (Attachments != null && Attachments.Any())
+    {
+        <RadzenFieldset Text="@($"Attachments ({Attachments.Count})")">
+            <RadzenStack Gap="0.5rem">
+                @foreach (var attachment in Attachments.OrderByDescending(a => a.UploadedAt))
+                {
+                    <RadzenCard Style="padding: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                   JustifyContent="JustifyContent.SpaceBetween"
+                                   AlignItems="AlignItems.Center"
+                                   Gap="1rem">
+                            <RadzenStack Gap="0.25rem" Style="flex: 1; min-width: 0;">
+                                @if (attachment.Type == AttachmentType.Link)
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="@GetLinkIcon(attachment.ExternalLinkType)" />
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600; overflow: hidden; text-overflow: ellipsis;">
+                                            @attachment.GetDisplayName()
+                                        </RadzenText>
+                                        @if (attachment.ExternalLinkType.HasValue && attachment.ExternalLinkType != ExternalLinkType.Other)
+                                        {
+                                            <RadzenBadge Text="@attachment.ExternalLinkType.Value.ToString()"
+                                                       BadgeStyle="BadgeStyle.Info"
+                                                       Variant="Variant.Outlined" />
+                                        }
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        @attachment.ExternalUrl
+                                    </RadzenText>
+                                }
+                                else if (attachment.IsImage())
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="image" />
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                            @attachment.FileName
+                                        </RadzenText>
+                                        <RadzenBadge Text="Image" BadgeStyle="BadgeStyle.Success" Variant="Variant.Outlined" />
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                        @attachment.GetFormattedFileSize()
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(attachment.FilePath))
+                                    {
+                                        <div style="margin-top: 0.5rem;">
+                                            <img src="/api/attachments/@attachment.Id/preview"
+                                                 alt="@attachment.FileName"
+                                                 style="max-width: 200px; max-height: 150px; border-radius: 4px; border: 1px solid #e2e8f0;" />
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="@GetFileIcon(attachment.ContentType)" />
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                            @attachment.FileName
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                        @attachment.GetFormattedFileSize() • @attachment.ContentType
+                                    </RadzenText>
+                                }
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #a0aec0;">
+                                    Uploaded @attachment.UploadedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")
+                                </RadzenText>
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                @if (attachment.Type == AttachmentType.Link)
+                                {
+                                    <RadzenButton Icon="open_in_new"
+                                                ButtonStyle="ButtonStyle.Info"
+                                                Size="ButtonSize.Small"
+                                                title="Open link in new tab"
+                                                Click="@(() => OpenLink(attachment.ExternalUrl!))" />
+                                }
+                                else
+                                {
+                                    <RadzenButton Icon="download"
+                                                ButtonStyle="ButtonStyle.Info"
+                                                Size="ButtonSize.Small"
+                                                title="Download file"
+                                                Click="@(() => DownloadFile(attachment))" />
+                                }
+                                <RadzenButton Icon="delete"
+                                            ButtonStyle="ButtonStyle.Danger"
+                                            Size="ButtonSize.Small"
+                                            title="Delete attachment"
+                                            Click="@(() => DeleteAttachment(attachment))" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+            <RadzenText TextStyle="TextStyle.Body2">
+                No attachments yet. Upload files or add links to get started.
+            </RadzenText>
+        </RadzenAlert>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? EventId { get; set; }
+
+    [Parameter]
+    public List<EventAttachment>? Attachments { get; set; }
+
+    [Parameter]
+    public EventCallback<List<EventAttachment>> OnAttachmentsChanged { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private List<IBrowserFile> _selectedFiles = new();
+    private bool _isUploading = false;
+    private double _uploadProgress = 0;
+
+    private string _newLinkTitle = string.Empty;
+    private string _newLinkUrl = string.Empty;
+    private ExternalLinkType? _newLinkType = ExternalLinkType.Other;
+
+    private readonly ExternalLinkType[] _linkTypes = Enum.GetValues<ExternalLinkType>();
+
+    protected override void OnParametersSet()
+    {
+        if (Attachments == null)
+        {
+            Attachments = new List<EventAttachment>();
+        }
+    }
+
+    private async Task TriggerFileInput()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('fileUpload').click()");
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFiles = e.GetMultipleFiles(maximumFileCount: 10).ToList();
+        StateHasChanged();
+    }
+
+    private void RemoveSelectedFile(IBrowserFile file)
+    {
+        _selectedFiles.Remove(file);
+        StateHasChanged();
+    }
+
+    private async Task UploadFiles()
+    {
+        if (!_selectedFiles.Any() || string.IsNullOrEmpty(UserId))
+            return;
+
+        _isUploading = true;
+        _uploadProgress = 0;
+
+        try
+        {
+            var totalFiles = _selectedFiles.Count;
+            var uploadedCount = 0;
+
+            foreach (var file in _selectedFiles)
+            {
+                // For new events without an ID yet, we need to handle this differently
+                var eventId = EventId ?? Guid.Empty;
+
+                using var stream = file.OpenReadStream(maxAllowedSize: 52428800); // 50MB limit
+                var attachment = await AttachmentService.UploadFileAsync(
+                    eventId,
+                    stream,
+                    file.Name,
+                    file.ContentType ?? "application/octet-stream",
+                    UserId
+                );
+
+                Attachments!.Add(attachment);
+                uploadedCount++;
+                _uploadProgress = (uploadedCount / (double)totalFiles) * 100;
+                StateHasChanged();
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Upload Complete",
+                Detail = $"Successfully uploaded {totalFiles} file(s)",
+                Duration = 3000
+            });
+
+            _selectedFiles.Clear();
+            await OnAttachmentsChanged.InvokeAsync(Attachments);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error uploading files");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Upload Failed",
+                Detail = $"Error uploading files: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isUploading = false;
+            _uploadProgress = 0;
+        }
+    }
+
+    private bool CanAddLink()
+    {
+        return !string.IsNullOrWhiteSpace(_newLinkTitle)
+            && !string.IsNullOrWhiteSpace(_newLinkUrl)
+            && Uri.TryCreate(_newLinkUrl, UriKind.Absolute, out _);
+    }
+
+    private async Task AddExternalLink()
+    {
+        if (!CanAddLink() || string.IsNullOrEmpty(UserId))
+            return;
+
+        try
+        {
+            var eventId = EventId ?? Guid.Empty;
+
+            var attachment = await AttachmentService.AddExternalLinkAsync(
+                eventId,
+                _newLinkUrl,
+                _newLinkTitle,
+                _newLinkType,
+                UserId
+            );
+
+            Attachments!.Add(attachment);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Link Added",
+                Detail = "External link added successfully",
+                Duration = 3000
+            });
+
+            // Clear form
+            _newLinkTitle = string.Empty;
+            _newLinkUrl = string.Empty;
+            _newLinkType = ExternalLinkType.Other;
+
+            await OnAttachmentsChanged.InvokeAsync(Attachments);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error adding external link");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error adding link: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task DeleteAttachment(EventAttachment attachment)
+    {
+        try
+        {
+            var success = await AttachmentService.DeleteAttachmentAsync(attachment.Id, UserId);
+
+            if (success)
+            {
+                Attachments!.Remove(attachment);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Deleted",
+                    Detail = "Attachment deleted successfully",
+                    Duration = 3000
+                });
+
+                await OnAttachmentsChanged.InvokeAsync(Attachments);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting attachment");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error deleting attachment: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task DownloadFile(EventAttachment attachment)
+    {
+        // Trigger download by navigating to download endpoint
+        // This will be handled by a controller endpoint
+        var downloadUrl = $"/api/attachments/{attachment.Id}/download";
+        await JSRuntime.InvokeVoidAsync("open", downloadUrl, "_blank");
+    }
+
+    private void OpenLink(string url)
+    {
+        // Open link in new tab
+        JSRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    private string GetFileIcon(string? contentType)
+    {
+        if (string.IsNullOrEmpty(contentType))
+            return "insert_drive_file";
+
+        if (contentType.StartsWith("image/"))
+            return "image";
+        if (contentType.Contains("pdf"))
+            return "picture_as_pdf";
+        if (contentType.Contains("word") || contentType.Contains("document"))
+            return "description";
+        if (contentType.Contains("sheet") || contentType.Contains("excel"))
+            return "table_chart";
+        if (contentType.Contains("presentation") || contentType.Contains("powerpoint"))
+            return "slideshow";
+        if (contentType.Contains("video"))
+            return "videocam";
+        if (contentType.Contains("audio"))
+            return "audiotrack";
+        if (contentType.Contains("zip") || contentType.Contains("archive"))
+            return "folder_zip";
+
+        return "insert_drive_file";
+    }
+
+    private string GetLinkIcon(ExternalLinkType? linkType)
+    {
+        return linkType switch
+        {
+            ExternalLinkType.OneNote => "note",
+            ExternalLinkType.Evernote => "note",
+            ExternalLinkType.GoogleDocs => "description",
+            ExternalLinkType.GoogleSheets => "table_chart",
+            ExternalLinkType.GoogleSlides => "slideshow",
+            ExternalLinkType.Notion => "description",
+            ExternalLinkType.Confluence => "description",
+            ExternalLinkType.SharePoint => "folder",
+            ExternalLinkType.Dropbox => "cloud",
+            ExternalLinkType.OneDrive => "cloud",
+            ExternalLinkType.Box => "cloud",
+            ExternalLinkType.GitHub => "code",
+            ExternalLinkType.Jira => "bug_report",
+            ExternalLinkType.Trello => "view_kanban",
+            ExternalLinkType.Asana => "check_circle",
+            ExternalLinkType.Slack => "chat",
+            ExternalLinkType.Teams => "groups",
+            ExternalLinkType.Zoom => "videocam",
+            ExternalLinkType.Meet => "videocam",
+            _ => "link"
+        };
+    }
+}

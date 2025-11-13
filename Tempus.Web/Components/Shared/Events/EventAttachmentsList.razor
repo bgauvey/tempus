@@ -1,0 +1,253 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@if (Attachments != null && Attachments.Any())
+{
+    <RadzenStack Gap="0.75rem">
+        @foreach (var attachment in Attachments.OrderByDescending(a => a.UploadedAt))
+        {
+            <RadzenCard Style="padding: 0.875rem; cursor: pointer; transition: all 0.2s;"
+                      @onclick="@(() => HandleAttachmentClick(attachment))">
+                <RadzenStack Orientation="Orientation.Horizontal"
+                           AlignItems="AlignItems.Center"
+                           Gap="1rem">
+                    <!-- Icon -->
+                    <div style="flex-shrink: 0;">
+                        @if (attachment.Type == AttachmentType.Link)
+                        {
+                            <RadzenIcon Icon="@GetLinkIcon(attachment.ExternalLinkType)"
+                                      Style="font-size: 2rem; color: #667eea;" />
+                        }
+                        else if (attachment.IsImage())
+                        {
+                            @if (!string.IsNullOrEmpty(attachment.FilePath))
+                            {
+                                <img src="/api/attachments/@attachment.Id/preview"
+                                     alt="@attachment.FileName"
+                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="image"
+                                          Style="font-size: 2rem; color: #48bb78;" />
+                            }
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="@GetFileIcon(attachment.ContentType)"
+                                      Style="font-size: 2rem; color: #4299e1;" />
+                        }
+                    </div>
+
+                    <!-- Details -->
+                    <RadzenStack Gap="0.25rem" Style="flex: 1; min-width: 0;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Body1"
+                                      Style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                @attachment.GetDisplayName()
+                            </RadzenText>
+                            @if (attachment.Type == AttachmentType.Link && attachment.ExternalLinkType.HasValue && attachment.ExternalLinkType != ExternalLinkType.Other)
+                            {
+                                <RadzenBadge Text="@attachment.ExternalLinkType.Value.ToString()"
+                                           BadgeStyle="BadgeStyle.Info"
+                                           Variant="Variant.Outlined"
+                                           Style="flex-shrink: 0;" />
+                            }
+                            else if (attachment.IsImage())
+                            {
+                                <RadzenBadge Text="Image"
+                                           BadgeStyle="BadgeStyle.Success"
+                                           Variant="Variant.Outlined"
+                                           Style="flex-shrink: 0;" />
+                            }
+                        </RadzenStack>
+
+                        @if (attachment.Type == AttachmentType.Link)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2"
+                                      Style="color: #718096; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                @attachment.ExternalUrl
+                            </RadzenText>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                @attachment.GetFormattedFileSize()
+                                @if (!string.IsNullOrEmpty(attachment.ContentType))
+                                {
+                                    <span> • @GetContentTypeDisplay(attachment.ContentType)</span>
+                                }
+                            </RadzenText>
+                        }
+
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #a0aec0;">
+                            @attachment.UploadedAt.ToLocalTime().ToString("MMM d, yyyy")
+                        </RadzenText>
+                    </RadzenStack>
+
+                    <!-- Action Icon -->
+                    <div style="flex-shrink: 0;">
+                        @if (attachment.Type == AttachmentType.Link)
+                        {
+                            <RadzenIcon Icon="open_in_new" Style="color: #718096;" />
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="download" Style="color: #718096;" />
+                        }
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @if (ShowImageGallery && ImageAttachments.Any())
+        {
+            <RadzenFieldset Text="Image Gallery" Style="margin-top: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                    @foreach (var image in ImageAttachments)
+                    {
+                        <div style="position: relative; cursor: pointer;"
+                           @onclick="@(() => OpenImagePreview(image))">
+                            <img src="/api/attachments/@image.Id/preview"
+                                 alt="@image.FileName"
+                                 style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.6)); padding: 0.5rem; border-radius: 0 0 8px 8px;">
+                                <RadzenText TextStyle="TextStyle.Caption"
+                                          Style="color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    @image.FileName
+                                </RadzenText>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </RadzenFieldset>
+        }
+    </RadzenStack>
+}
+else
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body2">
+            No attachments available for this event.
+        </RadzenText>
+    </RadzenAlert>
+}
+
+@code {
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    [Parameter]
+    public List<EventAttachment>? Attachments { get; set; }
+
+    [Parameter]
+    public bool ShowImageGallery { get; set; } = true;
+
+    private IEnumerable<EventAttachment> ImageAttachments =>
+        Attachments?.Where(a => a.IsImage()) ?? Enumerable.Empty<EventAttachment>();
+
+    private void HandleAttachmentClick(EventAttachment attachment)
+    {
+        if (attachment.Type == AttachmentType.Link && !string.IsNullOrEmpty(attachment.ExternalUrl))
+        {
+            OpenLink(attachment.ExternalUrl);
+        }
+        else
+        {
+            DownloadFile(attachment);
+        }
+    }
+
+    private void DownloadFile(EventAttachment attachment)
+    {
+        var downloadUrl = $"/api/attachments/{attachment.Id}/download";
+        JSRuntime.InvokeVoidAsync("open", downloadUrl, "_blank");
+    }
+
+    private void OpenLink(string url)
+    {
+        JSRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private void OpenImagePreview(EventAttachment image)
+    {
+        // Open image in new tab for full preview
+        var previewUrl = $"/api/attachments/{image.Id}/preview";
+        JSRuntime.InvokeVoidAsync("open", previewUrl, "_blank");
+    }
+
+    private string GetFileIcon(string? contentType)
+    {
+        if (string.IsNullOrEmpty(contentType))
+            return "insert_drive_file";
+
+        if (contentType.StartsWith("image/"))
+            return "image";
+        if (contentType.Contains("pdf"))
+            return "picture_as_pdf";
+        if (contentType.Contains("word") || contentType.Contains("document"))
+            return "description";
+        if (contentType.Contains("sheet") || contentType.Contains("excel"))
+            return "table_chart";
+        if (contentType.Contains("presentation") || contentType.Contains("powerpoint"))
+            return "slideshow";
+        if (contentType.Contains("video"))
+            return "videocam";
+        if (contentType.Contains("audio"))
+            return "audiotrack";
+        if (contentType.Contains("zip") || contentType.Contains("archive"))
+            return "folder_zip";
+
+        return "insert_drive_file";
+    }
+
+    private string GetLinkIcon(ExternalLinkType? linkType)
+    {
+        return linkType switch
+        {
+            ExternalLinkType.OneNote => "note",
+            ExternalLinkType.Evernote => "note",
+            ExternalLinkType.GoogleDocs => "description",
+            ExternalLinkType.GoogleSheets => "table_chart",
+            ExternalLinkType.GoogleSlides => "slideshow",
+            ExternalLinkType.Notion => "description",
+            ExternalLinkType.Confluence => "description",
+            ExternalLinkType.SharePoint => "folder",
+            ExternalLinkType.Dropbox => "cloud",
+            ExternalLinkType.OneDrive => "cloud",
+            ExternalLinkType.Box => "cloud",
+            ExternalLinkType.GitHub => "code",
+            ExternalLinkType.Jira => "bug_report",
+            ExternalLinkType.Trello => "view_kanban",
+            ExternalLinkType.Asana => "check_circle",
+            ExternalLinkType.Slack => "chat",
+            ExternalLinkType.Teams => "groups",
+            ExternalLinkType.Zoom => "videocam",
+            ExternalLinkType.Meet => "videocam",
+            _ => "link"
+        };
+    }
+
+    private string GetContentTypeDisplay(string contentType)
+    {
+        if (contentType.Contains("pdf"))
+            return "PDF";
+        if (contentType.Contains("word") || contentType.Contains("document"))
+            return "Document";
+        if (contentType.Contains("sheet") || contentType.Contains("excel"))
+            return "Spreadsheet";
+        if (contentType.Contains("presentation") || contentType.Contains("powerpoint"))
+            return "Presentation";
+        if (contentType.Contains("video"))
+            return "Video";
+        if (contentType.Contains("audio"))
+            return "Audio";
+        if (contentType.Contains("zip") || contentType.Contains("archive"))
+            return "Archive";
+
+        var parts = contentType.Split('/');
+        return parts.Length > 1 ? parts[1].ToUpper() : contentType;
+    }
+}
