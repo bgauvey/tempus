@@ -1,6 +1,6 @@
 using Tempus.Core.Interfaces;
 
-namespace Tempus.Web.Services;
+namespace Tempus.Web.Services.Notifications;
 
 public class NotificationBackgroundService : BackgroundService
 {

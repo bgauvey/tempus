@@ -1,7 +1,7 @@
 using Tempus.Core.Enums;
 using Tempus.Core.Models;
 
-namespace Tempus.Web.Helpers;
+namespace Tempus.Web.Helpers.Calendar;
 
 /// <summary>
 /// Provides formatting utilities for the Calendar component

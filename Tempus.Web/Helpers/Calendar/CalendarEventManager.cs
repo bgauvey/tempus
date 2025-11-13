@@ -5,9 +5,9 @@ using Radzen;
 using Tempus.Core.Enums;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
-using Tempus.Web.Components.Dialogs;
+using Tempus.Web.Components.Dialogs.Events;
 
-namespace Tempus.Web.Helpers;
+namespace Tempus.Web.Helpers.Calendar;
 
 /// <summary>
 /// Manages event operations for the Calendar component

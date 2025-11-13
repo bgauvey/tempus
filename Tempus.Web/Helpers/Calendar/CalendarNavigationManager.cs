@@ -1,6 +1,6 @@
 using Tempus.Core.Models;
 
-namespace Tempus.Web.Helpers;
+namespace Tempus.Web.Helpers.Calendar;
 
 /// <summary>
 /// Manages navigation and view operations for the Calendar component
