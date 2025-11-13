@@ -4,7 +4,7 @@ using QuestPDF.Infrastructure;
 using Tempus.Core.Models;
 using Tempus.Core.Enums;
 
-namespace Tempus.Web.Services;
+namespace Tempus.Web.Services.Pdf;
 
 public class PdfAgendaService : IPdfAgendaService
 {

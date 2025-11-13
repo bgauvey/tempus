@@ -1,6 +1,6 @@
 using Tempus.Core.Models;
 
-namespace Tempus.Web.Services;
+namespace Tempus.Web.Services.Pdf;
 
 public interface IPdfAgendaService
 {

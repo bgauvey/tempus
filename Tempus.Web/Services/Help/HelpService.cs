@@ -1,7 +1,7 @@
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 
-namespace Tempus.Web.Services;
+namespace Tempus.Web.Services.Help;
 
 /// <summary>
 /// Service for managing help topics and content
