@@ -1,0 +1,35 @@
+@using Tempus.Core.Models
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@if (VideoConference != null)
+{
+    <RadzenButton Text="@ButtonText"
+                  Icon="videocam"
+                  ButtonStyle="@ButtonStyle"
+                  Size="@Size"
+                  Click="@JoinMeeting"
+                  title="@($"Join {VideoConference.GetProviderDisplayName()} meeting")" />
+}
+
+@code {
+    [Parameter]
+    public VideoConference? VideoConference { get; set; }
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Join Meeting";
+
+    [Parameter]
+    public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
+
+    [Parameter]
+    public ButtonSize Size { get; set; } = ButtonSize.Medium;
+
+    private async Task JoinMeeting()
+    {
+        if (VideoConference == null || string.IsNullOrEmpty(VideoConference.MeetingUrl))
+            return;
+
+        await JSRuntime.InvokeVoidAsync("open", VideoConference.MeetingUrl, "_blank");
+    }
+}

@@ -1,0 +1,228 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Radzen
+@inject IVideoConferenceService VideoConferenceService
+@inject NotificationService NotificationService
+@inject ILogger<VideoConferenceManager> Logger
+
+<RadzenStack Gap="1rem">
+    @if (VideoConference == null)
+    {
+        <!-- Add Video Conference Section -->
+        <RadzenFieldset Text="Add Video Conference">
+            <RadzenStack Gap="1rem">
+                <RadzenFormField Text="Meeting URL" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@_meetingUrl"
+                                 Placeholder="https://zoom.us/j/... or https://teams.microsoft.com/..."
+                                 Style="width: 100%;" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Meeting ID (Optional)" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@_meetingId"
+                                 Placeholder="123 456 7890"
+                                 Style="width: 100%;" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Passcode (Optional)" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@_passcode"
+                                 Placeholder="Meeting passcode"
+                                 Style="width: 100%;" />
+                </RadzenFormField>
+
+                <RadzenButton Text="Add Video Conference"
+                            Icon="videocam"
+                            ButtonStyle="ButtonStyle.Success"
+                            Click="@AddVideoConference"
+                            Disabled="@(!CanAddVideoConference())" />
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+    else
+    {
+        <!-- Display Existing Video Conference -->
+        <RadzenFieldset Text="Video Conference">
+            <RadzenStack Gap="1rem">
+                <RadzenCard Style="padding: 1rem;">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="@VideoConference.GetProviderIcon()" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                @VideoConference.GetProviderDisplayName()
+                            </RadzenText>
+                            <RadzenBadge Text="@VideoConference.Provider.ToString()"
+                                       BadgeStyle="BadgeStyle.Info"
+                                       Variant="Variant.Outlined" />
+                        </RadzenStack>
+
+                        <RadzenFormField Text="Meeting URL" Variant="Variant.Outlined">
+                            <RadzenTextBox Value="@VideoConference.MeetingUrl" ReadOnly="true" Style="width: 100%;" />
+                        </RadzenFormField>
+
+                        @if (!string.IsNullOrEmpty(VideoConference.MeetingId))
+                        {
+                            <RadzenFormField Text="Meeting ID" Variant="Variant.Outlined">
+                                <RadzenTextBox Value="@VideoConference.MeetingId" ReadOnly="true" Style="width: 100%;" />
+                            </RadzenFormField>
+                        }
+
+                        @if (!string.IsNullOrEmpty(VideoConference.Passcode))
+                        {
+                            <RadzenFormField Text="Passcode" Variant="Variant.Outlined">
+                                <RadzenTextBox Value="@VideoConference.Passcode" ReadOnly="true" Style="width: 100%;" />
+                            </RadzenFormField>
+                        }
+
+                        @if (VideoConference.HasDialIn())
+                        {
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600; margin-top: 0.5rem;">
+                                Phone Dial-In Numbers
+                            </RadzenText>
+                            @foreach (var dialIn in VideoConference.GetDialInNumbers())
+                            {
+                                <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>@dialIn.Country (@dialIn.CountryCode):</strong> @dialIn.Number
+                                        @if (dialIn.Type == "Toll-free")
+                                        {
+                                            <RadzenBadge Text="Toll-free" BadgeStyle="BadgeStyle.Success" Variant="Variant.Outlined" />
+                                        }
+                                    </RadzenText>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(VideoConference.DialInPasscode))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                    <strong>Dial-in passcode:</strong> @VideoConference.DialInPasscode
+                                </RadzenText>
+                            }
+                        }
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 0.5rem;">
+                            <RadzenButton Text="Join Meeting"
+                                        Icon="videocam"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Click="@(() => OpenMeetingUrl(VideoConference.MeetingUrl))" />
+                            <RadzenButton Text="Remove"
+                                        Icon="delete"
+                                        ButtonStyle="ButtonStyle.Danger"
+                                        Click="@DeleteVideoConference" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? EventId { get; set; }
+
+    [Parameter]
+    public VideoConference? VideoConference { get; set; }
+
+    [Parameter]
+    public EventCallback<VideoConference?> OnVideoConferenceChanged { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private string _meetingUrl = string.Empty;
+    private string _meetingId = string.Empty;
+    private string _passcode = string.Empty;
+
+    private bool CanAddVideoConference()
+    {
+        return !string.IsNullOrWhiteSpace(_meetingUrl)
+            && Uri.TryCreate(_meetingUrl, UriKind.Absolute, out _);
+    }
+
+    private async Task AddVideoConference()
+    {
+        if (!CanAddVideoConference() || string.IsNullOrEmpty(UserId))
+            return;
+
+        try
+        {
+            var eventId = EventId ?? Guid.Empty;
+
+            var videoConference = await VideoConferenceService.CreateCustomMeetingAsync(
+                eventId,
+                _meetingUrl,
+                string.IsNullOrWhiteSpace(_meetingId) ? null : _meetingId,
+                string.IsNullOrWhiteSpace(_passcode) ? null : _passcode,
+                UserId
+            );
+
+            VideoConference = videoConference;
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Video Conference Added",
+                Detail = $"{videoConference.GetProviderDisplayName()} meeting added successfully",
+                Duration = 3000
+            });
+
+            // Clear form
+            _meetingUrl = string.Empty;
+            _meetingId = string.Empty;
+            _passcode = string.Empty;
+
+            await OnVideoConferenceChanged.InvokeAsync(VideoConference);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error adding video conference");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error adding video conference: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task DeleteVideoConference()
+    {
+        if (VideoConference == null || string.IsNullOrEmpty(UserId))
+            return;
+
+        try
+        {
+            var success = await VideoConferenceService.DeleteVideoConferenceAsync(VideoConference.Id, UserId);
+
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Deleted",
+                    Detail = "Video conference removed successfully",
+                    Duration = 3000
+                });
+
+                VideoConference = null;
+                await OnVideoConferenceChanged.InvokeAsync(null);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting video conference");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error removing video conference: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private void OpenMeetingUrl(string url)
+    {
+        // This will be handled by JavaScript
+    }
+}

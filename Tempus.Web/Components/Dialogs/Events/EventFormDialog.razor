@@ -9,6 +9,7 @@
 @inject ICalendarRepository CalendarRepository
 @inject IContactRepository ContactRepository
 @inject IAttachmentService AttachmentService
+@inject IVideoConferenceService VideoConferenceService
 @inject ITimeZoneConversionService TimeZoneService
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
@@ -405,6 +406,16 @@
                                        UserId="@_userId" />
             </RadzenStack>
         </RadzenTabsItem>
+
+        <!-- Video Conference Tab -->
+        <RadzenTabsItem Text="Video Conference" Icon="videocam">
+            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                <VideoConferenceManager EventId="@EventId"
+                                      VideoConference="@_videoConference"
+                                      OnVideoConferenceChanged="@OnVideoConferenceChanged"
+                                      UserId="@_userId" />
+            </RadzenStack>
+        </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 
@@ -566,6 +577,9 @@
     // Attachment management
     private List<EventAttachment> _attachments = new();
 
+    // Video conference management
+    private VideoConference? _videoConference = null;
+
     private readonly List<DayOfWeekOption> _daysOfWeek = new()
     {
         new DayOfWeekOption { Text = "Sun", Value = 0 },
@@ -721,6 +735,9 @@
 
                 // Load existing attachments
                 await LoadAttachments();
+
+                // Load existing video conference
+                await LoadVideoConference();
             }
         }
         else
@@ -1189,6 +1206,29 @@
         {
             Logger.LogError(ex, "Error loading attachments for event {EventId}", EventId);
             _attachments = new List<EventAttachment>();
+        }
+    }
+
+    private void OnVideoConferenceChanged(VideoConference? videoConference)
+    {
+        _videoConference = videoConference;
+        StateHasChanged();
+    }
+
+    private async Task LoadVideoConference()
+    {
+        try
+        {
+            if (EventId.HasValue)
+            {
+                _videoConference = await VideoConferenceService.GetVideoConferenceAsync(EventId.Value);
+                Logger.LogDebug("Loaded video conference for event {EventId}", EventId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading video conference for event {EventId}", EventId);
+            _videoConference = null;
         }
     }
 }
