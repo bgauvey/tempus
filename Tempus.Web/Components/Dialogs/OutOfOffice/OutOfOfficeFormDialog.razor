@@ -1,0 +1,280 @@
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IOutOfOfficeService OutOfOfficeService
+@inject ILogger<OutOfOfficeFormDialog> Logger
+
+<RadzenStack Gap="1rem" Style="width: 650px;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        @(StatusId.HasValue ? "Edit" : "Add") Out of Office
+    </RadzenText>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @errorMessage
+        </RadzenAlert>
+    }
+
+    <RadzenFormField Text="Status Type" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@statusType"
+                       Data="@statusTypes"
+                       TextProperty="Label"
+                       ValueProperty="Value"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Title / Reason (Optional)" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@title"
+                      Placeholder="e.g., Vacation, Conference, Sick Leave"
+                      Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Start Date & Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@startDate"
+                                 ShowTime="true"
+                                 DateFormat="MM/dd/yyyy"
+                                 TimeFormat="h:mm tt"
+                                 Style="width: 100%;"
+                                 Min="@DateTime.Now" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="End Date & Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@endDate"
+                                 ShowTime="true"
+                                 DateFormat="MM/dd/yyyy"
+                                 TimeFormat="h:mm tt"
+                                 Style="width: 100%;"
+                                 Min="@startDate" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFieldset Text="Auto-Decline Settings">
+        <RadzenStack Gap="0.75rem">
+            <RadzenCheckBox @bind-Value="@autoDeclineMeetings" Name="autoDecline" />
+            <RadzenLabel Text="Automatically decline meeting invitations" Component="autoDecline" Style="cursor: pointer;" />
+
+            @if (autoDeclineMeetings)
+            {
+                <RadzenStack Gap="0.5rem" Style="margin-left: 2rem;">
+                    <RadzenCheckBox @bind-Value="@declineOptionalOnly" Name="declineOptional" />
+                    <RadzenLabel Text="Only decline optional meetings (keep required meetings)" Component="declineOptional" Style="cursor: pointer;" />
+                </RadzenStack>
+
+                <RadzenFormField Text="Decline Message (Optional)" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@declineMessage"
+                                   Placeholder="Custom message to include when declining meetings..."
+                                   Rows="2"
+                                   Style="width: 100%;"
+                                   MaxLength="500" />
+                </RadzenFormField>
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenFieldset Text="Auto-Responder">
+        <RadzenStack Gap="0.75rem">
+            <RadzenCheckBox @bind-Value="@sendAutoResponder" Name="autoRespond" />
+            <RadzenLabel Text="Send automatic replies" Component="autoRespond" Style="cursor: pointer;" />
+
+            @if (sendAutoResponder)
+            {
+                <RadzenFormField Text="Auto-Responder Message" Variant="Variant.Outlined">
+                    <RadzenTextArea @bind-Value="@autoResponderMessage"
+                                   Placeholder="I'm currently out of office and will respond when I return..."
+                                   Rows="4"
+                                   Style="width: 100%;"
+                                   MaxLength="2000" />
+                </RadzenFormField>
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenFieldset Text="Exemptions (Optional)">
+        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+            Enter email addresses that can still book meetings with you (one per line)
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@exemptEmails"
+                       Placeholder="manager@example.com&#10;assistant@example.com"
+                       Rows="3"
+                       Style="width: 100%;" />
+    </RadzenFieldset>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel"
+                     Click="@Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Secondary" />
+        <RadzenButton Text="@(StatusId.HasValue ? "Update" : "Create")"
+                     Click="@Submit"
+                     Disabled="@isSaving"
+                     Icon="@(isSaving ? "" : "check")"
+                     IsBusy="@isSaving"
+                     ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid? StatusId { get; set; }
+    [Parameter] public string UserId { get; set; } = string.Empty;
+
+    private AvailabilityStatusType statusType = AvailabilityStatusType.OutOfOffice;
+    private string? title;
+    private DateTime startDate = DateTime.Now;
+    private DateTime endDate = DateTime.Now.AddDays(1);
+    private bool autoDeclineMeetings = true;
+    private bool declineOptionalOnly = false;
+    private string? declineMessage;
+    private bool sendAutoResponder = true;
+    private string? autoResponderMessage;
+    private string? exemptEmails;
+    private bool isSaving = false;
+    private string? errorMessage;
+
+    private List<StatusTypeOption> statusTypes = new()
+    {
+        new() { Value = AvailabilityStatusType.OutOfOffice, Label = "🏖️ Out of Office" },
+        new() { Value = AvailabilityStatusType.FocusTime, Label = "🎯 Focus Time" },
+        new() { Value = AvailabilityStatusType.WorkingRemotely, Label = "💼 Working Remotely" },
+        new() { Value = AvailabilityStatusType.Busy, Label = "⏰ Busy" },
+        new() { Value = AvailabilityStatusType.DoNotDisturb, Label = "🔕 Do Not Disturb" }
+    };
+
+    [Inject] private DialogService DialogService { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StatusId.HasValue)
+        {
+            await LoadStatus();
+        }
+        else
+        {
+            // Set default messages
+            autoResponderMessage = "I'm currently out of office and will respond when I return. For urgent matters, please contact my team.";
+            declineMessage = "I'm out of office during this time and unable to attend. Please reschedule if possible.";
+        }
+    }
+
+    private async Task LoadStatus()
+    {
+        try
+        {
+            var status = await OutOfOfficeService.GetByIdAsync(StatusId!.Value, UserId);
+
+            if (status != null)
+            {
+                statusType = status.StatusType;
+                title = status.Title;
+                startDate = status.StartDate.ToLocalTime();
+                endDate = status.EndDate.ToLocalTime();
+                autoDeclineMeetings = status.AutoDeclineMeetings;
+                declineOptionalOnly = status.DeclineOptionalOnly;
+                declineMessage = status.DeclineMessage;
+                sendAutoResponder = status.SendAutoResponder;
+                autoResponderMessage = status.AutoResponderMessage;
+
+                if (status.ExemptOrganizerEmails.Any())
+                {
+                    exemptEmails = string.Join("\n", status.ExemptOrganizerEmails);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading OOO status {StatusId}", StatusId);
+            errorMessage = "Failed to load out-of-office status";
+        }
+    }
+
+    private async Task Submit()
+    {
+        errorMessage = null;
+
+        // Validation
+        if (startDate >= endDate)
+        {
+            errorMessage = "End date must be after start date";
+            return;
+        }
+
+        if (autoDeclineMeetings && string.IsNullOrWhiteSpace(declineMessage))
+        {
+            declineMessage = "I'm currently unavailable and unable to attend this meeting.";
+        }
+
+        if (sendAutoResponder && string.IsNullOrWhiteSpace(autoResponderMessage))
+        {
+            errorMessage = "Auto-responder message is required when auto-responder is enabled";
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+
+            // Parse exempt emails
+            var exemptEmailList = new List<string>();
+            if (!string.IsNullOrWhiteSpace(exemptEmails))
+            {
+                exemptEmailList = exemptEmails
+                    .Split('\n')
+                    .Select(e => e.Trim())
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .ToList();
+            }
+
+            var status = new OutOfOfficeStatus
+            {
+                Id = StatusId ?? Guid.NewGuid(),
+                UserId = UserId,
+                StatusType = statusType,
+                Title = title,
+                StartDate = startDate.ToUniversalTime(),
+                EndDate = endDate.ToUniversalTime(),
+                AutoDeclineMeetings = autoDeclineMeetings,
+                DeclineOptionalOnly = declineOptionalOnly,
+                DeclineMessage = declineMessage,
+                SendAutoResponder = sendAutoResponder,
+                AutoResponderMessage = autoResponderMessage,
+                ExemptOrganizerEmails = exemptEmailList,
+                IsActive = true
+            };
+
+            if (StatusId.HasValue)
+            {
+                await OutOfOfficeService.UpdateAsync(status);
+            }
+            else
+            {
+                await OutOfOfficeService.CreateAsync(status);
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving OOO status");
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+
+    private class StatusTypeOption
+    {
+        public AvailabilityStatusType Value { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
+}

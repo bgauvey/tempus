@@ -1,0 +1,333 @@
+@page "/out-of-office"
+@rendermode InteractiveServer
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IOutOfOfficeService OutOfOfficeService
+@inject ILogger<OutOfOffice> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>Out of Office - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Out of Office</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Add Out of Office"
+                             Icon="add_circle"
+                             Click="@OpenCreateDialog"
+                             ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="@LoadData"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading out of office periods...</RadzenText>
+        </RadzenStack>
+    }
+    else
+    {
+        @* Active OOO Status *@
+        @if (activeStatus != null)
+        {
+            <RadzenCard Style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #ffc107;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                🏖️ You are currently @GetStatusTypeText(activeStatus.StatusType)
+                            </RadzenText>
+                            @if (!string.IsNullOrEmpty(activeStatus.Title))
+                            {
+                                <RadzenText TextStyle="TextStyle.Subtitle1">@activeStatus.Title</RadzenText>
+                            }
+                        </RadzenStack>
+                        <RadzenButton Icon="edit"
+                                     Click="@(() => OpenEditDialog(activeStatus))"
+                                     Variant="Variant.Text"
+                                     ButtonStyle="ButtonStyle.Warning"
+                                     Size="ButtonSize.Small" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" Wrap="FlexWrap.Wrap">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">FROM</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @activeStatus.StartDate.ToString("MMM dd, yyyy h:mm tt")
+                            </RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">UNTIL</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @activeStatus.EndDate.ToString("MMM dd, yyyy h:mm tt")
+                            </RadzenText>
+                        </div>
+                    </RadzenStack>
+
+                    @if (activeStatus.AutoDeclineMeetings)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="event_busy" />
+                                <span>Meetings are being automatically declined during this period</span>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Upcoming OOO Periods *@
+        @if (upcomingStatuses.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H6">Upcoming (@upcomingStatuses.Count)</RadzenText>
+
+            <RadzenDataList Data="@upcomingStatuses" TItem="OutOfOfficeStatus" AllowPaging="true" PageSize="5">
+                <Template Context="status">
+                    <RadzenCard Style="margin-bottom: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                            <div style="width: 50px; height: 50px; border-radius: 8px; background: @GetStatusColor(status.StatusType); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                @GetStatusIcon(status.StatusType)
+                            </div>
+
+                            <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600; margin: 0;">
+                                        @(!string.IsNullOrEmpty(status.Title) ? status.Title : GetStatusTypeText(status.StatusType))
+                                    </RadzenText>
+                                    <RadzenBadge Text="@status.StatusType.ToString()"
+                                                BadgeStyle="@GetStatusBadgeStyle(status.StatusType)"
+                                                IsPill="true" />
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    @status.StartDate.ToString("MMM dd, yyyy h:mm tt") - @status.EndDate.ToString("MMM dd, yyyy h:mm tt")
+                                </RadzenText>
+                                @if (status.AutoDeclineMeetings)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        <RadzenIcon Icon="event_busy" Style="font-size: 0.875rem;" /> Auto-declining meetings
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="edit"
+                                             Click="@(() => OpenEditDialog(status))"
+                                             Variant="Variant.Text"
+                                             ButtonStyle="ButtonStyle.Info"
+                                             Size="ButtonSize.Small"
+                                             title="Edit" />
+                                <RadzenButton Icon="delete"
+                                             Click="@(() => DeleteStatus(status.Id))"
+                                             Variant="Variant.Text"
+                                             ButtonStyle="ButtonStyle.Danger"
+                                             Size="ButtonSize.Small"
+                                             title="Delete" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+
+        @* Empty State *@
+        @if (activeStatus == null && !upcomingStatuses.Any())
+        {
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                    <RadzenIcon Icon="beach_access" Style="font-size: 3rem; color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.H6">No Out of Office Periods</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                        Set up out-of-office periods to automatically manage your availability and decline meetings.
+                    </RadzenText>
+                    <RadzenButton Text="Add Out of Office"
+                                 Icon="add_circle"
+                                 Click="@OpenCreateDialog"
+                                 ButtonStyle="ButtonStyle.Primary" />
+                </RadzenStack>
+            </RadzenCard>
+        }
+    }
+</RadzenStack>
+
+@code {
+    private OutOfOfficeStatus? activeStatus;
+    private List<OutOfOfficeStatus> upcomingStatuses = new();
+    private bool isLoading = false;
+    private string userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogWarning("Unable to determine current user");
+                return;
+            }
+
+            // Get active status
+            activeStatus = await OutOfOfficeService.GetActiveStatusAtTimeAsync(userId, DateTime.UtcNow);
+
+            // Get upcoming statuses (next 90 days)
+            var allUpcoming = await OutOfOfficeService.GetUpcomingStatusesAsync(userId, 90);
+
+            // Filter out the active one from upcoming
+            upcomingStatuses = allUpcoming
+                .Where(s => activeStatus == null || s.Id != activeStatus.Id)
+                .Where(s => s.StartDate > DateTime.UtcNow) // Only future ones
+                .ToList();
+
+            Logger.LogInformation("Loaded {Count} upcoming OOO statuses", upcomingStatuses.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading out-of-office data");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load out-of-office periods");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var result = await DialogService.OpenAsync<Tempus.Web.Components.Dialogs.OutOfOffice.OutOfOfficeFormDialog>(
+            "Add Out of Office",
+            new Dictionary<string, object>
+            {
+                { "UserId", userId }
+            },
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result is bool success && success)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(OutOfOfficeStatus status)
+    {
+        var result = await DialogService.OpenAsync<Tempus.Web.Components.Dialogs.OutOfOffice.OutOfOfficeFormDialog>(
+            "Edit Out of Office",
+            new Dictionary<string, object>
+            {
+                { "StatusId", status.Id },
+                { "UserId", userId }
+            },
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result is bool success && success)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteStatus(Guid id)
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to delete this out-of-office period?",
+            "Delete Out of Office",
+            new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                var success = await OutOfOfficeService.DeleteAsync(id, userId);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Deleted", "Out-of-office period deleted");
+                    await LoadData();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to delete out-of-office period");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting OOO status {Id}", id);
+                NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            }
+        }
+    }
+
+    private string GetStatusTypeText(AvailabilityStatusType type)
+    {
+        return type switch
+        {
+            AvailabilityStatusType.OutOfOffice => "Out of Office",
+            AvailabilityStatusType.FocusTime => "in Focus Time",
+            AvailabilityStatusType.WorkingRemotely => "Working Remotely",
+            AvailabilityStatusType.Busy => "Busy",
+            AvailabilityStatusType.DoNotDisturb => "in Do Not Disturb mode",
+            _ => "unavailable"
+        };
+    }
+
+    private string GetStatusIcon(AvailabilityStatusType type)
+    {
+        return type switch
+        {
+            AvailabilityStatusType.OutOfOffice => "🏖️",
+            AvailabilityStatusType.FocusTime => "🎯",
+            AvailabilityStatusType.WorkingRemotely => "💼",
+            AvailabilityStatusType.Busy => "⏰",
+            AvailabilityStatusType.DoNotDisturb => "🔕",
+            _ => "📅"
+        };
+    }
+
+    private string GetStatusColor(AvailabilityStatusType type)
+    {
+        return type switch
+        {
+            AvailabilityStatusType.OutOfOffice => "#fff3cd",
+            AvailabilityStatusType.FocusTime => "#e3f2fd",
+            AvailabilityStatusType.WorkingRemotely => "#e8f5e9",
+            AvailabilityStatusType.Busy => "#ffebee",
+            AvailabilityStatusType.DoNotDisturb => "#fce4ec",
+            _ => "#f5f5f5"
+        };
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(AvailabilityStatusType type)
+    {
+        return type switch
+        {
+            AvailabilityStatusType.OutOfOffice => BadgeStyle.Warning,
+            AvailabilityStatusType.FocusTime => BadgeStyle.Info,
+            AvailabilityStatusType.WorkingRemotely => BadgeStyle.Success,
+            AvailabilityStatusType.Busy => BadgeStyle.Danger,
+            AvailabilityStatusType.DoNotDisturb => BadgeStyle.Dark,
+            _ => BadgeStyle.Secondary
+        };
+    }
+}

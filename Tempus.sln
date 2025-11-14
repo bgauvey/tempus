@@ -9,6 +9,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempus.Core", "Tempus.Core\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempus.Infrastructure", "Tempus.Infrastructure\Tempus.Infrastructure.csproj", "{C3D4E5F6-7890-ABCD-EF12-345678901234}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{E001B596-0159-4CED-B2E2-9C0197D37549}"
+	ProjectSection(SolutionItems) = preProject
+		docs\EMAIL_CONFIGURATION.md = docs\EMAIL_CONFIGURATION.md
+		docs\CALENDAR_SHARING_TEST.md = docs\CALENDAR_SHARING_TEST.md
+		docs\UI_TRANSFORMATION_SUMMARY.md = docs\UI_TRANSFORMATION_SUMMARY.md
+		docs\QUICKSTART.md = docs\QUICKSTART.md
+		docs\PROJECT_STRUCTURE.md = docs\PROJECT_STRUCTURE.md
+		docs\OUTLOOK_SETUP.md = docs\OUTLOOK_SETUP.md
+		docs\GOOGLE_CALENDAR_SETUP.md = docs\GOOGLE_CALENDAR_SETUP.md
+		docs\EVENT_SYSTEM_QUICK_REFERENCE.md = docs\EVENT_SYSTEM_QUICK_REFERENCE.md
+		docs\EVENT_SYSTEM_DOCS_INDEX.md = docs\EVENT_SYSTEM_DOCS_INDEX.md
+		docs\EVENT_SYSTEM_ARCHITECTURE.md = docs\EVENT_SYSTEM_ARCHITECTURE.md
+		docs\EVENT_FLOW_DIAGRAM.md = docs\EVENT_FLOW_DIAGRAM.md
+		docs\CALENDAR_REFACTORING.md = docs\CALENDAR_REFACTORING.md
+		docs\Advanced analytics.md = docs\Advanced analytics.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

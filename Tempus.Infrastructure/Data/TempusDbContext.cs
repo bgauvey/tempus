@@ -29,6 +29,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TeamInvitation> TeamInvitations { get; set; }
     public DbSet<CalendarShare> CalendarShares { get; set; }
     public DbSet<PublicCalendar> PublicCalendars { get; set; }
+    public DbSet<OutOfOfficeStatus> OutOfOfficeStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -425,6 +426,24 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(p => new { p.UserId, p.Category });
             entity.HasIndex(p => new { p.UserId, p.IsActive });
+        });
+
+        modelBuilder.Entity<OutOfOfficeStatus>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(o => o.Title).HasMaxLength(200);
+            entity.Property(o => o.AutoResponderMessage).HasMaxLength(2000);
+            entity.Property(o => o.DeclineMessage).HasMaxLength(1000);
+
+            entity.HasOne(o => o.User)
+                  .WithMany()
+                  .HasForeignKey(o => o.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(o => new { o.UserId, o.IsActive });
+            entity.HasIndex(o => new { o.UserId, o.StartDate, o.EndDate });
+            entity.HasIndex(o => new { o.StartDate, o.EndDate, o.IsActive });
         });
     }
 }

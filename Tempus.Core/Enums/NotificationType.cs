@@ -11,5 +11,8 @@ public enum NotificationType
     System,
     ReminderSent,        // RSVP reminder was sent to attendee
     RSVPResponse,        // Attendee responded to RSVP
-    ProposedTimeSubmitted // Alternative time was proposed
+    ProposedTimeSubmitted, // Alternative time was proposed
+    OutOfOfficeAutoDecline, // Meeting auto-declined due to OOO
+    OutOfOfficeAutoResponder, // Auto-responder sent
+    FocusTimeProtection // Meeting declined due to focus time
 }
