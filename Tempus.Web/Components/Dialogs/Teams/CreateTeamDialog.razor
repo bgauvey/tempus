@@ -1,0 +1,78 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Radzen
+@inject ITeamService TeamService
+@inject NotificationService NotificationService
+@inject ILogger<CreateTeamDialog> Logger
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Team Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_teamName"
+                     Placeholder="Enter team name..."
+                     Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Description (Optional)" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@_description"
+                      Placeholder="What is this team for?"
+                      Style="width: 100%;"
+                      Rows="3" />
+    </RadzenFormField>
+
+    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body2">
+            You will be added as the team owner and can invite others to join.
+        </RadzenText>
+    </RadzenAlert>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Create Team" ButtonStyle="ButtonStyle.Primary"
+                    Click="@CreateTeam" Disabled="@(!CanCreate())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public EventCallback<Team> OnTeamCreated { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private string _teamName = string.Empty;
+    private string _description = string.Empty;
+
+    private bool CanCreate()
+    {
+        return !string.IsNullOrWhiteSpace(_teamName) && !string.IsNullOrWhiteSpace(UserId);
+    }
+
+    private async Task CreateTeam()
+    {
+        if (!CanCreate())
+            return;
+
+        try
+        {
+            var team = await TeamService.CreateTeamAsync(_teamName, _description, UserId);
+
+            await OnTeamCreated.InvokeAsync(team);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating team");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to create team: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private void Cancel()
+    {
+        // Close will be handled by parent
+    }
+}

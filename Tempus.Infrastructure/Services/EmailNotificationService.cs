@@ -1,4 +1,10 @@
+using System.Net;
+using System.Net.Mail;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using Tempus.Core.Configuration;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 
@@ -7,10 +13,14 @@ namespace Tempus.Infrastructure.Services;
 public class EmailNotificationService : IEmailNotificationService
 {
     private readonly ILogger<EmailNotificationService> _logger;
+    private readonly EmailSettings _emailSettings;
 
-    public EmailNotificationService(ILogger<EmailNotificationService> logger)
+    public EmailNotificationService(
+        ILogger<EmailNotificationService> logger,
+        IOptions<EmailSettings> emailSettings)
     {
         _logger = logger;
+        _emailSettings = emailSettings.Value;
     }
 
     public async Task SendMeetingUpdateAsync(Event originalEvent, Event updatedEvent, string organizerName, MeetingUpdateType updateType)
@@ -81,30 +91,50 @@ public class EmailNotificationService : IEmailNotificationService
 
     private async Task SendEmailAsync(string toEmail, string toName, string subject, string body)
     {
-        // TODO: Implement actual email sending using SMTP, SendGrid, or other email service
-        // For now, we'll just log the email that would be sent
-
-        _logger.LogInformation(
-            "EMAIL NOTIFICATION:\n" +
-            "To: {ToName} <{ToEmail}>\n" +
-            "Subject: {Subject}\n" +
-            "Body:\n{Body}\n" +
-            "---END EMAIL---",
-            toName, toEmail, subject, body);
-
-        // Simulate async operation
-        await Task.CompletedTask;
-
-        /* Example implementation with SMTP:
-        using var client = new SmtpClient("smtp.example.com", 587)
+        // If email is disabled, just log it
+        if (!_emailSettings.Enabled)
         {
-            Credentials = new NetworkCredential("username", "password"),
-            EnableSsl = true
+            _logger.LogInformation(
+                "EMAIL (Not Sent - Disabled):\n" +
+                "To: {ToName} <{ToEmail}>\n" +
+                "Subject: {Subject}\n" +
+                "Body:\n{Body}\n" +
+                "---END EMAIL---",
+                toName, toEmail, subject, body);
+            return;
+        }
+
+        try
+        {
+            if (_emailSettings.Provider == EmailProvider.SMTP)
+            {
+                await SendEmailViaSmtpAsync(toEmail, toName, subject, body);
+            }
+            else if (_emailSettings.Provider == EmailProvider.SendGrid)
+            {
+                await SendEmailViaSendGridAsync(toEmail, toName, subject, body);
+            }
+
+            _logger.LogInformation("Email sent successfully to {ToEmail}", toEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+            throw;
+        }
+    }
+
+    private async Task SendEmailViaSmtpAsync(string toEmail, string toName, string subject, string body)
+    {
+        using var client = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.SmtpPort)
+        {
+            Credentials = new NetworkCredential(_emailSettings.SmtpUsername, _emailSettings.SmtpPassword),
+            EnableSsl = _emailSettings.EnableSsl
         };
 
-        var message = new MailMessage
+        using var message = new MailMessage
         {
-            From = new MailAddress("noreply@tempus.com", "Tempus Calendar"),
+            From = new MailAddress(_emailSettings.FromEmail, _emailSettings.FromName),
             Subject = subject,
             Body = body,
             IsBodyHtml = true
@@ -112,7 +142,26 @@ public class EmailNotificationService : IEmailNotificationService
         message.To.Add(new MailAddress(toEmail, toName));
 
         await client.SendMailAsync(message);
-        */
+    }
+
+    private async Task SendEmailViaSendGridAsync(string toEmail, string toName, string subject, string body)
+    {
+        var client = new SendGridClient(_emailSettings.SendGridApiKey);
+
+        var from = new EmailAddress(_emailSettings.FromEmail, _emailSettings.FromName);
+        var to = new EmailAddress(toEmail, toName);
+
+        var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent: null, htmlContent: body);
+
+        var response = await client.SendEmailAsync(msg);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Body.ReadAsStringAsync();
+            _logger.LogError("SendGrid email failed with status {StatusCode}: {ResponseBody}",
+                response.StatusCode, responseBody);
+            throw new Exception($"SendGrid email failed with status {response.StatusCode}: {responseBody}");
+        }
     }
 
     private string GenerateMeetingUpdateBody(Event originalEvent, Event updatedEvent, string organizerName, MeetingUpdateType updateType)
@@ -619,6 +668,79 @@ public class EmailNotificationService : IEmailNotificationService
             <p>An event has been created in your calendar. All participants will be notified.</p>
 
             <p>Best regards,<br>Tempus Calendar System</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    public async Task SendTeamInvitationAsync(string teamName, string? teamDescription, string inviteeEmail,
+        string inviterName, string inviterEmail, string invitationToken, string invitationUrl,
+        DateTime expiresAt, string role)
+    {
+        _logger.LogInformation(
+            "Sending team invitation for {TeamName} to {InviteeEmail} from {InviterName}",
+            teamName, inviteeEmail, inviterName);
+
+        await SendEmailAsync(
+            toEmail: inviteeEmail,
+            toName: inviteeEmail, // We don't have the invitee's name yet
+            subject: $"You're invited to join {teamName} on Tempus",
+            body: GenerateTeamInvitationBody(teamName, teamDescription, inviterName, inviterEmail, invitationUrl, expiresAt, role)
+        );
+    }
+
+    private string GenerateTeamInvitationBody(string teamName, string? teamDescription,
+        string inviterName, string inviterEmail, string invitationUrl, DateTime expiresAt, string role)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }}
+        .team-details {{ background: white; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4299e1; }}
+        .invitation-info {{ background: #e6f7ff; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .cta-button {{ display: inline-block; background: #4299e1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 15px 0; font-weight: bold; }}
+        .cta-button:hover {{ background: #3182ce; }}
+        .role-badge {{ background: #48bb78; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.9em; }}
+        .expiry-notice {{ color: #718096; font-size: 0.9em; margin-top: 15px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>👥 Team Invitation</h2>
+        </div>
+        <div class='content'>
+            <p>Hello!</p>
+            <p><strong>{inviterName}</strong> ({inviterEmail}) has invited you to join their team on Tempus.</p>
+
+            <div class='team-details'>
+                <h3>{teamName}</h3>
+                {(!string.IsNullOrEmpty(teamDescription) ? $"<p>{teamDescription}</p>" : "")}
+            </div>
+
+            <div class='invitation-info'>
+                <p><strong>📧 Your Role:</strong> <span class='role-badge'>{role}</span></p>
+                <p><strong>👤 Invited by:</strong> {inviterName} ({inviterEmail})</p>
+            </div>
+
+            <p>Click the button below to accept this invitation and join the team:</p>
+
+            <a href='{invitationUrl}' class='cta-button'>Accept Invitation</a>
+
+            <p>Or copy and paste this link into your browser:</p>
+            <p style='word-break: break-all; color: #4299e1;'>{invitationUrl}</p>
+
+            <p class='expiry-notice'>⏰ This invitation will expire on {expiresAt:MMMM dd, yyyy 'at' h:mm tt}</p>
+
+            <p>If you don't want to join this team, you can safely ignore this email.</p>
+
+            <p>Best regards,<br>The Tempus Team</p>
         </div>
     </div>
 </body>

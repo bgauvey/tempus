@@ -79,6 +79,23 @@ public interface IEmailNotificationService
     /// <param name="poll">The finalized scheduling poll</param>
     /// <returns>Task representing the async operation</returns>
     Task SendPollFinalizedNotificationAsync(SchedulingPoll poll);
+
+    /// <summary>
+    /// Sends a team invitation email to a potential team member
+    /// </summary>
+    /// <param name="teamName">Name of the team</param>
+    /// <param name="teamDescription">Description of the team (optional)</param>
+    /// <param name="inviteeEmail">Email address of the person being invited</param>
+    /// <param name="inviterName">Name of the person sending the invitation</param>
+    /// <param name="inviterEmail">Email of the person sending the invitation</param>
+    /// <param name="invitationToken">Unique invitation token</param>
+    /// <param name="invitationUrl">Full URL to accept the invitation</param>
+    /// <param name="expiresAt">When the invitation expires</param>
+    /// <param name="role">Role the invitee will have</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendTeamInvitationAsync(string teamName, string? teamDescription, string inviteeEmail,
+        string inviterName, string inviterEmail, string invitationToken, string invitationUrl,
+        DateTime expiresAt, string role);
 }
 
 public enum MeetingUpdateType

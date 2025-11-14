@@ -47,6 +47,14 @@ builder.Services.AddControllers();
 // Add HTTP context accessor
 builder.Services.AddHttpContextAccessor();
 
+// Configure application settings
+builder.Services.Configure<Tempus.Core.Configuration.ApplicationSettings>(
+    builder.Configuration.GetSection("ApplicationSettings"));
+
+// Configure email settings
+builder.Services.Configure<Tempus.Core.Configuration.EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 // Add Radzen services
 builder.Services.AddRadzenComponents();
 builder.Services.AddRadzenCookieThemeService(options =>
@@ -131,6 +139,7 @@ builder.Services.AddScoped<ISchedulingAssistantService, SchedulingAssistantServi
 builder.Services.AddScoped<IPollService, PollService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IVideoConferenceService, VideoConferenceService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 // Register calendar services for refactored Calendar component
 builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarStateService>();

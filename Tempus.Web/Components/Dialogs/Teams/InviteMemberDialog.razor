@@ -1,0 +1,117 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Radzen
+@inject ITeamService TeamService
+@inject NotificationService NotificationService
+@inject ILogger<InviteMemberDialog> Logger
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Email Address" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@_email"
+                     Placeholder="Enter email address..."
+                     Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Role" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@_role"
+                      Data="@_availableRoles"
+                      TextProperty="Text"
+                      ValueProperty="Value"
+                      Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">
+                Role Permissions:
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                • <strong>Member:</strong> Can view team details and members
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                • <strong>Admin:</strong> Can invite and remove members
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                • <strong>Owner:</strong> Full control of the team
+            </RadzenText>
+        </RadzenStack>
+    </RadzenAlert>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Send Invitation" ButtonStyle="ButtonStyle.Primary"
+                    Click="@SendInvitation" Disabled="@(!CanInvite())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid TeamId { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnMemberInvited { get; set; }
+
+    private string _email = string.Empty;
+    private TeamRole _role = TeamRole.Member;
+
+    private readonly List<RoleOption> _availableRoles = new()
+    {
+        new RoleOption { Text = "Member", Value = TeamRole.Member },
+        new RoleOption { Text = "Admin", Value = TeamRole.Admin }
+        // Owner role is not available for invitation
+    };
+
+    private class RoleOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public TeamRole Value { get; set; }
+    }
+
+    private bool CanInvite()
+    {
+        return !string.IsNullOrWhiteSpace(_email) &&
+               _email.Contains("@") &&
+               !string.IsNullOrWhiteSpace(UserId);
+    }
+
+    private async Task SendInvitation()
+    {
+        if (!CanInvite())
+            return;
+
+        try
+        {
+            var invitation = await TeamService.CreateInvitationAsync(TeamId, _email, _role, UserId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Invitation Sent",
+                Detail = $"Invitation sent to {_email}",
+                Duration = 3000
+            });
+
+            await OnMemberInvited.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error sending invitation");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to send invitation: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private void Cancel()
+    {
+        // Close will be handled by parent
+    }
+}

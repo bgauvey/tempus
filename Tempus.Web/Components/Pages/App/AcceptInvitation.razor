@@ -1,0 +1,238 @@
+@page "/teams/accept-invitation"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Web.Components.Account
+@attribute [Authorize]
+@inject ITeamService TeamService
+@inject IdentityUserAccessor IdentityUserAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+@inject ILogger<AcceptInvitation> Logger
+
+<PageTitle>Accept Team Invitation - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem" Style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    @if (_isLoading)
+    {
+        <RadzenCard Style="padding: 3rem; text-align: center;">
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText TextStyle="TextStyle.Body1">Loading invitation...</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (_error != null)
+    {
+        <RadzenCard Style="padding: 3rem; text-align: center;">
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="error" Style="font-size: 4rem; color: #f56565;" />
+                <RadzenText TextStyle="TextStyle.H5">Error</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                    @_error
+                </RadzenText>
+                <RadzenButton Text="Go to Teams" Icon="groups"
+                            Click="@(() => NavigationManager.NavigateTo("/teams"))" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (_invitation != null)
+    {
+        <RadzenCard Style="padding: 2rem;">
+            <RadzenStack Gap="1.5rem">
+                <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center" Style="text-align: center;">
+                    <RadzenIcon Icon="mail" Style="font-size: 3rem; color: #4299e1;" />
+                    <RadzenText TextStyle="TextStyle.H4">Team Invitation</RadzenText>
+                </RadzenStack>
+
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            You've been invited to join <strong>@_invitation.Team?.Name</strong>
+                        </RadzenText>
+
+                        @if (!string.IsNullOrEmpty(_invitation.Team?.Description))
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">
+                                @_invitation.Team.Description
+                            </RadzenText>
+                        }
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="person" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Invited by: @_invitation.Inviter?.Email
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="badge" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Role: <strong>@_invitation.Role.ToString()</strong>
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="schedule" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Expires: @_invitation.ExpiresAt.ToLocalTime().ToString("MMMM d, yyyy")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenAlert>
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center">
+                    <RadzenButton Text="Accept"
+                                Icon="check_circle"
+                                ButtonStyle="ButtonStyle.Success"
+                                Click="@AcceptTeamInvitation"
+                                Disabled="@_isProcessing" />
+                    <RadzenButton Text="Decline"
+                                Icon="cancel"
+                                ButtonStyle="ButtonStyle.Danger"
+                                Click="@DeclineTeamInvitation"
+                                Disabled="@_isProcessing" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (_accepted)
+    {
+        <RadzenCard Style="padding: 3rem; text-align: center;">
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="check_circle" Style="font-size: 4rem; color: #48bb78;" />
+                <RadzenText TextStyle="TextStyle.H5">Invitation Accepted!</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                    You are now a member of the team.
+                </RadzenText>
+                <RadzenButton Text="View Team" Icon="groups"
+                            Click="@(() => NavigationManager.NavigateTo($"/teams/{_invitation?.TeamId}"))" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Token { get; set; }
+
+    private TeamInvitation? _invitation;
+    private string? _error;
+    private string _userId = string.Empty;
+    private bool _isLoading = true;
+    private bool _isProcessing = false;
+    private bool _accepted = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            _error = "Invalid invitation link";
+            _isLoading = false;
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                await LoadInvitation();
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task LoadInvitation()
+    {
+        try
+        {
+            _invitation = await TeamService.GetInvitationByTokenAsync(Token!);
+
+            if (_invitation == null)
+            {
+                _error = "Invitation not found";
+                return;
+            }
+
+            if (!_invitation.CanBeAccepted())
+            {
+                _error = $"This invitation cannot be accepted. Status: {_invitation.GetStatusDisplayName()}";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading invitation");
+            _error = "Failed to load invitation";
+        }
+    }
+
+    private async Task AcceptTeamInvitation()
+    {
+        _isProcessing = true;
+
+        try
+        {
+            await TeamService.AcceptInvitationAsync(Token!, _userId);
+
+            _accepted = true;
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Invitation Accepted",
+                Detail = $"You are now a member of {_invitation?.Team?.Name}",
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error accepting invitation");
+            _error = $"Failed to accept invitation: {ex.Message}";
+        }
+
+        _isProcessing = false;
+    }
+
+    private async Task DeclineTeamInvitation()
+    {
+        _isProcessing = true;
+
+        try
+        {
+            await TeamService.DeclineInvitationAsync(Token!);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Invitation Declined",
+                Detail = "The invitation has been declined",
+                Duration = 3000
+            });
+
+            NavigationManager.NavigateTo("/teams");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error declining invitation");
+            _error = $"Failed to decline invitation: {ex.Message}";
+        }
+
+        _isProcessing = false;
+    }
+}

@@ -1,0 +1,371 @@
+@page "/teams/{TeamId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Web.Components.Account
+@attribute [Authorize]
+@inject ITeamService TeamService
+@inject IdentityUserAccessor IdentityUserAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject ILogger<TeamDetails> Logger
+
+<PageTitle>@(_team?.Name ?? "Team") - Tempus</PageTitle>
+
+@if (_isLoading)
+{
+    <RadzenStack Gap="1rem" Style="padding: 2rem;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <RadzenText TextStyle="TextStyle.Body1" Style="text-align: center;">Loading team...</RadzenText>
+    </RadzenStack>
+}
+else if (_team == null)
+{
+    <RadzenCard Style="padding: 3rem; text-align: center;">
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon="error" Style="font-size: 4rem; color: #f56565;" />
+            <RadzenText TextStyle="TextStyle.H5">Team not found</RadzenText>
+            <RadzenButton Text="Back to Teams" Icon="arrow_back" Click="@(() => NavigationManager.NavigateTo("/teams"))" />
+        </RadzenStack>
+    </RadzenCard>
+}
+else
+{
+    <RadzenStack Gap="1.5rem">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <RadzenStack Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                Click="@(() => NavigationManager.NavigateTo("/teams"))" />
+                    <RadzenText TextStyle="TextStyle.H3">@_team.Name</RadzenText>
+                    @if (_isOwner)
+                    {
+                        <RadzenBadge Text="Owner" BadgeStyle="BadgeStyle.Success" />
+                    }
+                    else if (_isAdmin)
+                    {
+                        <RadzenBadge Text="Admin" BadgeStyle="BadgeStyle.Info" />
+                    }
+                </RadzenStack>
+                @if (!string.IsNullOrEmpty(_team.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                        @_team.Description
+                    </RadzenText>
+                }
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                @if (_isAdmin)
+                {
+                    <RadzenButton Text="Invite Member"
+                                Icon="person_add"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Click="@ShowInviteMemberDialog" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Members" Icon="people">
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Team Members (@_members.Count)
+                        </RadzenText>
+
+                        @if (!_members.Any())
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    No members yet. Invite people to join your team.
+                                </RadzenText>
+                            </RadzenAlert>
+                        }
+                        else
+                        {
+                            <RadzenDataGrid Data="@_members" TItem="TeamMember" AllowSorting="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="TeamMember" Property="User.Email" Title="Email" />
+                                    <RadzenDataGridColumn TItem="TeamMember" Property="User.UserName" Title="Name" />
+                                    <RadzenDataGridColumn TItem="TeamMember" Property="Role" Title="Role">
+                                        <Template Context="member">
+                                            <RadzenBadge Text="@member.GetRoleDisplayName()"
+                                                       BadgeStyle="@GetRoleBadgeStyle(member.Role)" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="TeamMember" Property="JoinedAt" Title="Joined" FormatString="{0:MMM d, yyyy}" />
+                                    <RadzenDataGridColumn TItem="TeamMember" Title="Actions" Sortable="false">
+                                        <Template Context="member">
+                                            @if (_isOwner && member.Role != TeamRole.Owner)
+                                            {
+                                                <RadzenButton Icon="delete"
+                                                            ButtonStyle="ButtonStyle.Danger"
+                                                            Size="ButtonSize.Small"
+                                                            Click="@(() => RemoveMember(member))"
+                                                            title="Remove member" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @if (_isAdmin)
+                {
+                    <RadzenTabsItem Text="Invitations" Icon="mail">
+                        <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                            <RadzenText TextStyle="TextStyle.H6">
+                                Pending Invitations (@_pendingInvitations.Count)
+                            </RadzenText>
+
+                            @if (!_pendingInvitations.Any())
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        No pending invitations.
+                                    </RadzenText>
+                                </RadzenAlert>
+                            }
+                            else
+                            {
+                                <RadzenDataGrid Data="@_pendingInvitations" TItem="TeamInvitation" AllowSorting="true">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="TeamInvitation" Property="Email" Title="Email" />
+                                        <RadzenDataGridColumn TItem="TeamInvitation" Property="Role" Title="Role">
+                                            <Template Context="invitation">
+                                                <RadzenBadge Text="@invitation.Role.ToString()"
+                                                           BadgeStyle="@GetRoleBadgeStyle(invitation.Role)" />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TeamInvitation" Property="InvitedAt" Title="Invited" FormatString="{0:MMM d, yyyy}" />
+                                        <RadzenDataGridColumn TItem="TeamInvitation" Property="ExpiresAt" Title="Expires" FormatString="{0:MMM d, yyyy}" />
+                                        <RadzenDataGridColumn TItem="TeamInvitation" Title="Actions" Sortable="false">
+                                            <Template Context="invitation">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                    <RadzenButton Icon="content_copy"
+                                                                ButtonStyle="ButtonStyle.Info"
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => CopyInvitationLink(invitation))"
+                                                                title="Copy invitation link" />
+                                                    <RadzenButton Icon="delete"
+                                                                ButtonStyle="ButtonStyle.Danger"
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => CancelInvitation(invitation))"
+                                                                title="Cancel invitation" />
+                                                </RadzenStack>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                        </RadzenStack>
+                    </RadzenTabsItem>
+                }
+            </Tabs>
+        </RadzenTabs>
+    </RadzenStack>
+}
+
+@code {
+    [Parameter]
+    public Guid TeamId { get; set; }
+
+    private Team? _team;
+    private List<TeamMember> _members = new();
+    private List<TeamInvitation> _pendingInvitations = new();
+    private string _userId = string.Empty;
+    private bool _isLoading = true;
+    private bool _isOwner = false;
+    private bool _isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                await LoadTeam();
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task LoadTeam()
+    {
+        try
+        {
+            _team = await TeamService.GetTeamByIdAsync(TeamId);
+
+            if (_team != null)
+            {
+                _isOwner = _team.IsUserOwner(_userId);
+                _isAdmin = _team.IsUserAdmin(_userId);
+
+                await LoadMembers();
+
+                if (_isAdmin)
+                {
+                    await LoadInvitations();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading team {TeamId}", TeamId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load team",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task LoadMembers()
+    {
+        try
+        {
+            _members = await TeamService.GetTeamMembersAsync(TeamId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading members for team {TeamId}", TeamId);
+        }
+    }
+
+    private async Task LoadInvitations()
+    {
+        try
+        {
+            var allInvitations = await TeamService.GetTeamInvitationsAsync(TeamId);
+            _pendingInvitations = allInvitations
+                .Where(i => i.IsPending())
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading invitations for team {TeamId}", TeamId);
+        }
+    }
+
+    private async Task ShowInviteMemberDialog()
+    {
+        await DialogService.OpenAsync("Invite Member",
+            ds => @<InviteMemberDialog TeamId="@TeamId" UserId="@_userId" OnMemberInvited="@OnMemberInvited" />,
+            new DialogOptions { Width = "600px" });
+    }
+
+    private async Task OnMemberInvited()
+    {
+        await LoadInvitations();
+        DialogService.Close();
+    }
+
+    private async Task RemoveMember(TeamMember member)
+    {
+        var confirmed = await DialogService.Confirm($"Are you sure you want to remove {member.User?.Email} from this team?",
+            "Remove Member", new ConfirmOptions { OkButtonText = "Remove", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await TeamService.RemoveMemberAsync(TeamId, member.UserId, _userId);
+                await LoadMembers();
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Member Removed",
+                    Detail = $"{member.User?.Email} has been removed from the team",
+                    Duration = 3000
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error removing member {UserId} from team {TeamId}", member.UserId, TeamId);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = $"Failed to remove member: {ex.Message}",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+
+    private async Task CancelInvitation(TeamInvitation invitation)
+    {
+        var confirmed = await DialogService.Confirm($"Are you sure you want to cancel the invitation for {invitation.Email}?",
+            "Cancel Invitation", new ConfirmOptions { OkButtonText = "Cancel Invitation", CancelButtonText = "Keep" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await TeamService.CancelInvitationAsync(invitation.Id, _userId);
+                await LoadInvitations();
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Invitation Cancelled",
+                    Detail = $"Invitation for {invitation.Email} has been cancelled",
+                    Duration = 3000
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error cancelling invitation {InvitationId}", invitation.Id);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = $"Failed to cancel invitation: {ex.Message}",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+
+    private void CopyInvitationLink(TeamInvitation invitation)
+    {
+        // TODO: Get base URL from configuration
+        var inviteUrl = $"http://localhost:5000/teams/accept-invitation?token={invitation.Token}";
+
+        // Copy to clipboard - this would need JavaScript interop
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Invitation Link",
+            Detail = $"Link: {inviteUrl}",
+            Duration = 10000
+        });
+    }
+
+    private BadgeStyle GetRoleBadgeStyle(TeamRole role)
+    {
+        return role switch
+        {
+            TeamRole.Owner => BadgeStyle.Success,
+            TeamRole.Admin => BadgeStyle.Info,
+            TeamRole.Member => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+}
