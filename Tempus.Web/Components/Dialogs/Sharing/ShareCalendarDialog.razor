@@ -3,6 +3,7 @@
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICalendarSharingService SharingService
+@inject IUserService UserService
 @inject ILogger<ShareCalendarDialog> Logger
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NotificationService NotificationService
@@ -141,19 +142,22 @@
                 return;
             }
 
-            // Find user by email - we need to get the user ID from the email
-            // For now, we'll need to add a helper method to the service
-            // TODO: Add GetUserByEmailAsync to a user service or extend the sharing service
+            // Find user by email
+            var user = await UserService.FindByEmailAsync(userEmail);
 
-            // Placeholder: For now, show an error that we need the user ID
-            errorMessage = "Email-based sharing will be implemented with user lookup service. For now, use the test API with user IDs.";
+            if (user == null)
+            {
+                errorMessage = $"No user found with email address '{userEmail}'";
+                return;
+            }
 
-            // When implemented:
-            // await SharingService.ShareCalendarAsync(CalendarId, foundUserId, selectedPermission, userId, note);
-            // NotificationService.Notify(NotificationSeverity.Success, "Calendar Shared", $"Successfully shared calendar with {userEmail}");
-            // await DialogService.Close(true);
+            // Share the calendar
+            await SharingService.ShareCalendarAsync(CalendarId, user.Id, selectedPermission, userId, note);
 
-            Logger.LogWarning("Email-based sharing attempted but user lookup not implemented");
+            NotificationService.Notify(NotificationSeverity.Success, "Calendar Shared",
+                $"Successfully shared calendar with {userEmail}");
+
+            DialogService.Close(true);
         }
         catch (Exception ex)
         {
