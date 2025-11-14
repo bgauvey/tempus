@@ -8,6 +8,7 @@ public interface IEventRepository
     Task<Event?> GetByIdAsync(Guid id, string userId);
     Task<List<Event>> GetAllAsync(string userId);
     Task<List<Event>> GetEventsByDateRangeAsync(DateTime startDate, DateTime endDate, string userId);
+    Task<List<Event>> GetEventsByDateRangeAndCalendarsAsync(DateTime startDate, DateTime endDate, List<Guid> calendarIds);
     Task<Event> CreateAsync(Event @event);
     Task<Event> UpdateAsync(Event @event);
     Task DeleteAsync(Guid id, string userId);

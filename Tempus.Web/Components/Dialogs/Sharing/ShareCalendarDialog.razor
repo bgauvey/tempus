@@ -1,0 +1,188 @@
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICalendarSharingService SharingService
+@inject IUserService UserService
+@inject ILogger<ShareCalendarDialog> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6">Share "@CalendarName"</RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+        Share this calendar with another user by entering their email address
+    </RadzenText>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @errorMessage
+        </RadzenAlert>
+    }
+
+    <RadzenFormField Text="User Email" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@userEmail" Placeholder="user@example.com" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Permission Level" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@selectedPermission"
+                       Data="@permissionOptions"
+                       TextProperty="Label"
+                       ValueProperty="Value"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Note (Optional)" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@note"
+                       Placeholder="Add a message..."
+                       Rows="3"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    @foreach (var option in permissionOptions.Where(o => o.Value == selectedPermission))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                <RadzenIcon Icon="info" />
+                <RadzenText TextStyle="TextStyle.Body2">@option.Description</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel"
+                     Click="Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Share Calendar"
+                     Click="ShareCalendar"
+                     IsBusy="@isSharing"
+                     Icon="share"
+                     ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid CalendarId { get; set; }
+    [Parameter] public string CalendarName { get; set; } = string.Empty;
+
+    private string userEmail = string.Empty;
+    private CalendarSharePermission selectedPermission = CalendarSharePermission.ViewAll;
+    private string note = string.Empty;
+    private string errorMessage = string.Empty;
+    private bool isSharing = false;
+
+    private class PermissionOption
+    {
+        public CalendarSharePermission Value { get; set; }
+        public string Label { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private List<PermissionOption> permissionOptions = new()
+    {
+        new()
+        {
+            Value = CalendarSharePermission.FreeBusyOnly,
+            Label = "See only free/busy",
+            Description = "Can see when you're busy but not event details. Good for assistants or team members who just need to know your availability."
+        },
+        new()
+        {
+            Value = CalendarSharePermission.ViewAll,
+            Label = "See all event details",
+            Description = "Can view all event information but cannot make changes. Good for team members who need to see your schedule."
+        },
+        new()
+        {
+            Value = CalendarSharePermission.Edit,
+            Label = "Make changes to events",
+            Description = "Can create, edit, and delete events on your calendar. Good for assistants who manage your schedule."
+        },
+        new()
+        {
+            Value = CalendarSharePermission.ManageSharing,
+            Label = "Make changes and manage sharing",
+            Description = "Full control including managing who else can access this calendar. Give this to people you trust completely."
+        }
+    };
+
+    private async Task ShareCalendar()
+    {
+        errorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            errorMessage = "Please enter a user email address";
+            return;
+        }
+
+        if (!IsValidEmail(userEmail))
+        {
+            errorMessage = "Please enter a valid email address";
+            return;
+        }
+
+        try
+        {
+            isSharing = true;
+
+            // Get current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                errorMessage = "Unable to determine current user";
+                return;
+            }
+
+            // Find user by email
+            var user = await UserService.FindByEmailAsync(userEmail);
+
+            if (user == null)
+            {
+                errorMessage = $"No user found with email address '{userEmail}'";
+                return;
+            }
+
+            // Share the calendar
+            await SharingService.ShareCalendarAsync(CalendarId, user.Id, selectedPermission, userId, note);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Calendar Shared",
+                $"Successfully shared calendar with {userEmail}");
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error sharing calendar");
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSharing = false;
+        }
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

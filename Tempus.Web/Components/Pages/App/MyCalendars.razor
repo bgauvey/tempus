@@ -1,0 +1,206 @@
+@page "/my-calendars"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Web.Components.Dialogs.Sharing
+@inject ICalendarRepository CalendarRepository
+@inject ICalendarSharingService SharingService
+@inject ILogger<MyCalendars> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>My Calendars - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">My Calendars</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="LoadCalendars"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading calendars...</RadzenText>
+        </RadzenStack>
+    }
+    else if (!calendars.Any())
+    {
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                <RadzenIcon Icon="event" Style="font-size: 3rem; color: var(--rz-text-secondary-color);" />
+                <RadzenText TextStyle="TextStyle.H6">No Calendars</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                    You don't have any calendars yet.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenDataList Data="@calendars"
+                       TItem="Tempus.Core.Models.Calendar"
+                       AllowPaging="false">
+            <Template Context="calendar">
+                <RadzenCard Style="margin-bottom: 1rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" Style="flex: 1;">
+                            <div style="@($"width: 20px; height: 20px; border-radius: 4px; background-color: {calendar.Color}; flex-shrink: 0;")"></div>
+
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                    @calendar.Name
+                                    @if (calendar.IsDefault)
+                                    {
+                                        <RadzenBadge Text="Default" BadgeStyle="BadgeStyle.Secondary" IsPill="true" Style="margin-left: 0.5rem;" />
+                                    }
+                                </RadzenText>
+                                @if (!string.IsNullOrEmpty(calendar.Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        @calendar.Description
+                                    </RadzenText>
+                                }
+                                @if (calendarShares.ContainsKey(calendar.Id))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        <RadzenIcon Icon="share" Style="font-size: 0.875rem;" />
+                                        Shared with @calendarShares[calendar.Id].Count @(calendarShares[calendar.Id].Count == 1 ? "person" : "people")
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Icon="share"
+                                         Click="@(() => ShareCalendar(calendar))"
+                                         Variant="Variant.Text"
+                                         ButtonStyle="ButtonStyle.Info"
+                                         Size="ButtonSize.Small"
+                                         title="Share calendar" />
+
+                            <RadzenButton Icon="people"
+                                         Click="@(() => ViewShares(calendar))"
+                                         Variant="Variant.Text"
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Size="ButtonSize.Small"
+                                         title="View who has access"
+                                         Disabled="@(!calendarShares.ContainsKey(calendar.Id) || calendarShares[calendar.Id].Count == 0)" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>
+    }
+</RadzenStack>
+
+@code {
+    private List<Tempus.Core.Models.Calendar> calendars = new();
+    private Dictionary<Guid, List<CalendarShare>> calendarShares = new();
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCalendars();
+    }
+
+    private async Task LoadCalendars()
+    {
+        isLoading = true;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogWarning("Unable to determine current user");
+                return;
+            }
+
+            calendars = await CalendarRepository.GetAllAsync(userId);
+
+            // Load shares for each calendar
+            calendarShares.Clear();
+            foreach (var calendar in calendars)
+            {
+                var shares = await SharingService.GetCalendarSharesAsync(calendar.Id);
+                if (shares.Any())
+                {
+                    calendarShares[calendar.Id] = shares;
+                }
+            }
+
+            Logger.LogInformation("Loaded {Count} calendars", calendars.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading calendars");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load calendars");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ShareCalendar(Tempus.Core.Models.Calendar calendar)
+    {
+        try
+        {
+            Logger.LogInformation("Opening share dialog for calendar {CalendarId} - {CalendarName}", calendar.Id, calendar.Name);
+
+            var result = await DialogService.OpenAsync<ShareCalendarDialog>("Share Calendar",
+                new Dictionary<string, object>
+                {
+                    { "CalendarId", calendar.Id },
+                    { "CalendarName", calendar.Name }
+                },
+                new DialogOptions { Width = "600px", Height = "auto", Resizable = true, Draggable = true });
+
+            var dialogResult = result as bool?;
+            Logger.LogInformation("Share dialog closed with result: {Result}", dialogResult);
+
+            if (dialogResult == true)
+            {
+                await LoadCalendars(); // Refresh to show updated share count
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening share dialog for calendar {CalendarId}", calendar.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to open share dialog: {ex.Message}");
+        }
+    }
+
+    private async Task ViewShares(Tempus.Core.Models.Calendar calendar)
+    {
+        if (!calendarShares.ContainsKey(calendar.Id))
+        {
+            return;
+        }
+
+        var shares = calendarShares[calendar.Id];
+        var shareList = string.Join("\n", shares.Select(s =>
+            $"• {s.SharedWithUser?.UserName ?? s.SharedWithUser?.Email ?? "Unknown"} ({s.GetPermissionDisplayName()})"));
+
+        await DialogService.Alert(
+            $"This calendar is shared with:\n\n{shareList}",
+            $"Sharing - {calendar.Name}",
+            new AlertOptions { OkButtonText = "Close" });
+    }
+}

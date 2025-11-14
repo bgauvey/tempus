@@ -1,0 +1,324 @@
+@page "/public-calendars"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICalendarSharingService SharingService
+@inject ILogger<PublicCalendars> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>Public Calendars - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Public Calendars</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Subscribe"
+                             Icon="add"
+                             Click="ShowSubscribeDialog"
+                             ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="LoadPublicCalendars"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading public calendars...</RadzenText>
+        </RadzenStack>
+    }
+    else if (!publicCalendars.Any())
+    {
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                <RadzenIcon Icon="public" Style="font-size: 3rem; color: var(--rz-text-secondary-color);" />
+                <RadzenText TextStyle="TextStyle.H6">No Public Calendar Subscriptions</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center; max-width: 500px;">
+                    Subscribe to public calendars like holidays, sports schedules, or school calendars to automatically add events to your calendar.
+                </RadzenText>
+                <RadzenButton Text="Subscribe to Calendar"
+                             Icon="add"
+                             Click="ShowSubscribeDialog"
+                             ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        @foreach (var category in publicCalendars.GroupBy(c => c.Category).OrderBy(g => g.Key))
+        {
+            <RadzenText TextStyle="TextStyle.H6">
+                @GetCategoryIcon(category.Key) @GetCategoryName(category.Key) (@category.Count())
+            </RadzenText>
+
+            <RadzenRow>
+                @foreach (var calendar in category)
+                {
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                        <RadzenCard Style="height: 100%;">
+                            <RadzenStack Gap="1rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                    <RadzenColorPicker @bind-Value="@calendar.Color"
+                                                      ShowButton="true"
+                                                      Change="@(() => UpdateCalendarColor(calendar))"
+                                                      Style="width: 40px;" />
+
+                                    <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                            @calendar.Name
+                                        </RadzenText>
+                                        @if (!string.IsNullOrEmpty(calendar.Description))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                @calendar.Description
+                                            </RadzenText>
+                                        }
+                                    </RadzenStack>
+
+                                    <RadzenSwitch @bind-Value="@calendar.IsActive"
+                                                 Change="@(() => ToggleCalendar(calendar))" />
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="font-size: 0.875rem; color: var(--rz-text-secondary-color);">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="event" Style="font-size: 1rem;" />
+                                        <span>@calendar.EventCount events</span>
+                                    </RadzenStack>
+                                    @if (calendar.LastSyncedAt.HasValue)
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                            <RadzenIcon Icon="sync" Style="font-size: 1rem;" />
+                                            <span>@calendar.LastSyncedAt.Value.ToString("MMM dd")</span>
+                                        </RadzenStack>
+                                    }
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                    <RadzenButton Text="Sync Now"
+                                                 Click="@(() => SyncCalendar(calendar.Id))"
+                                                 Icon="sync"
+                                                 Variant="Variant.Text"
+                                                 ButtonStyle="ButtonStyle.Info"
+                                                 Size="ButtonSize.Small" />
+                                    <RadzenButton Text="Unsubscribe"
+                                                 Click="@(() => Unsubscribe(calendar.Id))"
+                                                 Icon="close"
+                                                 Variant="Variant.Text"
+                                                 ButtonStyle="ButtonStyle.Danger"
+                                                 Size="ButtonSize.Small" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+        }
+    }
+</RadzenStack>
+
+@code {
+    private List<PublicCalendar> publicCalendars = new();
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPublicCalendars();
+    }
+
+    private async Task LoadPublicCalendars()
+    {
+        isLoading = true;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogWarning("Unable to determine current user");
+                return;
+            }
+
+            publicCalendars = await SharingService.GetUserPublicCalendarsAsync(userId, activeOnly: false);
+
+            Logger.LogInformation("Loaded {Count} public calendars", publicCalendars.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading public calendars");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load public calendars");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ShowSubscribeDialog()
+    {
+        // TODO: Create SubscribePublicCalendarDialog component
+        NotificationService.Notify(NotificationSeverity.Info, "Coming Soon",
+            "Public calendar subscription dialog will be implemented next");
+        await Task.CompletedTask;
+    }
+
+    private async Task ToggleCalendar(PublicCalendar calendar)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            await SharingService.UpdatePublicCalendarAsync(calendar.Id, userId, isActive: calendar.IsActive);
+
+            var status = calendar.IsActive ? "enabled" : "disabled";
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Calendar {status}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling calendar {CalendarId}", calendar.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            calendar.IsActive = !calendar.IsActive; // Revert
+        }
+    }
+
+    private async Task UpdateCalendarColor(PublicCalendar calendar)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return;
+            }
+
+            await SharingService.UpdatePublicCalendarAsync(calendar.Id, userId, color: calendar.Color);
+
+            Logger.LogInformation("Updated color for calendar {CalendarId}", calendar.Id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating calendar color");
+        }
+    }
+
+    private async Task SyncCalendar(Guid calendarId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            NotificationService.Notify(NotificationSeverity.Info, "Syncing", "Fetching events from calendar...");
+
+            var eventCount = await SharingService.SyncPublicCalendarAsync(calendarId, userId);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Synced {eventCount} events");
+
+            await LoadPublicCalendars();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error syncing calendar {CalendarId}", calendarId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to sync calendar: " + ex.Message);
+        }
+    }
+
+    private async Task Unsubscribe(Guid calendarId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            var confirmed = await DialogService.Confirm(
+                "Are you sure you want to unsubscribe from this calendar? Previously synced events will remain.",
+                "Unsubscribe from Calendar",
+                new ConfirmOptions { OkButtonText = "Yes, Unsubscribe", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                var success = await SharingService.UnsubscribeFromPublicCalendarAsync(calendarId, userId);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Unsubscribed from calendar");
+                    await LoadPublicCalendars();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unsubscribe");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unsubscribing from calendar {CalendarId}", calendarId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private string GetCategoryName(PublicCalendarCategory category)
+    {
+        return category switch
+        {
+            PublicCalendarCategory.Holidays => "Holidays",
+            PublicCalendarCategory.Sports => "Sports",
+            PublicCalendarCategory.School => "School",
+            PublicCalendarCategory.Religious => "Religious",
+            PublicCalendarCategory.Weather => "Weather",
+            PublicCalendarCategory.Entertainment => "Entertainment",
+            PublicCalendarCategory.Other => "Other",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetCategoryIcon(PublicCalendarCategory category)
+    {
+        return category switch
+        {
+            PublicCalendarCategory.Holidays => "🎉",
+            PublicCalendarCategory.Sports => "⚽",
+            PublicCalendarCategory.School => "🎓",
+            PublicCalendarCategory.Religious => "🕊️",
+            PublicCalendarCategory.Weather => "🌤️",
+            PublicCalendarCategory.Entertainment => "🎬",
+            PublicCalendarCategory.Other => "📅",
+            _ => "📅"
+        };
+    }
+}

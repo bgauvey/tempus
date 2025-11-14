@@ -27,6 +27,8 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Team> Teams { get; set; }
     public DbSet<TeamMember> TeamMembers { get; set; }
     public DbSet<TeamInvitation> TeamInvitations { get; set; }
+    public DbSet<CalendarShare> CalendarShares { get; set; }
+    public DbSet<PublicCalendar> PublicCalendars { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -376,6 +378,53 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(i => i.Token).IsUnique();
             entity.HasIndex(i => new { i.TeamId, i.Email });
             entity.HasIndex(i => new { i.Status, i.ExpiresAt });
+        });
+
+        modelBuilder.Entity<CalendarShare>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.SharedWithUserId).IsRequired().HasMaxLength(450);
+            entity.Property(s => s.SharedByUserId).IsRequired().HasMaxLength(450);
+            entity.Property(s => s.Note).HasMaxLength(500);
+            entity.Property(s => s.Color).HasMaxLength(50);
+
+            entity.HasOne(s => s.Calendar)
+                  .WithMany()
+                  .HasForeignKey(s => s.CalendarId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.SharedWithUser)
+                  .WithMany()
+                  .HasForeignKey(s => s.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(s => s.SharedByUser)
+                  .WithMany()
+                  .HasForeignKey(s => s.SharedByUserId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            // Ensure a calendar can only be shared once with a specific user
+            entity.HasIndex(s => new { s.CalendarId, s.SharedWithUserId }).IsUnique();
+            entity.HasIndex(s => s.SharedWithUserId);
+            entity.HasIndex(s => new { s.SharedWithUserId, s.IsAccepted });
+        });
+
+        modelBuilder.Entity<PublicCalendar>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.Description).HasMaxLength(1000);
+            entity.Property(p => p.IcsUrl).IsRequired().HasMaxLength(2000);
+            entity.Property(p => p.Color).IsRequired().HasMaxLength(50);
+
+            entity.HasOne(p => p.User)
+                  .WithMany()
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => new { p.UserId, p.Category });
+            entity.HasIndex(p => new { p.UserId, p.IsActive });
         });
     }
 }
