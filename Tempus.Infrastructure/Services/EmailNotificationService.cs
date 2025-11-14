@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 using Tempus.Core.Configuration;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
@@ -144,11 +146,22 @@ public class EmailNotificationService : IEmailNotificationService
 
     private async Task SendEmailViaSendGridAsync(string toEmail, string toName, string subject, string body)
     {
-        // Note: SendGrid implementation requires the SendGrid NuGet package
-        // For now, we'll throw a NotImplementedException
-        // To implement: Install SendGrid NuGet package and use SendGrid API
-        _logger.LogWarning("SendGrid email provider is configured but not yet implemented. Please use SMTP provider or implement SendGrid support.");
-        throw new NotImplementedException("SendGrid email sending is not yet implemented. Please configure SMTP provider in appsettings.json.");
+        var client = new SendGridClient(_emailSettings.SendGridApiKey);
+
+        var from = new EmailAddress(_emailSettings.FromEmail, _emailSettings.FromName);
+        var to = new EmailAddress(toEmail, toName);
+
+        var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent: null, htmlContent: body);
+
+        var response = await client.SendEmailAsync(msg);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Body.ReadAsStringAsync();
+            _logger.LogError("SendGrid email failed with status {StatusCode}: {ResponseBody}",
+                response.StatusCode, responseBody);
+            throw new Exception($"SendGrid email failed with status {response.StatusCode}: {responseBody}");
+        }
     }
 
     private string GenerateMeetingUpdateBody(Event originalEvent, Event updatedEvent, string organizerName, MeetingUpdateType updateType)

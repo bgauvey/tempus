@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Graph" Version="5.77.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.73.1" />
     <PackageReference Include="QuestPDF" Version="2024.10.3" />
+    <PackageReference Include="SendGrid" Version="9.29.3" />
     <PackageReference Include="Serilog" Version="4.3.0" />
   </ItemGroup>
 
