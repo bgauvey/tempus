@@ -51,6 +51,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<Tempus.Core.Configuration.ApplicationSettings>(
     builder.Configuration.GetSection("ApplicationSettings"));
 
+// Configure email settings
+builder.Services.Configure<Tempus.Core.Configuration.EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 // Add Radzen services
 builder.Services.AddRadzenComponents();
 builder.Services.AddRadzenCookieThemeService(options =>
