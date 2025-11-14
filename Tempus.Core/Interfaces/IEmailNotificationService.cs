@@ -96,6 +96,27 @@ public interface IEmailNotificationService
     Task SendTeamInvitationAsync(string teamName, string? teamDescription, string inviteeEmail,
         string inviterName, string inviterEmail, string invitationToken, string invitationUrl,
         DateTime expiresAt, string role);
+
+    /// <summary>
+    /// Sends an out-of-office auto-responder email
+    /// </summary>
+    /// <param name="toEmail">Recipient email address</param>
+    /// <param name="toName">Recipient name</param>
+    /// <param name="fromUserName">User who is out of office</param>
+    /// <param name="fromUserEmail">Email of user who is out of office</param>
+    /// <param name="oooStatus">Out of office status details</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendOutOfOfficeAutoResponderAsync(string toEmail, string toName, string fromUserName,
+        string fromUserEmail, OutOfOfficeStatus oooStatus);
+
+    /// <summary>
+    /// Sends notification to organizer that their meeting was auto-declined
+    /// </summary>
+    /// <param name="meetingEvent">The meeting that was auto-declined</param>
+    /// <param name="declinedAttendee">The attendee who auto-declined</param>
+    /// <param name="reason">Reason for auto-decline</param>
+    /// <returns>Task representing the async operation</returns>
+    Task SendAutoDeclineNotificationAsync(Event meetingEvent, Attendee declinedAttendee, string reason);
 }
 
 public enum MeetingUpdateType

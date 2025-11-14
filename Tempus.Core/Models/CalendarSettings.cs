@@ -60,6 +60,13 @@ public class CalendarSettings
     public bool DesktopNotificationsEnabled { get; set; } = true;
     public string DefaultReminderTimes { get; set; } = "15,60"; // 15 min, 1 hour (in minutes)
 
+    // Focus Time & Availability
+    public bool EnableFocusTimeProtection { get; set; } = false;
+    public int MaxMeetingsPerDay { get; set; } = 0; // 0 = unlimited
+    public int MinimumNoticePeriodHours { get; set; } = 24; // Require X hours notice for meetings
+    public bool AutoDeclineMeetingsOutsideWorkingHours { get; set; } = false;
+    public bool AllowMeetingsDuringLunchBreak { get; set; } = true;
+
     // Other
     public Guid? DefaultCalendarId { get; set; } // For future multi-calendar support
 

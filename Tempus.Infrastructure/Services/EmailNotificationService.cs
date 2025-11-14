@@ -747,6 +747,149 @@ public class EmailNotificationService : IEmailNotificationService
 </html>";
     }
 
+    public async Task SendOutOfOfficeAutoResponderAsync(string toEmail, string toName, string fromUserName,
+        string fromUserEmail, OutOfOfficeStatus oooStatus)
+    {
+        _logger.LogInformation("Sending out-of-office auto-responder from {FromUser} to {ToEmail}",
+            fromUserName, toEmail);
+
+        var subject = $"{fromUserName} is Out of Office";
+        var body = GenerateOutOfOfficeAutoResponderBody(fromUserName, fromUserEmail, oooStatus);
+
+        await SendEmailAsync(toEmail, toName, subject, body);
+    }
+
+    public async Task SendAutoDeclineNotificationAsync(Event meetingEvent, Attendee declinedAttendee, string reason)
+    {
+        _logger.LogInformation("Sending auto-decline notification for {EventTitle} - {AttendeeName} declined",
+            meetingEvent.Title, declinedAttendee.Name);
+
+        // Find the organizer
+        var organizer = meetingEvent.Attendees.FirstOrDefault(a => a.IsOrganizer);
+        if (organizer == null)
+        {
+            _logger.LogWarning("No organizer found for event {EventId}", meetingEvent.Id);
+            return;
+        }
+
+        var subject = $"Meeting Declined: {declinedAttendee.Name} - {meetingEvent.Title}";
+        var body = GenerateAutoDeclineNotificationBody(meetingEvent, declinedAttendee, reason);
+
+        await SendEmailAsync(organizer.Email, organizer.Name, subject, body);
+    }
+
+    private string GenerateOutOfOfficeAutoResponderBody(string fromUserName, string fromUserEmail, OutOfOfficeStatus oooStatus)
+    {
+        var statusTypeText = oooStatus.StatusType switch
+        {
+            Core.Enums.AvailabilityStatusType.OutOfOffice => "Out of Office",
+            Core.Enums.AvailabilityStatusType.FocusTime => "in Focus Time",
+            Core.Enums.AvailabilityStatusType.DoNotDisturb => "unavailable (Do Not Disturb)",
+            _ => "currently unavailable"
+        };
+
+        return $@"
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }}
+        .ooo-notice {{ background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }}
+        .dates {{ background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .user-message {{ background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #2196f3; font-style: italic; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>🏖️ Automatic Reply</h2>
+        </div>
+        <div class='content'>
+            <div class='ooo-notice'>
+                <p><strong>{fromUserName}</strong> ({fromUserEmail}) is currently {statusTypeText}.</p>
+            </div>
+
+            {(!string.IsNullOrEmpty(oooStatus.Title) ? $"<p><strong>📌 Reason:</strong> {oooStatus.Title}</p>" : "")}
+
+            <div class='dates'>
+                <p><strong>📅 Period:</strong></p>
+                <p><strong>From:</strong> {FormatDateTime(oooStatus.StartDate)}</p>
+                <p><strong>Until:</strong> {FormatDateTime(oooStatus.EndDate)}</p>
+            </div>
+
+            {(!string.IsNullOrEmpty(oooStatus.AutoResponderMessage) ? $@"
+            <div class='user-message'>
+                {oooStatus.AutoResponderMessage.Replace("\n", "<br>")}
+            </div>" : "")}
+
+            <p>This is an automated message. Your email has been received but may not be responded to until {fromUserName} returns.</p>
+
+            <p style='color: #666; font-size: 0.9em; margin-top: 20px;'>
+                This automatic reply was sent by Tempus Calendar on behalf of {fromUserName}.
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private string GenerateAutoDeclineNotificationBody(Event meetingEvent, Attendee declinedAttendee, string reason)
+    {
+        return $@"
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }}
+        .decline-notice {{ background: #fee; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f56565; }}
+        .meeting-details {{ background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .reason {{ background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }}
+        .attendee-info {{ background: #e6f7ff; padding: 10px 15px; border-radius: 6px; display: inline-block; margin: 10px 0; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>❌ Meeting Automatically Declined</h2>
+        </div>
+        <div class='content'>
+            <div class='decline-notice'>
+                <p><strong>{declinedAttendee.Name}</strong> has automatically declined your meeting invitation.</p>
+            </div>
+
+            <div class='meeting-details'>
+                <h3>{meetingEvent.Title}</h3>
+                <p><strong>📅 When:</strong> {FormatDateTime(meetingEvent.StartTime)}</p>
+                <p><strong>⏰ Time:</strong> {FormatTime(meetingEvent.StartTime)} - {FormatTime(meetingEvent.EndTime)}</p>
+                {(!string.IsNullOrEmpty(meetingEvent.Location) ? $"<p><strong>📍 Where:</strong> {meetingEvent.Location}</p>" : "")}
+            </div>
+
+            <div class='attendee-info'>
+                <strong>Declined by:</strong> {declinedAttendee.Name} ({declinedAttendee.Email})
+            </div>
+
+            <div class='reason'>
+                <p><strong>💬 Reason:</strong></p>
+                <p>{reason}</p>
+            </div>
+
+            <p>This meeting invitation was automatically declined based on the attendee's availability settings.</p>
+
+            <p style='color: #666; font-size: 0.9em; margin-top: 20px;'>
+                You may want to check with {declinedAttendee.Name} about their availability or reschedule the meeting.
+            </p>
+
+            <p>Best regards,<br>The Tempus Team</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
     private string FormatDateTime(DateTime dt)
     {
         return dt.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt");
