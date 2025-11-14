@@ -18,6 +18,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Exporter;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -180,6 +181,7 @@ builder.Services.AddOpenTelemetry()
             {
                 activity.SetTag("http.response.status_code", httpResponse.StatusCode);
             };
+            
         })
         .AddHttpClientInstrumentation(options =>
         {
@@ -188,15 +190,21 @@ builder.Services.AddOpenTelemetry()
         .AddSource("Tempus.*") // Add custom activity sources
         .SetSampler(new AlwaysOnSampler()) // Sample all traces in development
         .AddConsoleExporter()
-        .AddOtlpExporter())
-    .WithMetrics(metrics => metrics
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri("http://localhost:4317");  // Jaeger OTLP endpoint
+        }))
+    .WithMetrics(metrics => {
+        metrics
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddRuntimeInstrumentation()
         .AddProcessInstrumentation()
         .AddMeter("Tempus.*") // Add custom meters
         .AddConsoleExporter()
-        .AddOtlpExporter());
+        .AddOtlpExporter()
+        .AddPrometheusExporter();  // For Prometheus
+    });
 
 var app = builder.Build();
 
@@ -229,6 +237,9 @@ app.MapRazorComponents<App>()
 
 // Add Identity endpoints for login/logout
 app.MapAdditionalIdentityEndpoints();
+
+// Add Prometheus scraping endpoint
+app.MapPrometheusScrapingEndpoint();  // Typically exposes on /metrics
 
 // Map API controllers
 app.MapControllers();
