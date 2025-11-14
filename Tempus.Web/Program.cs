@@ -140,6 +140,7 @@ builder.Services.AddScoped<IPollService, PollService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IVideoConferenceService, VideoConferenceService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ICalendarSharingService, CalendarSharingService>();
 
 // Register calendar services for refactored Calendar component
 builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarStateService>();
