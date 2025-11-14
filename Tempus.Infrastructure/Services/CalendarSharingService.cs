@@ -245,6 +245,24 @@ public class CalendarSharingService : ICalendarSharingService
         return share?.Permission;
     }
 
+    public async Task<bool> UpdateShareVisibilityAsync(Guid shareId, bool isVisible, string userId)
+    {
+        var share = await _context.CalendarShares
+            .FirstOrDefaultAsync(s => s.Id == shareId && s.SharedWithUserId == userId);
+
+        if (share == null)
+        {
+            return false;
+        }
+
+        share.IsVisible = isVisible;
+        share.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
     #endregion
 
     #region Public Calendars

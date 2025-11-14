@@ -5,11 +5,10 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<RadzenDialog>
-    <RadzenStack Gap="1rem" Style="width: 500px;">
-        <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
-            RSVP: @EventTitle
-        </RadzenText>
+<RadzenStack Gap="1rem" Style="width: 500px;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        RSVP: @EventTitle
+    </RadzenText>
 
         @if (ShowDeadline && RSVPDeadline.HasValue)
         {
@@ -110,8 +109,7 @@
                 Disabled="@(!selectedStatus.HasValue || isSubmitting)"
                 Text="@(isSubmitting ? "Submitting..." : "Submit Response")" />
         </RadzenStack>
-    </RadzenStack>
-</RadzenDialog>
+</RadzenStack>
 
 @code {
     [Parameter] public Guid EventId { get; set; }

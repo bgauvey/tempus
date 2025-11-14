@@ -14,6 +14,7 @@
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ICalendarRepository CalendarRepository
+@inject ICalendarSharingService CalendarSharingService
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -285,6 +286,28 @@
                         No calendars found
                     </RadzenText>
                 }
+
+                @if (_sharedCalendars.Any())
+                {
+                    <hr style="border: none; border-top: 1px solid var(--rz-border-color); margin: 0.5rem 0;" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; margin: 0;">Shared Calendars</RadzenText>
+
+                    @foreach (var share in _sharedCalendars)
+                    {
+                        var calendar = share.Calendar;
+                        var displayColor = share.Color ?? calendar?.Color ?? "#3498db";
+                        var displayName = calendar?.Name ?? "Unknown Calendar";
+
+                        <div class="calendar-item @(share.IsVisible ? "" : "calendar-item-hidden")">
+                            <div class="calendar-color-indicator" style="background-color: @displayColor;"></div>
+                            <div class="calendar-item-name" title="Shared by @(share.SharedByUser?.UserName ?? "Unknown")">
+                                @displayName
+                            </div>
+                            <RadzenCheckBox @bind-Value="@share.IsVisible"
+                                          Change="@((bool value) => UpdateSharedCalendarVisibility(share, value))" />
+                        </div>
+                    }
+                }
             </RadzenStack>
         </RadzenCard>
     </div>
@@ -373,6 +396,7 @@
 
     // Calendar management
     private List<Tempus.Core.Models.Calendar> _calendars = new();
+    private List<CalendarShare> _sharedCalendars = new();
 
     // Bulk operations
     private bool _selectionMode = false;
@@ -416,7 +440,11 @@
                 // Load user's calendars
                 await CalendarRepository.EnsureDefaultCalendarExistsAsync(_userId, _userEmail);
                 _calendars = await CalendarRepository.GetAllAsync(_userId);
-                Logger.LogDebug("Loaded {CalendarCount} calendars", _calendars.Count);
+                Logger.LogDebug("Loaded {CalendarCount} owned calendars", _calendars.Count);
+
+                // Load shared calendars (only accepted shares)
+                _sharedCalendars = await CalendarSharingService.GetCalendarsSharedWithUserAsync(_userId, includeUnaccepted: false);
+                Logger.LogDebug("Loaded {SharedCalendarCount} shared calendars", _sharedCalendars.Count);
             }
         }
 
@@ -446,9 +474,22 @@
             Logger.LogDebug("Date range: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
             Logger.LogDebug("User ID: {UserId}", _userId);
 
-            _events = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
+            // Load user's own events
+            var ownEvents = await EventRepository.GetEventsByDateRangeAsync(startDate, endDate, _userId);
+            Logger.LogDebug("Loaded {OwnEventCount} owned events", ownEvents.Count);
 
-            Logger.LogDebug("Loaded {EventCount} events", _events.Count);
+            // Load events from shared calendars
+            var sharedCalendarIds = _sharedCalendars.Select(sc => sc.CalendarId).ToList();
+            var sharedEvents = new List<Event>();
+            if (sharedCalendarIds.Any())
+            {
+                sharedEvents = await EventRepository.GetEventsByDateRangeAndCalendarsAsync(startDate, endDate, sharedCalendarIds);
+                Logger.LogDebug("Loaded {SharedEventCount} shared calendar events", sharedEvents.Count);
+            }
+
+            // Combine both lists
+            _events = ownEvents.Concat(sharedEvents).OrderBy(e => e.StartTime).ToList();
+            Logger.LogDebug("Loaded {EventCount} total events", _events.Count);
 
             ConvertEventsToAppointments();
 
@@ -508,10 +549,22 @@
             Logger.LogDebug("User timezone range - Start: {StartLocal:yyyy-MM-dd}, End: {EndLocal:yyyy-MM-dd}", startLocal, endLocal);
             Logger.LogDebug("Converted to UTC - Start: {StartUtc:yyyy-MM-dd HH:mm:ss}, End: {EndUtc:yyyy-MM-dd HH:mm:ss}", startUtc, endUtc);
 
-            // Load events for the visible date range in the scheduler
-            _events = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, _userId);
+            // Load user's own events
+            var ownEvents = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, _userId);
+            Logger.LogDebug("Loaded {OwnEventCount} owned events", ownEvents.Count);
 
-            Logger.LogDebug("Loaded {EventCount} events", _events.Count);
+            // Load events from shared calendars
+            var sharedCalendarIds = _sharedCalendars.Select(sc => sc.CalendarId).ToList();
+            var sharedEvents = new List<Event>();
+            if (sharedCalendarIds.Any())
+            {
+                sharedEvents = await EventRepository.GetEventsByDateRangeAndCalendarsAsync(startUtc, endUtc, sharedCalendarIds);
+                Logger.LogDebug("Loaded {SharedEventCount} shared calendar events", sharedEvents.Count);
+            }
+
+            // Combine both lists
+            _events = ownEvents.Concat(sharedEvents).OrderBy(e => e.StartTime).ToList();
+            Logger.LogDebug("Loaded {EventCount} total events", _events.Count);
             if (_events.Any())
             {
                 var minDate = _events.Min(e => e.StartTime);
@@ -558,9 +611,17 @@
         // All events are stored in UTC, so always convert to user's timezone for display
         // Filter events by calendar visibility
 
-        var visibleCalendarIds = _calendars
+        // Combine visible calendar IDs from owned and shared calendars
+        var visibleOwnedCalendarIds = _calendars
             .Where(c => c.IsVisible)
-            .Select(c => c.Id)
+            .Select(c => c.Id);
+
+        var visibleSharedCalendarIds = _sharedCalendars
+            .Where(sc => sc.IsVisible)
+            .Select(sc => sc.CalendarId);
+
+        var visibleCalendarIds = visibleOwnedCalendarIds
+            .Concat(visibleSharedCalendarIds)
             .ToHashSet();
 
         _appointments = _events
@@ -665,14 +726,35 @@
         var appointment = args.Data;
         if (appointment?.Event != null)
         {
-            // If in selection mode, toggle selection instead of opening dialog
-            if (_selectionMode)
+            // Check if user has permission to view details
+            var canViewDetails = true;
+            if (appointment.Event.CalendarId.HasValue)
             {
-                ToggleEventSelection(appointment.Event.Id);
+                var share = _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == appointment.Event.CalendarId.Value);
+                if (share != null && !share.CanViewDetails())
+                {
+                    canViewDetails = false;
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Limited Access",
+                        Detail = "You can only see free/busy information for this calendar",
+                        Duration = 3000
+                    });
+                }
             }
-            else
+
+            if (canViewDetails)
             {
-                await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+                // If in selection mode, toggle selection instead of opening dialog
+                if (_selectionMode)
+                {
+                    ToggleEventSelection(appointment.Event.Id);
+                }
+                else
+                {
+                    await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+                }
             }
         }
     }
@@ -690,9 +772,18 @@
             // Check if event is selected
             var isSelected = _selectedEventIds.Contains(evt.Id);
 
-            // Get calendar color if event has a calendar, otherwise use event color
+            // Check if this is a shared calendar event and get permission level
+            var share = evt.CalendarId.HasValue
+                ? _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)
+                : null;
+            var isFreeBusyOnly = share != null && share.Permission == CalendarSharePermission.FreeBusyOnly;
+
+            // Get calendar color - check both owned and shared calendars
             var backgroundColor = evt.CalendarId.HasValue
-                ? _calendars.FirstOrDefault(c => c.Id == evt.CalendarId.Value)?.Color ?? _formatter.GetEventBackgroundColor(evt)
+                ? (_calendars.FirstOrDefault(c => c.Id == evt.CalendarId.Value)?.Color
+                   ?? _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)?.Color
+                   ?? _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)?.Calendar?.Color
+                   ?? _formatter.GetEventBackgroundColor(evt))
                 : _formatter.GetEventBackgroundColor(evt);
 
             // Add selection styling if selected
@@ -705,36 +796,55 @@
                 args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
             }
 
-            // Add icon based on event type
-            var icon = _formatter.GetEventIcon(evt.EventType);
-
-            // Add selection indicator
-            var selectionIndicator = isSelected ? "✓ " : "";
-
-            // Add timezone indicator if event is in a different timezone
-            var timeZoneIndicator = "";
-            if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+            // For FreeBusyOnly permission, show "Busy" instead of event details
+            if (isFreeBusyOnly)
             {
-                try
-                {
-                    var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
-                    var abbreviation = GetTimeZoneAbbreviation(tz);
-                    timeZoneIndicator = $" 🌍 {abbreviation}";
-                }
-                catch
-                {
-                    timeZoneIndicator = " 🌍";
-                }
+                args.Data.Text = "🔒 Busy";
             }
+            else
+            {
+                // Add icon based on event type
+                var icon = _formatter.GetEventIcon(evt.EventType);
 
-            args.Data.Text = $"{selectionIndicator}{icon} {evt.Title}{timeZoneIndicator}";
+                // Add selection indicator
+                var selectionIndicator = isSelected ? "✓ " : "";
+
+                // Add timezone indicator if event is in a different timezone
+                var timeZoneIndicator = "";
+                if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+                {
+                    try
+                    {
+                        var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
+                        var abbreviation = GetTimeZoneAbbreviation(tz);
+                        timeZoneIndicator = $" 🌍 {abbreviation}";
+                    }
+                    catch
+                    {
+                        timeZoneIndicator = " 🌍";
+                    }
+                }
+
+                args.Data.Text = $"{selectionIndicator}{icon} {evt.Title}{timeZoneIndicator}";
+            }
         }
 
-        // Add context menu to appointment
-        args.Attributes["oncontextmenu"] = (MouseEventArgs mouseArgs) =>
+        // Add context menu to appointment (but only for events user can view)
+        if (evt != null)
         {
-            ShowContextMenu(mouseArgs, args.Data);
-        };
+            var canViewDetails = evt.CalendarId.HasValue
+                ? (_calendars.Any(c => c.Id == evt.CalendarId.Value) || // User owns the calendar
+                   _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)?.CanViewDetails() == true)
+                : true;
+
+            if (canViewDetails)
+            {
+                args.Attributes["oncontextmenu"] = (MouseEventArgs mouseArgs) =>
+                {
+                    ShowContextMenu(mouseArgs, args.Data);
+                };
+            }
+        }
     }
 
     private string GetTimeZoneAbbreviation(TimeZoneInfo tz)
@@ -1419,6 +1529,26 @@
             Severity = NotificationSeverity.Info,
             Summary = "Calendar Visibility",
             Detail = $"{calendar.Name} is now {(isVisible ? "visible" : "hidden")}",
+            Duration = 2000
+        });
+    }
+
+    private async Task UpdateSharedCalendarVisibility(CalendarShare share, bool isVisible)
+    {
+        // The @bind-Value already updated share.IsVisible
+        // We just need to save it and refresh the view
+        await CalendarSharingService.UpdateShareVisibilityAsync(share.Id, isVisible, _userId);
+
+        // Refresh the calendar view
+        ConvertEventsToAppointments();
+        StateHasChanged();
+
+        var calendarName = share.Calendar?.Name ?? "Shared calendar";
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Calendar Visibility",
+            Detail = $"{calendarName} is now {(isVisible ? "visible" : "hidden")}",
             Duration = 2000
         });
     }

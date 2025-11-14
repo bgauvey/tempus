@@ -58,6 +58,11 @@ public interface ICalendarSharingService
     /// </summary>
     Task<CalendarSharePermission?> GetUserPermissionAsync(Guid calendarId, string userId);
 
+    /// <summary>
+    /// Update the visibility of a shared calendar
+    /// </summary>
+    Task<bool> UpdateShareVisibilityAsync(Guid shareId, bool isVisible, string userId);
+
     #endregion
 
     #region Public Calendars

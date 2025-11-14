@@ -9,63 +9,61 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<RadzenDialog>
-    <RadzenStack Gap="1rem">
-        <RadzenText TextStyle="TextStyle.H6">Share "@CalendarName"</RadzenText>
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6">Share "@CalendarName"</RadzenText>
 
-        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-            Share this calendar with another user by entering their email address
-        </RadzenText>
+    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+        Share this calendar with another user by entering their email address
+    </RadzenText>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
-                @errorMessage
-            </RadzenAlert>
-        }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @errorMessage
+        </RadzenAlert>
+    }
 
-        <RadzenFormField Text="User Email" Variant="Variant.Outlined">
-            <RadzenTextBox @bind-Value="@userEmail" Placeholder="user@example.com" Style="width: 100%;" />
-        </RadzenFormField>
+    <RadzenFormField Text="User Email" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@userEmail" Placeholder="user@example.com" Style="width: 100%;" />
+    </RadzenFormField>
 
-        <RadzenFormField Text="Permission Level" Variant="Variant.Outlined">
-            <RadzenDropDown @bind-Value="@selectedPermission"
-                           Data="@permissionOptions"
-                           TextProperty="Label"
-                           ValueProperty="Value"
-                           Style="width: 100%;" />
-        </RadzenFormField>
+    <RadzenFormField Text="Permission Level" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@selectedPermission"
+                       Data="@permissionOptions"
+                       TextProperty="Label"
+                       ValueProperty="Value"
+                       Style="width: 100%;" />
+    </RadzenFormField>
 
-        <RadzenFormField Text="Note (Optional)" Variant="Variant.Outlined">
-            <RadzenTextArea @bind-Value="@note"
-                           Placeholder="Add a message..."
-                           Rows="3"
-                           Style="width: 100%;" />
-        </RadzenFormField>
+    <RadzenFormField Text="Note (Optional)" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@note"
+                       Placeholder="Add a message..."
+                       Rows="3"
+                       Style="width: 100%;" />
+    </RadzenFormField>
 
-        @foreach (var option in permissionOptions.Where(o => o.Value == selectedPermission))
-        {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
-                    <RadzenIcon Icon="info" />
-                    <RadzenText TextStyle="TextStyle.Body2">@option.Description</RadzenText>
-                </RadzenStack>
-            </RadzenAlert>
-        }
+    @foreach (var option in permissionOptions.Where(o => o.Value == selectedPermission))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                <RadzenIcon Icon="info" />
+                <RadzenText TextStyle="TextStyle.Body2">@option.Description</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+    }
 
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-            <RadzenButton Text="Cancel"
-                         Click="Cancel"
-                         Variant="Variant.Text"
-                         ButtonStyle="ButtonStyle.Light" />
-            <RadzenButton Text="Share Calendar"
-                         Click="ShareCalendar"
-                         IsBusy="@isSharing"
-                         Icon="share"
-                         ButtonStyle="ButtonStyle.Primary" />
-        </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Cancel"
+                     Click="Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Share Calendar"
+                     Click="ShareCalendar"
+                     IsBusy="@isSharing"
+                     Icon="share"
+                     ButtonStyle="ButtonStyle.Primary" />
     </RadzenStack>
-</RadzenDialog>
+</RadzenStack>
 
 @code {
     [Parameter] public Guid CalendarId { get; set; }

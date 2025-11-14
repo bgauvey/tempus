@@ -43,6 +43,11 @@ public class CalendarShare
     public bool IsAccepted { get; set; } = false;
 
     /// <summary>
+    /// Whether the shared calendar is currently visible in the calendar view
+    /// </summary>
+    public bool IsVisible { get; set; } = true;
+
+    /// <summary>
     /// Display color for the shared calendar (can be customized by recipient)
     /// </summary>
     public string? Color { get; set; }

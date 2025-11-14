@@ -130,6 +130,85 @@ public class EventRepository : IEventRepository
         return allEvents;
     }
 
+    public async Task<List<Event>> GetEventsByDateRangeAndCalendarsAsync(DateTime startDate, DateTime endDate, List<Guid> calendarIds)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Get all non-recurring events in the date range for the specified calendars
+        var nonRecurringEvents = await context.Events
+            .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
+            .Where(e => e.CalendarId.HasValue &&
+                       calendarIds.Contains(e.CalendarId.Value) &&
+                       !e.IsRecurring &&
+                       !e.IsRecurrenceException &&
+                       e.StartTime >= startDate &&
+                       e.StartTime <= endDate)
+            .ToListAsync();
+
+        // Get all recurring events that could have instances in this range
+        var recurringEvents = await context.Events
+            .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
+            .Where(e => e.CalendarId.HasValue &&
+                       calendarIds.Contains(e.CalendarId.Value) &&
+                       e.IsRecurring &&
+                       e.RecurrenceParentId == null &&
+                       e.StartTime <= endDate)
+            .ToListAsync();
+
+        // Get all exception events (modified or deleted occurrences)
+        var exceptionEvents = await context.Events
+            .Include(e => e.Attendees)
+            .Include(e => e.Calendar)
+            .Where(e => e.CalendarId.HasValue &&
+                       calendarIds.Contains(e.CalendarId.Value) &&
+                       e.IsRecurrenceException &&
+                       e.RecurrenceExceptionDate.HasValue &&
+                       e.RecurrenceExceptionDate.Value >= startDate.Date &&
+                       e.RecurrenceExceptionDate.Value <= endDate.Date)
+            .ToListAsync();
+
+        // Build a set of exception dates for each recurring event
+        var exceptionDatesByParent = exceptionEvents
+            .Where(e => e.RecurrenceParentId.HasValue && e.RecurrenceExceptionDate.HasValue)
+            .Select(e => new { ParentId = e.RecurrenceParentId!.Value, Date = e.RecurrenceExceptionDate!.Value.Date })
+            .GroupBy(x => x.ParentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Date).ToHashSet()
+            );
+
+        // Expand recurring events into instances, excluding exception dates
+        var recurringInstances = new List<Event>();
+        foreach (var recurringEvent in recurringEvents)
+        {
+            var instances = RecurrenceHelper.ExpandRecurringEvent(recurringEvent, startDate, endDate);
+
+            // Filter out instances that have exceptions
+            if (exceptionDatesByParent.TryGetValue(recurringEvent.Id, out var exceptionDates))
+            {
+                instances = instances.Where(i => !exceptionDates.Contains(i.StartTime.Date)).ToList();
+            }
+
+            recurringInstances.AddRange(instances.Where(i => i.Id != recurringEvent.Id));
+        }
+
+        // Add exception events that aren't deleted
+        var visibleExceptions = exceptionEvents.Where(e => e.Title != "(Deleted)").ToList();
+
+        // Combine and sort all events
+        var allEvents = nonRecurringEvents
+            .Concat(recurringInstances)
+            .Concat(visibleExceptions)
+            .OrderBy(e => e.StartTime)
+            .ToList();
+
+        _logger.LogDebug("Found {EventCount} total events for {CalendarCount} calendars", allEvents.Count, calendarIds.Count);
+
+        return allEvents;
+    }
+
     public async Task<Event> CreateAsync(Event @event)
     {
         using var activity = TelemetryConfig.EventActivitySource.StartActivity("CreateEvent");
