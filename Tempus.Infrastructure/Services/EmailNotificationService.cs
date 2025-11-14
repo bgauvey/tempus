@@ -1,4 +1,8 @@
+using System.Net;
+using System.Net.Mail;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Tempus.Core.Configuration;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
 
@@ -7,10 +11,14 @@ namespace Tempus.Infrastructure.Services;
 public class EmailNotificationService : IEmailNotificationService
 {
     private readonly ILogger<EmailNotificationService> _logger;
+    private readonly EmailSettings _emailSettings;
 
-    public EmailNotificationService(ILogger<EmailNotificationService> logger)
+    public EmailNotificationService(
+        ILogger<EmailNotificationService> logger,
+        IOptions<EmailSettings> emailSettings)
     {
         _logger = logger;
+        _emailSettings = emailSettings.Value;
     }
 
     public async Task SendMeetingUpdateAsync(Event originalEvent, Event updatedEvent, string organizerName, MeetingUpdateType updateType)
@@ -81,30 +89,50 @@ public class EmailNotificationService : IEmailNotificationService
 
     private async Task SendEmailAsync(string toEmail, string toName, string subject, string body)
     {
-        // TODO: Implement actual email sending using SMTP, SendGrid, or other email service
-        // For now, we'll just log the email that would be sent
-
-        _logger.LogInformation(
-            "EMAIL NOTIFICATION:\n" +
-            "To: {ToName} <{ToEmail}>\n" +
-            "Subject: {Subject}\n" +
-            "Body:\n{Body}\n" +
-            "---END EMAIL---",
-            toName, toEmail, subject, body);
-
-        // Simulate async operation
-        await Task.CompletedTask;
-
-        /* Example implementation with SMTP:
-        using var client = new SmtpClient("smtp.example.com", 587)
+        // If email is disabled, just log it
+        if (!_emailSettings.Enabled)
         {
-            Credentials = new NetworkCredential("username", "password"),
-            EnableSsl = true
+            _logger.LogInformation(
+                "EMAIL (Not Sent - Disabled):\n" +
+                "To: {ToName} <{ToEmail}>\n" +
+                "Subject: {Subject}\n" +
+                "Body:\n{Body}\n" +
+                "---END EMAIL---",
+                toName, toEmail, subject, body);
+            return;
+        }
+
+        try
+        {
+            if (_emailSettings.Provider == EmailProvider.SMTP)
+            {
+                await SendEmailViaSmtpAsync(toEmail, toName, subject, body);
+            }
+            else if (_emailSettings.Provider == EmailProvider.SendGrid)
+            {
+                await SendEmailViaSendGridAsync(toEmail, toName, subject, body);
+            }
+
+            _logger.LogInformation("Email sent successfully to {ToEmail}", toEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+            throw;
+        }
+    }
+
+    private async Task SendEmailViaSmtpAsync(string toEmail, string toName, string subject, string body)
+    {
+        using var client = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.SmtpPort)
+        {
+            Credentials = new NetworkCredential(_emailSettings.SmtpUsername, _emailSettings.SmtpPassword),
+            EnableSsl = _emailSettings.EnableSsl
         };
 
-        var message = new MailMessage
+        using var message = new MailMessage
         {
-            From = new MailAddress("noreply@tempus.com", "Tempus Calendar"),
+            From = new MailAddress(_emailSettings.FromEmail, _emailSettings.FromName),
             Subject = subject,
             Body = body,
             IsBodyHtml = true
@@ -112,7 +140,15 @@ public class EmailNotificationService : IEmailNotificationService
         message.To.Add(new MailAddress(toEmail, toName));
 
         await client.SendMailAsync(message);
-        */
+    }
+
+    private async Task SendEmailViaSendGridAsync(string toEmail, string toName, string subject, string body)
+    {
+        // Note: SendGrid implementation requires the SendGrid NuGet package
+        // For now, we'll throw a NotImplementedException
+        // To implement: Install SendGrid NuGet package and use SendGrid API
+        _logger.LogWarning("SendGrid email provider is configured but not yet implemented. Please use SMTP provider or implement SendGrid support.");
+        throw new NotImplementedException("SendGrid email sending is not yet implemented. Please configure SMTP provider in appsettings.json.");
     }
 
     private string GenerateMeetingUpdateBody(Event originalEvent, Event updatedEvent, string organizerName, MeetingUpdateType updateType)
