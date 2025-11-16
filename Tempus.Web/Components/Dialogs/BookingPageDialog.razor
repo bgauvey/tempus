@@ -1,0 +1,380 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IBookingPageRepository BookingPageRepository
+@inject IBookingPageService BookingPageService
+@inject ICalendarRepository CalendarRepository
+@inject ILogger<BookingPageDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Basic Info">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenFormField Text="Title" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@model.Title" Style="width: 100%;" Placeholder="e.g., 30-Minute Consultation" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Slug (URL)" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenTextBox @bind-Value="@model.Slug" Style="width: 100%;" Placeholder="e.g., consultation" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                Your booking page will be available at: /book/@(model.Slug ?? "your-slug")
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Description (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@model.Description" Style="width: 100%;" Rows="3" Placeholder="Brief description of this booking type" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Welcome Message (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@model.WelcomeMessage" Style="width: 100%;" Rows="3" Placeholder="Message shown to guests when booking" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Calendar" Variant="@Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@model.CalendarId" Data="@calendars" Style="width: 100%;"
+                                        TextProperty="Name" ValueProperty="Id" Placeholder="Select calendar for bookings" AllowClear="true" />
+                    </RadzenFormField>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Duration & Availability">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenFormField Text="Default Duration (minutes)" Variant="@Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@model.DurationMinutes" Style="width: 100%;" Min="5" Max="480" Step="5" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Available Durations (comma-separated, optional)" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenTextBox @bind-Value="@model.AvailableDurations" Style="width: 100%;" Placeholder="e.g., 15,30,60" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                Allow guests to choose from multiple durations. Leave empty to use default duration only.
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Timezone" Variant="@Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@model.TimeZoneId" Data="@timezones" Style="width: 100%;"
+                                        Placeholder="Select timezone" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Available Days" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenCheckBoxList @bind-Value="@selectedDays" Orientation="Orientation.Horizontal">
+                                <Items>
+                                    <RadzenCheckBoxListItem Text="Sun" Value="0" />
+                                    <RadzenCheckBoxListItem Text="Mon" Value="1" />
+                                    <RadzenCheckBoxListItem Text="Tue" Value="2" />
+                                    <RadzenCheckBoxListItem Text="Wed" Value="3" />
+                                    <RadzenCheckBoxListItem Text="Thu" Value="4" />
+                                    <RadzenCheckBoxListItem Text="Fri" Value="5" />
+                                    <RadzenCheckBoxListItem Text="Sat" Value="6" />
+                                </Items>
+                            </RadzenCheckBoxList>
+                        </RadzenStack>
+                    </RadzenFormField>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Daily Start Time" Variant="@Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@dailyStartTime" ShowTime="true" TimeOnly="true" DateFormat="h:mm tt" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Daily End Time" Variant="@Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@dailyEndTime" ShowTime="true" TimeOnly="true" DateFormat="h:mm tt" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Booking Rules">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenRow>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Buffer Before (minutes)" Variant="@Variant.Outlined">
+                                <RadzenNumeric @bind-Value="@model.BufferBeforeMinutes" Style="width: 100%;" Min="0" Max="120" Step="5" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Buffer After (minutes)" Variant="@Variant.Outlined">
+                                <RadzenNumeric @bind-Value="@model.BufferAfterMinutes" Style="width: 100%;" Min="0" Max="120" Step="5" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenFormField Text="Minimum Notice (minutes)" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenNumeric @bind-Value="@model.MinimumNoticeMinutes" Style="width: 100%;" Min="0" Max="10080" Step="15" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                How far in advance must guests book (e.g., 60 = 1 hour notice required)
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Max Advance Booking (days)" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenNumeric @bind-Value="@model.MaxAdvanceBookingDays" Style="width: 100%;" Min="1" Max="365" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                How far in the future can guests book
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Max Bookings Per Day (optional)" Variant="@Variant.Outlined">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenNumeric @bind-Value="@model.MaxBookingsPerDay" Style="width: 100%;" Min="1" Max="50" ShowUpDown="false" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                Leave empty for unlimited bookings per day
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenFormField>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Guest Form & Location">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Required Information</RadzenText>
+
+                    <RadzenCheckBox @bind-Value="@model.RequireGuestName" Name="requireName" />
+                    <RadzenLabel Text="Require guest name" Component="requireName" Style="margin-left: 0.5rem;" />
+
+                    <RadzenCheckBox @bind-Value="@model.RequireGuestEmail" Name="requireEmail" />
+                    <RadzenLabel Text="Require guest email" Component="requireEmail" Style="margin-left: 0.5rem;" />
+
+                    <RadzenCheckBox @bind-Value="@model.RequireGuestPhone" Name="requirePhone" />
+                    <RadzenLabel Text="Require guest phone" Component="requirePhone" Style="margin-left: 0.5rem;" />
+
+                    <RadzenCheckBox @bind-Value="@model.AllowGuestNotes" Name="allowNotes" />
+                    <RadzenLabel Text="Allow additional notes" Component="allowNotes" Style="margin-left: 0.5rem;" />
+
+                    <RadzenFormField Text="Location (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@model.Location" Style="width: 100%;" Placeholder="Physical address or 'Virtual'" />
+                    </RadzenFormField>
+
+                    <RadzenCheckBox @bind-Value="@model.IncludeVideoConference" Name="includeVideo" />
+                    <RadzenLabel Text="Include video conference link" Component="includeVideo" Style="margin-left: 0.5rem;" />
+
+                    @if (model.IncludeVideoConference)
+                    {
+                        <RadzenFormField Text="Video Conference Provider" Variant="@Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@model.VideoConferenceProvider" Data="@videoProviders" Style="width: 100%;" />
+                        </RadzenFormField>
+                    }
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Notifications & Display">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenText TextStyle="TextStyle.Subtitle2">Email Notifications</RadzenText>
+
+                    <RadzenCheckBox @bind-Value="@model.SendConfirmationEmail" Name="sendConfirm" />
+                    <RadzenLabel Text="Send confirmation email to guests" Component="sendConfirm" Style="margin-left: 0.5rem;" />
+
+                    <RadzenFormField Text="Confirmation Message (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@model.ConfirmationMessage" Style="width: 100%;" Rows="4"
+                                        Placeholder="Custom message in confirmation email (leave empty for default)" />
+                    </RadzenFormField>
+
+                    <RadzenCheckBox @bind-Value="@model.SendReminderEmail" Name="sendReminder" />
+                    <RadzenLabel Text="Send reminder email before appointment" Component="sendReminder" Style="margin-left: 0.5rem;" />
+
+                    @if (model.SendReminderEmail)
+                    {
+                        <RadzenFormField Text="Reminder Time (minutes before)" Variant="@Variant.Outlined">
+                            <RadzenNumeric @bind-Value="@model.ReminderMinutesBeforeAppointment" Style="width: 100%;" Min="15" Max="10080" Step="15" />
+                        </RadzenFormField>
+                    }
+
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-top: 1rem;">Display Options</RadzenText>
+
+                    <RadzenCheckBox @bind-Value="@model.IsActive" Name="isActive" />
+                    <RadzenLabel Text="Active (accept bookings)" Component="isActive" Style="margin-left: 0.5rem;" />
+
+                    <RadzenFormField Text="Redirect URL After Booking (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@model.RedirectUrl" Style="width: 100%;" Placeholder="https://example.com/thank-you" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Color Theme (Optional)" Variant="@Variant.Outlined">
+                        <RadzenColorPicker @bind-Value="@model.Color" Style="width: 100%;" ShowButton="true" />
+                    </RadzenFormField>
+                </RadzenStack>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</RadzenStack>
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1.5rem;">
+    <RadzenButton Click="@Cancel" ButtonStyle="ButtonStyle.Light" Text="Cancel" />
+    <RadzenButton Click="@Save" ButtonStyle="ButtonStyle.Primary" Text="@(isEditMode ? "Update" : "Create")" IsBusy="@isSaving" />
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public BookingPage? BookingPage { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private BookingPage model = new();
+    private bool isEditMode = false;
+    private bool isSaving = false;
+    private List<Tempus.Core.Models.Calendar> calendars = new();
+    private List<string> timezones = new();
+    private List<string> videoProviders = new() { "Zoom", "MicrosoftTeams", "GoogleMeet", "WebexMeetings", "Custom" };
+    private IEnumerable<int> selectedDays = new List<int> { 1, 2, 3, 4, 5 }; // Mon-Fri by default
+    private DateTime? dailyStartTime = DateTime.Today.AddHours(9); // 9 AM
+    private DateTime? dailyEndTime = DateTime.Today.AddHours(17); // 5 PM
+
+    protected override async Task OnInitializedAsync()
+    {
+        isEditMode = BookingPage != null;
+
+        if (isEditMode && BookingPage != null)
+        {
+            model = BookingPage;
+            selectedDays = model.GetAvailableDaysOfWeek();
+
+            if (model.DailyStartTime.HasValue)
+            {
+                dailyStartTime = DateTime.Today.Add(model.DailyStartTime.Value);
+            }
+            if (model.DailyEndTime.HasValue)
+            {
+                dailyEndTime = DateTime.Today.Add(model.DailyEndTime.Value);
+            }
+        }
+        else
+        {
+            model = new BookingPage
+            {
+                UserId = UserId,
+                IsActive = true,
+                RequireGuestName = true,
+                RequireGuestEmail = true,
+                AllowGuestNotes = true,
+                SendConfirmationEmail = true,
+                DurationMinutes = 30,
+                BufferBeforeMinutes = 0,
+                BufferAfterMinutes = 0,
+                MinimumNoticeMinutes = 60,
+                MaxAdvanceBookingDays = 60,
+                ReminderMinutesBeforeAppointment = 1440 // 24 hours
+            };
+        }
+
+        await LoadCalendars();
+        LoadTimezones();
+    }
+
+    private async Task LoadCalendars()
+    {
+        try
+        {
+            calendars = await CalendarRepository.GetAllAsync(UserId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading calendars");
+        }
+    }
+
+    private void LoadTimezones()
+    {
+        timezones = TimeZoneInfo.GetSystemTimeZones()
+            .Select(tz => tz.Id)
+            .ToList();
+
+        if (string.IsNullOrEmpty(model.TimeZoneId))
+        {
+            model.TimeZoneId = TimeZoneInfo.Local.Id;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (!ValidateForm())
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            // Convert selected days to comma-separated string
+            model.AvailableDaysOfWeek = string.Join(",", selectedDays.OrderBy(d => d));
+
+            // Convert time pickers to TimeSpan
+            if (dailyStartTime.HasValue)
+            {
+                model.DailyStartTime = dailyStartTime.Value.TimeOfDay;
+            }
+            if (dailyEndTime.HasValue)
+            {
+                model.DailyEndTime = dailyEndTime.Value.TimeOfDay;
+            }
+
+            // Generate slug if empty
+            if (string.IsNullOrWhiteSpace(model.Slug))
+            {
+                model.Slug = await BookingPageService.GenerateUniqueSlugAsync(model.Title);
+            }
+
+            if (isEditMode)
+            {
+                await BookingPageRepository.UpdateAsync(model);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Booking page updated");
+            }
+            else
+            {
+                model.UserId = UserId;
+                await BookingPageRepository.CreateAsync(model);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Booking page created");
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving booking page");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                ex.Message.Contains("slug") ? "This slug is already in use" : "Failed to save booking page");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Title is required");
+            return false;
+        }
+
+        if (!selectedDays.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Please select at least one available day");
+            return false;
+        }
+
+        if (dailyStartTime >= dailyEndTime)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Daily start time must be before end time");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

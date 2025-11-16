@@ -778,13 +778,16 @@
                 : null;
             var isFreeBusyOnly = share != null && share.Permission == CalendarSharePermission.FreeBusyOnly;
 
-            // Get calendar color - check both owned and shared calendars
-            var backgroundColor = evt.CalendarId.HasValue
+            // Get calendar color for border - check both owned and shared calendars
+            var calendarColor = evt.CalendarId.HasValue
                 ? (_calendars.FirstOrDefault(c => c.Id == evt.CalendarId.Value)?.Color
                    ?? _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)?.Color
                    ?? _sharedCalendars.FirstOrDefault(sc => sc.CalendarId == evt.CalendarId.Value)?.Calendar?.Color
-                   ?? _formatter.GetEventBackgroundColor(evt))
-                : _formatter.GetEventBackgroundColor(evt);
+                   ?? "#757575") // Default gray if no calendar
+                : "#757575"; // Default gray if no calendar
+
+            // Get event's own color for background (from booking page, category, or custom)
+            var backgroundColor = _formatter.GetEventBackgroundColor(evt);
 
             // Add selection styling if selected
             if (isSelected)
@@ -793,7 +796,7 @@
             }
             else
             {
-                args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 4px solid {backgroundColor};";
+                args.Attributes["style"] = $"background-color: {backgroundColor}; border-left: 5px solid {calendarColor};";
             }
 
             // For FreeBusyOnly permission, show "Busy" instead of event details

@@ -1,0 +1,562 @@
+@page "/book/{slug}"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IBookingPageService BookingPageService
+@inject IBookingPageRepository BookingPageRepository
+@inject ILogger<Book> Logger
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<PageTitle>@(bookingPage?.Title ?? "Book Appointment") - Tempus</PageTitle>
+
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    </div>
+}
+else if (bookingPage == null)
+{
+    <div style="max-width: 600px; margin: 3rem auto; text-align: center;">
+        <RadzenCard>
+            <RadzenStack Gap="1.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="event_busy" Style="font-size: 5rem; color: var(--rz-text-tertiary-color);" />
+                <RadzenText TextStyle="TextStyle.H4">Booking Page Not Found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                    This booking page doesn't exist or is no longer active.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}
+else if (bookingConfirmed)
+{
+    <div style="max-width: 700px; margin: 2rem auto;">
+        <RadzenCard>
+            <RadzenStack Gap="2rem" AlignItems="AlignItems.Center" Style="text-align: center; padding: 2rem;">
+                <RadzenIcon Icon="check_circle" Style="font-size: 5rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H4">Booking Confirmed!</RadzenText>
+
+                @if (!string.IsNullOrEmpty(bookingPage.ConfirmationMessage))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Style="white-space: pre-line;">
+                        @bookingPage.ConfirmationMessage
+                    </RadzenText>
+                }
+                else
+                {
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            Your appointment has been successfully scheduled.
+                        </RadzenText>
+                        @if (selectedTimeSlot.HasValue)
+                        {
+                            var confirmedLocalTime = TimeZoneInfo.ConvertTimeFromUtc(selectedTimeSlot.Value, GetBookingPageTimeZone());
+                            <RadzenCard Style="background: var(--rz-base-100); padding: 1.5rem;">
+                                <RadzenStack Gap="0.75rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1">Appointment Details</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>Date:</strong> @confirmedLocalTime.ToString("dddd, MMMM dd, yyyy")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>Time:</strong> @confirmedLocalTime.ToString("h:mm tt")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>Duration:</strong> @selectedDuration minutes
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(bookingPage.Location))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            <strong>Location:</strong> @bookingPage.Location
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                        @if (bookingPage.SendConfirmationEmail)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                A confirmation email has been sent to @guestEmail
+                            </RadzenText>
+                        }
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}
+else
+{
+    <div style="max-width: 1200px; margin: 2rem auto;">
+        <RadzenRow Gap="2rem">
+            <!-- Left Panel - Booking Info -->
+            <RadzenColumn Size="12" SizeMD="5">
+                <RadzenCard Style="position: sticky; top: 1rem;">
+                    <RadzenStack Gap="1.5rem">
+                        @if (!string.IsNullOrEmpty(bookingPage.LogoUrl))
+                        {
+                            <img src="@bookingPage.LogoUrl" alt="Logo" style="max-width: 150px; height: auto;" />
+                        }
+
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.H4">@bookingPage.Title</RadzenText>
+
+                            @if (!string.IsNullOrEmpty(bookingPage.WelcomeMessage))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color); white-space: pre-line;">
+                                    @bookingPage.WelcomeMessage
+                                </RadzenText>
+                            }
+                            else if (!string.IsNullOrEmpty(bookingPage.Description))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+                                    @bookingPage.Description
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="schedule" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    @GetDurationDisplay()
+                                </RadzenText>
+                            </RadzenStack>
+
+                            @if (!string.IsNullOrEmpty(bookingPage.Location))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="place" />
+                                    <RadzenText TextStyle="TextStyle.Body2">@bookingPage.Location</RadzenText>
+                                </RadzenStack>
+                            }
+
+                            @if (bookingPage.IncludeVideoConference)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="videocam" />
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @bookingPage.VideoConferenceProvider meeting link will be provided
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+
+                        @if (selectedTimeSlot.HasValue)
+                        {
+                            var localSelectedTime = TimeZoneInfo.ConvertTimeFromUtc(selectedTimeSlot.Value, GetBookingPageTimeZone());
+                            <RadzenCard Style="background: var(--rz-primary); color: white;">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Selected Time</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">
+                                        @localSelectedTime.ToString("dddd, MMMM dd")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">
+                                        @localSelectedTime.ToString("h:mm tt") (@selectedDuration min)
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <!-- Right Panel - Booking Flow -->
+            <RadzenColumn Size="12" SizeMD="7">
+                <RadzenCard>
+                    @if (currentStep == BookingStep.SelectDuration && availableDurations.Count > 1)
+                    {
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenText TextStyle="TextStyle.H5">Select Duration</RadzenText>
+                            <RadzenStack Gap="0.75rem">
+                                @foreach (var duration in availableDurations)
+                                {
+                                    <RadzenButton Click="@(() => SelectDuration(duration))"
+                                                  ButtonStyle="@(selectedDuration == duration ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                  Style="width: 100%; justify-content: flex-start; padding: 1rem;"
+                                                  Size="ButtonSize.Large">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="schedule" />
+                                            <span>@duration minutes</span>
+                                        </RadzenStack>
+                                    </RadzenButton>
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                    else if (currentStep == BookingStep.SelectDate)
+                    {
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.H5">Select a Date & Time</RadzenText>
+                                @if (availableDurations.Count > 1)
+                                {
+                                    <RadzenButton Click="@(() => currentStep = BookingStep.SelectDuration)"
+                                                  ButtonStyle="ButtonStyle.Light"
+                                                  Text="Change Duration"
+                                                  Size="ButtonSize.Small" />
+                                }
+                            </RadzenStack>
+
+                            @if (loadingSlots)
+                            {
+                                <div style="text-align: center; padding: 2rem;">
+                                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin-top: 1rem;">Loading available times...</RadzenText>
+                                </div>
+                            }
+                            else if (!availableTimeSlots.Any())
+                            {
+                                <RadzenCard Style="text-align: center; padding: 2rem; background: var(--rz-base-100);">
+                                    <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="event_busy" Style="font-size: 3rem; color: var(--rz-text-tertiary-color);" />
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">No available times</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                            Please try a different date range or check back later.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                            else
+                            {
+                                <RadzenStack Gap="1rem">
+                                    @foreach (var dateGroup in GetTimeSlotsByDate())
+                                    {
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">
+                                                @dateGroup.Key.ToString("dddd, MMMM dd, yyyy")
+                                            </RadzenText>
+                                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem;">
+                                                @foreach (var timeSlot in dateGroup.Value)
+                                                {
+                                                    var utcSlot = GetUtcTimeSlot(timeSlot);
+                                                    <RadzenButton Click="@(() => SelectTimeSlot(utcSlot))"
+                                                                  ButtonStyle="@(selectedTimeSlot == utcSlot ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                                  Text="@timeSlot.ToString("h:mm tt")"
+                                                                  Style="width: 100%;" />
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </RadzenStack>
+
+                                @if (canLoadMore)
+                                {
+                                    <RadzenButton Click="@LoadMoreSlots"
+                                                  ButtonStyle="ButtonStyle.Light"
+                                                  Text="Load More Dates"
+                                                  Icon="expand_more"
+                                                  Style="width: 100%;" />
+                                }
+                            }
+                        </RadzenStack>
+                    }
+                    else if (currentStep == BookingStep.EnterDetails)
+                    {
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.H5">Enter Your Details</RadzenText>
+                                <RadzenButton Click="@(() => { currentStep = BookingStep.SelectDate; selectedTimeSlot = null; })"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Text="Change Time"
+                                              Size="ButtonSize.Small" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="1rem">
+                                @if (bookingPage.RequireGuestName)
+                                {
+                                    <RadzenFormField Text="Name" Variant="@Variant.Outlined">
+                                        <RadzenTextBox @bind-Value="@guestName" Style="width: 100%;" Placeholder="Your name" />
+                                    </RadzenFormField>
+                                }
+
+                                @if (bookingPage.RequireGuestEmail)
+                                {
+                                    <RadzenFormField Text="Email" Variant="@Variant.Outlined">
+                                        <RadzenTextBox @bind-Value="@guestEmail" Style="width: 100%;" Placeholder="your@email.com" />
+                                    </RadzenFormField>
+                                }
+
+                                @if (bookingPage.RequireGuestPhone)
+                                {
+                                    <RadzenFormField Text="Phone" Variant="@Variant.Outlined">
+                                        <RadzenTextBox @bind-Value="@guestPhone" Style="width: 100%;" Placeholder="(555) 123-4567" />
+                                    </RadzenFormField>
+                                }
+
+                                @if (bookingPage.AllowGuestNotes)
+                                {
+                                    <RadzenFormField Text="Additional Notes (Optional)" Variant="@Variant.Outlined">
+                                        <RadzenTextArea @bind-Value="@guestNotes" Style="width: 100%;" Rows="4" Placeholder="Any additional information..." />
+                                    </RadzenFormField>
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                <RadzenButton Click="@(() => currentStep = BookingStep.SelectDate)"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Text="Back" />
+                                <RadzenButton Click="@ConfirmBooking"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Text="Confirm Booking"
+                                              Icon="check_circle"
+                                              Disabled="@(!IsFormValid())"
+                                              IsBusy="@isSubmitting"
+                                              Size="ButtonSize.Large" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    private BookingPage? bookingPage;
+    private bool isLoading = true;
+    private bool loadingSlots = false;
+    private bool isSubmitting = false;
+    private bool bookingConfirmed = false;
+    private bool canLoadMore = true;
+
+    private BookingStep currentStep = BookingStep.SelectDuration;
+    private List<int> availableDurations = new();
+    private int selectedDuration = 30;
+    private List<DateTime> availableTimeSlots = new();
+    private DateTime? selectedTimeSlot;
+    private DateTime searchStartDate;
+    private DateTime searchEndDate;
+
+    // Guest details
+    private string guestName = string.Empty;
+    private string guestEmail = string.Empty;
+    private string guestPhone = string.Empty;
+    private string guestNotes = string.Empty;
+
+    private enum BookingStep
+    {
+        SelectDuration,
+        SelectDate,
+        EnterDetails
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            bookingPage = await BookingPageRepository.GetBySlugAsync(Slug);
+
+            if (bookingPage != null)
+            {
+                availableDurations = bookingPage.GetAvailableDurations();
+                selectedDuration = availableDurations.FirstOrDefault();
+
+                if (availableDurations.Count == 1)
+                {
+                    currentStep = BookingStep.SelectDate;
+                    await LoadInitialTimeSlots();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading booking page {Slug}", Slug);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load booking page");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SelectDuration(int duration)
+    {
+        selectedDuration = duration;
+        currentStep = BookingStep.SelectDate;
+        await LoadInitialTimeSlots();
+    }
+
+    private async Task LoadInitialTimeSlots()
+    {
+        loadingSlots = true;
+        // Get current date in the booking page's timezone
+        var timeZone = GetBookingPageTimeZone();
+        var nowInBookingZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        searchStartDate = nowInBookingZone.Date;
+        searchEndDate = nowInBookingZone.Date.AddDays(14);
+
+        try
+        {
+            availableTimeSlots = await BookingPageService.GetAvailableTimeSlotsBySlugAsync(
+                Slug,
+                searchStartDate,
+                searchEndDate,
+                selectedDuration);
+
+            canLoadMore = availableTimeSlots.Any();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading time slots");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load available times");
+        }
+        finally
+        {
+            loadingSlots = false;
+        }
+    }
+
+    private async Task LoadMoreSlots()
+    {
+        loadingSlots = true;
+        var newStartDate = searchEndDate.AddDays(1);
+        var newEndDate = newStartDate.AddDays(14);
+
+        try
+        {
+            var newSlots = await BookingPageService.GetAvailableTimeSlotsBySlugAsync(
+                Slug,
+                newStartDate,
+                newEndDate,
+                selectedDuration);
+
+            if (newSlots.Any())
+            {
+                availableTimeSlots.AddRange(newSlots);
+                searchEndDate = newEndDate;
+            }
+            else
+            {
+                canLoadMore = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading more time slots");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load more times");
+        }
+        finally
+        {
+            loadingSlots = false;
+        }
+    }
+
+    private Dictionary<DateTime, List<DateTime>> GetTimeSlotsByDate()
+    {
+        // Convert UTC slots to booking page's timezone for display
+        var timeZone = GetBookingPageTimeZone();
+        var localSlots = availableTimeSlots
+            .Select(utcTime => TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone))
+            .ToList();
+
+        return localSlots
+            .GroupBy(dt => dt.Date)
+            .OrderBy(g => g.Key)
+            .ToDictionary(g => g.Key, g => g.OrderBy(dt => dt.TimeOfDay).ToList());
+    }
+
+    private TimeZoneInfo GetBookingPageTimeZone()
+    {
+        if (bookingPage == null || string.IsNullOrEmpty(bookingPage.TimeZoneId))
+        {
+            return TimeZoneInfo.Local;
+        }
+
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
+        }
+        catch
+        {
+            return TimeZoneInfo.Local;
+        }
+    }
+
+    private DateTime GetUtcTimeSlot(DateTime localTimeSlot)
+    {
+        // Convert local display time back to UTC by finding the matching slot
+        var timeZone = GetBookingPageTimeZone();
+        var utcTime = TimeZoneInfo.ConvertTimeToUtc(localTimeSlot, timeZone);
+
+        // Find the closest matching UTC slot (to handle any rounding issues)
+        return availableTimeSlots
+            .OrderBy(slot => Math.Abs((slot - utcTime).TotalMinutes))
+            .First();
+    }
+
+    private void SelectTimeSlot(DateTime timeSlot)
+    {
+        selectedTimeSlot = timeSlot;
+        currentStep = BookingStep.EnterDetails;
+    }
+
+    private bool IsFormValid()
+    {
+        if (bookingPage == null || !selectedTimeSlot.HasValue) return false;
+        if (bookingPage.RequireGuestName && string.IsNullOrWhiteSpace(guestName)) return false;
+        if (bookingPage.RequireGuestEmail && string.IsNullOrWhiteSpace(guestEmail)) return false;
+        if (bookingPage.RequireGuestPhone && string.IsNullOrWhiteSpace(guestPhone)) return false;
+
+        return true;
+    }
+
+    private async Task ConfirmBooking()
+    {
+        if (!IsFormValid() || !selectedTimeSlot.HasValue || bookingPage == null)
+        {
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            await BookingPageService.CreateBookingBySlugAsync(
+                Slug,
+                selectedTimeSlot.Value,
+                selectedDuration,
+                guestName,
+                guestEmail,
+                guestPhone,
+                guestNotes);
+
+            bookingConfirmed = true;
+
+            // Redirect if configured
+            if (!string.IsNullOrEmpty(bookingPage.RedirectUrl))
+            {
+                await Task.Delay(3000); // Show success for 3 seconds
+                NavigationManager.NavigateTo(bookingPage.RedirectUrl);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating booking");
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                "Failed to create booking. The time slot may no longer be available.");
+
+            // Reload available slots
+            selectedTimeSlot = null;
+            currentStep = BookingStep.SelectDate;
+            await LoadInitialTimeSlots();
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GetDurationDisplay()
+    {
+        if (availableDurations.Count == 1)
+        {
+            return $"{availableDurations[0]} minutes";
+        }
+        return $"{string.Join(", ", availableDurations)} minutes";
+    }
+}

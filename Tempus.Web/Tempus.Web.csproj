@@ -31,4 +31,8 @@
     <ProjectReference Include="..\Tempus.Infrastructure\Tempus.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
 </Project>
