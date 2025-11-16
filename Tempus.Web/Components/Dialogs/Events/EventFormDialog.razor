@@ -16,31 +16,48 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
 @inject NotificationService NotificationService
+@inject IRoomBookingService RoomBookingService
+@inject IResourceReservationService ResourceReservationService
+@inject IRoomRepository RoomRepository
+@inject IResourceRepository ResourceRepository
 @inject ILogger<EventFormDialog> Logger
 
+<style>
+    .rz-tabview-nav {
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+    }
+
+    .rz-tabview-panels {
+        overflow-y: auto !important;
+        max-height: calc(80vh - 200px);
+    }
+</style>
+
 <RadzenStack Gap="1rem">
-    <RadzenFormField Text="Title" Variant="Variant.Outlined">
-        <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
-    </RadzenFormField>
-
-    <RadzenFormField Text="Description" Variant="Variant.Outlined">
-        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
-    </RadzenFormField>
-
-    <RadzenFormField Text="Calendar" Variant="Variant.Outlined">
-        <RadzenDropDown @bind-Value="@_selectedCalendarId"
-                        Data="@_calendars"
-                        TextProperty="Name"
-                        ValueProperty="Id"
-                        Style="width: 100%;"
-                        Placeholder="Select a calendar..." />
-    </RadzenFormField>
-
-    <RadzenTabs>
+    <RadzenTabs RenderMode="TabRenderMode.Client" TabPosition="TabPosition.Top"
+                 Style="width: 100%; --rz-tabs-header-wrap: wrap;">
         <Tabs>
             <!-- Details Tab -->
             <RadzenTabsItem Text="Details" Icon="event">
                 <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <RadzenFormField Text="Title" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Calendar" Variant="Variant.Outlined">
+                        <RadzenDropDown @bind-Value="@_selectedCalendarId"
+                                        Data="@_calendars"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        Style="width: 100%;"
+                                        Placeholder="Select a calendar..." />
+                    </RadzenFormField>
+
                     <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
@@ -416,6 +433,87 @@
                                       UserId="@_userId" />
             </RadzenStack>
         </RadzenTabsItem>
+
+        <!-- Rooms & Resources Tab -->
+        <RadzenTabsItem Text="Rooms & Resources" Icon="meeting_room">
+            <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                <!-- Room Booking Section -->
+                <RadzenFieldset Text="Conference Room">
+                    <RadzenStack Gap="1rem">
+                        @if (_bookedRoom != null)
+                        {
+                            <RadzenCard Style="background: #f0fdf4; border: 1px solid #86efac;">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="meeting_room" Style="color: #16a34a;" />
+                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">@_bookedRoom.Name</RadzenText>
+                                            <RadzenBadge Text="Booked" BadgeStyle="BadgeStyle.Success" />
+                                        </RadzenStack>
+                                        @if (!string.IsNullOrEmpty(_bookedRoom.Location))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #15803d;">
+                                                <RadzenIcon Icon="location_on" Style="font-size: 0.875rem;" /> @_bookedRoom.Location
+                                            </RadzenText>
+                                        }
+                                    </RadzenStack>
+                                    <RadzenButton Text="Change Room" Icon="swap_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                  Click="@FindRoom" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                        else
+                        {
+                            <RadzenButton Text="Find Available Room" Icon="search" ButtonStyle="ButtonStyle.Primary"
+                                          Click="@FindRoom" Style="width: 100%;" />
+                        }
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <!-- Resource Reservation Section -->
+                <RadzenFieldset Text="Resources & Equipment">
+                    <RadzenStack Gap="1rem">
+                        @if (_reservedResources.Any())
+                        {
+                            <RadzenStack Gap="0.5rem">
+                                @foreach (var reservation in _reservedResources)
+                                {
+                                    var resource = _allResources.FirstOrDefault(r => r.Id == reservation.ResourceId);
+                                    if (resource != null)
+                                    {
+                                        <RadzenCard Style="background: #eff6ff; border: 1px solid #93c5fd; padding: 0.75rem;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="@GetResourceIcon(resource.ResourceType)" Style="color: #2563eb;" />
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@resource.Name</RadzenText>
+                                                    <RadzenBadge Text="@($"Qty: {reservation.QuantityReserved}")" BadgeStyle="BadgeStyle.Info" />
+                                                </RadzenStack>
+                                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                              Click="@(() => RemoveResourceReservation(reservation))" />
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No resources reserved</RadzenText>
+                        }
+
+                        <RadzenButton Text="Add Resources" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                      Click="@AddResources" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                    <RadzenText TextStyle="TextStyle.Caption">
+                        Room and resource bookings are checked for availability based on the event start and end times.
+                        Make sure to set your event times before booking.
+                    </RadzenText>
+                </RadzenAlert>
+            </RadzenStack>
+        </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 
@@ -738,6 +836,10 @@
 
                 // Load existing video conference
                 await LoadVideoConference();
+
+                // Load existing room booking and resource reservations
+                await LoadRoomBooking();
+                await LoadResourceReservations();
             }
         }
         else
@@ -1230,5 +1332,158 @@
             Logger.LogError(ex, "Error loading video conference for event {EventId}", EventId);
             _videoConference = null;
         }
+    }
+
+    // Room and Resource Booking
+    private Room? _bookedRoom = null;
+    private Guid? _roomBookingId = null;
+    private List<ResourceReservation> _reservedResources = new();
+    private List<Resource> _allResources = new();
+
+    private async Task FindRoom()
+    {
+        if (_event.StartTime == default || _event.EndTime == default)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Set Event Times",
+                "Please set event start and end times before booking a room");
+            return;
+        }
+
+        // If we already have an event ID, we can book directly
+        // Otherwise, we'll need to save the event first
+        if (EventId.HasValue)
+        {
+            var result = await DialogService.OpenAsync<Tempus.Web.Components.Dialogs.Rooms.RoomFinderDialog>(
+                "Find Available Room",
+                new Dictionary<string, object>
+                {
+                    { "EventId", EventId.Value },
+                    { "UserId", _userId },
+                    { "InitialStartTime", _event.StartTime },
+                    { "InitialEndTime", _event.EndTime }
+                },
+                new DialogOptions { Width = "900px", Height = "80vh", Resizable = true, Draggable = true });
+
+            if (result is Room room)
+            {
+                _bookedRoom = room;
+                await LoadRoomBooking();
+            }
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Info, "Save Event First",
+                "Please save the event before booking a room");
+        }
+    }
+
+    private async Task AddResources()
+    {
+        if (_event.StartTime == default || _event.EndTime == default)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Set Event Times",
+                "Please set event start and end times before reserving resources");
+            return;
+        }
+
+        if (!EventId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Info, "Save Event First",
+                "Please save the event before reserving resources");
+            return;
+        }
+
+        // Open resource selection dialog
+        var result = await DialogService.OpenAsync<Tempus.Web.Components.Dialogs.Rooms.RoomFinderDialog>(
+            "Reserve Resources",
+            new Dictionary<string, object>
+            {
+                { "EventId", EventId.Value },
+                { "UserId", _userId },
+                { "InitialStartTime", _event.StartTime },
+                { "InitialEndTime", _event.EndTime }
+            },
+            new DialogOptions { Width = "900px", Height = "80vh", Resizable = true, Draggable = true });
+
+        await LoadResourceReservations();
+    }
+
+    private async Task RemoveResourceReservation(ResourceReservation reservation)
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to remove this resource reservation?",
+            "Remove Resource",
+            new ConfirmOptions { OkButtonText = "Remove", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await ResourceReservationService.CancelReservationAsync(reservation.Id);
+                _reservedResources.Remove(reservation);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Resource reservation removed");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error removing resource reservation");
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to remove resource reservation");
+            }
+        }
+    }
+
+    private async Task LoadRoomBooking()
+    {
+        try
+        {
+            if (EventId.HasValue)
+            {
+                var bookings = await RoomBookingService.GetRoomBookingsAsync(Guid.Empty, DateTime.MinValue, DateTime.MaxValue);
+                var eventBooking = bookings.FirstOrDefault(b => b.EventId == EventId.Value && b.Status != Core.Enums.RoomBookingStatus.Cancelled);
+
+                if (eventBooking != null)
+                {
+                    _roomBookingId = eventBooking.Id;
+                    _bookedRoom = await RoomRepository.GetByIdAsync(eventBooking.RoomId, _userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading room booking");
+        }
+    }
+
+    private async Task LoadResourceReservations()
+    {
+        try
+        {
+            if (EventId.HasValue)
+            {
+                _reservedResources = await ResourceReservationService.GetResourceReservationsAsync(Guid.Empty, DateTime.MinValue, DateTime.MaxValue);
+                _reservedResources = _reservedResources
+                    .Where(r => r.EventId == EventId.Value && r.Status != Core.Enums.RoomBookingStatus.Cancelled)
+                    .ToList();
+
+                // Load all resources for display
+                _allResources = await ResourceRepository.GetAllAsync(_userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading resource reservations");
+            _reservedResources = new List<ResourceReservation>();
+        }
+    }
+
+    private string GetResourceIcon(ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.Equipment => "devices",
+            ResourceType.Vehicle => "directions_car",
+            ResourceType.Software => "computer",
+            ResourceType.Furniture => "chair",
+            _ => "category"
+        };
     }
 }

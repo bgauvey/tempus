@@ -1,0 +1,213 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IRoomRepository RoomRepository
+@inject ILogger<RoomDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Basic Info">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenFormField Text="Room Name" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@model.Name" Style="width: 100%;" Placeholder="e.g., Conference Room A" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Location" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@model.Location" Style="width: 100%;" Placeholder="e.g., Main Building, 2nd Floor" />
+                    </RadzenFormField>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Building (Optional)" Variant="@Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@model.Building" Style="width: 100%;" Placeholder="e.g., Building A" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenFormField Text="Floor (Optional)" Variant="@Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@model.Floor" Style="width: 100%;" Placeholder="e.g., 2" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenFormField Text="Capacity" Variant="@Variant.Outlined">
+                        <RadzenNumeric @bind-Value="@model.Capacity" Style="width: 100%;" Min="1" Max="1000" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Description (Optional)" Variant="@Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@model.Description" Style="width: 100%;" Rows="3"
+                                        Placeholder="Brief description of the room" />
+                    </RadzenFormField>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenCheckBox @bind-Value="@model.IsAvailable" Name="isAvailable" />
+                        <RadzenLabel Text="Room is available for booking" Component="isAvailable" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Amenities">
+                <RadzenStack Gap="1rem" Style="padding: 1rem 0;">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                        Select the amenities available in this room.
+                    </RadzenText>
+
+                    <RadzenStack Gap="0.5rem">
+                        @foreach (var amenity in commonAmenities)
+                        {
+                            <RadzenCheckBox @bind-Value="@selectedAmenities[amenity]"
+                                            Name="@($"amenity-{amenity}")"
+                                            TValue="bool" />
+                            <RadzenLabel Text="@amenity" Component="@($"amenity-{amenity}")" Style="margin-left: 0.5rem; margin-bottom: 0.5rem;" />
+                        }
+                    </RadzenStack>
+
+                    <RadzenFormField Text="Custom Amenities (comma-separated)" Variant="@Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@customAmenitiesText" Style="width: 100%;"
+                                       Placeholder="e.g., Smart Board, Coffee Machine" />
+                    </RadzenFormField>
+                </RadzenStack>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="@(isEditMode ? "Update" : "Create")" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Room? Room { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private Room model = new();
+    private bool isEditMode = false;
+
+    private string[] commonAmenities = new[]
+    {
+        "Projector",
+        "Whiteboard",
+        "TV/Display",
+        "Video Conference",
+        "Phone",
+        "WiFi",
+        "Power Outlets",
+        "Microphone",
+        "Speakers",
+        "Air Conditioning"
+    };
+
+    private Dictionary<string, bool> selectedAmenities = new();
+    private string customAmenitiesText = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        // Initialize amenities dictionary
+        foreach (var amenity in commonAmenities)
+        {
+            selectedAmenities[amenity] = false;
+        }
+
+        if (Room != null)
+        {
+            isEditMode = true;
+            model = Room;
+
+            // Load existing amenities
+            var existingAmenities = model.GetAmenities();
+            if (existingAmenities != null)
+            {
+                foreach (var amenity in existingAmenities)
+                {
+                    if (selectedAmenities.ContainsKey(amenity))
+                    {
+                        selectedAmenities[amenity] = true;
+                    }
+                    else
+                    {
+                        // Custom amenity
+                        customAmenitiesText = string.IsNullOrEmpty(customAmenitiesText)
+                            ? amenity
+                            : $"{customAmenitiesText}, {amenity}";
+                    }
+                }
+            }
+        }
+        else
+        {
+            model = new Room
+            {
+                UserId = UserId,
+                IsAvailable = true,
+                Capacity = 10
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            // Validate
+            if (string.IsNullOrWhiteSpace(model.Name))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Validation Error", "Room name is required");
+                return;
+            }
+
+            // Check for duplicate name
+            var nameExists = await RoomRepository.RoomExistsAsync(model.Name, UserId, isEditMode ? model.Id : null);
+            if (nameExists)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Validation Error",
+                    $"A room with the name '{model.Name}' already exists");
+                return;
+            }
+
+            // Build amenities list
+            var amenitiesList = selectedAmenities
+                .Where(kvp => kvp.Value)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            // Add custom amenities
+            if (!string.IsNullOrWhiteSpace(customAmenitiesText))
+            {
+                var customList = customAmenitiesText
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Where(a => !string.IsNullOrWhiteSpace(a));
+                amenitiesList.AddRange(customList);
+            }
+
+            model.SetAmenities(amenitiesList);
+
+            if (isEditMode)
+            {
+                await RoomRepository.UpdateAsync(model);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Room updated successfully");
+            }
+            else
+            {
+                await RoomRepository.CreateAsync(model);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Room created successfully");
+            }
+
+            DialogService.Close(model);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving room");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save room");
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
