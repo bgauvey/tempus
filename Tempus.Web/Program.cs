@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
 using Tempus.Infrastructure.Data;
 using Tempus.Core.Interfaces;
 using Tempus.Core.Models;
@@ -195,6 +196,7 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter(options =>
         {
             options.Endpoint = new Uri("http://localhost:4317");  // Jaeger OTLP endpoint
+            options.ExportProcessorType = ExportProcessorType.Simple;
         }))
     .WithMetrics(metrics => {
         metrics
