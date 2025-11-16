@@ -106,6 +106,7 @@ public class BookingPageService : IBookingPageService
         var bookingPage = await _bookingPageRepository.GetByIdAsync(bookingPageId, string.Empty);
         if (bookingPage == null || !bookingPage.IsActive)
         {
+            _logger.LogDebug("Booking page {BookingPageId} not found or inactive", bookingPageId);
             return false;
         }
 
@@ -114,6 +115,8 @@ public class BookingPageService : IBookingPageService
         // Check if time is within configured availability
         if (!IsWithinAvailabilityWindow(bookingPage, startTime))
         {
+            _logger.LogDebug("Time {StartTime} UTC not within availability window for booking page {BookingPageId}",
+                startTime, bookingPageId);
             return false;
         }
 
@@ -121,23 +124,34 @@ public class BookingPageService : IBookingPageService
         var now = DateTime.UtcNow;
         if (startTime < now.AddMinutes(bookingPage.MinimumNoticeMinutes))
         {
+            _logger.LogDebug("Time {StartTime} UTC does not meet minimum notice requirement of {MinNotice} minutes (now: {Now} UTC)",
+                startTime, bookingPage.MinimumNoticeMinutes, now);
             return false;
         }
 
         // Check maximum advance booking limit
         if (startTime > now.AddDays(bookingPage.MaxAdvanceBookingDays))
         {
+            _logger.LogDebug("Time {StartTime} UTC exceeds maximum advance booking limit of {MaxDays} days",
+                startTime, bookingPage.MaxAdvanceBookingDays);
             return false;
         }
 
         // Check daily booking limit
         if (await HasReachedDailyLimitAsync(bookingPageId, startTime.Date))
         {
+            _logger.LogDebug("Daily booking limit reached for {Date}", startTime.Date);
             return false;
         }
 
         // Check for conflicts with existing events (including buffer times)
-        return await IsSlotFreeAsync(bookingPage, startTime, durationMinutes);
+        var isFree = await IsSlotFreeAsync(bookingPage, startTime, durationMinutes);
+        if (!isFree)
+        {
+            _logger.LogDebug("Time slot {StartTime} UTC has conflicts with existing events", startTime);
+        }
+
+        return isFree;
     }
 
     private async Task<bool> IsSlotFreeAsync(BookingPage bookingPage, DateTime slotStartUtc, int durationMinutes)
@@ -155,17 +169,29 @@ public class BookingPageService : IBookingPageService
             searchEnd,
             bookingPage.UserId);
 
-        // Check if any event conflicts with this slot (including buffers)
-        var hasConflict = events.Any(e =>
-        {
-            // Event conflicts if it overlaps with the buffer window
-            // Event: [e.StartTime ----------- e.EndTime]
-            // Slot:         [bufferStart ========= bufferEnd]
-            // Conflict if: e.StartTime < bufferEnd AND e.EndTime > bufferStart
-            return e.StartTime < bufferEndUtc && e.EndTime > bufferStartUtc;
-        });
+        _logger.LogDebug("Checking {EventCount} events for conflicts with slot {SlotStart}-{SlotEnd} UTC (buffer: {BufferStart}-{BufferEnd} UTC)",
+            events.Count, slotStartUtc, slotEndUtc, bufferStartUtc, bufferEndUtc);
 
-        return !hasConflict;
+        // Check if any event conflicts with this slot (including buffers)
+        // Events are stored in UTC, ensure we're comparing UTC to UTC
+        foreach (var e in events)
+        {
+            // Ensure event times are treated as UTC for comparison
+            var eventStart = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
+            var eventEnd = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
+
+            // Event conflicts if it overlaps with the buffer window
+            // Overlap occurs if: eventStart < bufferEnd AND eventEnd > bufferStart
+            if (eventStart < bufferEndUtc && eventEnd > bufferStartUtc)
+            {
+                _logger.LogDebug("Conflict found: Event '{Title}' ({EventStart}-{EventEnd} UTC) overlaps with slot",
+                    e.Title, eventStart, eventEnd);
+                return false;
+            }
+        }
+
+        _logger.LogDebug("No conflicts found, slot is available");
+        return true;
     }
 
     public async Task<bool> HasReachedDailyLimitAsync(Guid bookingPageId, DateTime date)
@@ -290,9 +316,17 @@ public class BookingPageService : IBookingPageService
             }
 
             // Generate time slots for this day in the booking page's timezone, then convert to UTC
-            var localDate = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
-            var slotStart = TimeZoneInfo.ConvertTimeToUtc(localDate + dailyStart, timeZone);
-            var dayEndTime = TimeZoneInfo.ConvertTimeToUtc(localDate + dailyEnd, timeZone);
+            // Create local datetime (unspecified kind) for this date at the daily start time
+            var localDateTime = DateTime.SpecifyKind(date + dailyStart, DateTimeKind.Unspecified);
+            var localEndTime = DateTime.SpecifyKind(date + dailyEnd, DateTimeKind.Unspecified);
+
+            // Convert to UTC and ensure DateTimeKind is set correctly
+            var slotStart = DateTime.SpecifyKind(
+                TimeZoneInfo.ConvertTimeToUtc(localDateTime, timeZone),
+                DateTimeKind.Utc);
+            var dayEndTime = DateTime.SpecifyKind(
+                TimeZoneInfo.ConvertTimeToUtc(localEndTime, timeZone),
+                DateTimeKind.Utc);
 
             while (slotStart.AddMinutes(durationMinutes) <= dayEndTime)
             {
@@ -312,11 +346,12 @@ public class BookingPageService : IBookingPageService
                 // Check for conflicts using pre-loaded events
                 if (IsSlotFreeWithEvents(bookingPage, slotStart, durationMinutes, allEvents))
                 {
-                    availableSlots.Add(slotStart);
+                    // Ensure the slot is UTC before adding
+                    availableSlots.Add(DateTime.SpecifyKind(slotStart, DateTimeKind.Utc));
                 }
 
                 // Move to next time slot (15-minute intervals)
-                slotStart = slotStart.AddMinutes(15);
+                slotStart = DateTime.SpecifyKind(slotStart.AddMinutes(15), DateTimeKind.Utc);
             }
         }
 
@@ -330,10 +365,16 @@ public class BookingPageService : IBookingPageService
         var bufferEndUtc = slotEndUtc.AddMinutes(bookingPage.BufferAfterMinutes);
 
         // Check if any event conflicts with this slot (including buffers)
+        // Events are stored in UTC, ensure we're comparing UTC to UTC
         var hasConflict = events.Any(e =>
         {
+            // Ensure event times are treated as UTC for comparison
+            var eventStart = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
+            var eventEnd = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
+
             // Event conflicts if it overlaps with the buffer window
-            return e.StartTime < bufferEndUtc && e.EndTime > bufferStartUtc;
+            // Overlap occurs if: eventStart < bufferEnd AND eventEnd > bufferStart
+            return eventStart < bufferEndUtc && eventEnd > bufferStartUtc;
         });
 
         return !hasConflict;
@@ -348,11 +389,22 @@ public class BookingPageService : IBookingPageService
         string? guestPhone,
         string? guestNotes)
     {
+        // Ensure we're working with UTC time
+        var utcStartTime = startTime.Kind == DateTimeKind.Utc
+            ? startTime
+            : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+
         // Validate the booking
-        if (!await IsTimeSlotAvailableAsync(bookingPage.Id, startTime, durationMinutes))
+        _logger.LogInformation("Validating booking slot: {StartTime} UTC, Duration: {Duration} min",
+            utcStartTime, durationMinutes);
+
+        if (!await IsTimeSlotAvailableAsync(bookingPage.Id, utcStartTime, durationMinutes))
         {
+            _logger.LogWarning("Booking slot validation failed for {StartTime} UTC", utcStartTime);
             throw new InvalidOperationException("The selected time slot is no longer available");
         }
+
+        startTime = utcStartTime;
 
         // Create the event
         var endTime = startTime.AddMinutes(durationMinutes);
@@ -431,14 +483,17 @@ public class BookingPageService : IBookingPageService
         return createdEvent;
     }
 
-    private bool IsWithinAvailabilityWindow(BookingPage bookingPage, DateTime dateTime)
+    private bool IsWithinAvailabilityWindow(BookingPage bookingPage, DateTime utcDateTime)
     {
-        // Convert UTC time to booking page's timezone for comparison
+        // Convert UTC time to booking page's timezone for comparison with working hours
+        // Working hours are defined in the booking page's timezone (e.g., 9 AM - 5 PM EST)
         var timeZone = string.IsNullOrEmpty(bookingPage.TimeZoneId)
-            ? TimeZoneInfo.Utc
+            ? TimeZoneInfo.Local
             : TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
 
-        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, timeZone);
+        // Ensure the datetime is treated as UTC before conversion
+        var utcTime = DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
+        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone);
 
         // Check day of week in local timezone
         var availableDays = bookingPage.GetAvailableDaysOfWeek();
