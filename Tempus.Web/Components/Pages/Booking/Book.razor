@@ -50,26 +50,30 @@ else if (bookingConfirmed)
                         <RadzenText TextStyle="TextStyle.Body1">
                             Your appointment has been successfully scheduled.
                         </RadzenText>
-                        <RadzenCard Style="background: var(--rz-base-100); padding: 1.5rem;">
-                            <RadzenStack Gap="0.75rem">
-                                <RadzenText TextStyle="TextStyle.Subtitle1">Appointment Details</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2">
-                                    <strong>Date:</strong> @selectedTimeSlot?.ToString("dddd, MMMM dd, yyyy")
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2">
-                                    <strong>Time:</strong> @selectedTimeSlot?.ToString("h:mm tt")
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2">
-                                    <strong>Duration:</strong> @selectedDuration minutes
-                                </RadzenText>
-                                @if (!string.IsNullOrEmpty(bookingPage.Location))
-                                {
+                        @if (selectedTimeSlot.HasValue)
+                        {
+                            var confirmedLocalTime = TimeZoneInfo.ConvertTimeFromUtc(selectedTimeSlot.Value, GetBookingPageTimeZone());
+                            <RadzenCard Style="background: var(--rz-base-100); padding: 1.5rem;">
+                                <RadzenStack Gap="0.75rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1">Appointment Details</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2">
-                                        <strong>Location:</strong> @bookingPage.Location
+                                        <strong>Date:</strong> @confirmedLocalTime.ToString("dddd, MMMM dd, yyyy")
                                     </RadzenText>
-                                }
-                            </RadzenStack>
-                        </RadzenCard>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>Time:</strong> @confirmedLocalTime.ToString("h:mm tt")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>Duration:</strong> @selectedDuration minutes
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(bookingPage.Location))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            <strong>Location:</strong> @bookingPage.Location
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
                         @if (bookingPage.SendConfirmationEmail)
                         {
                             <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
@@ -141,14 +145,15 @@ else
 
                         @if (selectedTimeSlot.HasValue)
                         {
+                            var localSelectedTime = TimeZoneInfo.ConvertTimeFromUtc(selectedTimeSlot.Value, GetBookingPageTimeZone());
                             <RadzenCard Style="background: var(--rz-primary); color: white;">
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenText TextStyle="TextStyle.Subtitle2">Selected Time</RadzenText>
                                     <RadzenText TextStyle="TextStyle.H6">
-                                        @selectedTimeSlot.Value.ToString("dddd, MMMM dd")
+                                        @localSelectedTime.ToString("dddd, MMMM dd")
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body1">
-                                        @selectedTimeSlot.Value.ToString("h:mm tt") (@selectedDuration min)
+                                        @localSelectedTime.ToString("h:mm tt") (@selectedDuration min)
                                     </RadzenText>
                                 </RadzenStack>
                             </RadzenCard>
@@ -225,8 +230,9 @@ else
                                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem;">
                                                 @foreach (var timeSlot in dateGroup.Value)
                                                 {
-                                                    <RadzenButton Click="@(() => SelectTimeSlot(timeSlot))"
-                                                                  ButtonStyle="@(selectedTimeSlot == timeSlot ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                    var utcSlot = GetUtcTimeSlot(timeSlot);
+                                                    <RadzenButton Click="@(() => SelectTimeSlot(utcSlot))"
+                                                                  ButtonStyle="@(selectedTimeSlot == utcSlot ? ButtonStyle.Primary : ButtonStyle.Light)"
                                                                   Text="@timeSlot.ToString("h:mm tt")"
                                                                   Style="width: 100%;" />
                                                 }
@@ -439,10 +445,45 @@ else
 
     private Dictionary<DateTime, List<DateTime>> GetTimeSlotsByDate()
     {
-        return availableTimeSlots
+        // Convert UTC slots to booking page's timezone for display
+        var timeZone = GetBookingPageTimeZone();
+        var localSlots = availableTimeSlots
+            .Select(utcTime => TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone))
+            .ToList();
+
+        return localSlots
             .GroupBy(dt => dt.Date)
             .OrderBy(g => g.Key)
             .ToDictionary(g => g.Key, g => g.OrderBy(dt => dt.TimeOfDay).ToList());
+    }
+
+    private TimeZoneInfo GetBookingPageTimeZone()
+    {
+        if (bookingPage == null || string.IsNullOrEmpty(bookingPage.TimeZoneId))
+        {
+            return TimeZoneInfo.Local;
+        }
+
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
+        }
+        catch
+        {
+            return TimeZoneInfo.Local;
+        }
+    }
+
+    private DateTime GetUtcTimeSlot(DateTime localTimeSlot)
+    {
+        // Convert local display time back to UTC by finding the matching slot
+        var timeZone = GetBookingPageTimeZone();
+        var utcTime = TimeZoneInfo.ConvertTimeToUtc(localTimeSlot, timeZone);
+
+        // Find the closest matching UTC slot (to handle any rounding issues)
+        return availableTimeSlots
+            .OrderBy(slot => Math.Abs((slot - utcTime).TotalMinutes))
+            .First();
     }
 
     private void SelectTimeSlot(DateTime timeSlot)

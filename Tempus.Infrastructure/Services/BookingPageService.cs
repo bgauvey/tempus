@@ -264,9 +264,10 @@ public class BookingPageService : IBookingPageService
                 continue;
             }
 
-            // Generate time slots for this day
-            var slotStart = date + dailyStart;
-            var dayEndTime = date + dailyEnd;
+            // Generate time slots for this day in the booking page's timezone, then convert to UTC
+            var localDate = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
+            var slotStart = TimeZoneInfo.ConvertTimeToUtc(localDate + dailyStart, timeZone);
+            var dayEndTime = TimeZoneInfo.ConvertTimeToUtc(localDate + dailyEnd, timeZone);
 
             while (slotStart.AddMinutes(durationMinutes) <= dayEndTime)
             {
@@ -399,15 +400,22 @@ public class BookingPageService : IBookingPageService
 
     private bool IsWithinAvailabilityWindow(BookingPage bookingPage, DateTime dateTime)
     {
-        // Check day of week
+        // Convert UTC time to booking page's timezone for comparison
+        var timeZone = string.IsNullOrEmpty(bookingPage.TimeZoneId)
+            ? TimeZoneInfo.Utc
+            : TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
+
+        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, timeZone);
+
+        // Check day of week in local timezone
         var availableDays = bookingPage.GetAvailableDaysOfWeek();
-        if (!availableDays.Contains((int)dateTime.DayOfWeek))
+        if (!availableDays.Contains((int)localDateTime.DayOfWeek))
         {
             return false;
         }
 
-        // Check time of day
-        var timeOfDay = dateTime.TimeOfDay;
+        // Check time of day in local timezone
+        var timeOfDay = localDateTime.TimeOfDay;
         var dailyStart = bookingPage.DailyStartTime ?? TimeSpan.FromHours(9);
         var dailyEnd = bookingPage.DailyEndTime ?? TimeSpan.FromHours(17);
 
