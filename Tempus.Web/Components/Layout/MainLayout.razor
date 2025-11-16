@@ -71,24 +71,40 @@
     <!-- Sidebar only for Authenticated Users -->
     <AuthorizeView>
         <Authorized>
-            <RadzenSidebar FullHeight="true"  @bind-Expanded="_drawerOpen">
-                <RadzenPanelMenu>
-                    <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
+            <RadzenSidebar FullHeight="true" @bind-Expanded="_drawerOpen">
+                <!-- Simplified Navigation: 5 Primary Items -->
+                <RadzenPanelMenu @rendermode="InteractiveServer">
+                    <!-- Calendar: Main view -->
                     <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
-                    <RadzenPanelMenuItem Text="My Calendars" Path="/my-calendars" Icon="event" />
-                    <RadzenPanelMenuItem Text="Shared Calendars" Path="/shared-calendars" Icon="share" />
-                    <RadzenPanelMenuItem Text="Public Calendars" Path="/public-calendars" Icon="public" />
-                    <RadzenPanelMenuItem Text="Meeting Polls" Path="/polls" Icon="poll" />
-                    <RadzenPanelMenuItem Text="Booking Pages" Path="/booking-pages" Icon="event_available" />
-                    <RadzenPanelMenuItem Text="Rooms" Path="/rooms" Icon="meeting_room" />
-                    <RadzenPanelMenuItem Text="Resources" Path="/resources" Icon="devices" />
-                    <RadzenPanelMenuItem Text="Analytics" Path="/analytics" Icon="analytics" />
-                    <RadzenPanelMenuItem Text="Benchmarks" Path="/benchmarks" Icon="show_chart" />
-                    <RadzenPanelMenuItem Text="Import ICS" Path="/import" Icon="upload" />
-                    <RadzenPanelMenuItem Text="Address Book" Path="/addresses" Icon="contacts" />
-                    <RadzenPanelMenuItem Text="Teams" Path="/teams" Icon="groups" />
-                    <RadzenPanelMenuItem Text="Out of Office" Path="/out-of-office" Icon="beach_access" />
+
+                    <!-- Tasks: Task-focused view (new) -->
+                    <RadzenPanelMenuItem Text="Tasks" Path="/tasks" Icon="check_circle" />
+
+                    <!-- People: Contacts + Teams -->
+                    <RadzenPanelMenuItem Text="People" Icon="people">
+                        <RadzenPanelMenuItem Text="Contacts" Path="/addresses" Icon="contact_mail" />
+                        <RadzenPanelMenuItem Text="Teams" Path="/teams" Icon="groups" />
+                    </RadzenPanelMenuItem>
+
+                    <!-- Insights: Analytics + Benchmarks -->
+                    <RadzenPanelMenuItem Text="Insights" Path="/insights" Icon="insights" />
+
+                    <!-- Settings: All configuration -->
+                    <RadzenPanelMenuItem Text="Settings" Icon="settings">
+                        <RadzenPanelMenuItem Text="General" Path="/settings" Icon="tune" />
+                        <RadzenPanelMenuItem Text="Calendar Sources" Path="/calendar-sources" Icon="event" />
+                        <RadzenPanelMenuItem Text="Integrations" Path="/integrations" Icon="sync" />
+                        <RadzenPanelMenuItem Text="Import/Export" Path="/import" Icon="upload" />
+                        <RadzenPanelMenuItem Text="Availability" Path="/out-of-office" Icon="beach_access" />
+                    </RadzenPanelMenuItem>
                 </RadzenPanelMenu>
+
+                <!-- Hidden but accessible features (moved to contextual locations) -->
+                <!-- Meeting Polls → Calendar contextual menu -->
+                <!-- Booking Pages → Settings > Integrations -->
+                <!-- Rooms/Resources → Event creation flow -->
+                <!-- Dashboard → Removed (Calendar is primary view) -->
+                <!-- My/Shared/Public Calendars → Calendar Sources -->
             </RadzenSidebar>
         </Authorized>
     </AuthorizeView>

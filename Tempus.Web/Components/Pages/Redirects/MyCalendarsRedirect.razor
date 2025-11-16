@@ -1,0 +1,10 @@
+@page "/my-calendars"
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect to unified Calendar Sources page
+        NavigationManager.NavigateTo("/calendar-sources", replace: true);
+    }
+}
