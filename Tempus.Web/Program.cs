@@ -121,6 +121,10 @@ builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<ICalendarIntegrationRepository, CalendarIntegrationRepository>();
 builder.Services.AddScoped<IBookingPageRepository, BookingPageRepository>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
+builder.Services.AddScoped<IRoomBookingRepository, RoomBookingRepository>();
+builder.Services.AddScoped<IResourceReservationRepository, ResourceReservationRepository>();
 builder.Services.AddScoped<IIcsImportService, IcsImportService>();
 builder.Services.AddScoped<IPstImportService, PstImportService>();
 builder.Services.AddScoped<IPdfAgendaService, PdfAgendaService>();
@@ -147,6 +151,8 @@ builder.Services.AddScoped<ICalendarSharingService, CalendarSharingService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOutOfOfficeService, OutOfOfficeService>();
 builder.Services.AddScoped<IBookingPageService, BookingPageService>();
+builder.Services.AddScoped<IRoomBookingService, RoomBookingService>();
+builder.Services.AddScoped<IResourceReservationService, ResourceReservationService>();
 
 // Register calendar services for refactored Calendar component
 builder.Services.AddScoped<Tempus.Web.Services.Calendar.CalendarStateService>();

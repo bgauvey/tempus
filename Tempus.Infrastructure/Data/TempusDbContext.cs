@@ -31,6 +31,10 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PublicCalendar> PublicCalendars { get; set; }
     public DbSet<OutOfOfficeStatus> OutOfOfficeStatuses { get; set; }
     public DbSet<BookingPage> BookingPages { get; set; }
+    public DbSet<Room> Rooms { get; set; }
+    public DbSet<Resource> Resources { get; set; }
+    public DbSet<RoomBooking> RoomBookings { get; set; }
+    public DbSet<ResourceReservation> ResourceReservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -480,6 +484,85 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(b => b.Slug).IsUnique();
             entity.HasIndex(b => new { b.UserId, b.IsActive });
             entity.HasIndex(b => new { b.UserId, b.CreatedAt });
+        });
+
+        modelBuilder.Entity<Room>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Name).IsRequired().HasMaxLength(200);
+            entity.Property(r => r.Description).HasMaxLength(1000);
+            entity.Property(r => r.Location).HasMaxLength(200);
+            entity.Property(r => r.Building).HasMaxLength(100);
+            entity.Property(r => r.Floor).HasMaxLength(50);
+            entity.Property(r => r.Amenities).HasMaxLength(2000); // JSON storage
+            entity.Property(r => r.ImageUrl).HasMaxLength(100);
+            entity.Property(r => r.UserId).IsRequired();
+
+            entity.HasOne(r => r.User)
+                  .WithMany()
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => new { r.UserId, r.IsAvailable });
+            entity.HasIndex(r => new { r.UserId, r.Building, r.Floor });
+        });
+
+        modelBuilder.Entity<Resource>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Name).IsRequired().HasMaxLength(200);
+            entity.Property(r => r.Description).HasMaxLength(1000);
+            entity.Property(r => r.Location).HasMaxLength(200);
+            entity.Property(r => r.ImageUrl).HasMaxLength(100);
+            entity.Property(r => r.Model).HasMaxLength(100);
+            entity.Property(r => r.SerialNumber).HasMaxLength(100);
+            entity.Property(r => r.UserId).IsRequired();
+
+            entity.HasOne(r => r.User)
+                  .WithMany()
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => new { r.UserId, r.ResourceType, r.IsAvailable });
+            entity.HasIndex(r => new { r.UserId, r.Condition });
+        });
+
+        modelBuilder.Entity<RoomBooking>(entity =>
+        {
+            entity.HasKey(rb => rb.Id);
+            entity.Property(rb => rb.Notes).HasMaxLength(1000);
+
+            entity.HasOne(rb => rb.Room)
+                  .WithMany(r => r.Bookings)
+                  .HasForeignKey(rb => rb.RoomId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(rb => rb.Event)
+                  .WithMany()
+                  .HasForeignKey(rb => rb.EventId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasIndex(rb => new { rb.RoomId, rb.EventId });
+            entity.HasIndex(rb => new { rb.RoomId, rb.Status });
+        });
+
+        modelBuilder.Entity<ResourceReservation>(entity =>
+        {
+            entity.HasKey(rr => rr.Id);
+            entity.Property(rr => rr.Notes).HasMaxLength(1000);
+
+            entity.HasOne(rr => rr.Resource)
+                  .WithMany(r => r.Reservations)
+                  .HasForeignKey(rr => rr.ResourceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(rr => rr.Event)
+                  .WithMany()
+                  .HasForeignKey(rr => rr.EventId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasIndex(rr => new { rr.ResourceId, rr.EventId });
+            entity.HasIndex(rr => new { rr.ResourceId, rr.Status });
         });
     }
 }

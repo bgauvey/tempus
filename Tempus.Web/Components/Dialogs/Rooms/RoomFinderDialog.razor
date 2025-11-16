@@ -1,0 +1,399 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@inject IRoomBookingService RoomBookingService
+@inject IResourceReservationService ResourceReservationService
+@inject ILogger<RoomFinderDialog> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenStack Gap="1.5rem">
+    <!-- Search Criteria -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1">Search for Available Rooms</RadzenText>
+
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenFormField Text="Start Time" Variant="@Variant.Outlined">
+                        <RadzenDatePicker @bind-Value="@startTime" ShowTime="true" DateFormat="MM/dd/yyyy h:mm tt" Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenFormField Text="End Time" Variant="@Variant.Outlined">
+                        <RadzenDatePicker @bind-Value="@endTime" ShowTime="true" DateFormat="MM/dd/yyyy h:mm tt" Style="width: 100%;" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenFormField Text="Minimum Capacity (Optional)" Variant="@Variant.Outlined">
+                <RadzenNumeric @bind-Value="@minCapacity" Style="width: 100%;" Min="1" Max="1000" ShowUpDown="false" Placeholder="Any capacity" />
+            </RadzenFormField>
+
+            <RadzenButton Click="@SearchRooms" Text="Search Available Rooms" ButtonStyle="ButtonStyle.Primary" Icon="search" Style="width: 100%;" />
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Search Results -->
+    @if (hasSearched)
+    {
+        @if (isSearching)
+        {
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 2rem auto;" />
+        }
+        else if (!availableRooms.Any())
+        {
+            <RadzenCard Style="text-align: center; padding: 2rem;">
+                <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="event_busy" Style="font-size: 3rem; color: var(--rz-text-tertiary-color);" />
+                    <RadzenText TextStyle="TextStyle.H6">No rooms available</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                        No rooms match your criteria for the selected time. Try adjusting your search.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenText TextStyle="TextStyle.Subtitle1">Available Rooms (@availableRooms.Count found)</RadzenText>
+
+            <RadzenStack Gap="1rem">
+                @foreach (var room in availableRooms)
+                {
+                    <RadzenCard>
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Gap="0.5rem" Style="flex: 1;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenIcon Icon="meeting_room" Style="font-size: 1.5rem;" />
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">@room.Name</RadzenText>
+                                    </RadzenStack>
+
+                                    @if (!string.IsNullOrEmpty(room.Location))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                            <RadzenIcon Icon="location_on" Style="font-size: 0.875rem;" /> @room.Location
+                                        </RadzenText>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(room.Building) || !string.IsNullOrEmpty(room.Floor))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                            @if (!string.IsNullOrEmpty(room.Building))
+                                            {
+                                                <text>@room.Building</text>
+                                            }
+                                            @if (!string.IsNullOrEmpty(room.Floor))
+                                            {
+                                                <text>, Floor @room.Floor</text>
+                                            }
+                                        </RadzenText>
+                                    }
+
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-top: 0.5rem;">
+                                        <RadzenBadge Text="@($"Capacity: {room.Capacity}")" BadgeStyle="BadgeStyle.Info" />
+
+                                        @{
+                                            var amenities = room.GetAmenities();
+                                            if (amenities != null && amenities.Any())
+                                            {
+                                                @foreach (var amenity in amenities.Take(3))
+                                                {
+                                                    <RadzenBadge Text="@amenity" BadgeStyle="BadgeStyle.Light" />
+                                                }
+                                                @if (amenities.Count > 3)
+                                                {
+                                                    <RadzenBadge Text="@($"+{amenities.Count - 3} more")" BadgeStyle="BadgeStyle.Light" />
+                                                }
+                                            }
+                                        }
+                                    </RadzenStack>
+                                </RadzenStack>
+
+                                @if (EventId.HasValue)
+                                {
+                                    <RadzenButton Click="@(() => BookRoom(room))"
+                                                  ButtonStyle="ButtonStyle.Success"
+                                                  Text="Book This Room"
+                                                  Icon="check_circle"
+                                                  Disabled="@(selectedRoomId == room.Id && isBooking)" />
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            </RadzenStack>
+        }
+    }
+
+    <!-- Resource Reservation Section (Optional) -->
+    @if (EventId.HasValue && showResourceSection)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenText TextStyle="TextStyle.Subtitle1">Reserve Resources (Optional)</RadzenText>
+                    <RadzenButton Click="@(() => showResourceSearch = !showResourceSearch)"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Icon="@(showResourceSearch ? "expand_less" : "expand_more")"
+                                  Text="@(showResourceSearch ? "Hide" : "Show")" />
+                </RadzenStack>
+
+                @if (showResourceSearch)
+                {
+                    <RadzenButton Click="@SearchResources" Text="Search Available Resources" ButtonStyle="ButtonStyle.Primary" Icon="search" Style="width: 100%;" />
+
+                    @if (hasSearchedResources)
+                    {
+                        @if (isSearchingResources)
+                        {
+                            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 1rem auto;" Size="ProgressBarCircularSize.Small" />
+                        }
+                        else if (availableResources.Any())
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2">Available Resources (@availableResources.Count found)</RadzenText>
+                            <RadzenStack Gap="0.5rem">
+                                @foreach (var resource in availableResources)
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="padding: 0.5rem; border: 1px solid var(--rz-border-color); border-radius: 4px;">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="flex: 1;">
+                                            <RadzenIcon Icon="@GetResourceIcon(resource.ResourceType)" />
+                                            <RadzenText TextStyle="TextStyle.Body2">@resource.Name</RadzenText>
+                                            <RadzenBadge Text="@($"Available: {GetAvailableQuantity(resource)}")" BadgeStyle="BadgeStyle.Info" />
+                                        </RadzenStack>
+                                        <RadzenNumeric @bind-Value="@resourceQuantities[resource.Id]" Style="width: 80px;" Min="0" Max="@GetAvailableQuantity(resource)" ShowUpDown="true" />
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                            <RadzenButton Click="@ReserveSelectedResources" Text="Reserve Selected Resources" ButtonStyle="ButtonStyle.Success" Icon="check_circle" Style="width: 100%;" Disabled="@isBooking" />
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                                No resources available for the selected time.
+                            </RadzenText>
+                        }
+                    }
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    <!-- Close Button -->
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Guid? EventId { get; set; }
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    [Parameter]
+    public DateTime? InitialStartTime { get; set; }
+
+    [Parameter]
+    public DateTime? InitialEndTime { get; set; }
+
+    private DateTime? startTime;
+    private DateTime? endTime;
+    private int? minCapacity;
+
+    private bool hasSearched = false;
+    private bool isSearching = false;
+    private List<Room> availableRooms = new();
+    private Guid? selectedRoomId;
+    private bool isBooking = false;
+
+    private bool showResourceSection = true;
+    private bool showResourceSearch = false;
+    private bool hasSearchedResources = false;
+    private bool isSearchingResources = false;
+    private List<Resource> availableResources = new();
+    private Dictionary<Guid, int> resourceQuantities = new();
+    private Dictionary<Guid, int> availableQuantities = new();
+
+    protected override void OnInitialized()
+    {
+        startTime = InitialStartTime ?? DateTime.Now.AddHours(1);
+        endTime = InitialEndTime ?? startTime.Value.AddHours(1);
+    }
+
+    private async Task SearchRooms()
+    {
+        if (!startTime.HasValue || !endTime.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select start and end times");
+            return;
+        }
+
+        if (startTime.Value >= endTime.Value)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Validation Error", "End time must be after start time");
+            return;
+        }
+
+        isSearching = true;
+        hasSearched = true;
+
+        try
+        {
+            availableRooms = await RoomBookingService.GetAvailableRoomsAsync(
+                startTime.Value,
+                endTime.Value,
+                minCapacity,
+                UserId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error searching for available rooms");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to search for rooms");
+            availableRooms = new();
+        }
+        finally
+        {
+            isSearching = false;
+        }
+    }
+
+    private async Task BookRoom(Room room)
+    {
+        if (!EventId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No event specified for booking");
+            return;
+        }
+
+        selectedRoomId = room.Id;
+        isBooking = true;
+
+        try
+        {
+            await RoomBookingService.BookRoomAsync(EventId.Value, room.Id);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", $"Room '{room.Name}' booked successfully");
+            DialogService.Close(room);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error booking room");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        finally
+        {
+            isBooking = false;
+            selectedRoomId = null;
+        }
+    }
+
+    private async Task SearchResources()
+    {
+        if (!startTime.HasValue || !endTime.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please search for rooms first");
+            return;
+        }
+
+        isSearchingResources = true;
+        hasSearchedResources = true;
+
+        try
+        {
+            availableResources = await ResourceReservationService.GetAvailableResourcesAsync(null, UserId);
+
+            // Get available quantities for each resource
+            resourceQuantities.Clear();
+            availableQuantities.Clear();
+
+            foreach (var resource in availableResources)
+            {
+                var available = await ResourceReservationService.GetAvailableQuantityAsync(
+                    resource.Id,
+                    startTime.Value,
+                    endTime.Value);
+
+                availableQuantities[resource.Id] = available;
+                resourceQuantities[resource.Id] = 0;
+            }
+
+            // Filter out resources with no available quantity
+            availableResources = availableResources.Where(r => availableQuantities[r.Id] > 0).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error searching for available resources");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to search for resources");
+            availableResources = new();
+        }
+        finally
+        {
+            isSearchingResources = false;
+        }
+    }
+
+    private async Task ReserveSelectedResources()
+    {
+        if (!EventId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No event specified for reservation");
+            return;
+        }
+
+        var selectedResources = resourceQuantities.Where(kvp => kvp.Value > 0).ToList();
+        if (!selectedResources.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "No Selection", "Please select at least one resource");
+            return;
+        }
+
+        isBooking = true;
+
+        try
+        {
+            foreach (var selection in selectedResources)
+            {
+                await ResourceReservationService.ReserveResourceAsync(EventId.Value, selection.Key, selection.Value);
+            }
+
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Reserved {selectedResources.Count} resource(s) successfully");
+
+            // Reset resource section
+            hasSearchedResources = false;
+            showResourceSearch = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error reserving resources");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        finally
+        {
+            isBooking = false;
+        }
+    }
+
+    private int GetAvailableQuantity(Resource resource)
+    {
+        return availableQuantities.TryGetValue(resource.Id, out var quantity) ? quantity : 0;
+    }
+
+    private string GetResourceIcon(ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.Equipment => "devices",
+            ResourceType.Vehicle => "directions_car",
+            ResourceType.Software => "computer",
+            ResourceType.Furniture => "chair",
+            _ => "category"
+        };
+    }
+
+    private void Close()
+    {
+        DialogService.Close(null);
+    }
+}

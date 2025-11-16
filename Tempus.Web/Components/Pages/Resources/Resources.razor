@@ -1,0 +1,257 @@
+@page "/resources"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Web.Components.Dialogs.Resources
+@inject IResourceRepository ResourceRepository
+@inject ILogger<Resources> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Resources - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1">
+            Resources
+        </RadzenText>
+        <RadzenButton Click="@CreateNewResource"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Text="Create Resource"
+                      Icon="add_circle"
+                      Size="ButtonSize.Large" />
+    </RadzenStack>
+
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Manage equipment, vehicles, and other bookable resources.
+    </RadzenText>
+
+    @if (isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 2rem auto;" />
+    }
+    else if (!resourcesList.Any())
+    {
+        <RadzenCard Style="text-align: center; padding: 3rem;">
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="devices" Style="font-size: 4rem; color: var(--rz-text-tertiary-color);" />
+                <RadzenText TextStyle="TextStyle.H6">No resources yet</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                    Create your first resource to start managing equipment and resource reservations.
+                </RadzenText>
+                <RadzenButton Click="@CreateNewResource"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Text="Create Resource"
+                              Icon="add_circle" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@resourcesList" TItem="Resource" AllowSorting="true" AllowFiltering="true"
+                        FilterMode="FilterMode.Simple" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="Resource" Property="Name" Title="Name" Width="200px">
+                    <Template Context="resource">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="@GetResourceIcon(resource.ResourceType)" Style="font-size: 1.25rem;" />
+                            <RadzenText TextStyle="TextStyle.Subtitle2">@resource.Name</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Resource" Property="ResourceType" Title="Type" Width="150px">
+                    <Template Context="resource">
+                        <RadzenBadge Text="@resource.ResourceType.ToString()" BadgeStyle="@GetTypeBadgeStyle(resource.ResourceType)" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Resource" Property="Location" Title="Location" Width="180px" />
+                <RadzenDataGridColumn TItem="Resource" Property="Quantity" Title="Quantity" Width="100px">
+                    <Template Context="resource">
+                        <RadzenBadge Text="@($"{resource.Quantity}")" BadgeStyle="BadgeStyle.Info" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Resource" Property="Condition" Title="Condition" Width="130px">
+                    <Template Context="resource">
+                        <RadzenBadge Text="@resource.Condition.ToString()" BadgeStyle="@GetConditionBadgeStyle(resource.Condition)" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Resource" Property="IsAvailable" Title="Status" Width="120px" Filterable="false" Sortable="false">
+                    <Template Context="resource">
+                        @if (resource.IsAvailable)
+                        {
+                            <RadzenBadge Text="Available" BadgeStyle="BadgeStyle.Success" />
+                        }
+                        else
+                        {
+                            <RadzenBadge Text="Unavailable" BadgeStyle="BadgeStyle.Secondary" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Resource" Property="Model" Title="Model" Width="150px" />
+                <RadzenDataGridColumn TItem="Resource" Title="Actions" Width="180px" Filterable="false" Sortable="false">
+                    <Template Context="resource">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Click="@(() => EditResource(resource))"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Icon="edit"
+                                          Size="ButtonSize.Small"
+                                          title="Edit" />
+                            <RadzenButton Click="@(() => ToggleAvailable(resource))"
+                                          ButtonStyle="@(resource.IsAvailable ? ButtonStyle.Warning : ButtonStyle.Success)"
+                                          Icon="@(resource.IsAvailable ? "block" : "check_circle")"
+                                          Size="ButtonSize.Small"
+                                          title="@(resource.IsAvailable ? "Mark Unavailable" : "Mark Available")" />
+                            <RadzenButton Click="@(() => DeleteResource(resource))"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Icon="delete"
+                                          Size="ButtonSize.Small"
+                                          title="Delete" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenStack>
+
+@code {
+    private List<Resource> resourcesList = new();
+    private bool isLoading = true;
+    private string userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserId();
+        await LoadResources();
+    }
+
+    private async Task LoadUserId()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private async Task LoadResources()
+    {
+        isLoading = true;
+        try
+        {
+            resourcesList = await ResourceRepository.GetAllAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading resources");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load resources");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateNewResource()
+    {
+        var result = await DialogService.OpenAsync<ResourceDialog>("Create Resource",
+            new Dictionary<string, object> { { "UserId", userId } },
+            new DialogOptions { Width = "700px", Height = "80vh", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await LoadResources();
+        }
+    }
+
+    private async Task EditResource(Resource resource)
+    {
+        var result = await DialogService.OpenAsync<ResourceDialog>($"Edit {resource.Name}",
+            new Dictionary<string, object> { { "Resource", resource }, { "UserId", userId } },
+            new DialogOptions { Width = "700px", Height = "80vh", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await LoadResources();
+        }
+    }
+
+    private async Task ToggleAvailable(Resource resource)
+    {
+        try
+        {
+            resource.IsAvailable = !resource.IsAvailable;
+            await ResourceRepository.UpdateAsync(resource);
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Resource marked as {(resource.IsAvailable ? "available" : "unavailable")}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling resource availability");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update resource");
+            resource.IsAvailable = !resource.IsAvailable; // Revert on error
+        }
+    }
+
+    private async Task DeleteResource(Resource resource)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete '{resource.Name}'? This will also delete all associated reservations.",
+            "Delete Resource",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await ResourceRepository.DeleteAsync(resource.Id, userId);
+                resourcesList.Remove(resource);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Resource deleted");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting resource");
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to delete resource");
+            }
+        }
+    }
+
+    private string GetResourceIcon(ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.Equipment => "devices",
+            ResourceType.Vehicle => "directions_car",
+            ResourceType.Software => "computer",
+            ResourceType.Furniture => "chair",
+            _ => "category"
+        };
+    }
+
+    private BadgeStyle GetTypeBadgeStyle(ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.Equipment => BadgeStyle.Primary,
+            ResourceType.Vehicle => BadgeStyle.Info,
+            ResourceType.Software => BadgeStyle.Secondary,
+            ResourceType.Furniture => BadgeStyle.Warning,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private BadgeStyle GetConditionBadgeStyle(ResourceCondition condition)
+    {
+        return condition switch
+        {
+            ResourceCondition.Excellent => BadgeStyle.Success,
+            ResourceCondition.Good => BadgeStyle.Info,
+            ResourceCondition.Fair => BadgeStyle.Warning,
+            ResourceCondition.NeedsRepair => BadgeStyle.Danger,
+            ResourceCondition.OutOfService => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+}
