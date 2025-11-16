@@ -445,13 +445,14 @@ public class BookingPageService : IBookingPageService
         var bookingEvent = new Event
         {
             Id = Guid.NewGuid(),
-            Title = $"{bookingPage.Title} - {guestName}",
-            Description = BuildBookingDescription(guestName, guestEmail, guestPhone, guestNotes),
+            Title = $"Appointment booked with {guestName}",
+            Description = BuildBookingDescription(bookingPage.Title, guestName, guestEmail, guestPhone, guestNotes),
             StartTime = startTime,
             EndTime = endTime,
             UserId = bookingPage.UserId,
             CalendarId = bookingPage.CalendarId,
             Location = bookingPage.Location,
+            Color = bookingPage.Color,
             EventType = EventType.Meeting,
             TimeZoneId = bookingPage.TimeZoneId,
             CreatedAt = DateTime.UtcNow,
@@ -545,12 +546,14 @@ public class BookingPageService : IBookingPageService
     }
 
     private string BuildBookingDescription(
+        string bookingPageTitle,
         string guestName,
         string guestEmail,
         string? guestPhone,
         string? guestNotes)
     {
-        var description = $"Booked by: {guestName}\n";
+        var description = $"Booking Type: {bookingPageTitle}\n\n";
+        description += $"Booked by: {guestName}\n";
         description += $"Email: {guestEmail}\n";
 
         if (!string.IsNullOrWhiteSpace(guestPhone))
