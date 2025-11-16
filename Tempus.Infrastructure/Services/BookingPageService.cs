@@ -313,6 +313,9 @@ public class BookingPageService : IBookingPageService
             ? TimeZoneInfo.Utc
             : TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
 
+        _logger.LogInformation("Generating slots for date range {StartDate} to {EndDate} (Kind: {Kind}) in timezone {TimeZone}",
+            startDate, endDate, startDate.Kind, timeZone.Id);
+
         var dailyStart = bookingPage.DailyStartTime ?? TimeSpan.FromHours(9); // Default 9 AM
         var dailyEnd = bookingPage.DailyEndTime ?? TimeSpan.FromHours(17); // Default 5 PM
         var availableDays = bookingPage.GetAvailableDaysOfWeek();
@@ -355,6 +358,9 @@ public class BookingPageService : IBookingPageService
             var dayEndTime = DateTime.SpecifyKind(
                 TimeZoneInfo.ConvertTimeToUtc(localEndTime, timeZone),
                 DateTimeKind.Utc);
+
+            _logger.LogInformation("Processing date {Date}: Local {LocalStart} -> UTC {UtcStart}",
+                date.ToShortDateString(), localDateTime, slotStart);
 
             while (slotStart.AddMinutes(durationMinutes) <= dayEndTime)
             {
@@ -454,7 +460,7 @@ public class BookingPageService : IBookingPageService
             Location = bookingPage.Location,
             Color = bookingPage.Color,
             EventType = EventType.Meeting,
-            TimeZoneId = bookingPage.TimeZoneId,
+            TimeZoneId = "UTC", // Events are always stored in UTC
             CreatedAt = DateTime.UtcNow,
             Tags = new List<string> { $"booking-page-{bookingPage.Id}", "public-booking" },
             Attendees = new List<Attendee>
