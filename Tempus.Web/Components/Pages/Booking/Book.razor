@@ -384,8 +384,8 @@ else
     private async Task LoadInitialTimeSlots()
     {
         loadingSlots = true;
-        searchStartDate = DateTime.Today;
-        searchEndDate = DateTime.Today.AddDays(14);
+        searchStartDate = DateTime.UtcNow.Date;
+        searchEndDate = DateTime.UtcNow.Date.AddDays(14);
 
         try
         {

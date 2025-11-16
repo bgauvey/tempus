@@ -106,17 +106,20 @@ public class BookingPageService : IBookingPageService
         var bookingPage = await _bookingPageRepository.GetByIdAsync(bookingPageId, string.Empty);
         if (bookingPage == null || !bookingPage.IsActive)
         {
-            _logger.LogDebug("Booking page {BookingPageId} not found or inactive", bookingPageId);
+            _logger.LogWarning("VALIDATION FAILED: Booking page {BookingPageId} not found or inactive", bookingPageId);
             return false;
         }
 
         var endTime = startTime.AddMinutes(durationMinutes);
 
+        _logger.LogInformation("Starting validation for slot {StartTime} UTC (duration: {Duration} min) on booking page {BookingPageId}",
+            startTime, durationMinutes, bookingPageId);
+
         // Check if time is within configured availability
         if (!IsWithinAvailabilityWindow(bookingPage, startTime))
         {
-            _logger.LogDebug("Time {StartTime} UTC not within availability window for booking page {BookingPageId}",
-                startTime, bookingPageId);
+            _logger.LogWarning("VALIDATION FAILED: Time {StartTime} UTC not within availability window (Working hours: {Start}-{End}, Days: {Days}, Timezone: {TZ})",
+                startTime, bookingPage.DailyStartTime, bookingPage.DailyEndTime, bookingPage.AvailableDaysOfWeek, bookingPage.TimeZoneId ?? "UTC");
             return false;
         }
 
@@ -124,15 +127,15 @@ public class BookingPageService : IBookingPageService
         var now = DateTime.UtcNow;
         if (startTime < now.AddMinutes(bookingPage.MinimumNoticeMinutes))
         {
-            _logger.LogDebug("Time {StartTime} UTC does not meet minimum notice requirement of {MinNotice} minutes (now: {Now} UTC)",
-                startTime, bookingPage.MinimumNoticeMinutes, now);
+            _logger.LogWarning("VALIDATION FAILED: Time {StartTime} UTC does not meet minimum notice requirement of {MinNotice} minutes (now: {Now} UTC, required by: {RequiredBy} UTC)",
+                startTime, bookingPage.MinimumNoticeMinutes, now, now.AddMinutes(bookingPage.MinimumNoticeMinutes));
             return false;
         }
 
         // Check maximum advance booking limit
         if (startTime > now.AddDays(bookingPage.MaxAdvanceBookingDays))
         {
-            _logger.LogDebug("Time {StartTime} UTC exceeds maximum advance booking limit of {MaxDays} days",
+            _logger.LogWarning("VALIDATION FAILED: Time {StartTime} UTC exceeds maximum advance booking limit of {MaxDays} days",
                 startTime, bookingPage.MaxAdvanceBookingDays);
             return false;
         }
@@ -140,7 +143,7 @@ public class BookingPageService : IBookingPageService
         // Check daily booking limit
         if (await HasReachedDailyLimitAsync(bookingPageId, startTime.Date))
         {
-            _logger.LogDebug("Daily booking limit reached for {Date}", startTime.Date);
+            _logger.LogWarning("VALIDATION FAILED: Daily booking limit reached for {Date}", startTime.Date);
             return false;
         }
 
@@ -148,7 +151,11 @@ public class BookingPageService : IBookingPageService
         var isFree = await IsSlotFreeAsync(bookingPage, startTime, durationMinutes);
         if (!isFree)
         {
-            _logger.LogDebug("Time slot {StartTime} UTC has conflicts with existing events", startTime);
+            _logger.LogWarning("VALIDATION FAILED: Time slot {StartTime} UTC has conflicts with existing events", startTime);
+        }
+        else
+        {
+            _logger.LogInformation("VALIDATION PASSED: Slot {StartTime} UTC is available", startTime);
         }
 
         return isFree;
@@ -169,7 +176,7 @@ public class BookingPageService : IBookingPageService
             searchEnd,
             bookingPage.UserId);
 
-        _logger.LogDebug("Checking {EventCount} events for conflicts with slot {SlotStart}-{SlotEnd} UTC (buffer: {BufferStart}-{BufferEnd} UTC)",
+        _logger.LogInformation("Conflict check: Found {EventCount} events to check against slot {SlotStart}-{SlotEnd} UTC (with buffers: {BufferStart}-{BufferEnd} UTC)",
             events.Count, slotStartUtc, slotEndUtc, bufferStartUtc, bufferEndUtc);
 
         // Check if any event conflicts with this slot (including buffers)
@@ -180,17 +187,24 @@ public class BookingPageService : IBookingPageService
             var eventStart = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
             var eventEnd = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
 
+            _logger.LogInformation("  Checking event '{Title}': {EventStart} UTC to {EventEnd} UTC",
+                e.Title, eventStart, eventEnd);
+
             // Event conflicts if it overlaps with the buffer window
             // Overlap occurs if: eventStart < bufferEnd AND eventEnd > bufferStart
             if (eventStart < bufferEndUtc && eventEnd > bufferStartUtc)
             {
-                _logger.LogDebug("Conflict found: Event '{Title}' ({EventStart}-{EventEnd} UTC) overlaps with slot",
-                    e.Title, eventStart, eventEnd);
+                _logger.LogWarning("  *** CONFLICT: Event '{Title}' ({EventStart}-{EventEnd} UTC) overlaps with requested slot ({SlotStart}-{SlotEnd} UTC + buffers)",
+                    e.Title, eventStart, eventEnd, slotStartUtc, slotEndUtc);
                 return false;
+            }
+            else
+            {
+                _logger.LogInformation("  OK: No overlap");
             }
         }
 
-        _logger.LogDebug("No conflicts found, slot is available");
+        _logger.LogInformation("Conflict check complete: No conflicts found, slot is available");
         return true;
     }
 
@@ -394,17 +408,19 @@ public class BookingPageService : IBookingPageService
             ? startTime
             : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
 
-        // Validate the booking
-        _logger.LogInformation("Validating booking slot: {StartTime} UTC, Duration: {Duration} min",
-            utcStartTime, durationMinutes);
+        _logger.LogInformation("=== CREATE BOOKING: Guest {GuestName} ({GuestEmail}) requesting slot {StartTime} UTC for {Duration} min on booking page {BookingPageSlug}",
+            guestName, guestEmail, utcStartTime, durationMinutes, bookingPage.Slug);
 
+        // Validate the booking
         if (!await IsTimeSlotAvailableAsync(bookingPage.Id, utcStartTime, durationMinutes))
         {
-            _logger.LogWarning("Booking slot validation failed for {StartTime} UTC", utcStartTime);
+            _logger.LogError("=== BOOKING FAILED: Validation failed for slot {StartTime} UTC - see validation logs above for specific reason",
+                utcStartTime);
             throw new InvalidOperationException("The selected time slot is no longer available");
         }
 
         startTime = utcStartTime;
+        _logger.LogInformation("=== VALIDATION PASSED: Creating event for {StartTime} UTC", utcStartTime);
 
         // Create the event
         var endTime = startTime.AddMinutes(durationMinutes);
