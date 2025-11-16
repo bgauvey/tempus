@@ -30,6 +30,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CalendarShare> CalendarShares { get; set; }
     public DbSet<PublicCalendar> PublicCalendars { get; set; }
     public DbSet<OutOfOfficeStatus> OutOfOfficeStatuses { get; set; }
+    public DbSet<BookingPage> BookingPages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -444,6 +445,41 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(o => new { o.UserId, o.IsActive });
             entity.HasIndex(o => new { o.UserId, o.StartDate, o.EndDate });
             entity.HasIndex(o => new { o.StartDate, o.EndDate, o.IsActive });
+        });
+
+        modelBuilder.Entity<BookingPage>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(b => b.Slug).IsRequired().HasMaxLength(100);
+            entity.Property(b => b.Title).IsRequired().HasMaxLength(200);
+            entity.Property(b => b.Description).HasMaxLength(2000);
+            entity.Property(b => b.WelcomeMessage).HasMaxLength(2000);
+            entity.Property(b => b.AvailableDurations).HasMaxLength(100);
+            entity.Property(b => b.AvailableDaysOfWeek).HasMaxLength(50);
+            entity.Property(b => b.TimeZoneId).HasMaxLength(100);
+            entity.Property(b => b.CustomFields).HasMaxLength(5000); // JSON storage
+            entity.Property(b => b.ConfirmationMessage).HasMaxLength(2000);
+            entity.Property(b => b.RedirectUrl).HasMaxLength(2000);
+            entity.Property(b => b.Color).HasMaxLength(50);
+            entity.Property(b => b.LogoUrl).HasMaxLength(2000);
+            entity.Property(b => b.Location).HasMaxLength(500);
+            entity.Property(b => b.VideoConferenceProvider).HasMaxLength(50);
+
+            entity.HasOne(b => b.User)
+                  .WithMany()
+                  .HasForeignKey(b => b.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(b => b.Calendar)
+                  .WithMany()
+                  .HasForeignKey(b => b.CalendarId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            // Ensure slug is unique
+            entity.HasIndex(b => b.Slug).IsUnique();
+            entity.HasIndex(b => new { b.UserId, b.IsActive });
+            entity.HasIndex(b => new { b.UserId, b.CreatedAt });
         });
     }
 }
