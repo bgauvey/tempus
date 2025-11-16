@@ -438,6 +438,10 @@ public class BookingPageService : IBookingPageService
 
         // Create the event
         var endTime = startTime.AddMinutes(durationMinutes);
+
+        _logger.LogInformation("Creating event with CalendarId: {CalendarId} (null = {IsNull})",
+            bookingPage.CalendarId, bookingPage.CalendarId == null);
+
         var bookingEvent = new Event
         {
             Id = Guid.NewGuid(),
