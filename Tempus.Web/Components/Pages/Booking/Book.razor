@@ -384,8 +384,11 @@ else
     private async Task LoadInitialTimeSlots()
     {
         loadingSlots = true;
-        searchStartDate = DateTime.UtcNow.Date;
-        searchEndDate = DateTime.UtcNow.Date.AddDays(14);
+        // Get current date in the booking page's timezone
+        var timeZone = GetBookingPageTimeZone();
+        var nowInBookingZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        searchStartDate = nowInBookingZone.Date;
+        searchEndDate = nowInBookingZone.Date.AddDays(14);
 
         try
         {
