@@ -110,10 +110,24 @@ public class BookingPageService : IBookingPageService
             return false;
         }
 
+        return await IsTimeSlotAvailableForPageAsync(bookingPage, startTime, durationMinutes);
+    }
+
+    private async Task<bool> IsTimeSlotAvailableForPageAsync(
+        BookingPage bookingPage,
+        DateTime startTime,
+        int durationMinutes)
+    {
+        if (!bookingPage.IsActive)
+        {
+            _logger.LogWarning("VALIDATION FAILED: Booking page {BookingPageId} is inactive", bookingPage.Id);
+            return false;
+        }
+
         var endTime = startTime.AddMinutes(durationMinutes);
 
         _logger.LogInformation("Starting validation for slot {StartTime} UTC (duration: {Duration} min) on booking page {BookingPageId}",
-            startTime, durationMinutes, bookingPageId);
+            startTime, durationMinutes, bookingPage.Id);
 
         // Check if time is within configured availability
         if (!IsWithinAvailabilityWindow(bookingPage, startTime))
@@ -141,7 +155,7 @@ public class BookingPageService : IBookingPageService
         }
 
         // Check daily booking limit
-        if (await HasReachedDailyLimitAsync(bookingPageId, startTime.Date))
+        if (await HasReachedDailyLimitAsync(bookingPage.Id, startTime.Date))
         {
             _logger.LogWarning("VALIDATION FAILED: Daily booking limit reached for {Date}", startTime.Date);
             return false;
@@ -411,8 +425,8 @@ public class BookingPageService : IBookingPageService
         _logger.LogInformation("=== CREATE BOOKING: Guest {GuestName} ({GuestEmail}) requesting slot {StartTime} UTC for {Duration} min on booking page {BookingPageSlug}",
             guestName, guestEmail, utcStartTime, durationMinutes, bookingPage.Slug);
 
-        // Validate the booking
-        if (!await IsTimeSlotAvailableAsync(bookingPage.Id, utcStartTime, durationMinutes))
+        // Validate the booking using the booking page object we already have
+        if (!await IsTimeSlotAvailableForPageAsync(bookingPage, utcStartTime, durationMinutes))
         {
             _logger.LogError("=== BOOKING FAILED: Validation failed for slot {StartTime} UTC - see validation logs above for specific reason",
                 utcStartTime);

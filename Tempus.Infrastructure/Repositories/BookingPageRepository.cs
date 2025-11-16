@@ -20,6 +20,16 @@ public class BookingPageRepository : IBookingPageRepository
     public async Task<BookingPage?> GetByIdAsync(Guid id, string userId)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // If userId is empty, only filter by ID (for public booking scenarios)
+        // Otherwise, filter by both ID and userId (for security)
+        if (string.IsNullOrEmpty(userId))
+        {
+            return await context.BookingPages
+                .Include(bp => bp.Calendar)
+                .FirstOrDefaultAsync(bp => bp.Id == id);
+        }
+
         return await context.BookingPages
             .Include(bp => bp.Calendar)
             .FirstOrDefaultAsync(bp => bp.Id == id && bp.UserId == userId);
