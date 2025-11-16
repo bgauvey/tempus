@@ -568,21 +568,42 @@ public class BookingPageService : IBookingPageService
         string guestName,
         string guestEmail)
     {
-        // Use SendMeetingInvitationAsync to send the confirmation
-        // We'll modify the event description to include the confirmation message if needed
+        // Convert event times from UTC to booking page's timezone for email display
+        var timeZone = string.IsNullOrEmpty(bookingPage.TimeZoneId)
+            ? TimeZoneInfo.Local
+            : TimeZoneInfo.FindSystemTimeZoneById(bookingPage.TimeZoneId);
+
+        var originalStartTime = bookingEvent.StartTime;
+        var originalEndTime = bookingEvent.EndTime;
         var originalDescription = bookingEvent.Description;
 
-        if (!string.IsNullOrEmpty(bookingPage.ConfirmationMessage))
+        try
         {
-            bookingEvent.Description = bookingPage.ConfirmationMessage + "\n\n---\n\n" + originalDescription;
+            // Temporarily convert times to local timezone for email display
+            // Ensure times are treated as UTC before conversion
+            var utcStart = DateTime.SpecifyKind(bookingEvent.StartTime, DateTimeKind.Utc);
+            var utcEnd = DateTime.SpecifyKind(bookingEvent.EndTime, DateTimeKind.Utc);
+
+            bookingEvent.StartTime = TimeZoneInfo.ConvertTimeFromUtc(utcStart, timeZone);
+            bookingEvent.EndTime = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, timeZone);
+
+            if (!string.IsNullOrEmpty(bookingPage.ConfirmationMessage))
+            {
+                bookingEvent.Description = bookingPage.ConfirmationMessage + "\n\n---\n\n" + originalDescription;
+            }
+
+            await _emailService.SendMeetingInvitationAsync(bookingEvent, bookingPage.User?.Email ?? "Organizer");
+
+            _logger.LogInformation("Sent booking confirmation email to {GuestEmail} with times in {TimeZone} timezone",
+                guestEmail, timeZone.Id);
         }
-
-        await _emailService.SendMeetingInvitationAsync(bookingEvent, bookingPage.User?.Email ?? "Organizer");
-
-        // Restore original description
-        bookingEvent.Description = originalDescription;
-
-        _logger.LogDebug("Sent booking confirmation email to {GuestEmail}", guestEmail);
+        finally
+        {
+            // Restore original UTC times
+            bookingEvent.StartTime = originalStartTime;
+            bookingEvent.EndTime = originalEndTime;
+            bookingEvent.Description = originalDescription;
+        }
     }
 
     private string BuildDefaultConfirmationMessage(BookingPage bookingPage, Event bookingEvent)
