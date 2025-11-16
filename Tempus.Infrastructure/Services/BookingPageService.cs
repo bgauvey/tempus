@@ -137,15 +137,35 @@ public class BookingPageService : IBookingPageService
         }
 
         // Check for conflicts with existing events (including buffer times)
-        var bufferStart = startTime.AddMinutes(-bookingPage.BufferBeforeMinutes);
-        var bufferEnd = endTime.AddMinutes(bookingPage.BufferAfterMinutes);
+        return await IsSlotFreeAsync(bookingPage, startTime, durationMinutes);
+    }
 
-        var conflicts = await _eventRepository.GetEventsByDateRangeAsync(
-            bufferStart,
-            bufferEnd,
+    private async Task<bool> IsSlotFreeAsync(BookingPage bookingPage, DateTime slotStartUtc, int durationMinutes)
+    {
+        var slotEndUtc = slotStartUtc.AddMinutes(durationMinutes);
+        var bufferStartUtc = slotStartUtc.AddMinutes(-bookingPage.BufferBeforeMinutes);
+        var bufferEndUtc = slotEndUtc.AddMinutes(bookingPage.BufferAfterMinutes);
+
+        // Get events that might conflict - expand range to be safe
+        var searchStart = bufferStartUtc.AddHours(-1);
+        var searchEnd = bufferEndUtc.AddHours(1);
+
+        var events = await _eventRepository.GetEventsByDateRangeAsync(
+            searchStart,
+            searchEnd,
             bookingPage.UserId);
 
-        return conflicts.Count == 0;
+        // Check if any event conflicts with this slot (including buffers)
+        var hasConflict = events.Any(e =>
+        {
+            // Event conflicts if it overlaps with the buffer window
+            // Event: [e.StartTime ----------- e.EndTime]
+            // Slot:         [bufferStart ========= bufferEnd]
+            // Conflict if: e.StartTime < bufferEnd AND e.EndTime > bufferStart
+            return e.StartTime < bufferEndUtc && e.EndTime > bufferStartUtc;
+        });
+
+        return !hasConflict;
     }
 
     public async Task<bool> HasReachedDailyLimitAsync(Guid bookingPageId, DateTime date)
@@ -243,10 +263,15 @@ public class BookingPageService : IBookingPageService
         var dailyEnd = bookingPage.DailyEndTime ?? TimeSpan.FromHours(17); // Default 5 PM
         var availableDays = bookingPage.GetAvailableDaysOfWeek();
 
-        // Get all events in the date range to check conflicts
-        var events = await _eventRepository.GetEventsByDateRangeAsync(
-            startDate,
-            endDate.AddDays(1),
+        // Pre-load all events in the date range once for efficiency
+        var localStartDate = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Unspecified);
+        var localEndDate = DateTime.SpecifyKind(endDate.Date.AddDays(1), DateTimeKind.Unspecified);
+        var utcSearchStart = TimeZoneInfo.ConvertTimeToUtc(localStartDate, timeZone).AddHours(-24);
+        var utcSearchEnd = TimeZoneInfo.ConvertTimeToUtc(localEndDate, timeZone).AddHours(24);
+
+        var allEvents = await _eventRepository.GetEventsByDateRangeAsync(
+            utcSearchStart,
+            utcSearchEnd,
             bookingPage.UserId);
 
         // Iterate through each day in the range
@@ -271,8 +296,6 @@ public class BookingPageService : IBookingPageService
 
             while (slotStart.AddMinutes(durationMinutes) <= dayEndTime)
             {
-                var slotEnd = slotStart.AddMinutes(durationMinutes);
-
                 // Check minimum notice
                 if (slotStart < now.AddMinutes(bookingPage.MinimumNoticeMinutes))
                 {
@@ -286,14 +309,8 @@ public class BookingPageService : IBookingPageService
                     break;
                 }
 
-                // Check for conflicts (including buffer times)
-                var bufferStart = slotStart.AddMinutes(-bookingPage.BufferBeforeMinutes);
-                var bufferEnd = slotEnd.AddMinutes(bookingPage.BufferAfterMinutes);
-
-                var hasConflict = events.Any(e =>
-                    (e.StartTime < bufferEnd && e.EndTime > bufferStart));
-
-                if (!hasConflict)
+                // Check for conflicts using pre-loaded events
+                if (IsSlotFreeWithEvents(bookingPage, slotStart, durationMinutes, allEvents))
                 {
                     availableSlots.Add(slotStart);
                 }
@@ -304,6 +321,22 @@ public class BookingPageService : IBookingPageService
         }
 
         return availableSlots;
+    }
+
+    private bool IsSlotFreeWithEvents(BookingPage bookingPage, DateTime slotStartUtc, int durationMinutes, List<Event> events)
+    {
+        var slotEndUtc = slotStartUtc.AddMinutes(durationMinutes);
+        var bufferStartUtc = slotStartUtc.AddMinutes(-bookingPage.BufferBeforeMinutes);
+        var bufferEndUtc = slotEndUtc.AddMinutes(bookingPage.BufferAfterMinutes);
+
+        // Check if any event conflicts with this slot (including buffers)
+        var hasConflict = events.Any(e =>
+        {
+            // Event conflicts if it overlaps with the buffer window
+            return e.StartTime < bufferEndUtc && e.EndTime > bufferStartUtc;
+        });
+
+        return !hasConflict;
     }
 
     private async Task<Event> CreateBookingForPageAsync(
