@@ -23,48 +23,40 @@
 @inject ILogger<EventFormDialog> Logger
 
 <style>
-    .rz-tabview-nav {
-        flex-wrap: wrap !important;
-        overflow-x: visible !important;
+    .event-form-container {
+        max-height: calc(80vh - 120px);
+        overflow-y: auto;
+        padding-right: 0.5rem;
     }
 
-    .rz-tabview-panels {
-        overflow-y: auto !important;
-        max-height: calc(80vh - 200px);
+    .event-form-section {
+        margin-bottom: 1rem;
+    }
+
+    .event-form-always-visible {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 1rem;
     }
 </style>
 
 <RadzenStack Gap="1rem">
-    <RadzenTabs RenderMode="TabRenderMode.Client" TabPosition="TabPosition.Top"
-                 Style="width: 100%; --rz-tabs-header-wrap: wrap;">
-        <Tabs>
-            <!-- Details Tab -->
-            <RadzenTabsItem Text="Details" Icon="event">
-                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                    <RadzenFormField Text="Title" Variant="Variant.Outlined">
-                        <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
-                    </RadzenFormField>
+    <div class="event-form-container">
+        <!-- ALWAYS VISIBLE SECTION -->
+        <div class="event-form-always-visible">
+            <RadzenStack Gap="1rem">
+                <RadzenFormField Text="Title" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="@_event.Title" Style="width: 100%;" />
+                </RadzenFormField>
 
-                    <RadzenFormField Text="Description" Variant="Variant.Outlined">
-                        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
-                    </RadzenFormField>
-
-                    <RadzenFormField Text="Calendar" Variant="Variant.Outlined">
-                        <RadzenDropDown @bind-Value="@_selectedCalendarId"
-                                        Data="@_calendars"
-                                        TextProperty="Name"
-                                        ValueProperty="Id"
-                                        Style="width: 100%;"
-                                        Placeholder="Select a calendar..." />
-                    </RadzenFormField>
-
-                    <RadzenRow Gap="1rem">
+                <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="@(IsAllDay ? "Start Date" : "Start Date/Time")" Variant="Variant.Outlined">
                             <RadzenDatePicker @bind-Value="@StartTime" ShowTime="@(!IsAllDay)"
                                             DateFormat="@(IsAllDay ? "MM/dd/yyyy" : DateTimeFormatString)"
                                             HourFormat="@HourFormat"
-                                            Style="width: 230px;" />
+                                            Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
@@ -72,450 +64,523 @@
                             <RadzenDatePicker @bind-Value="@EndTime" ShowTime="@(!IsAllDay)"
                                             DateFormat="@(IsAllDay ? "MM/dd/yyyy" : DateTimeFormatString)"
                                             HourFormat="@HourFormat"
-                                            Style="width: 230px;" />
+                                            Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
 
-                <RadzenFormField Text="Location" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
+                <RadzenFormField Text="Calendar" Variant="Variant.Outlined">
+                    <RadzenDropDown @bind-Value="@_selectedCalendarId"
+                                    Data="@_calendars"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Style="width: 100%;"
+                                    Placeholder="Select a calendar..." />
                 </RadzenFormField>
-
-                <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
-                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
-                        <div style="flex: 1; min-width: 0;">
-                            <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
-                                          Data="@_availableTimeZones"
-                                          TextProperty="DisplayName"
-                                          ValueProperty="Id"
-                                          FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                          AllowFiltering="true"
-                                          Placeholder="Select timezone..."
-                                          Style="width: 100%;" />
-                        </div>
-                        <RadzenButton Icon="refresh"
-                                    ButtonStyle="ButtonStyle.Light"
-                                    Size="ButtonSize.Small"
-                                    Click="@ResetToUserTimeZone"
-                                    title="Reset to your timezone"
-                                    Style="flex-shrink: 0;" />
-                    </div>
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem; display: block;">
-                        <RadzenIcon Icon="info" Style="font-size: 0.875rem; vertical-align: middle;" />
-                        Set timezone for multi-location meetings. Current: @GetTimeZoneAbbreviation()
-                    </RadzenText>
-                </RadzenFormField>
-
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
-                            <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
-                                          Change="@OnEventTypeChanged"
-                                          Style="width: 230px;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Priority" Variant="Variant.Outlined">
-                            <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
-                                          Style="width: 230px;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                </RadzenRow>
 
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenCheckBox @bind-Value="@IsAllDay" />
                     <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
                 </RadzenStack>
-
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
-                    <RadzenColorPicker @bind-Value="@_event.Color" />
-                </RadzenStack>
             </RadzenStack>
-        </RadzenTabsItem>
+        </div>
 
-        <!-- Meeting Tab (only for Meeting type events) -->
+        <!-- EVENT DETAILS SECTION -->
+        <RadzenExpander class="event-form-section" Expanded="@_eventDetailsExpanded">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="event" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Event Details</RadzenText>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Event Type" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@_event.EventType" Data="@_eventTypes"
+                                              Change="@OnEventTypeChanged"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@_event.Priority" Data="@_priorities"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenFormField Text="Location" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@_event.Location" Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                        <RadzenTextArea @bind-Value="@_event.Description" Style="width: 100%;" Rows="3" />
+                    </RadzenFormField>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
+                        <RadzenColorPicker @bind-Value="@_event.Color" />
+                    </RadzenStack>
+
+                    <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
+                        <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                            <div style="flex: 1; min-width: 0;">
+                                <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
+                                              Data="@_availableTimeZones"
+                                              TextProperty="DisplayName"
+                                              ValueProperty="Id"
+                                              FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                              AllowFiltering="true"
+                                              Placeholder="Select timezone..."
+                                              Style="width: 100%;" />
+                            </div>
+                            <RadzenButton Icon="refresh"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.Small"
+                                        Click="@ResetToUserTimeZone"
+                                        title="Reset to your timezone"
+                                        Style="flex-shrink: 0;" />
+                        </div>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem; display: block;">
+                            <RadzenIcon Icon="info" Style="font-size: 0.875rem; vertical-align: middle;" />
+                            Set timezone for multi-location meetings. Current: @GetTimeZoneAbbreviation()
+                        </RadzenText>
+                    </RadzenFormField>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenExpander>
+
+        <!-- MEETING DETAILS SECTION (Conditional) -->
         @if (_event.EventType == EventType.Meeting)
         {
-            <RadzenTabsItem Text="Meeting" Icon="groups">
-                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                    <!-- Attendees Section -->
-                    <RadzenFieldset Text="Attendees">
-                        <RadzenStack Gap="1rem">
-                @if (_event.Attendees.Any())
-                {
-                    <div style="max-height: 200px; overflow-y: auto;">
-                        @foreach (var attendee in _event.Attendees)
-                        {
-                            <RadzenCard Style="padding: 0.75rem; margin-bottom: 0.5rem;">
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@attendee.Name</RadzenText>
-                                            @if (attendee.IsOrganizer)
-                                            {
-                                                <RadzenBadge Text="Organizer" BadgeStyle="BadgeStyle.Info" Variant="Variant.Filled" />
-                                            }
-                                        </RadzenStack>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">@attendee.Email</RadzenText>
-                                    </RadzenStack>
-                                    @if (!attendee.IsOrganizer)
-                                    {
-                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                    Click="@(() => RemoveAttendee(attendee))" />
-                                    }
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No attendees added yet</RadzenText>
-                }
-
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12">
-                        <RadzenFormField Text="Search Contacts" Variant="Variant.Outlined">
-                            <RadzenAutoComplete @bind-Value="@_selectedContactEmail"
-                                              Data="@_contacts"
-                                              TextProperty="Email"
-                                              ValueProperty="Email"
-                                              Change="@OnContactSelected"
-                                              Placeholder="Type to search contacts or enter new email..."
-                                              Style="width: 100%;"
-                                              FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                              AllowCustomValues="true" />
-                        </RadzenFormField>
-                        @if (!string.IsNullOrWhiteSpace(_selectedContactEmail))
-                        {
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
-                                @if (_contacts.Any(c => c.Email.Equals(_selectedContactEmail, StringComparison.OrdinalIgnoreCase)))
+            <RadzenExpander class="event-form-section" Expanded="@_meetingDetailsExpanded">
+                <HeaderTemplate>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="groups" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Meeting Details</RadzenText>
+                    </RadzenStack>
+                </HeaderTemplate>
+                <ChildContent>
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <!-- Attendees Section -->
+                        <RadzenFieldset Text="Attendees">
+                            <RadzenStack Gap="1rem">
+                                @if (_event.Attendees.Any())
                                 {
-                                    <span>✓ Contact found in address book</span>
-                                }
-                                else if (IsValidEmail(_selectedContactEmail))
-                                {
-                                    <span>⊕ New contact - will be added to address book</span>
-                                }
-                            </RadzenText>
-                        }
-                    </RadzenColumn>
-                </RadzenRow>
-                <RadzenRow Gap="1rem" Style="margin-top: 0.5rem;">
-                    <RadzenColumn Size="12" SizeMD="10">
-                        <RadzenFormField Text="Name (for new contacts)" Variant="Variant.Outlined">
-                            <RadzenTextBox @bind-Value="@_newAttendeeName" Placeholder="Enter name" Style="width: 100%;"
-                                         Disabled="@(_selectedContact != null)" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="2" Style="display: flex; align-items: flex-end;">
-                        <RadzenButton Icon="add" Text="Add" ButtonStyle="ButtonStyle.Success"
-                                    Click="AddAttendee" Disabled="@(!CanAddAttendee())" Style="width: 100%;" />
-                    </RadzenColumn>
-                </RadzenRow>
-            </RadzenStack>
-                    </RadzenFieldset>
-
-                    <!-- Meeting Cost Calculator -->
-                    <RadzenFieldset Text="Meeting Cost Calculator">
-                        <RadzenStack Gap="1rem">
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Hourly Cost Per Attendee" Variant="Variant.Outlined">
-                            <RadzenNumeric @bind-Value="@_event.HourlyCostPerAttendee"
-                                         Min="0"
-                                         Step="5"
-                                         Format="c"
-                                         Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <div style="padding: 1rem; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 8px; border: 1px solid #667eea30;">
-                            <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; font-weight: 600;">ESTIMATED MEETING COST</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800;">
-                                    @CalculateMeetingCost().ToString("C")
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
-                                    @_event.Attendees.Count attendee(s) × @GetMeetingDuration().ToString("0.##") hour(s)
-                                </RadzenText>
-                            </RadzenStack>
-                        </div>
-                    </RadzenColumn>
-                </RadzenRow>
-                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem; color: #718096;">
-                    <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                    <strong>Note:</strong> This cost will be saved and used for monthly meeting analysis reports.
-                </div>
-                        </RadzenStack>
-                    </RadzenFieldset>
-
-                    <!-- RSVP Configuration Section -->
-                    <RadzenFieldset Text="RSVP Settings">
-                        <RadzenStack Gap="1rem">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenCheckBox @bind-Value="@_event.RequireRSVP" Name="requireRsvp" />
-                                <RadzenLabel Text="Require RSVP from attendees" Component="requireRsvp" Style="cursor: pointer;" />
-                            </RadzenStack>
-
-                            @if (_event.RequireRSVP)
-                            {
-                                <RadzenRow>
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="RSVP Deadline (optional)" Variant="@Variant.Outlined">
-                                            <RadzenDatePicker @bind-Value="@_event.RSVPDeadline"
-                                                            ShowTime="true"
-                                                            DateFormat="MM/dd/yyyy"
-                                                            TimeFormat="h:mm tt"
-                                                            Style="width: 100%;"
-                                                            Name="rsvpDeadline"
-                                                            Placeholder="No deadline" />
-                                        </RadzenFormField>
-                                    </RadzenColumn>
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenFormField Text="Guest List Visibility" Variant="@Variant.Outlined">
-                                            <RadzenDropDown @bind-Value="@_event.GuestListVisibility"
-                                                          Data="@_guestListVisibilityOptions"
-                                                          Style="width: 100%;"
-                                                          Name="guestListVisibility" />
-                                        </RadzenFormField>
-                                    </RadzenColumn>
-                                </RadzenRow>
-
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="@_event.AllowProposedTimes" Name="allowProposedTimes" />
-                                    <RadzenLabel Text="Allow attendees to propose alternative times" Component="allowProposedTimes" Style="cursor: pointer;" />
-                                </RadzenStack>
-
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="@_event.SendReminderToNonResponders" Name="sendReminder" />
-                                    <RadzenLabel Text="Send reminders to non-responders" Component="sendReminder" Style="cursor: pointer;" />
-                                </RadzenStack>
-
-                                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
-                                    <RadzenText TextStyle="TextStyle.Caption">
-                                        Attendees will receive an invitation email and can respond with Accept, Decline, or Tentative.
-                                    </RadzenText>
-                                </RadzenAlert>
-                            }
-                        </RadzenStack>
-                    </RadzenFieldset>
-                </RadzenStack>
-            </RadzenTabsItem>
-        }
-
-        <!-- Recurrence Tab (hidden when editing single occurrence) -->
-        @if (!EditSingleOccurrence)
-        {
-            <RadzenTabsItem Text="Recurrence" Icon="repeat">
-                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
-                    <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
-                </RadzenStack>
-
-                @if (_event.IsRecurring)
-            {
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Pattern" Variant="Variant.Outlined">
-                            <RadzenDropDown @bind-Value="@_event.RecurrencePattern" Data="@_recurrencePatterns"
-                                          Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Every" Variant="Variant.Outlined">
-                            <RadzenNumeric @bind-Value="@_event.RecurrenceInterval" Min="1" Max="99"
-                                         Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                </RadzenRow>
-
-                @if (_event.RecurrencePattern == RecurrencePattern.Weekly)
-                {
-                    <RadzenFormField Text="Repeat On" Variant="Variant.Outlined">
-                        <RadzenCheckBoxList @bind-Value="@_selectedDaysOfWeek" TValue="int"
-                                          Orientation="Orientation.Horizontal"
-                                          Data="@_daysOfWeek" TextProperty="Text" ValueProperty="Value" />
-                    </RadzenFormField>
-                }
-
-                <RadzenFormField Text="Ends" Variant="Variant.Outlined">
-                    <RadzenDropDown @bind-Value="@_event.RecurrenceEndType" Data="@_recurrenceEndTypes"
-                                  Style="width: 100%;" />
-                </RadzenFormField>
-
-                @if (_event.RecurrenceEndType == RecurrenceEndType.AfterOccurrences)
-                {
-                    <RadzenFormField Text="Number of Occurrences" Variant="Variant.Outlined">
-                        <RadzenNumeric @bind-Value="@_event.RecurrenceCount" Min="1" Max="999"
-                                     Style="width: 100%;" />
-                    </RadzenFormField>
-                }
-                else if (_event.RecurrenceEndType == RecurrenceEndType.OnDate)
-                {
-                    <RadzenFormField Text="End Date" Variant="Variant.Outlined">
-                        <RadzenDatePicker @bind-Value="@_event.RecurrenceEndDate" Style="width: 100%;" />
-                    </RadzenFormField>
-                }
-
-                        <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
-                            <strong>Summary:</strong> @GetRecurrenceSummary()
-                        </div>
-                    }
-                </RadzenStack>
-            </RadzenTabsItem>
-        }
-
-        <!-- Reminders Tab -->
-        <RadzenTabsItem Text="Reminders" Icon="notifications">
-            <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0.5rem;">
-                    Choose when you want to be reminded about this event
-                </RadzenText>
-
-                <RadzenFormField Text="Reminder Times" Variant="Variant.Outlined">
-                    <RadzenCheckBoxList @bind-Value="@_selectedReminders"
-                                        TValue="int"
-                                        Orientation="Orientation.Vertical"
-                                        Data="@_reminderOptions"
-                                        TextProperty="Text"
-                                        ValueProperty="Value" />
-                </RadzenFormField>
-
-                @if (_selectedReminders != null && _selectedReminders.Any())
-                {
-                    <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
-                        <RadzenIcon Icon="notifications_active" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                        <strong>Active Reminders:</strong>
-                        <div style="margin-top: 0.5rem;">
-                            @foreach (var minutes in _selectedReminders.OrderBy(m => m))
-                            {
-                                <div style="margin-left: 1.5rem; color: #718096;">
-                                    • @GetReminderDescription(minutes) before event start
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div style="padding: 0.75rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
-                        <RadzenIcon Icon="notifications_off" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                        No reminders set. You won't receive notifications for this event.
-                    </div>
-                }
-
-                <div style="padding: 0.75rem; background: #e7f3ff; border-radius: 8px; font-size: 0.85rem; color: #0c5394; margin-top: 1rem;">
-                    <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                    <strong>Note:</strong> Notifications will be delivered via browser push notifications. Make sure your browser has notification permissions enabled.
-                </div>
-            </RadzenStack>
-        </RadzenTabsItem>
-
-        <!-- Attachments Tab -->
-        <RadzenTabsItem Text="Attachments" Icon="attach_file">
-            <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <EventAttachmentsManager EventId="@EventId"
-                                       Attachments="@_attachments"
-                                       OnAttachmentsChanged="@OnAttachmentsChanged"
-                                       UserId="@_userId" />
-            </RadzenStack>
-        </RadzenTabsItem>
-
-        <!-- Video Conference Tab -->
-        <RadzenTabsItem Text="Video Conference" Icon="videocam">
-            <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <VideoConferenceManager EventId="@EventId"
-                                      VideoConference="@_videoConference"
-                                      OnVideoConferenceChanged="@OnVideoConferenceChanged"
-                                      UserId="@_userId" />
-            </RadzenStack>
-        </RadzenTabsItem>
-
-        <!-- Rooms & Resources Tab -->
-        <RadzenTabsItem Text="Rooms & Resources" Icon="meeting_room">
-            <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                <!-- Room Booking Section -->
-                <RadzenFieldset Text="Conference Room">
-                    <RadzenStack Gap="1rem">
-                        @if (_bookedRoom != null)
-                        {
-                            <RadzenCard Style="background: #f0fdf4; border: 1px solid #86efac;">
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                    <RadzenStack Gap="0.5rem">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenIcon Icon="meeting_room" Style="color: #16a34a;" />
-                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">@_bookedRoom.Name</RadzenText>
-                                            <RadzenBadge Text="Booked" BadgeStyle="BadgeStyle.Success" />
-                                        </RadzenStack>
-                                        @if (!string.IsNullOrEmpty(_bookedRoom.Location))
+                                    <div style="max-height: 200px; overflow-y: auto;">
+                                        @foreach (var attendee in _event.Attendees)
                                         {
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #15803d;">
-                                                <RadzenIcon Icon="location_on" Style="font-size: 0.875rem;" /> @_bookedRoom.Location
+                                            <RadzenCard Style="padding: 0.75rem; margin-bottom: 0.5rem;">
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                    <RadzenStack Gap="0.25rem">
+                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@attendee.Name</RadzenText>
+                                                            @if (attendee.IsOrganizer)
+                                                            {
+                                                                <RadzenBadge Text="Organizer" BadgeStyle="BadgeStyle.Info" Variant="Variant.Filled" />
+                                                            }
+                                                        </RadzenStack>
+                                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096;">@attendee.Email</RadzenText>
+                                                    </RadzenStack>
+                                                    @if (!attendee.IsOrganizer)
+                                                    {
+                                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                                    Click="@(() => RemoveAttendee(attendee))" />
+                                                    }
+                                                </RadzenStack>
+                                            </RadzenCard>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No attendees added yet</RadzenText>
+                                }
+
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12">
+                                        <RadzenFormField Text="Search Contacts" Variant="Variant.Outlined">
+                                            <RadzenAutoComplete @bind-Value="@_selectedContactEmail"
+                                                              Data="@_contacts"
+                                                              TextProperty="Email"
+                                                              ValueProperty="Email"
+                                                              Change="@OnContactSelected"
+                                                              Placeholder="Type to search contacts or enter new email..."
+                                                              Style="width: 100%;"
+                                                              FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                              AllowCustomValues="true" />
+                                        </RadzenFormField>
+                                        @if (!string.IsNullOrWhiteSpace(_selectedContactEmail))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem;">
+                                                @if (_contacts.Any(c => c.Email.Equals(_selectedContactEmail, StringComparison.OrdinalIgnoreCase)))
+                                                {
+                                                    <span>✓ Contact found in address book</span>
+                                                }
+                                                else if (IsValidEmail(_selectedContactEmail))
+                                                {
+                                                    <span>⊕ New contact - will be added to address book</span>
+                                                }
                                             </RadzenText>
                                         }
-                                    </RadzenStack>
-                                    <RadzenButton Text="Change Room" Icon="swap_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                  Click="@FindRoom" />
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
-                        else
-                        {
-                            <RadzenButton Text="Find Available Room" Icon="search" ButtonStyle="ButtonStyle.Primary"
-                                          Click="@FindRoom" Style="width: 100%;" />
-                        }
-                    </RadzenStack>
-                </RadzenFieldset>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                <RadzenRow Gap="1rem" Style="margin-top: 0.5rem;">
+                                    <RadzenColumn Size="12" SizeMD="10">
+                                        <RadzenFormField Text="Name (for new contacts)" Variant="Variant.Outlined">
+                                            <RadzenTextBox @bind-Value="@_newAttendeeName" Placeholder="Enter name" Style="width: 100%;"
+                                                         Disabled="@(_selectedContact != null)" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="2" Style="display: flex; align-items: flex-end;">
+                                        <RadzenButton Icon="add" Text="Add" ButtonStyle="ButtonStyle.Success"
+                                                    Click="AddAttendee" Disabled="@(!CanAddAttendee())" Style="width: 100%;" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenFieldset>
 
-                <!-- Resource Reservation Section -->
-                <RadzenFieldset Text="Resources & Equipment">
-                    <RadzenStack Gap="1rem">
-                        @if (_reservedResources.Any())
-                        {
-                            <RadzenStack Gap="0.5rem">
-                                @foreach (var reservation in _reservedResources)
+                        <!-- RSVP Configuration Section -->
+                        <RadzenFieldset Text="RSVP Settings">
+                            <RadzenStack Gap="1rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="@_event.RequireRSVP" Name="requireRsvp" />
+                                    <RadzenLabel Text="Require RSVP from attendees" Component="requireRsvp" Style="cursor: pointer;" />
+                                </RadzenStack>
+
+                                @if (_event.RequireRSVP)
                                 {
-                                    var resource = _allResources.FirstOrDefault(r => r.Id == reservation.ResourceId);
-                                    if (resource != null)
-                                    {
-                                        <RadzenCard Style="background: #eff6ff; border: 1px solid #93c5fd; padding: 0.75rem;">
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenIcon Icon="@GetResourceIcon(resource.ResourceType)" Style="color: #2563eb;" />
-                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@resource.Name</RadzenText>
-                                                    <RadzenBadge Text="@($"Qty: {reservation.QuantityReserved}")" BadgeStyle="BadgeStyle.Info" />
-                                                </RadzenStack>
-                                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                              Click="@(() => RemoveResourceReservation(reservation))" />
-                                            </RadzenStack>
-                                        </RadzenCard>
-                                    }
+                                    <RadzenRow>
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="RSVP Deadline (optional)" Variant="@Variant.Outlined">
+                                                <RadzenDatePicker @bind-Value="@_event.RSVPDeadline"
+                                                                ShowTime="true"
+                                                                DateFormat="MM/dd/yyyy"
+                                                                TimeFormat="h:mm tt"
+                                                                Style="width: 100%;"
+                                                                Name="rsvpDeadline"
+                                                                Placeholder="No deadline" />
+                                            </RadzenFormField>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="Guest List Visibility" Variant="@Variant.Outlined">
+                                                <RadzenDropDown @bind-Value="@_event.GuestListVisibility"
+                                                              Data="@_guestListVisibilityOptions"
+                                                              Style="width: 100%;"
+                                                              Name="guestListVisibility" />
+                                            </RadzenFormField>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenCheckBox @bind-Value="@_event.AllowProposedTimes" Name="allowProposedTimes" />
+                                        <RadzenLabel Text="Allow attendees to propose alternative times" Component="allowProposedTimes" Style="cursor: pointer;" />
+                                    </RadzenStack>
+
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenCheckBox @bind-Value="@_event.SendReminderToNonResponders" Name="sendReminder" />
+                                        <RadzenLabel Text="Send reminders to non-responders" Component="sendReminder" Style="cursor: pointer;" />
+                                    </RadzenStack>
+
+                                    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                        <RadzenText TextStyle="TextStyle.Caption">
+                                            Attendees will receive an invitation email and can respond with Accept, Decline, or Tentative.
+                                        </RadzenText>
+                                    </RadzenAlert>
                                 }
                             </RadzenStack>
-                        }
-                        else
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No resources reserved</RadzenText>
-                        }
+                        </RadzenFieldset>
 
-                        <RadzenButton Text="Add Resources" Icon="add" ButtonStyle="ButtonStyle.Success"
-                                      Click="@AddResources" Style="width: 100%;" />
+                        <!-- Meeting Cost Calculator -->
+                        <RadzenFieldset Text="Meeting Cost Calculator">
+                            <RadzenStack Gap="1rem">
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Hourly Cost Per Attendee" Variant="Variant.Outlined">
+                                            <RadzenNumeric @bind-Value="@_event.HourlyCostPerAttendee"
+                                                         Min="0"
+                                                         Step="5"
+                                                         Format="c"
+                                                         Style="width: 100%;" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <div style="padding: 1rem; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 8px; border: 1px solid #667eea30;">
+                                            <RadzenStack Gap="0.5rem">
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; font-weight: 600;">ESTIMATED MEETING COST</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800;">
+                                                    @CalculateMeetingCost().ToString("C")
+                                                </RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096;">
+                                                    @_event.Attendees.Count attendee(s) × @GetMeetingDuration().ToString("0.##") hour(s)
+                                                </RadzenText>
+                                            </RadzenStack>
+                                        </div>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem; color: #718096;">
+                                    <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                                    <strong>Note:</strong> This cost will be saved and used for monthly meeting analysis reports.
+                                </div>
+                            </RadzenStack>
+                        </RadzenFieldset>
                     </RadzenStack>
-                </RadzenFieldset>
+                </ChildContent>
+            </RadzenExpander>
+        }
 
-                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
-                    <RadzenText TextStyle="TextStyle.Caption">
-                        Room and resource bookings are checked for availability based on the event start and end times.
-                        Make sure to set your event times before booking.
+        <!-- RECURRENCE SECTION (hidden when editing single occurrence) -->
+        @if (!EditSingleOccurrence)
+        {
+            <RadzenExpander class="event-form-section" Expanded="@_recurrenceExpanded">
+                <HeaderTemplate>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="repeat" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Repeat</RadzenText>
+                    </RadzenStack>
+                </HeaderTemplate>
+                <ChildContent>
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@_event.IsRecurring" />
+                            <RadzenLabel Text="Recurring Event" Style="margin: 0; cursor: pointer;" />
+                        </RadzenStack>
+
+                        @if (_event.IsRecurring)
+                        {
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Pattern" Variant="Variant.Outlined">
+                                        <RadzenDropDown @bind-Value="@_event.RecurrencePattern" Data="@_recurrencePatterns"
+                                                      Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenFormField Text="Every" Variant="Variant.Outlined">
+                                        <RadzenNumeric @bind-Value="@_event.RecurrenceInterval" Min="1" Max="99"
+                                                     Style="width: 100%;" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            @if (_event.RecurrencePattern == RecurrencePattern.Weekly)
+                            {
+                                <RadzenFormField Text="Repeat On" Variant="Variant.Outlined">
+                                    <RadzenCheckBoxList @bind-Value="@_selectedDaysOfWeek" TValue="int"
+                                                      Orientation="Orientation.Horizontal"
+                                                      Data="@_daysOfWeek" TextProperty="Text" ValueProperty="Value" />
+                                </RadzenFormField>
+                            }
+
+                            <RadzenFormField Text="Ends" Variant="Variant.Outlined">
+                                <RadzenDropDown @bind-Value="@_event.RecurrenceEndType" Data="@_recurrenceEndTypes"
+                                              Style="width: 100%;" />
+                            </RadzenFormField>
+
+                            @if (_event.RecurrenceEndType == RecurrenceEndType.AfterOccurrences)
+                            {
+                                <RadzenFormField Text="Number of Occurrences" Variant="Variant.Outlined">
+                                    <RadzenNumeric @bind-Value="@_event.RecurrenceCount" Min="1" Max="999"
+                                                 Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+                            else if (_event.RecurrenceEndType == RecurrenceEndType.OnDate)
+                            {
+                                <RadzenFormField Text="End Date" Variant="Variant.Outlined">
+                                    <RadzenDatePicker @bind-Value="@_event.RecurrenceEndDate" Style="width: 100%;" />
+                                </RadzenFormField>
+                            }
+
+                            <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                                <strong>Summary:</strong> @GetRecurrenceSummary()
+                            </div>
+                        }
+                    </RadzenStack>
+                </ChildContent>
+            </RadzenExpander>
+        }
+
+        <!-- REMINDERS SECTION -->
+        <RadzenExpander class="event-form-section" Expanded="@_remindersExpanded">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="notifications" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Reminders</RadzenText>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0.5rem;">
+                        Choose when you want to be reminded about this event
                     </RadzenText>
-                </RadzenAlert>
-            </RadzenStack>
-        </RadzenTabsItem>
-        </Tabs>
-    </RadzenTabs>
+
+                    <RadzenFormField Text="Reminder Times" Variant="Variant.Outlined">
+                        <RadzenCheckBoxList @bind-Value="@_selectedReminders"
+                                            TValue="int"
+                                            Orientation="Orientation.Vertical"
+                                            Data="@_reminderOptions"
+                                            TextProperty="Text"
+                                            ValueProperty="Value" />
+                    </RadzenFormField>
+
+                    @if (_selectedReminders != null && _selectedReminders.Any())
+                    {
+                        <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                            <RadzenIcon Icon="notifications_active" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                            <strong>Active Reminders:</strong>
+                            <div style="margin-top: 0.5rem;">
+                                @foreach (var minutes in _selectedReminders.OrderBy(m => m))
+                                {
+                                    <div style="margin-left: 1.5rem; color: #718096;">
+                                        • @GetReminderDescription(minutes) before event start
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="padding: 0.75rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
+                            <RadzenIcon Icon="notifications_off" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                            No reminders set. You won't receive notifications for this event.
+                        </div>
+                    }
+
+                    <div style="padding: 0.75rem; background: #e7f3ff; border-radius: 8px; font-size: 0.85rem; color: #0c5394; margin-top: 1rem;">
+                        <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
+                        <strong>Note:</strong> Notifications will be delivered via browser push notifications. Make sure your browser has notification permissions enabled.
+                    </div>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenExpander>
+
+        <!-- ATTACHMENTS SECTION -->
+        <RadzenExpander class="event-form-section" Expanded="@_attachmentsExpanded">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="attach_file" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Attachments</RadzenText>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <EventAttachmentsManager EventId="@EventId"
+                                           Attachments="@_attachments"
+                                           OnAttachmentsChanged="@OnAttachmentsChanged"
+                                           UserId="@_userId" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenExpander>
+
+        <!-- VIDEO CONFERENCE SECTION -->
+        <RadzenExpander class="event-form-section" Expanded="@_videoExpanded">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="videocam" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Video Conference</RadzenText>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <VideoConferenceManager EventId="@EventId"
+                                          VideoConference="@_videoConference"
+                                          OnVideoConferenceChanged="@OnVideoConferenceChanged"
+                                          UserId="@_userId" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenExpander>
+
+        <!-- ROOMS & RESOURCES SECTION -->
+        <RadzenExpander class="event-form-section" Expanded="@_roomsExpanded">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="meeting_room" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Rooms & Resources</RadzenText>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                    <!-- Room Booking Section -->
+                    <RadzenFieldset Text="Conference Room">
+                        <RadzenStack Gap="1rem">
+                            @if (_bookedRoom != null)
+                            {
+                                <RadzenCard Style="background: #f0fdf4; border: 1px solid #86efac;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenIcon Icon="meeting_room" Style="color: #16a34a;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">@_bookedRoom.Name</RadzenText>
+                                                <RadzenBadge Text="Booked" BadgeStyle="BadgeStyle.Success" />
+                                            </RadzenStack>
+                                            @if (!string.IsNullOrEmpty(_bookedRoom.Location))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="color: #15803d;">
+                                                    <RadzenIcon Icon="location_on" Style="font-size: 0.875rem;" /> @_bookedRoom.Location
+                                                </RadzenText>
+                                            }
+                                        </RadzenStack>
+                                        <RadzenButton Text="Change Room" Icon="swap_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                      Click="@FindRoom" />
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                            else
+                            {
+                                <RadzenButton Text="Find Available Room" Icon="search" ButtonStyle="ButtonStyle.Primary"
+                                              Click="@FindRoom" Style="width: 100%;" />
+                            }
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <!-- Resource Reservation Section -->
+                    <RadzenFieldset Text="Resources & Equipment">
+                        <RadzenStack Gap="1rem">
+                            @if (_reservedResources.Any())
+                            {
+                                <RadzenStack Gap="0.5rem">
+                                    @foreach (var reservation in _reservedResources)
+                                    {
+                                        var resource = _allResources.FirstOrDefault(r => r.Id == reservation.ResourceId);
+                                        if (resource != null)
+                                        {
+                                            <RadzenCard Style="background: #eff6ff; border: 1px solid #93c5fd; padding: 0.75rem;">
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenIcon Icon="@GetResourceIcon(resource.ResourceType)" Style="color: #2563eb;" />
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@resource.Name</RadzenText>
+                                                        <RadzenBadge Text="@($"Qty: {reservation.QuantityReserved}")" BadgeStyle="BadgeStyle.Info" />
+                                                    </RadzenStack>
+                                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                                  Click="@(() => RemoveResourceReservation(reservation))" />
+                                                </RadzenStack>
+                                            </RadzenCard>
+                                        }
+                                    }
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: #718096; font-style: italic;">No resources reserved</RadzenText>
+                            }
+
+                            <RadzenButton Text="Add Resources" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                          Click="@AddResources" Style="width: 100%;" />
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            Room and resource bookings are checked for availability based on the event start and end times.
+                            Make sure to set your event times before booking.
+                        </RadzenText>
+                    </RadzenAlert>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenExpander>
+    </div>
 
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
@@ -1339,6 +1404,15 @@
     private Guid? _roomBookingId = null;
     private List<ResourceReservation> _reservedResources = new();
     private List<Resource> _allResources = new();
+
+    // Expander state variables
+    private bool _eventDetailsExpanded = true;
+    private bool _meetingDetailsExpanded = true;
+    private bool _recurrenceExpanded = true;
+    private bool _remindersExpanded = true;
+    private bool _attachmentsExpanded = true;
+    private bool _videoExpanded = true;
+    private bool _roomsExpanded = true;
 
     private async Task FindRoom()
     {
