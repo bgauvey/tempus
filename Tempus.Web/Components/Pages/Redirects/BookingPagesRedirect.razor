@@ -1,0 +1,9 @@
+@page "/booking-pages"
+@inject NavigationManager Navigation
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect /booking-pages to /integrations (booking pages now integrated into integrations page)
+        Navigation.NavigateTo("/integrations", forceLoad: false);
+    }
+}

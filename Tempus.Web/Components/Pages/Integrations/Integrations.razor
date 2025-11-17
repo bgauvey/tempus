@@ -4,17 +4,23 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
+@using Tempus.Web.Components.Dialogs
+@using System.Security.Claims
 @attribute [Authorize]
 @inject IGoogleCalendarService GoogleCalendarService
 @inject IAppleCalendarService AppleCalendarService
 @inject IOutlookCalendarService OutlookCalendarService
 @inject ICalendarIntegrationRepository IntegrationRepository
+@inject IBookingPageRepository BookingPageRepository
+@inject IBookingPageService BookingPageService
+@inject ICalendarRepository CalendarRepository
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject ILogger<Integrations> Logger
 
-<PageTitle>Integrations - Tempus</PageTitle>
+<PageTitle>Integrations & Booking - Tempus</PageTitle>
 
 <RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Calendar Integrations</RadzenText>
 <RadzenText class="rz-mb-4">Connect your existing calendars to sync events with Tempus</RadzenText>
@@ -180,7 +186,92 @@
     </RadzenAlert>
 }
 
+<!-- Booking Pages Section -->
+<RadzenText TextStyle="TextStyle.H3" class="rz-mb-2 rz-mt-6">Booking Pages</RadzenText>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-4">
+    <RadzenText>Create public booking pages to let others schedule time with you automatically - like Calendly.</RadzenText>
+    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add_circle" Text="Create Booking Page" Click="@CreateNewBookingPage" />
+</RadzenStack>
+
+@if (_isLoadingBookingPages)
+{
+    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 2rem auto;" />
+}
+else if (!_bookingPages.Any())
+{
+    <RadzenCard>
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Style="text-align: center; padding: 2rem;">
+            <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: var(--rz-text-tertiary-color);" />
+            <RadzenText TextStyle="TextStyle.H6">No booking pages yet</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Create your first booking page to start accepting appointments.
+            </RadzenText>
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add_circle" Text="Create Booking Page" Click="@CreateNewBookingPage" />
+        </RadzenStack>
+    </RadzenCard>
+}
+else
+{
+    <RadzenRow Gap="1rem">
+        @foreach (var page in _bookingPages)
+        {
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <RadzenCard Style="height: 100%;">
+                    <RadzenStack Gap="1rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="event_available" Style="font-size: 1.5rem;" />
+                            <RadzenText TextStyle="TextStyle.H6">@(page.Title)</RadzenText>
+                            @if (page.IsActive)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Active" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="Inactive" />
+                            }
+                        </RadzenStack>
+
+                        @if (!string.IsNullOrEmpty(page.Description))
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-2" Style="color: var(--rz-text-secondary-color);">
+                                @(page.Description)
+                            </RadzenText>
+                        }
+
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                <strong>Link:</strong> /book/@(page.Slug)
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                <strong>Duration:</strong> @(page.DurationMinutes) minutes
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                <strong>Bookings:</strong> @(page.TotalBookings)
+                            </RadzenText>
+                            @if (page.LastBookingAt.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption">
+                                    <strong>Last booking:</strong> @(page.LastBookingAt.Value.ToString("MMM dd, yyyy"))
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Icon="content_copy" title="Copy link" Click="@(() => CopyBookingLink(page))" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Icon="visibility" title="View" Click="@(() => ViewBookingPage(page))" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Icon="edit" title="Edit" Click="@(() => EditBookingPage(page))" />
+                            <RadzenButton ButtonStyle="@(page.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)" Size="ButtonSize.Small" Icon="@(page.IsActive ? "pause_circle" : "play_circle")" title="@(page.IsActive ? "Deactivate" : "Activate")" Click="@(() => ToggleActive(page))" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Icon="delete" title="Delete" Click="@(() => DeleteBookingPage(page))" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        }
+    </RadzenRow>
+}
+
 @code {
+    // Calendar integration state
     private CalendarIntegration? _googleIntegration;
     private CalendarIntegration? _appleIntegration;
     private CalendarIntegration? _outlookIntegration;
@@ -188,6 +279,10 @@
     private bool _isSyncingApple = false;
     private bool _isSyncingOutlook = false;
     private string _userId = string.Empty;
+
+    // Booking pages state
+    private List<BookingPage> _bookingPages = new();
+    private bool _isLoadingBookingPages = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,6 +292,7 @@
         if (!string.IsNullOrEmpty(_userId))
         {
             await LoadIntegrations();
+            await LoadBookingPages();
         }
     }
 
@@ -471,6 +567,138 @@
                     Severity = NotificationSeverity.Error,
                     Summary = "Disconnect Failed",
                     Detail = ex.Message,
+                    Duration = 5000
+                });
+            }
+        }
+    }
+
+    // Booking Pages methods
+    private async Task LoadBookingPages()
+    {
+        _isLoadingBookingPages = true;
+        try
+        {
+            _bookingPages = await BookingPageRepository.GetAllAsync(_userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading booking pages");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load booking pages",
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            _isLoadingBookingPages = false;
+        }
+    }
+
+    private async Task CreateNewBookingPage()
+    {
+        var result = await DialogService.OpenAsync<BookingPageDialog>("Create Booking Page",
+            new Dictionary<string, object> { { "UserId", _userId } },
+            new DialogOptions { Width = "800px", Height = "80vh", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await LoadBookingPages();
+        }
+    }
+
+    private async Task EditBookingPage(BookingPage page)
+    {
+        var result = await DialogService.OpenAsync<BookingPageDialog>($"Edit {page.Title}",
+            new Dictionary<string, object> { { "BookingPage", page }, { "UserId", _userId } },
+            new DialogOptions { Width = "800px", Height = "80vh", Resizable = true, Draggable = true });
+
+        if (result != null)
+        {
+            await LoadBookingPages();
+        }
+    }
+
+    private void ViewBookingPage(BookingPage page)
+    {
+        var url = $"/book/{page.Slug}";
+        NavigationManager.NavigateTo(url, forceLoad: true);
+    }
+
+    private async Task CopyBookingLink(BookingPage page)
+    {
+        var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+        var fullUrl = $"{baseUrl}/book/{page.Slug}";
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Booking Link",
+            Detail = $"Copy this link: {fullUrl}",
+            Duration = 5000
+        });
+    }
+
+    private async Task ToggleActive(BookingPage page)
+    {
+        try
+        {
+            page.IsActive = !page.IsActive;
+            await BookingPageRepository.UpdateAsync(page);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Booking page {(page.IsActive ? "activated" : "deactivated")}",
+                Duration = 5000
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling booking page status");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to update booking page",
+                Duration = 5000
+            });
+            page.IsActive = !page.IsActive; // Revert on error
+        }
+    }
+
+    private async Task DeleteBookingPage(BookingPage page)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete '{page.Title}'? This action cannot be undone.",
+            "Delete Booking Page",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await BookingPageRepository.DeleteAsync(page.Id, _userId);
+                _bookingPages.Remove(page);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Booking page deleted",
+                    Duration = 5000
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting booking page");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to delete booking page",
                     Duration = 5000
                 });
             }
