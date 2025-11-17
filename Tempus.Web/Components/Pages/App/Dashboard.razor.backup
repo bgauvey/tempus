@@ -1,0 +1,384 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Web.Services
+@using Microsoft.JSInterop
+@using Tempus.Web.Components.Account
+@attribute [Authorize]
+@inject IEventRepository EventRepository
+@inject ISettingsService SettingsService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IdentityUserAccessor IdentityUserAccessor
+@inject IPdfAgendaService PdfAgendaService
+@inject IJSRuntime JSRuntime
+@inject ITimeZoneConversionService TimeZoneConversionService
+@inject ILogger<Dashboard> Logger
+
+<PageTitle>Dashboard - Tempus</PageTitle>
+
+<div style="padding: 2rem;">
+    <RadzenStack Gap="2rem">
+        <!-- Header -->
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Dashboard</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
+                Welcome back! Here's your overview for today.
+            </RadzenText>
+        </RadzenStack>
+
+        <!-- Metrics Cards -->
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_todayEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Today's Events</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_upcomingEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">This Week</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_totalEvents</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Total Events</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(250, 112, 154, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_pendingTasks</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Pending Tasks</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Main Content -->
+        <RadzenRow Gap="1.5rem" class="dashboard-main-row">
+            <RadzenColumn Size="12" SizeLG="8" class="dashboard-column">
+                <RadzenCard class="dashboard-card dashboard-card-equal-height">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Upcoming Events</RadzenText>
+                        @if (_recentEvents.Any())
+                        {
+                            <RadzenStack Gap="0.75rem">
+                                @foreach (var evt in _recentEvents)
+                                {
+                                    <RadzenCard>
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
+                                                </div>
+                                                <RadzenStack Gap="0.25rem">
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                                        @evt.Title @GetTimeZoneIndicator(evt)
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2">
+                                                        @GetDisplayTime(evt).ToString(DateTimeFormatString)
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@evt.EventType.ToString()" />
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Style="padding: 3rem; text-align: center;">
+                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; opacity: 0.3;" />
+                                <RadzenText>No upcoming events. Start by creating your first event!</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeLG="4" class="dashboard-column">
+                <RadzenCard class="dashboard-card dashboard-card-equal-height">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
+                        <RadzenStack Gap="0.75rem">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="picture_as_pdf"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
+                                          Click="DownloadTodayAgenda">
+                                Download Today's Agenda
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/events"))">
+                                Create Event
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="upload"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/import"))">
+                                Import ICS / PST File
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="calendar_month"
+                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
+                                          Click="@(() => NavigationManager.NavigateTo("/calendar"))">
+                                View Calendar
+                            </RadzenButton>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Additional Stats Section -->
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Event Distribution</RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Meetings</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@_meetingCount.ToString()" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Tasks</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@_taskCount.ToString()" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenText>Appointments</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@_appointmentCount.ToString()" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard class="dashboard-card">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Recent Activity</RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @if (_totalEvents > 0)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="check_circle" Style="color: #43e97b; margin-top: 2px;" />
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Events Created</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@_totalEvents total events in the system</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="schedule" Style="color: #4facfe; margin-top: 2px;" />
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Upcoming This Week</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@_upcomingEvents events scheduled</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenText Style="text-align: center; padding: 1rem;">
+                                    No activity yet. Start creating events!
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+</div>
+
+@code {
+    private int _todayEvents;
+    private int _upcomingEvents;
+    private int _totalEvents;
+    private int _pendingTasks;
+    private int _meetingCount;
+    private int _taskCount;
+    private int _appointmentCount;
+    private List<Event> _recentEvents = new();
+
+    private string _userId = string.Empty;
+    private string _userTimeZone = TimeZoneInfo.Local.Id;
+    private CalendarSettings? _settings;
+
+    private string DateTimeFormatString => _settings?.TimeFormat == Core.Enums.TimeFormat.TwentyFourHour
+        ? "MMM dd, yyyy • HH:mm"
+        : "MMM dd, yyyy • hh:mm tt";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
+            if (appUser != null)
+            {
+                _userId = appUser.Id;
+                _userTimeZone = appUser.TimeZone;
+                // Load user's calendar settings for time format preference
+                _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
+            }
+        }
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var today = DateTime.Today;
+        var endOfWeek = today.AddDays(7);
+
+        var allEvents = await EventRepository.GetAllAsync(_userId);
+        _totalEvents = allEvents.Count;
+
+        _todayEvents = allEvents.Count(e => e.StartTime.Date == today);
+        _upcomingEvents = allEvents.Count(e => e.StartTime >= today && e.StartTime <= endOfWeek);
+        _pendingTasks = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task && !e.IsCompleted);
+
+        // Event type distribution
+        _meetingCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Meeting);
+        _taskCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task);
+        _appointmentCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Appointment);
+
+        _recentEvents = allEvents
+            .Where(e => e.StartTime >= DateTime.Now)
+            .OrderBy(e => e.StartTime)
+            .Take(5)
+            .ToList();
+    }
+
+    private async Task DownloadTodayAgenda()
+    {
+        try
+        {
+            var today = DateTime.Today;
+
+            // Get all events for today
+            var allEvents = await EventRepository.GetAllAsync(_userId);
+            var todayEvents = allEvents
+                .Where(e => e.StartTime.Date == today)
+                .OrderBy(e => e.StartTime)
+                .ToList();
+
+            // Get user name
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userName = "User";
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var appUser = await IdentityUserAccessor.GetUserAsync(user);
+                if (appUser != null)
+                {
+                    userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
+                    if (string.IsNullOrWhiteSpace(userName))
+                    {
+                        userName = appUser.Email ?? "User";
+                    }
+                }
+            }
+
+            // Generate PDF
+            var pdfBytes = PdfAgendaService.GenerateDailyAgenda(todayEvents, today, userName);
+
+            // Download file using inline JavaScript to avoid timing issues
+            var fileName = $"Daily-Agenda-{today:yyyy-MM-dd}.pdf";
+            var base64 = Convert.ToBase64String(pdfBytes);
+
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    const byteCharacters = atob('{base64}');
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {{
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }}
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {{ type: 'application/pdf' }});
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = '{fileName}';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error generating PDF");
+        }
+    }
+
+    // Timezone helper methods
+    private DateTime GetDisplayTime(Event evt)
+    {
+        // If event has a timezone different from user's, convert it
+        if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+        {
+            var convertedEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(evt, _userTimeZone);
+            return convertedEvent.StartTime;
+        }
+        return evt.StartTime;
+    }
+
+    private string GetTimeZoneIndicator(Event evt)
+    {
+        if (!string.IsNullOrEmpty(evt.TimeZoneId) && evt.TimeZoneId != _userTimeZone)
+        {
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
+                var abbreviation = GetTimeZoneAbbreviation(tz);
+                return $" 🌍 ({abbreviation})";
+            }
+            catch
+            {
+                return " 🌍";
+            }
+        }
+        return string.Empty;
+    }
+
+    private string GetTimeZoneAbbreviation(TimeZoneInfo tz)
+    {
+        var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
+            ? tz.DaylightName
+            : tz.StandardName;
+
+        // Try to get a shorter abbreviation
+        if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
+        {
+            var words = abbreviation.Split(' ');
+            if (words.Length > 1)
+            {
+                abbreviation = string.Join("", words.Select(w => char.IsLetter(w.FirstOrDefault()) ? w.First() : ' ')).Trim();
+            }
+        }
+
+        // If abbreviation is still long, use UTC offset instead
+        if (abbreviation.Length > 5)
+        {
+            abbreviation = $"UTC{tz.BaseUtcOffset:hh\\:mm}";
+        }
+
+        return abbreviation;
+    }
+}
