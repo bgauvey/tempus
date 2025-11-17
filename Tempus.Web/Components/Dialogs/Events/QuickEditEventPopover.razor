@@ -1,0 +1,297 @@
+@using Tempus.Core.Models
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Enums
+@inject IEventRepository EventRepository
+@inject ICalendarRepository CalendarRepository
+@inject NotificationService NotificationService
+@inject ILogger<QuickEditEventPopover> Logger
+
+<style>
+    .quick-edit-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 9998;
+        display: none;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .quick-edit-backdrop.show {
+        display: block;
+    }
+
+    .quick-edit-popover {
+        position: fixed;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        z-index: 9999;
+        padding: 1.5rem;
+        min-width: 400px;
+        max-width: 500px;
+        display: none;
+        animation: slideUp 0.2s ease;
+    }
+
+    .quick-edit-popover.show {
+        display: block;
+    }
+
+    .quick-edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .quick-edit-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .quick-edit-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .quick-edit-close:hover {
+        background: #f0f0f0;
+    }
+
+    .quick-edit-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .quick-edit-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .quick-edit-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #666;
+    }
+
+    .quick-edit-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="quick-edit-backdrop @(_isVisible ? "show" : "")" @onclick="Close"></div>
+
+<div class="quick-edit-popover @(_isVisible ? "show" : "")" style="@_positionStyle">
+    @if (_event != null)
+    {
+        <div class="quick-edit-header">
+            <span class="quick-edit-title">Quick Edit Event</span>
+            <button class="quick-edit-close" @onclick="Close" title="Close">×</button>
+        </div>
+
+        <div class="quick-edit-body">
+            <!-- Title -->
+            <div class="quick-edit-field">
+                <label class="quick-edit-label">Title</label>
+                <RadzenTextBox @bind-Value="_event.Title"
+                              Style="width: 100%;"
+                              Placeholder="Event title" />
+            </div>
+
+            <!-- Start Date/Time -->
+            <div class="quick-edit-field">
+                <label class="quick-edit-label">Start</label>
+                <RadzenDatePicker @bind-Value="_event.StartTime"
+                                 DateFormat="MM/dd/yyyy"
+                                 ShowTime="@(!_event.IsAllDay)"
+                                 TimeOnly="false"
+                                 Style="width: 100%;" />
+            </div>
+
+            <!-- End Date/Time -->
+            <div class="quick-edit-field">
+                <label class="quick-edit-label">End</label>
+                <RadzenDatePicker @bind-Value="_event.EndTime"
+                                 DateFormat="MM/dd/yyyy"
+                                 ShowTime="@(!_event.IsAllDay)"
+                                 TimeOnly="false"
+                                 Style="width: 100%;" />
+            </div>
+
+            <!-- All Day Toggle -->
+            <div class="quick-edit-field">
+                <RadzenCheckBox @bind-Value="_event.IsAllDay" Name="quickEditAllDay" />
+                <label class="quick-edit-label" style="display: inline; margin-left: 0.5rem;">All Day</label>
+            </div>
+
+            <!-- Priority -->
+            <div class="quick-edit-field">
+                <label class="quick-edit-label">Priority</label>
+                <RadzenDropDown @bind-Value="_event.Priority"
+                               Data="@(Enum.GetValues(typeof(Priority)).Cast<Priority>())"
+                               Style="width: 100%;" />
+            </div>
+        </div>
+
+        <div class="quick-edit-footer">
+            <RadzenButton Text="More Options"
+                         Variant="Variant.Text"
+                         ButtonStyle="ButtonStyle.Secondary"
+                         Click="OpenFullDialog" />
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="Cancel"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light"
+                             Click="Close" />
+                <RadzenButton Text="Save"
+                             Icon="check"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Click="SaveChanges" />
+            </RadzenStack>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _isVisible = false;
+    private Event? _event;
+    private Event? _originalEvent;
+    private string _positionStyle = "";
+    private double _mouseX;
+    private double _mouseY;
+
+    [Parameter] public EventCallback<bool> OnSaved { get; set; }
+    [Parameter] public EventCallback OnFullDialogRequested { get; set; }
+
+    public async Task ShowAsync(Event eventToEdit, double mouseX, double mouseY)
+    {
+        _originalEvent = eventToEdit;
+        _event = new Event
+        {
+            Id = eventToEdit.Id,
+            Title = eventToEdit.Title,
+            Description = eventToEdit.Description,
+            StartTime = eventToEdit.StartTime,
+            EndTime = eventToEdit.EndTime,
+            IsAllDay = eventToEdit.IsAllDay,
+            Location = eventToEdit.Location,
+            Priority = eventToEdit.Priority,
+            EventType = eventToEdit.EventType,
+            CalendarId = eventToEdit.CalendarId,
+            UserId = eventToEdit.UserId,
+            Color = eventToEdit.Color
+        };
+
+        _mouseX = mouseX;
+        _mouseY = mouseY;
+
+        // Position the popover near the click location
+        // Ensure it doesn't go off screen
+        var left = Math.Min(mouseX, 1200); // Adjust based on window width
+        var top = Math.Min(mouseY, 600);   // Adjust based on window height
+
+        _positionStyle = $"left: {left}px; top: {top}px;";
+        _isVisible = true;
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    public void Close()
+    {
+        _isVisible = false;
+        _event = null;
+        StateHasChanged();
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            if (_event == null || _originalEvent == null)
+            {
+                return;
+            }
+
+            // Validate
+            if (string.IsNullOrWhiteSpace(_event.Title))
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Event title is required");
+                return;
+            }
+
+            if (_event.EndTime < _event.StartTime)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Validation", "End time must be after start time");
+                return;
+            }
+
+            // Update the original event with new values
+            _originalEvent.Title = _event.Title;
+            _originalEvent.StartTime = _event.StartTime;
+            _originalEvent.EndTime = _event.EndTime;
+            _originalEvent.IsAllDay = _event.IsAllDay;
+            _originalEvent.Priority = _event.Priority;
+
+            // Save to database
+            await EventRepository.UpdateAsync(_originalEvent);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Event updated");
+
+            Close();
+            await OnSaved.InvokeAsync(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving quick edit changes");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save changes");
+        }
+    }
+
+    private async Task OpenFullDialog()
+    {
+        Close();
+        await OnFullDialogRequested.InvokeAsync();
+    }
+}

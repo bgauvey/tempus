@@ -7,6 +7,7 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Dialogs.Events
 @using Tempus.Web.Components.Shared
 @using Tempus.Web.Services
 @using Tempus.Web.Helpers
@@ -370,6 +371,11 @@
 
 </div>
 
+<!-- Quick Edit Popover -->
+<QuickEditEventPopover @ref="_quickEditPopover"
+                       OnSaved="OnQuickEditSaved"
+                       OnFullDialogRequested="OnFullDialogRequested" />
+
 @code {
     // Appointment wrapper class for RadzenScheduler
     public class AppointmentData
@@ -392,6 +398,8 @@
     private RadzenScheduler<AppointmentData>? _scheduler;
     private int _selectedViewIndex = 1; // Default to Week view (index 1)
     private bool _isSearchActive = false;
+    private QuickEditEventPopover? _quickEditPopover;
+    private Event? _pendingEventForFullDialog;
     private List<Event> _allEvents = new(); // Store all events when search is active
 
     // Calendar management
@@ -753,7 +761,13 @@
                 }
                 else
                 {
-                    await OpenEventDialogAsync(appointment.Event.RecurrenceParentId ?? appointment.Event.Id);
+                    // Show quick edit popover for single click
+                    // Position at center of screen (we can enhance this later with JS interop for mouse position)
+                    if (_quickEditPopover != null)
+                    {
+                        _pendingEventForFullDialog = appointment.Event;
+                        await _quickEditPopover.ShowAsync(appointment.Event, 400, 200);
+                    }
                 }
             }
         }
@@ -762,6 +776,25 @@
     private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
         await OpenEventDialogAsync(null, args.Start);
+    }
+
+    private async Task OnQuickEditSaved(bool saved)
+    {
+        if (saved)
+        {
+            // Reload events to show updated data
+            await LoadEvents();
+        }
+    }
+
+    private async Task OnFullDialogRequested()
+    {
+        if (_pendingEventForFullDialog != null)
+        {
+            var eventId = _pendingEventForFullDialog.RecurrenceParentId ?? _pendingEventForFullDialog.Id;
+            await OpenEventDialogAsync(eventId);
+            _pendingEventForFullDialog = null;
+        }
     }
 
     private void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AppointmentData> args)
