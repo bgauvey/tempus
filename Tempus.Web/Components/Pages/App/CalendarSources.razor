@@ -5,6 +5,7 @@
 @using Tempus.Core.Enums
 @using Microsoft.AspNetCore.Components.Authorization
 @using Tempus.Web.Components.Dialogs.Sharing
+@using Tempus.Web.Components.Shared
 @inject ICalendarRepository CalendarRepository
 @inject ICalendarSharingService SharingService
 @inject ILogger<CalendarSources> Logger
@@ -36,10 +37,7 @@
 
     @if (isLoading)
     {
-        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
-            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-            <RadzenText TextStyle="TextStyle.Body1">Loading calendar sources...</RadzenText>
-        </RadzenStack>
+        <SkeletonLoader Type="SkeletonType.Card" Count="3" />
     }
     else
     {

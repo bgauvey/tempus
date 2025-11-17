@@ -6,6 +6,7 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Dialogs.Events
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -111,10 +112,7 @@
 
     @if (isLoading)
     {
-        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
-            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-            <RadzenText TextStyle="TextStyle.Body1">Loading tasks...</RadzenText>
-        </RadzenStack>
+        <SkeletonLoader Type="SkeletonType.List" Count="5" />
     }
     else if (!filteredTasks.Any())
     {

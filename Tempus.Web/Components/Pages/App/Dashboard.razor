@@ -8,6 +8,7 @@
 @using Tempus.Web.Services
 @using Microsoft.JSInterop
 @using Tempus.Web.Components.Account
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ISettingsService SettingsService
@@ -22,7 +23,13 @@
 <PageTitle>Dashboard - Tempus</PageTitle>
 
 <div class="dashboard-container">
-    <RadzenStack Gap="var(--space-xl)">
+    @if (_isLoading)
+    {
+        <SkeletonLoader Type="SkeletonType.Dashboard" Count="2" />
+    }
+    else
+    {
+        <RadzenStack Gap="var(--space-xl)">
 
         <!-- Card 1: Hero Section - "Today's Focus" -->
         <RadzenCard class="hero-card">
@@ -219,7 +226,8 @@
             </RadzenStack>
         </RadzenCard>
 
-    </RadzenStack>
+        </RadzenStack>
+    }
 </div>
 
 <style>
@@ -385,6 +393,7 @@
 </style>
 
 @code {
+    private bool _isLoading = true;
     private int _todayEvents;
     private Event? _nextEvent;
     private List<Event> _todayEventsList = new();
@@ -424,25 +433,33 @@
 
     private async Task LoadDashboardData()
     {
-        var today = DateTime.Today;
-        var now = DateTime.Now;
+        try
+        {
+            _isLoading = true;
+            var today = DateTime.Today;
+            var now = DateTime.Now;
 
-        var allEvents = await EventRepository.GetAllAsync(_userId);
+            var allEvents = await EventRepository.GetAllAsync(_userId);
 
-        // Count today's events
-        _todayEvents = allEvents.Count(e => GetDisplayTime(e).Date == today);
+            // Count today's events
+            _todayEvents = allEvents.Count(e => GetDisplayTime(e).Date == today);
 
-        // Get today's events list (sorted by time)
-        _todayEventsList = allEvents
-            .Where(e => GetDisplayTime(e).Date == today)
-            .OrderBy(e => GetDisplayTime(e))
-            .ToList();
+            // Get today's events list (sorted by time)
+            _todayEventsList = allEvents
+                .Where(e => GetDisplayTime(e).Date == today)
+                .OrderBy(e => GetDisplayTime(e))
+                .ToList();
 
-        // Get the next upcoming event (could be today or future)
-        _nextEvent = allEvents
-            .Where(e => GetDisplayTime(e) >= now)
-            .OrderBy(e => GetDisplayTime(e))
-            .FirstOrDefault();
+            // Get the next upcoming event (could be today or future)
+            _nextEvent = allEvents
+                .Where(e => GetDisplayTime(e) >= now)
+                .OrderBy(e => GetDisplayTime(e))
+                .FirstOrDefault();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private string GetGreeting()

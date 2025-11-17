@@ -5,6 +5,7 @@
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Web.Components.Dialogs
+@using Tempus.Web.Components.Shared
 @using System.Security.Claims
 @attribute [Authorize]
 @inject IGoogleCalendarService GoogleCalendarService
@@ -195,7 +196,7 @@
 
 @if (_isLoadingBookingPages)
 {
-    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin: 2rem auto;" />
+    <SkeletonLoader Type="SkeletonType.Card" Count="3" />
 }
 else if (!_bookingPages.Any())
 {
