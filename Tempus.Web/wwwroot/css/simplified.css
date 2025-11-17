@@ -1,0 +1,471 @@
+/* Tempus Simplified Design System */
+/* Phase 3: Visual Design Modernization */
+
+/* ============================================
+   1. CSS Variables - Simplified Color System
+   ============================================ */
+:root {
+    /* Primary Colors - Reduced from gradients to solid colors */
+    --color-primary: #667eea;
+    --color-primary-light: #8899f5;
+    --color-primary-dark: #4d5fd1;
+
+    /* Semantic Event Colors - Reduced from 10+ to 6 */
+    --color-deadline: #ef4444;      /* Red - Deadlines */
+    --color-meeting: #f97316;       /* Orange - Meetings */
+    --color-timeblock: #fbbf24;     /* Yellow - Time blocks */
+    --color-personal: #10b981;      /* Green - Personal */
+    --color-work: #3b82f6;          /* Blue - Work */
+    --color-focus: #8b5cf6;         /* Purple - Focus time */
+
+    /* Neutral Colors */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: var(--color-gray-50);
+    --bg-tertiary: var(--color-gray-100);
+
+    /* Text Colors */
+    --text-primary: var(--color-gray-900);
+    --text-secondary: var(--color-gray-600);
+    --text-tertiary: var(--color-gray-500);
+
+    /* Border Colors */
+    --border-light: var(--color-gray-200);
+    --border-medium: var(--color-gray-300);
+    --border-dark: var(--color-gray-400);
+
+    /* Shadows - Simplified */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+    /* Spacing Scale */
+    --space-xs: 0.25rem;    /* 4px */
+    --space-sm: 0.5rem;     /* 8px */
+    --space-md: 1rem;       /* 16px */
+    --space-lg: 1.5rem;     /* 24px */
+    --space-xl: 2rem;       /* 32px */
+    --space-2xl: 3rem;      /* 48px */
+
+    /* Typography Scale */
+    --text-xs: 0.75rem;     /* 12px */
+    --text-sm: 0.875rem;    /* 14px */
+    --text-base: 1rem;      /* 16px */
+    --text-lg: 1.125rem;    /* 18px */
+    --text-xl: 1.25rem;     /* 20px */
+    --text-2xl: 1.5rem;     /* 24px */
+    --text-3xl: 1.875rem;   /* 30px */
+    --text-4xl: 2.25rem;    /* 36px */
+
+    /* Border Radius */
+    --radius-sm: 0.25rem;   /* 4px */
+    --radius-md: 0.5rem;    /* 8px */
+    --radius-lg: 0.75rem;   /* 12px */
+    --radius-xl: 1rem;      /* 16px */
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   2. Typography Hierarchy
+   ============================================ */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
+/* ============================================
+   3. Simplified Card Styles
+   ============================================ */
+.rz-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base);
+}
+
+.rz-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.rz-card-content {
+    padding: var(--space-lg);
+}
+
+/* Remove excessive gradients from cards */
+.rz-card.gradient-card {
+    background: var(--bg-primary);
+}
+
+/* ============================================
+   4. Flattened Button Styles
+   ============================================ */
+.rz-button {
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    box-shadow: none !important;
+}
+
+.rz-button-md {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--text-sm);
+}
+
+.rz-button-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+}
+
+/* Primary Button - Flat design */
+.rz-button.rz-primary {
+    background: var(--color-primary);
+    border: none;
+}
+
+.rz-button.rz-primary:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+}
+
+.rz-button.rz-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary Button */
+.rz-button.rz-secondary,
+.rz-button.rz-variant-text {
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text-secondary);
+}
+
+.rz-button.rz-secondary:hover,
+.rz-button.rz-variant-text:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-dark);
+}
+
+/* ============================================
+   5. Simplified Event Cards
+   ============================================ */
+.event-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    transition: all var(--transition-fast);
+}
+
+.event-card:hover {
+    border-left-width: 4px;
+    box-shadow: var(--shadow-sm);
+    transform: translateX(2px);
+}
+
+.event-card-title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.event-card-time {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.event-card-meta {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    margin-top: var(--space-xs);
+}
+
+/* Event type colors */
+.event-card.deadline { border-left-color: var(--color-deadline); }
+.event-card.meeting { border-left-color: var(--color-meeting); }
+.event-card.timeblock { border-left-color: var(--color-timeblock); }
+.event-card.personal { border-left-color: var(--color-personal); }
+.event-card.work { border-left-color: var(--color-work); }
+.event-card.focus { border-left-color: var(--color-focus); }
+
+/* ============================================
+   6. Reduced Borders & Shadows
+   ============================================ */
+/* Override heavy shadows */
+.rz-panel,
+.rz-dialog,
+.rz-dropdown-panel {
+    box-shadow: var(--shadow-lg);
+}
+
+.rz-datalist,
+.rz-grid {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+
+/* Remove excessive borders */
+.rz-datalist-item {
+    border-bottom: 1px solid var(--border-light);
+}
+
+.rz-datalist-item:last-child {
+    border-bottom: none;
+}
+
+/* ============================================
+   7. Spacing Utilities
+   ============================================ */
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-lg { padding: var(--space-lg); }
+.p-xl { padding: var(--space-xl); }
+
+.m-xs { margin: var(--space-xs); }
+.m-sm { margin: var(--space-sm); }
+.m-md { margin: var(--space-md); }
+.m-lg { margin: var(--space-lg); }
+.m-xl { margin: var(--space-xl); }
+
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+.gap-xl { gap: var(--space-xl); }
+
+/* ============================================
+   8. Subtle Animations
+   ============================================ */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn var(--transition-base);
+}
+
+.animate-slideUp {
+    animation: slideUp var(--transition-base);
+}
+
+.animate-slideDown {
+    animation: slideDown var(--transition-base);
+}
+
+/* ============================================
+   9. Responsive Design Improvements
+   ============================================ */
+/* Mobile-first breakpoints */
+@media (max-width: 640px) {
+    :root {
+        --space-lg: 1rem;
+        --space-xl: 1.5rem;
+        --space-2xl: 2rem;
+    }
+
+    .rz-card-content {
+        padding: var(--space-md);
+    }
+
+    .event-card {
+        padding: var(--space-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    /* Stack navigation items on mobile */
+    .rz-stack[data-orientation="horizontal"] {
+        flex-direction: column;
+    }
+}
+
+/* ============================================
+   10. Calendar-Specific Simplifications
+   ============================================ */
+/* Simplified scheduler appearance */
+.rz-scheduler {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+
+.rz-scheduler-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--space-md);
+}
+
+.rz-scheduler-view {
+    border-radius: var(--radius-md);
+}
+
+/* Cleaner appointment styling */
+.rz-scheduler-appointment {
+    border-radius: var(--radius-sm);
+    border: none !important;
+    box-shadow: var(--shadow-sm);
+}
+
+.rz-scheduler-appointment:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   11. Form Input Simplification
+   ============================================ */
+.rz-textbox,
+.rz-dropdown,
+.rz-datepicker-input {
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--text-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.rz-textbox:focus,
+.rz-dropdown:focus,
+.rz-datepicker-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ============================================
+   12. Badge Simplification
+   ============================================ */
+.rz-badge {
+    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    border: none;
+}
+
+/* ============================================
+   13. Navigation Simplification
+   ============================================ */
+.rz-panelmenu {
+    border: none;
+}
+
+.rz-panelmenu-item {
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-xs);
+    transition: background var(--transition-fast);
+}
+
+.rz-panelmenu-item:hover {
+    background: var(--bg-secondary);
+}
+
+.rz-panelmenu-item.rz-state-active {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* ============================================
+   14. Loading States
+   ============================================ */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-2xl);
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   15. Utility Classes
+   ============================================ */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+.border-light { border: 1px solid var(--border-light); }
+.border-medium { border: 1px solid var(--border-medium); }
+.border-dark { border: 1px solid var(--border-dark); }
+
+.bg-primary { background: var(--bg-primary); }
+.bg-secondary { background: var(--bg-secondary); }
+.bg-tertiary { background: var(--bg-tertiary); }
+
+/* ============================================
+   16. Accessibility Improvements
+   ============================================ */
+/* Focus visible styles */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
