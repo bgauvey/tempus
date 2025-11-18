@@ -329,6 +329,7 @@
                            SelectedIndex="@_selectedViewIndex"
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
+                           SlotRender="@OnSlotRender"
                            AppointmentRender="@OnAppointmentRender"
                            AppointmentMove="@OnAppointmentMove"
                            LoadData="@OnLoadData"
@@ -776,6 +777,16 @@
     private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
         await OpenEventDialogAsync(null, args.Start);
+    }
+
+    private void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+        // Shade non-working hours (before 9 AM and after 5 PM)
+        var hour = args.Start.Hour;
+        if (hour < 9 || hour >= 17)
+        {
+            args.Attributes["class"] = "non-working-hours";
+        }
     }
 
     private async Task OnQuickEditSaved(bool saved)
