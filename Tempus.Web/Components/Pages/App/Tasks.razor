@@ -1,0 +1,414 @@
+@page "/tasks"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Tempus.Web.Components.Dialogs.Events
+@using Tempus.Web.Components.Shared
+@attribute [Authorize]
+@inject IEventRepository EventRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject ILogger<Tasks> Logger
+
+<PageTitle>Tasks - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <!-- Header -->
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1">Tasks</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Manage your tasks, deadlines, and reminders
+            </RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="LoadTasks"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Quick Stats -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">
+                        @pendingTasks.Count
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Pending Tasks</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">
+                        @overdueTasks.Count
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Overdue</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">
+                        @dueSoonTasks.Count
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Due Soon</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800;">
+                        @completedTasks.Count
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Completed</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Filters -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenText TextStyle="TextStyle.Subtitle2">Filter:</RadzenText>
+
+            <RadzenSelectBar @bind-Value="@selectedView" TValue="string" Change="@(() => ApplyFilters())">
+                <Items>
+                    <RadzenSelectBarItem Text="All" Value="@("all")" />
+                    <RadzenSelectBarItem Text="Pending" Value="@("pending")" />
+                    <RadzenSelectBarItem Text="Overdue" Value="@("overdue")" />
+                    <RadzenSelectBarItem Text="Completed" Value="@("completed")" />
+                </Items>
+            </RadzenSelectBar>
+
+            <RadzenDropDown @bind-Value="@selectedPriority"
+                           Data="@priorityOptions"
+                           Change="@(() => ApplyFilters())"
+                           AllowClear="true"
+                           Placeholder="All Priorities"
+                           Style="width: 150px;" />
+
+            <RadzenDropDown @bind-Value="@selectedEventType"
+                           Data="@eventTypeOptions"
+                           Change="@(() => ApplyFilters())"
+                           AllowClear="true"
+                           Placeholder="All Types"
+                           Style="width: 150px;" />
+        </RadzenStack>
+    </RadzenCard>
+
+    @if (isLoading)
+    {
+        <SkeletonLoader Type="SkeletonType.List" Count="5" />
+    }
+    else if (!filteredTasks.Any())
+    {
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                <RadzenIcon Icon="task_alt" Style="font-size: 3rem; color: var(--rz-text-secondary-color);" />
+                <RadzenText TextStyle="TextStyle.H6">No Tasks Found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                    @if (selectedView == "all")
+                    {
+                        <text>You don't have any tasks yet. Create events with type Task, Deadline, or Reminder to see them here.</text>
+                    }
+                    else
+                    {
+                        <text>No tasks match your current filters. Try adjusting the filter settings.</text>
+                    }
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- Task List -->
+        <RadzenStack Gap="0.75rem">
+            @foreach (var task in filteredTasks.OrderBy(t => t.IsCompleted).ThenBy(t => t.StartTime).ThenByDescending(t => t.Priority))
+            {
+                var isOverdue = !task.IsCompleted && task.StartTime < DateTime.Now;
+                var isDueSoon = !task.IsCompleted && task.StartTime >= DateTime.Now && task.StartTime <= DateTime.Now.AddDays(3);
+
+                <RadzenCard Style="@(task.IsCompleted ? "opacity: 0.6;" : "")">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                        <!-- Checkbox -->
+                        <RadzenCheckBox @bind-Value="@task.IsCompleted"
+                                       Change="@((bool isCompleted) => ToggleTaskCompletion(task))"
+                                       Style="transform: scale(1.2);" />
+
+                        <!-- Task Info -->
+                        <RadzenStack Gap="0.25rem" Style="@($"flex: 1; {(task.IsCompleted ? "text-decoration: line-through;" : "")}")">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                    @task.Title
+                                </RadzenText>
+
+                                @if (isOverdue)
+                                {
+                                    <RadzenBadge Text="Overdue" BadgeStyle="BadgeStyle.Danger" IsPill="true" />
+                                }
+                                else if (isDueSoon)
+                                {
+                                    <RadzenBadge Text="Due Soon" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                    <RadzenIcon Icon="event" Style="font-size: 0.875rem;" />
+                                    @task.StartTime.ToString("MMM dd, yyyy h:mm tt")
+                                </RadzenText>
+
+                                @if (!string.IsNullOrEmpty(task.Location))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        <RadzenIcon Icon="location_on" Style="font-size: 0.875rem;" />
+                                        @task.Location
+                                    </RadzenText>
+                                }
+
+                                <RadzenBadge Text="@task.EventType.ToString()"
+                                            BadgeStyle="@GetEventTypeBadgeStyle(task.EventType)"
+                                            IsPill="true" />
+
+                                <RadzenBadge Text="@task.Priority.ToString()"
+                                            BadgeStyle="@GetPriorityBadgeStyle(task.Priority)"
+                                            IsPill="true" />
+
+                                @if (task.Calendar != null)
+                                {
+                                    <RadzenBadge Text="@task.Calendar.Name"
+                                                BadgeStyle="BadgeStyle.Light"
+                                                IsPill="true"
+                                                Style="@($"background-color: {task.Calendar.Color}; color: white;")" />
+                                }
+                            </RadzenStack>
+
+                            @if (!string.IsNullOrEmpty(task.Description))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin-top: 0.5rem;">
+                                    @(task.Description.Length > 150 ? task.Description.Substring(0, 150) + "..." : task.Description)
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+
+                        <!-- Actions -->
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Icon="edit"
+                                         Click="@(() => EditTask(task))"
+                                         Variant="Variant.Text"
+                                         ButtonStyle="ButtonStyle.Info"
+                                         Size="ButtonSize.Small"
+                                         title="Edit task" />
+                            <RadzenButton Icon="delete"
+                                         Click="@(() => DeleteTask(task))"
+                                         Variant="Variant.Text"
+                                         ButtonStyle="ButtonStyle.Danger"
+                                         Size="ButtonSize.Small"
+                                         title="Delete task" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    private List<Event> allTasks = new();
+    private List<Event> filteredTasks = new();
+    private List<Event> pendingTasks = new();
+    private List<Event> overdueTasks = new();
+    private List<Event> dueSoonTasks = new();
+    private List<Event> completedTasks = new();
+
+    private string selectedView = "pending";
+    private Priority? selectedPriority;
+    private EventType? selectedEventType;
+
+    private List<Priority> priorityOptions = Enum.GetValues<Priority>().ToList();
+    private List<EventType> eventTypeOptions = new List<EventType> { EventType.Task, EventType.Deadline, EventType.Reminder };
+
+    private bool isLoading = false;
+    private string userId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserId();
+        await LoadTasks();
+    }
+
+    private async Task LoadUserId()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    }
+
+    private async Task LoadTasks()
+    {
+        isLoading = true;
+
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogWarning("Unable to determine current user");
+                return;
+            }
+
+            // Get all task-type events (Task, Deadline, Reminder)
+            var filter = new AdvancedSearchFilter
+            {
+                EventTypes = new List<EventType> { EventType.Task, EventType.Deadline, EventType.Reminder }
+            };
+
+            allTasks = await EventRepository.AdvancedSearchAsync(filter, userId);
+
+            // Calculate stats
+            pendingTasks = allTasks.Where(t => !t.IsCompleted).ToList();
+            overdueTasks = allTasks.Where(t => !t.IsCompleted && t.StartTime < DateTime.Now).ToList();
+            dueSoonTasks = allTasks.Where(t => !t.IsCompleted && t.StartTime >= DateTime.Now && t.StartTime <= DateTime.Now.AddDays(3)).ToList();
+            completedTasks = allTasks.Where(t => t.IsCompleted).ToList();
+
+            ApplyFilters();
+
+            Logger.LogInformation("Loaded {Count} tasks", allTasks.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading tasks");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load tasks");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredTasks = allTasks;
+
+        // Apply view filter
+        filteredTasks = selectedView switch
+        {
+            "pending" => filteredTasks.Where(t => !t.IsCompleted).ToList(),
+            "overdue" => filteredTasks.Where(t => !t.IsCompleted && t.StartTime < DateTime.Now).ToList(),
+            "completed" => filteredTasks.Where(t => t.IsCompleted).ToList(),
+            _ => filteredTasks
+        };
+
+        // Apply priority filter
+        if (selectedPriority.HasValue)
+        {
+            filteredTasks = filteredTasks.Where(t => t.Priority == selectedPriority.Value).ToList();
+        }
+
+        // Apply event type filter
+        if (selectedEventType.HasValue)
+        {
+            filteredTasks = filteredTasks.Where(t => t.EventType == selectedEventType.Value).ToList();
+        }
+    }
+
+    private async Task ToggleTaskCompletion(Event task)
+    {
+        try
+        {
+            await EventRepository.UpdateAsync(task);
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Success",
+                task.IsCompleted ? "Task marked as completed" : "Task marked as pending"
+            );
+
+            await LoadTasks();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling task completion");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update task");
+            task.IsCompleted = !task.IsCompleted; // Revert on error
+        }
+    }
+
+    private async Task EditTask(Event task)
+    {
+        try
+        {
+            var result = await DialogService.OpenAsync<EventFormDialog>($"Edit {task.Title}",
+                new Dictionary<string, object> { { "EventId", task.Id } },
+                new DialogOptions { Width = "900px", Height = "80vh", Resizable = true, Draggable = true });
+
+            if (result != null)
+            {
+                await LoadTasks();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening edit dialog for task {TaskId}", task.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to open edit dialog");
+        }
+    }
+
+    private async Task DeleteTask(Event task)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to delete '{task.Title}'?",
+                "Delete Task",
+                new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" }
+            );
+
+            if (confirmed == true)
+            {
+                await EventRepository.DeleteAsync(task.Id, userId);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Task deleted");
+                await LoadTasks();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting task {TaskId}", task.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to delete task");
+        }
+    }
+
+    private BadgeStyle GetEventTypeBadgeStyle(EventType eventType)
+    {
+        return eventType switch
+        {
+            EventType.Task => BadgeStyle.Primary,
+            EventType.Deadline => BadgeStyle.Danger,
+            EventType.Reminder => BadgeStyle.Warning,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private BadgeStyle GetPriorityBadgeStyle(Priority priority)
+    {
+        return priority switch
+        {
+            Priority.Urgent => BadgeStyle.Danger,
+            Priority.High => BadgeStyle.Warning,
+            Priority.Medium => BadgeStyle.Info,
+            Priority.Low => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+}

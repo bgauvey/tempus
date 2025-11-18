@@ -1,0 +1,10 @@
+@page "/analytics"
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect to unified Insights page
+        NavigationManager.NavigateTo("/insights", replace: true);
+    }
+}

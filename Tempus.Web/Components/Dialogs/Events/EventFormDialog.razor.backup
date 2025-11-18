@@ -868,9 +868,6 @@
 
             // Load reminders from instance
             LoadReminders();
-
-            // Auto-expand sections that have content (progressive disclosure)
-            SetSmartExpanderDefaults();
         }
         else if (EventId.HasValue)
         {
@@ -908,9 +905,6 @@
                 // Load existing room booking and resource reservations
                 await LoadRoomBooking();
                 await LoadResourceReservations();
-
-                // Auto-expand sections that have content (progressive disclosure)
-                SetSmartExpanderDefaults();
             }
         }
         else
@@ -1412,14 +1406,13 @@
     private List<Resource> _allResources = new();
 
     // Expander state variables
-    // Progressive disclosure: Only expand sections that are important or have content
-    private bool _eventDetailsExpanded = true;  // Always start expanded - important fields
-    private bool _meetingDetailsExpanded = true;  // Start expanded for meetings - important
-    private bool _recurrenceExpanded = false;  // Start collapsed - only needed for recurring
-    private bool _remindersExpanded = false;  // Start collapsed - optional feature
-    private bool _attachmentsExpanded = false;  // Start collapsed - rarely used
-    private bool _videoExpanded = false;  // Start collapsed - only needed sometimes
-    private bool _roomsExpanded = false;  // Start collapsed - only needed sometimes
+    private bool _eventDetailsExpanded = true;
+    private bool _meetingDetailsExpanded = true;
+    private bool _recurrenceExpanded = true;
+    private bool _remindersExpanded = true;
+    private bool _attachmentsExpanded = true;
+    private bool _videoExpanded = true;
+    private bool _roomsExpanded = true;
 
     private async Task FindRoom()
     {
@@ -1554,27 +1547,6 @@
             Logger.LogError(ex, "Error loading resource reservations");
             _reservedResources = new List<ResourceReservation>();
         }
-    }
-
-    private void SetSmartExpanderDefaults()
-    {
-        // Auto-expand sections that have content when editing existing events
-        // This implements progressive disclosure - show what's relevant, hide what's empty
-
-        // Recurrence: Expand if event is recurring
-        _recurrenceExpanded = _event.IsRecurring;
-
-        // Reminders: Expand if event has reminders
-        _remindersExpanded = _selectedReminders?.Any() ?? false;
-
-        // Attachments: Expand if event has attachments
-        _attachmentsExpanded = _attachments.Any();
-
-        // Video: Expand if event has video conference
-        _videoExpanded = _event.VideoConference != null;
-
-        // Rooms: Expand if event has room booking or resource reservations
-        _roomsExpanded = _bookedRoom != null || _reservedResources.Any();
     }
 
     private string GetResourceIcon(ResourceType type)

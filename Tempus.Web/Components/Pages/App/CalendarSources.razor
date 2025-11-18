@@ -1,0 +1,844 @@
+@page "/calendar-sources"
+@rendermode InteractiveServer
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Web.Components.Dialogs.Sharing
+@using Tempus.Web.Components.Shared
+@inject ICalendarRepository CalendarRepository
+@inject ICalendarSharingService SharingService
+@inject ILogger<CalendarSources> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>Calendar Sources - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <!-- Header -->
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1">Calendar Sources</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Manage your calendars, shared calendars, and subscriptions
+            </RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Refresh All"
+                             Icon="refresh"
+                             Click="RefreshAll"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <SkeletonLoader Type="SkeletonType.Card" Count="3" />
+    }
+    else
+    {
+        <!-- My Calendars Section -->
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="cursor: pointer;" @onclick="() => myCalendarsExpanded = !myCalendarsExpanded">
+                        <RadzenIcon Icon="@(myCalendarsExpanded ? "expand_more" : "chevron_right")" />
+                        <RadzenText TextStyle="TextStyle.H6">
+                            My Calendars (@myCalendars.Count)
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+
+                @if (myCalendarsExpanded)
+                {
+                    @if (!myCalendars.Any())
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); padding: 1rem;">
+                            You don't have any calendars yet.
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        <RadzenStack Gap="0.75rem">
+                            @foreach (var calendar in myCalendars)
+                            {
+                                <RadzenCard Style="background-color: var(--rz-base-100);">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" Style="flex: 1;">
+                                            <div style="@($"width: 20px; height: 20px; border-radius: 4px; background-color: {calendar.Color}; flex-shrink: 0;")"></div>
+
+                                            <RadzenStack Gap="0.25rem">
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                                    @calendar.Name
+                                                    @if (calendar.IsDefault)
+                                                    {
+                                                        <RadzenBadge Text="Default" BadgeStyle="BadgeStyle.Secondary" IsPill="true" Style="margin-left: 0.5rem;" />
+                                                    }
+                                                </RadzenText>
+                                                @if (!string.IsNullOrEmpty(calendar.Description))
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        @calendar.Description
+                                                    </RadzenText>
+                                                }
+                                                @if (calendarShares.ContainsKey(calendar.Id))
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        <RadzenIcon Icon="share" Style="font-size: 0.875rem;" />
+                                                        Shared with @calendarShares[calendar.Id].Count @(calendarShares[calendar.Id].Count == 1 ? "person" : "people")
+                                                    </RadzenText>
+                                                }
+                                            </RadzenStack>
+                                        </RadzenStack>
+
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                            <RadzenButton Icon="share"
+                                                         Click="@(() => ShareCalendar(calendar))"
+                                                         Variant="Variant.Text"
+                                                         ButtonStyle="ButtonStyle.Info"
+                                                         Size="ButtonSize.Small"
+                                                         title="Share calendar" />
+
+                                            <RadzenButton Icon="people"
+                                                         Click="@(() => ViewShares(calendar))"
+                                                         Variant="Variant.Text"
+                                                         ButtonStyle="ButtonStyle.Secondary"
+                                                         Size="ButtonSize.Small"
+                                                         title="View who has access"
+                                                         Disabled="@(!calendarShares.ContainsKey(calendar.Id) || calendarShares[calendar.Id].Count == 0)" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                    }
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Shared with Me Section -->
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="cursor: pointer;" @onclick="() => sharedCalendarsExpanded = !sharedCalendarsExpanded">
+                        <RadzenIcon Icon="@(sharedCalendarsExpanded ? "expand_more" : "chevron_right")" />
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Shared with Me (@(acceptedShares.Count + pendingShares.Count))
+                        </RadzenText>
+                        @if (pendingShares.Any())
+                        {
+                            <RadzenBadge Text="@pendingShares.Count.ToString()" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
+                        }
+                    </RadzenStack>
+                </RadzenStack>
+
+                @if (sharedCalendarsExpanded)
+                {
+                    @if (!acceptedShares.Any() && !pendingShares.Any())
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); padding: 1rem;">
+                            When someone shares their calendar with you, it will appear here.
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        @if (pendingShares.Any())
+                        {
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-warning);">
+                                    Pending Invitations (@pendingShares.Count)
+                                </RadzenText>
+
+                                @foreach (var share in pendingShares)
+                                {
+                                    <RadzenCard Style="background-color: #fff7ed; border: 1px solid #fed7aa;">
+                                        <RadzenStack Gap="0.75rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                                <RadzenIcon Icon="calendar_month" Style="@($"color: {share.Calendar?.Color ?? "#3498db"};")" />
+                                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                                        @share.Calendar?.Name
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                        Shared by @(share.SharedByUser?.UserName ?? "Unknown")
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenStack>
+
+                                            <RadzenBadge Text="@share.GetPermissionDisplayName()"
+                                                        BadgeStyle="BadgeStyle.Info"
+                                                        IsPill="true" />
+
+                                            @if (!string.IsNullOrEmpty(share.Note))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-style: italic; color: var(--rz-text-secondary-color);">
+                                                    "@share.Note"
+                                                </RadzenText>
+                                            }
+
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                                <RadzenButton Text="Decline"
+                                                             Click="@(() => DeclineShare(share.Id))"
+                                                             Variant="Variant.Text"
+                                                             ButtonStyle="ButtonStyle.Danger"
+                                                             Size="ButtonSize.Small" />
+                                                <RadzenButton Text="Accept"
+                                                             Click="@(() => AcceptShare(share.Id))"
+                                                             Icon="check"
+                                                             ButtonStyle="ButtonStyle.Success"
+                                                             Size="ButtonSize.Small" />
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            </RadzenStack>
+                        }
+
+                        @if (acceptedShares.Any())
+                        {
+                            <RadzenStack Gap="0.5rem" Style="@(pendingShares.Any() ? "margin-top: 1rem;" : "")">
+                                @if (pendingShares.Any())
+                                {
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">
+                                        Active Shared Calendars (@acceptedShares.Count)
+                                    </RadzenText>
+                                }
+
+                                @foreach (var share in acceptedShares)
+                                {
+                                    <RadzenCard Style="background-color: var(--rz-base-100);">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" Style="flex: 1;">
+                                                <RadzenColorPicker @bind-Value="@share.Color"
+                                                                  ShowButton="true"
+                                                                  Change="@(() => UpdateShareColor(share))"
+                                                                  Style="width: 40px;" />
+
+                                                <RadzenStack Gap="0.25rem">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                                        @share.Calendar?.Name
+                                                    </RadzenText>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            <RadzenIcon Icon="person" Style="font-size: 0.875rem;" />
+                                                            @(share.SharedByUser?.UserName ?? "Unknown")
+                                                        </RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            <RadzenIcon Icon="event" Style="font-size: 0.875rem;" />
+                                                            Accepted @share.AcceptedAt?.ToString("MMM dd, yyyy")
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            </RadzenStack>
+
+                                            <RadzenBadge Text="@share.GetPermissionDisplayName()"
+                                                        BadgeStyle="@GetPermissionBadgeStyle(share.Permission)"
+                                                        IsPill="true" />
+
+                                            <RadzenButton Icon="close"
+                                                         Click="@(() => RemoveShare(share.Id))"
+                                                         Variant="Variant.Text"
+                                                         ButtonStyle="ButtonStyle.Danger"
+                                                         Size="ButtonSize.Small"
+                                                         title="Stop sharing" />
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            </RadzenStack>
+                        }
+                    }
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Subscriptions (Public Calendars) Section -->
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="cursor: pointer;" @onclick="() => subscriptionsExpanded = !subscriptionsExpanded">
+                        <RadzenIcon Icon="@(subscriptionsExpanded ? "expand_more" : "chevron_right")" />
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Subscriptions (@publicCalendars.Count)
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenButton Text="Subscribe"
+                                 Icon="add"
+                                 Click="ShowSubscribeDialog"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Size="ButtonSize.Small" />
+                </RadzenStack>
+
+                @if (subscriptionsExpanded)
+                {
+                    @if (!publicCalendars.Any())
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" Gap="0.75rem" Style="padding: 1rem;">
+                            <RadzenIcon Icon="public" Style="font-size: 2rem; color: var(--rz-text-secondary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                                Subscribe to public calendars like holidays, sports schedules, or school calendars.
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        @foreach (var category in publicCalendars.GroupBy(c => c.Category).OrderBy(g => g.Key))
+                        {
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2">
+                                    @GetCategoryIcon(category.Key) @GetCategoryName(category.Key) (@category.Count())
+                                </RadzenText>
+
+                                @foreach (var calendar in category)
+                                {
+                                    <RadzenCard Style="background-color: var(--rz-base-100);">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start" Style="flex: 1;">
+                                                <RadzenColorPicker @bind-Value="@calendar.Color"
+                                                                  ShowButton="true"
+                                                                  Change="@(() => UpdateCalendarColor(calendar))"
+                                                                  Style="width: 40px;" />
+
+                                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                                        @calendar.Name
+                                                    </RadzenText>
+                                                    @if (!string.IsNullOrEmpty(calendar.Description))
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                                            @calendar.Description
+                                                        </RadzenText>
+                                                    }
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="font-size: 0.75rem; color: var(--rz-text-secondary-color);">
+                                                        <span><RadzenIcon Icon="event" Style="font-size: 0.875rem;" /> @calendar.EventCount events</span>
+                                                        @if (calendar.LastSyncedAt.HasValue)
+                                                        {
+                                                            <span><RadzenIcon Icon="sync" Style="font-size: 0.875rem;" /> @calendar.LastSyncedAt.Value.ToString("MMM dd")</span>
+                                                        }
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            </RadzenStack>
+
+                                            <RadzenSwitch @bind-Value="@calendar.IsActive"
+                                                         Change="@(() => ToggleCalendar(calendar))"
+                                                         title="@(calendar.IsActive ? "Disable" : "Enable")" />
+
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                                <RadzenButton Icon="sync"
+                                                             Click="@(() => SyncCalendar(calendar.Id))"
+                                                             Variant="Variant.Text"
+                                                             ButtonStyle="ButtonStyle.Info"
+                                                             Size="ButtonSize.Small"
+                                                             title="Sync now" />
+                                                <RadzenButton Icon="close"
+                                                             Click="@(() => Unsubscribe(calendar.Id))"
+                                                             Variant="Variant.Text"
+                                                             ButtonStyle="ButtonStyle.Danger"
+                                                             Size="ButtonSize.Small"
+                                                             title="Unsubscribe" />
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            </RadzenStack>
+                        }
+                    }
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Connected Accounts Section (Future Implementation) -->
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="cursor: pointer;" @onclick="() => connectedAccountsExpanded = !connectedAccountsExpanded">
+                        <RadzenIcon Icon="@(connectedAccountsExpanded ? "expand_more" : "chevron_right")" />
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Connected Accounts (0)
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenButton Text="Connect"
+                                 Icon="add"
+                                 Click="ShowConnectAccountDialog"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Size="ButtonSize.Small" />
+                </RadzenStack>
+
+                @if (connectedAccountsExpanded)
+                {
+                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.75rem" Style="padding: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                            <RadzenIcon Icon="🔗" Style="font-size: 2rem;" />
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+                            Connect your Google, Microsoft Outlook, or Apple Calendar accounts to sync events automatically.
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary-color);">
+                            Coming soon
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    // My Calendars
+    private List<Tempus.Core.Models.Calendar> myCalendars = new();
+    private Dictionary<Guid, List<CalendarShare>> calendarShares = new();
+    private bool myCalendarsExpanded = true;
+
+    // Shared Calendars
+    private List<CalendarShare> acceptedShares = new();
+    private List<CalendarShare> pendingShares = new();
+    private bool sharedCalendarsExpanded = true;
+
+    // Public Calendars
+    private List<PublicCalendar> publicCalendars = new();
+    private bool subscriptionsExpanded = false;
+
+    // Connected Accounts
+    private bool connectedAccountsExpanded = false;
+
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllSources();
+    }
+
+    private async Task RefreshAll()
+    {
+        await LoadAllSources();
+    }
+
+    private async Task LoadAllSources()
+    {
+        isLoading = true;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogWarning("Unable to determine current user");
+                return;
+            }
+
+            // Load My Calendars
+            await LoadMyCalendars(userId);
+
+            // Load Shared Calendars
+            await LoadSharedCalendars(userId);
+
+            // Load Public Calendars
+            await LoadPublicCalendars(userId);
+
+            Logger.LogInformation("Loaded all calendar sources");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading calendar sources");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load calendar sources");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    #region My Calendars
+
+    private async Task LoadMyCalendars(string userId)
+    {
+        myCalendars = await CalendarRepository.GetAllAsync(userId);
+
+        // Load shares for each calendar
+        calendarShares.Clear();
+        foreach (var calendar in myCalendars)
+        {
+            var shares = await SharingService.GetCalendarSharesAsync(calendar.Id);
+            if (shares.Any())
+            {
+                calendarShares[calendar.Id] = shares;
+            }
+        }
+    }
+
+    private async Task ShareCalendar(Tempus.Core.Models.Calendar calendar)
+    {
+        try
+        {
+            Logger.LogInformation("Opening share dialog for calendar {CalendarId} - {CalendarName}", calendar.Id, calendar.Name);
+
+            var result = await DialogService.OpenAsync<ShareCalendarDialog>("Share Calendar",
+                new Dictionary<string, object>
+                {
+                    { "CalendarId", calendar.Id },
+                    { "CalendarName", calendar.Name }
+                },
+                new DialogOptions { Width = "600px", Height = "auto", Resizable = true, Draggable = true });
+
+            var dialogResult = result as bool?;
+            Logger.LogInformation("Share dialog closed with result: {Result}", dialogResult);
+
+            if (dialogResult == true)
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    await LoadMyCalendars(userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error opening share dialog for calendar {CalendarId}", calendar.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to open share dialog: {ex.Message}");
+        }
+    }
+
+    private async Task ViewShares(Tempus.Core.Models.Calendar calendar)
+    {
+        if (!calendarShares.ContainsKey(calendar.Id))
+        {
+            return;
+        }
+
+        var shares = calendarShares[calendar.Id];
+        var shareList = string.Join("\n", shares.Select(s =>
+            $"• {s.SharedWithUser?.UserName ?? s.SharedWithUser?.Email ?? "Unknown"} ({s.GetPermissionDisplayName()})"));
+
+        await DialogService.Alert(
+            $"This calendar is shared with:\n\n{shareList}",
+            $"Sharing - {calendar.Name}",
+            new AlertOptions { OkButtonText = "Close" });
+    }
+
+    #endregion
+
+    #region Shared Calendars
+
+    private async Task LoadSharedCalendars(string userId)
+    {
+        var allShares = await SharingService.GetCalendarsSharedWithUserAsync(userId, includeUnaccepted: true);
+
+        acceptedShares = allShares.Where(s => s.IsAccepted).ToList();
+        pendingShares = allShares.Where(s => !s.IsAccepted).ToList();
+    }
+
+    private async Task AcceptShare(Guid shareId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            var success = await SharingService.AcceptShareAsync(shareId, userId);
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Calendar share accepted");
+                await LoadSharedCalendars(userId);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to accept calendar share");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error accepting share {ShareId}", shareId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private async Task DeclineShare(Guid shareId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            var confirmed = await DialogService.Confirm("Are you sure you want to decline this calendar share?",
+                "Decline Calendar Share",
+                new ConfirmOptions { OkButtonText = "Yes, Decline", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                var success = await SharingService.DeclineShareAsync(shareId, userId);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Calendar share declined");
+                    await LoadSharedCalendars(userId);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to decline calendar share");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error declining share {ShareId}", shareId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private async Task RemoveShare(Guid shareId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            var confirmed = await DialogService.Confirm("Are you sure you want to remove this shared calendar?",
+                "Remove Shared Calendar",
+                new ConfirmOptions { OkButtonText = "Yes, Remove", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                var success = await SharingService.RemoveShareAsync(shareId, userId);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Shared calendar removed");
+                    await LoadSharedCalendars(userId);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to remove shared calendar");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error removing share {ShareId}", shareId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private async Task UpdateShareColor(CalendarShare share)
+    {
+        // This would typically save the color preference to the database
+        // For now, it just updates the local state
+        Logger.LogInformation("Updated color for share {ShareId} to {Color}", share.Id, share.Color);
+        await Task.CompletedTask;
+    }
+
+    private BadgeStyle GetPermissionBadgeStyle(CalendarSharePermission permission)
+    {
+        return permission switch
+        {
+            CalendarSharePermission.FreeBusyOnly => BadgeStyle.Secondary,
+            CalendarSharePermission.ViewAll => BadgeStyle.Info,
+            CalendarSharePermission.Edit => BadgeStyle.Warning,
+            CalendarSharePermission.ManageSharing => BadgeStyle.Success,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    #endregion
+
+    #region Public Calendars
+
+    private async Task LoadPublicCalendars(string userId)
+    {
+        publicCalendars = await SharingService.GetUserPublicCalendarsAsync(userId, activeOnly: false);
+    }
+
+    private async Task ShowSubscribeDialog()
+    {
+        // TODO: Create SubscribePublicCalendarDialog component
+        NotificationService.Notify(NotificationSeverity.Info, "Coming Soon",
+            "Public calendar subscription dialog will be implemented next");
+        await Task.CompletedTask;
+    }
+
+    private async Task ToggleCalendar(PublicCalendar calendar)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            await SharingService.UpdatePublicCalendarAsync(calendar.Id, userId, isActive: calendar.IsActive);
+
+            var status = calendar.IsActive ? "enabled" : "disabled";
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Calendar {status}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling calendar {CalendarId}", calendar.Id);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            calendar.IsActive = !calendar.IsActive; // Revert
+        }
+    }
+
+    private async Task UpdateCalendarColor(PublicCalendar calendar)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return;
+            }
+
+            await SharingService.UpdatePublicCalendarAsync(calendar.Id, userId, color: calendar.Color);
+
+            Logger.LogInformation("Updated color for calendar {CalendarId}", calendar.Id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating calendar color");
+        }
+    }
+
+    private async Task SyncCalendar(Guid calendarId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            NotificationService.Notify(NotificationSeverity.Info, "Syncing", "Fetching events from calendar...");
+
+            var eventCount = await SharingService.SyncPublicCalendarAsync(calendarId, userId);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Success",
+                $"Synced {eventCount} events");
+
+            await LoadPublicCalendars(userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error syncing calendar {CalendarId}", calendarId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to sync calendar: " + ex.Message);
+        }
+    }
+
+    private async Task Unsubscribe(Guid calendarId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to determine current user");
+                return;
+            }
+
+            var confirmed = await DialogService.Confirm(
+                "Are you sure you want to unsubscribe from this calendar? Previously synced events will remain.",
+                "Unsubscribe from Calendar",
+                new ConfirmOptions { OkButtonText = "Yes, Unsubscribe", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                var success = await SharingService.UnsubscribeFromPublicCalendarAsync(calendarId, userId);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Unsubscribed from calendar");
+                    await LoadPublicCalendars(userId);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unsubscribe");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unsubscribing from calendar {CalendarId}", calendarId);
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private string GetCategoryName(PublicCalendarCategory category)
+    {
+        return category switch
+        {
+            PublicCalendarCategory.Holidays => "Holidays",
+            PublicCalendarCategory.Sports => "Sports",
+            PublicCalendarCategory.School => "School",
+            PublicCalendarCategory.Religious => "Religious",
+            PublicCalendarCategory.Weather => "Weather",
+            PublicCalendarCategory.Entertainment => "Entertainment",
+            PublicCalendarCategory.Other => "Other",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetCategoryIcon(PublicCalendarCategory category)
+    {
+        return category switch
+        {
+            PublicCalendarCategory.Holidays => "🎉",
+            PublicCalendarCategory.Sports => "⚽",
+            PublicCalendarCategory.School => "🎓",
+            PublicCalendarCategory.Religious => "🕊️",
+            PublicCalendarCategory.Weather => "🌤️",
+            PublicCalendarCategory.Entertainment => "🎬",
+            PublicCalendarCategory.Other => "📅",
+            _ => "📅"
+        };
+    }
+
+    #endregion
+
+    #region Connected Accounts
+
+    private async Task ShowConnectAccountDialog()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Coming Soon",
+            "Connected account integration will be available in a future update");
+        await Task.CompletedTask;
+    }
+
+    #endregion
+}

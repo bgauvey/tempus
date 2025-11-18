@@ -1,0 +1,319 @@
+@*
+    SkeletonLoader Component
+    Provides modern skeleton loading screens to replace spinners
+
+    Usage:
+    <SkeletonLoader Type="SkeletonType.Card" Count="3" />
+    <SkeletonLoader Type="SkeletonType.List" Count="5" />
+    <SkeletonLoader Type="SkeletonType.Calendar" />
+*@
+
+@if (Type == SkeletonType.Card)
+{
+    <div class="skeleton-container">
+        @for (int i = 0; i < Count; i++)
+        {
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text skeleton-text-short"></div>
+            </div>
+        }
+    </div>
+}
+else if (Type == SkeletonType.List)
+{
+    <div class="skeleton-list">
+        @for (int i = 0; i < Count; i++)
+        {
+            <div class="skeleton-list-item">
+                <div class="skeleton skeleton-avatar"></div>
+                <div class="skeleton-list-content">
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text skeleton-text-short"></div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (Type == SkeletonType.Table)
+{
+    <div class="skeleton-table">
+        <div class="skeleton-table-header">
+            @for (int i = 0; i < Columns; i++)
+            {
+                <div class="skeleton skeleton-text skeleton-text-short"></div>
+            }
+        </div>
+        @for (int i = 0; i < Count; i++)
+        {
+            <div class="skeleton-table-row">
+                @for (int j = 0; j < Columns; j++)
+                {
+                    <div class="skeleton skeleton-text"></div>
+                }
+            </div>
+        }
+    </div>
+}
+else if (Type == SkeletonType.Calendar)
+{
+    <div class="skeleton-calendar">
+        <div class="skeleton-calendar-header">
+            <div class="skeleton skeleton-text" style="width: 200px;"></div>
+            <div class="skeleton-calendar-actions">
+                <div class="skeleton skeleton-button"></div>
+                <div class="skeleton skeleton-button"></div>
+            </div>
+        </div>
+        <div class="skeleton-calendar-grid">
+            @for (int i = 0; i < 24; i++)
+            {
+                <div class="skeleton-calendar-timeslot">
+                    <div class="skeleton skeleton-time"></div>
+                    <div class="skeleton-calendar-slot"></div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else if (Type == SkeletonType.Dashboard)
+{
+    <div class="skeleton-dashboard">
+        <div class="skeleton-hero">
+            <div class="skeleton skeleton-title" style="width: 60%;"></div>
+            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+        </div>
+        <div class="skeleton-cards">
+            @for (int i = 0; i < Count; i++)
+            {
+                <div class="skeleton-card">
+                    <div class="skeleton skeleton-subtitle"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text skeleton-text-short"></div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    /* Skeleton Animation */
+    @@keyframes shimmer {
+        0% {
+            background-position: -468px 0;
+        }
+        100% {
+            background-position: 468px 0;
+        }
+    }
+
+    .skeleton {
+        background: linear-gradient(
+            90deg,
+            var(--rz-base-200, #f0f0f0) 0px,
+            var(--rz-base-300, #e0e0e0) 40px,
+            var(--rz-base-200, #f0f0f0) 80px
+        );
+        background-size: 800px 104px;
+        animation: shimmer 1.5s infinite linear;
+        border-radius: var(--radius-sm, 4px);
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .skeleton {
+            animation: none;
+        }
+    }
+
+    /* Card Skeleton */
+    .skeleton-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--space-md, 1rem);
+    }
+
+    .skeleton-card {
+        padding: var(--space-lg, 1.5rem);
+        border: 1px solid var(--border-light, #e0e0e0);
+        border-radius: var(--radius-md, 8px);
+        background: var(--bg-primary, white);
+    }
+
+    .skeleton-title {
+        height: 28px;
+        margin-bottom: var(--space-md, 1rem);
+        width: 70%;
+    }
+
+    .skeleton-subtitle {
+        height: 20px;
+        margin-bottom: var(--space-sm, 0.5rem);
+        width: 50%;
+    }
+
+    .skeleton-text {
+        height: 16px;
+        margin-bottom: var(--space-sm, 0.5rem);
+        width: 100%;
+    }
+
+    .skeleton-text-short {
+        width: 60%;
+    }
+
+    /* List Skeleton */
+    .skeleton-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm, 0.5rem);
+    }
+
+    .skeleton-list-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md, 1rem);
+        padding: var(--space-md, 1rem);
+        border: 1px solid var(--border-light, #e0e0e0);
+        border-radius: var(--radius-md, 8px);
+        background: var(--bg-primary, white);
+    }
+
+    .skeleton-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .skeleton-list-content {
+        flex: 1;
+    }
+
+    /* Table Skeleton */
+    .skeleton-table {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs, 0.25rem);
+    }
+
+    .skeleton-table-header,
+    .skeleton-table-row {
+        display: grid;
+        grid-template-columns: repeat(var(--columns, 3), 1fr);
+        gap: var(--space-md, 1rem);
+        padding: var(--space-md, 1rem);
+        background: var(--bg-primary, white);
+    }
+
+    .skeleton-table-header {
+        border-bottom: 2px solid var(--border-light, #e0e0e0);
+    }
+
+    .skeleton-table-row {
+        border-bottom: 1px solid var(--border-light, #e0e0e0);
+    }
+
+    /* Calendar Skeleton */
+    .skeleton-calendar {
+        background: var(--bg-primary, white);
+        border: 1px solid var(--border-light, #e0e0e0);
+        border-radius: var(--radius-md, 8px);
+        padding: var(--space-lg, 1.5rem);
+    }
+
+    .skeleton-calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-lg, 1.5rem);
+    }
+
+    .skeleton-calendar-actions {
+        display: flex;
+        gap: var(--space-sm, 0.5rem);
+    }
+
+    .skeleton-button {
+        width: 100px;
+        height: 36px;
+        border-radius: var(--radius-sm, 4px);
+    }
+
+    .skeleton-calendar-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        max-height: 600px;
+        overflow: hidden;
+    }
+
+    .skeleton-calendar-timeslot {
+        display: flex;
+        gap: var(--space-sm, 0.5rem);
+        align-items: center;
+    }
+
+    .skeleton-time {
+        width: 60px;
+        height: 20px;
+    }
+
+    .skeleton-calendar-slot {
+        flex: 1;
+        height: 40px;
+        border-radius: var(--radius-sm, 4px);
+    }
+
+    /* Dashboard Skeleton */
+    .skeleton-dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl, 2rem);
+    }
+
+    .skeleton-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: var(--space-2xl, 3rem);
+        border-radius: var(--radius-lg, 12px);
+    }
+
+    .skeleton-hero .skeleton {
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.1) 0px,
+            rgba(255, 255, 255, 0.2) 40px,
+            rgba(255, 255, 255, 0.1) 80px
+        );
+        background-size: 800px 104px;
+    }
+
+    .skeleton-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: var(--space-lg, 1.5rem);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .skeleton-container,
+        .skeleton-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .skeleton-calendar-grid {
+            max-height: 400px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public SkeletonType Type { get; set; } = SkeletonType.Card;
+
+    [Parameter]
+    public int Count { get; set; } = 3;
+
+    [Parameter]
+    public int Columns { get; set; } = 3;
+}

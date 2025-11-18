@@ -5,6 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>86d7e2b0-702e-47de-ab4a-70539ac314de</UserSecretsId>
+    <!-- Suppress false positive Razor warnings for Radzen components -->
+    <NoWarn>$(NoWarn);RZ10012</NoWarn>
+    <!-- Suppress unused field warnings for expansion state fields -->
+    <NoWarn>$(NoWarn);CS0414</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

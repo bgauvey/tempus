@@ -76,7 +76,7 @@ public class BenchmarkService : IBenchmarkService
             ? analytics.MeetingStats.TotalMeetingHours
             : 0;
 
-        var actualPercentage = totalHours > 0 ? ((double)meetingHours / totalHours) * 100 : 0;
+        var actualPercentage = totalHours > 0 ? Math.Round(((double)meetingHours / totalHours) * 100, 1) : 0;
         var benchmarkValue = _industryBenchmarks.OptimalMeetingPercentage;
 
         var status = DetermineStatus(actualPercentage, benchmarkValue, _industryBenchmarks.MaxMeetingPercentage, lowerIsBetter: false);
@@ -142,7 +142,7 @@ public class BenchmarkService : IBenchmarkService
     {
         var focusHours = analytics.Productivity?.TotalFocusHours ?? 0;
         var totalHours = analytics.TimeUsage.TotalScheduledHours;
-        var actualPercentage = totalHours > 0 ? (focusHours / totalHours) * 100 : 0;
+        var actualPercentage = totalHours > 0 ? Math.Round((double)(focusHours / totalHours) * 100, 1) : 0;
         var benchmarkValue = _industryBenchmarks.OptimalFocusTimePercentage;
 
         var status = actualPercentage >= benchmarkValue ? BenchmarkStatus.Excellent :
@@ -270,7 +270,7 @@ public class BenchmarkService : IBenchmarkService
         // Use fragmented hours as a proxy for fragmentation score
         var actualFragmentation = analytics.Productivity?.FragmentedHours ?? 0;
         var totalHours = analytics.TimeUsage.TotalScheduledHours;
-        var fragmentationScore = totalHours > 0 ? ((double)actualFragmentation / totalHours) * 10 : 0;
+        var fragmentationScore = totalHours > 0 ? Math.Round(((double)actualFragmentation / totalHours) * 10, 1) : 0;
         var benchmarkValue = _industryBenchmarks.MaxFragmentationScore;
 
         var status = fragmentationScore <= benchmarkValue ? BenchmarkStatus.Excellent :
@@ -313,7 +313,7 @@ public class BenchmarkService : IBenchmarkService
     private double CalculateVariance(double actualValue, double benchmarkValue)
     {
         if (benchmarkValue == 0) return 0;
-        return ((actualValue - benchmarkValue) / benchmarkValue) * 100;
+        return Math.Round(((actualValue - benchmarkValue) / benchmarkValue) * 100, 1);
     }
 
     public BenchmarkComparison CompareMetric(string category, string metricName, double actualValue, double benchmarkValue, bool higherIsBetter = true)
@@ -354,7 +354,7 @@ public class BenchmarkService : IBenchmarkService
             };
         }
 
-        return score / comparisons.Count;
+        return Math.Round(score / comparisons.Count, 1);
     }
 
     private List<string> GenerateTopRecommendations(List<BenchmarkComparison> comparisons)

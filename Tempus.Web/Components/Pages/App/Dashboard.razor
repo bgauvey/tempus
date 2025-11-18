@@ -8,6 +8,7 @@
 @using Tempus.Web.Services
 @using Microsoft.JSInterop
 @using Tempus.Web.Components.Account
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject IEventRepository EventRepository
 @inject ISettingsService SettingsService
@@ -21,200 +22,384 @@
 
 <PageTitle>Dashboard - Tempus</PageTitle>
 
-<div style="padding: 2rem;">
-    <RadzenStack Gap="2rem">
-        <!-- Header -->
-        <RadzenStack Gap="0.5rem">
-            <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">Dashboard</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="color: #718096;">
-                Welcome back! Here's your overview for today.
-            </RadzenText>
-        </RadzenStack>
+<div class="dashboard-container">
+    @if (_isLoading)
+    {
+        <SkeletonLoader Type="SkeletonType.Dashboard" Count="2" />
+    }
+    else
+    {
+        <RadzenStack Gap="var(--space-xl)">
 
-        <!-- Metrics Cards -->
-        <RadzenRow Gap="1.5rem">
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_todayEvents</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Today's Events</RadzenText>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
+        <!-- Card 1: Hero Section - "Today's Focus" -->
+        <RadzenCard class="hero-card">
+            <RadzenStack Gap="var(--space-sm)">
+                <RadzenText TextStyle="TextStyle.DisplayH4" class="hero-greeting">
+                    @GetGreeting()
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.H6" class="hero-date text-secondary">
+                    @DateTime.Now.ToString("dddd, MMMM dd, yyyy")
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.H5" class="hero-event-count">
+                    @if (_todayEvents == 0)
+                    {
+                        <text>No events scheduled today</text>
+                    }
+                    else if (_todayEvents == 1)
+                    {
+                        <text>You have 1 event today</text>
+                    }
+                    else
+                    {
+                        <text>You have @_todayEvents events today</text>
+                    }
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_upcomingEvents</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">This Week</RadzenText>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
+        <!-- Card 2: Next Up -->
+        <RadzenCard class="next-up-card">
+            <RadzenStack Gap="var(--space-lg)">
+                <RadzenText TextStyle="TextStyle.H5" class="font-bold">
+                    Next Up
+                </RadzenText>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_totalEvents</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Total Events</RadzenText>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(250, 112, 154, 0.3); transition: all 0.3s ease; cursor: default;" class="metric-card">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_pendingTasks</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Pending Tasks</RadzenText>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-        </RadzenRow>
-
-        <!-- Main Content -->
-        <RadzenRow Gap="1.5rem" class="dashboard-main-row">
-            <RadzenColumn Size="12" SizeLG="8" class="dashboard-column">
-                <RadzenCard class="dashboard-card dashboard-card-equal-height">
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Upcoming Events</RadzenText>
-                        @if (_recentEvents.Any())
-                        {
-                            <RadzenStack Gap="0.75rem">
-                                @foreach (var evt in _recentEvents)
-                                {
-                                    <RadzenCard>
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
-                                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                                    <RadzenIcon Icon="event" Style="color: white; font-size: 1.5rem;" />
-                                                </div>
-                                                <RadzenStack Gap="0.25rem">
-                                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
-                                                        @evt.Title @GetTimeZoneIndicator(evt)
-                                                    </RadzenText>
-                                                    <RadzenText TextStyle="TextStyle.Body2">
-                                                        @GetDisplayTime(evt).ToString(DateTimeFormatString)
-                                                    </RadzenText>
-                                                </RadzenStack>
-                                            </RadzenStack>
-                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@evt.EventType.ToString()" />
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                }
-                            </RadzenStack>
-                        }
-                        else
-                        {
-                            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Style="padding: 3rem; text-align: center;">
-                                <RadzenIcon Icon="event_available" Style="font-size: 4rem; opacity: 0.3;" />
-                                <RadzenText>No upcoming events. Start by creating your first event!</RadzenText>
-                            </RadzenStack>
-                        }
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-
-            <RadzenColumn Size="12" SizeLG="4" class="dashboard-column">
-                <RadzenCard class="dashboard-card dashboard-card-equal-height">
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">Quick Actions</RadzenText>
-                        <RadzenStack Gap="0.75rem">
-                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="picture_as_pdf"
-                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
-                                          Click="DownloadTodayAgenda">
-                                Download Today's Agenda
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add"
-                                          Style="width: 100%; height: 50px; font-size: 1rem; font-weight: 600; border-radius: 12px;"
-                                          Click="@(() => NavigationManager.NavigateTo("/events"))">
-                                Create Event
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="upload"
-                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
-                                          Click="@(() => NavigationManager.NavigateTo("/import"))">
-                                Import ICS / PST File
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="calendar_month"
-                                          Style="width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;"
-                                          Click="@(() => NavigationManager.NavigateTo("/calendar"))">
-                                View Calendar
-                            </RadzenButton>
-                        </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-        </RadzenRow>
-
-        <!-- Additional Stats Section -->
-        <RadzenRow Gap="1.5rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCard class="dashboard-card">
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Event Distribution</RadzenText>
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                <RadzenText>Meetings</RadzenText>
-                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@_meetingCount.ToString()" />
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                <RadzenText>Tasks</RadzenText>
-                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@_taskCount.ToString()" />
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                <RadzenText>Appointments</RadzenText>
-                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@_appointmentCount.ToString()" />
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCard class="dashboard-card">
-                    <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">Recent Activity</RadzenText>
-                        <RadzenStack Gap="0.5rem">
-                            @if (_totalEvents > 0)
-                            {
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
-                                    <RadzenIcon Icon="check_circle" Style="color: #43e97b; margin-top: 2px;" />
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Events Created</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2">@_totalEvents total events in the system</RadzenText>
+                @if (_nextEvent != null)
+                {
+                    <div class="next-event-content">
+                        <RadzenStack Gap="var(--space-md)">
+                            <RadzenStack Gap="var(--space-xs)">
+                                <RadzenText TextStyle="TextStyle.H6" class="font-semibold text-primary">
+                                    @_nextEvent.Title @GetTimeZoneIndicator(_nextEvent)
+                                </RadzenText>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-md)" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="schedule" Style="font-size: 1.25rem; color: var(--text-secondary);" />
+                                        <RadzenText TextStyle="TextStyle.Body1" class="text-secondary">
+                                            @GetDisplayTime(_nextEvent).ToString(DateTimeFormatString)
+                                        </RadzenText>
                                     </RadzenStack>
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@_nextEvent.EventType.ToString()" />
                                 </RadzenStack>
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.Start">
-                                    <RadzenIcon Icon="schedule" Style="color: #4facfe; margin-top: 2px;" />
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenText Style="font-size: 0.9rem; font-weight: 600;">Upcoming This Week</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2">@_upcomingEvents events scheduled</RadzenText>
-                                    </RadzenStack>
+                            </RadzenStack>
+
+                            @if (!string.IsNullOrEmpty(_nextEvent.Location))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="location_on" Style="font-size: 1.25rem; color: var(--text-secondary);" />
+                                    <RadzenText TextStyle="TextStyle.Body2" class="text-secondary">
+                                        @_nextEvent.Location
+                                    </RadzenText>
                                 </RadzenStack>
                             }
-                            else
+
+                            @if (!string.IsNullOrEmpty(_nextEvent.Description))
                             {
-                                <RadzenText Style="text-align: center; padding: 1rem;">
-                                    No activity yet. Start creating events!
+                                <RadzenText TextStyle="TextStyle.Body2" class="text-secondary" Style="line-height: 1.6;">
+                                    @_nextEvent.Description
                                 </RadzenText>
                             }
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-sm)" Wrap="FlexWrap.Wrap">
+                                @if (_nextEvent.VideoConference != null && !string.IsNullOrEmpty(_nextEvent.VideoConference.MeetingUrl))
+                                {
+                                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                                  Icon="videocam"
+                                                  Text="Join Meeting"
+                                                  Click="@(() => JoinMeeting(_nextEvent.VideoConference.MeetingUrl))"
+                                                  Style="font-weight: 600;" />
+                                }
+                                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                              Icon="info"
+                                              Text="View Details"
+                                              Click="@(() => NavigateToEvent(_nextEvent.Id))"
+                                              Style="font-weight: 600;" />
+                            </RadzenStack>
                         </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-        </RadzenRow>
-    </RadzenStack>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <RadzenStack Gap="var(--space-md)" AlignItems="AlignItems.Center" Style="text-align: center; padding: var(--space-2xl) var(--space-md);">
+                            <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: var(--color-gray-300);" />
+                            <RadzenStack Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                <RadzenText TextStyle="TextStyle.H6" class="text-secondary">
+                                    No upcoming events
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="text-tertiary">
+                                    You're all caught up! Time to plan your next event.
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Icon="add"
+                                          Text="Create Event"
+                                          Click="@(() => NavigationManager.NavigateTo("/events"))"
+                                          Style="font-weight: 600; margin-top: var(--space-sm);" />
+                        </RadzenStack>
+                    </div>
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Card 3: Today's Agenda -->
+        <RadzenCard class="agenda-card">
+            <RadzenStack Gap="var(--space-lg)">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.H5" class="font-bold">
+                        Today's Agenda
+                    </RadzenText>
+                    @if (_todayEventsList.Any())
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Icon="picture_as_pdf"
+                                      Text="Download PDF"
+                                      Click="DownloadTodayAgenda"
+                                      Size="ButtonSize.Small"
+                                      Style="font-weight: 600;" />
+                    }
+                </RadzenStack>
+
+                @if (_todayEventsList.Any())
+                {
+                    <div class="agenda-list">
+                        <RadzenStack Gap="var(--space-sm)">
+                            @foreach (var evt in _todayEventsList)
+                            {
+                                <div class="agenda-item @GetEventTypeClass(evt.EventType)" @onclick="@(() => NavigateToEvent(evt.Id))">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-md)" AlignItems="AlignItems.Start">
+                                        <div class="agenda-time">
+                                            <RadzenText TextStyle="TextStyle.Body2" class="font-semibold">
+                                                @GetDisplayTime(evt).ToString(_settings?.TimeFormat == Core.Enums.TimeFormat.TwentyFourHour ? "HH:mm" : "h:mm tt")
+                                            </RadzenText>
+                                        </div>
+                                        <div class="agenda-details">
+                                            <RadzenStack Gap="var(--space-xs)">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-sm)" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                                    <RadzenText TextStyle="TextStyle.Body1" class="font-semibold">
+                                                        @evt.Title @GetTimeZoneIndicator(evt)
+                                                    </RadzenText>
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@evt.EventType.ToString()" Style="font-size: var(--text-xs);" />
+                                                </RadzenStack>
+                                                @if (!string.IsNullOrEmpty(evt.Location))
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                                        <RadzenIcon Icon="location_on" Style="font-size: 1rem; color: var(--text-tertiary);" />
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="text-tertiary">
+                                                            @evt.Location
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                }
+                                                @if (evt.VideoConference != null && !string.IsNullOrEmpty(evt.VideoConference.MeetingUrl))
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                                        <RadzenIcon Icon="videocam" Style="font-size: 1rem; color: var(--color-primary);" />
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="text-primary">
+                                                            Video conference available
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                }
+                                            </RadzenStack>
+                                        </div>
+                                    </RadzenStack>
+                                </div>
+                            }
+                        </RadzenStack>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <RadzenStack Gap="var(--space-md)" AlignItems="AlignItems.Center" Style="text-align: center; padding: var(--space-xl) var(--space-md);">
+                            <RadzenIcon Icon="event_note" Style="font-size: 3rem; color: var(--color-gray-300);" />
+                            <RadzenStack Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                <RadzenText TextStyle="TextStyle.Body1" class="text-secondary">
+                                    No events scheduled for today
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="text-tertiary">
+                                    Enjoy your free day or create a new event.
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </div>
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        </RadzenStack>
+    }
 </div>
 
+<style>
+    .dashboard-container {
+        padding: var(--space-xl);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Hero Card - Today's Focus */
+    .hero-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: var(--space-2xl);
+        border: none;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .hero-greeting {
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .hero-date {
+        opacity: 0.95;
+        font-weight: 500;
+    }
+
+    .hero-event-count {
+        margin-top: var(--space-sm);
+        font-weight: 600;
+        opacity: 0.95;
+    }
+
+    /* Next Up Card */
+    .next-up-card {
+        padding: var(--space-xl);
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-md);
+    }
+
+    .next-event-content {
+        background: var(--bg-secondary);
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
+        border-left: 4px solid var(--color-primary);
+    }
+
+    /* Agenda Card */
+    .agenda-card {
+        padding: var(--space-xl);
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .agenda-list {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: var(--space-xs);
+    }
+
+    .agenda-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .agenda-list::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+    }
+
+    .agenda-list::-webkit-scrollbar-thumb {
+        background: var(--color-gray-300);
+        border-radius: var(--radius-sm);
+    }
+
+    .agenda-list::-webkit-scrollbar-thumb:hover {
+        background: var(--color-gray-400);
+    }
+
+    .agenda-item {
+        padding: var(--space-md);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-left: 4px solid var(--color-gray-300);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .agenda-item:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateX(4px);
+        border-left-width: 4px;
+    }
+
+    .agenda-item.meeting { border-left-color: var(--color-meeting); }
+    .agenda-item.task { border-left-color: var(--color-timeblock); }
+    .agenda-item.appointment { border-left-color: var(--color-personal); }
+    .agenda-item.deadline { border-left-color: var(--color-deadline); }
+    .agenda-item.reminder { border-left-color: var(--color-work); }
+    .agenda-item.other { border-left-color: var(--color-focus); }
+
+    .agenda-time {
+        min-width: 80px;
+        text-align: left;
+    }
+
+    .agenda-details {
+        flex: 1;
+    }
+
+    .empty-state {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+    }
+
+    /* Mobile Responsive */
+    @@media (max-width: 768px) {
+        .dashboard-container {
+            padding: var(--space-md);
+        }
+
+        .hero-card {
+            padding: var(--space-xl);
+        }
+
+        .next-up-card,
+        .agenda-card {
+            padding: var(--space-md);
+        }
+
+        .next-event-content {
+            padding: var(--space-md);
+        }
+
+        .agenda-item {
+            padding: var(--space-sm);
+        }
+
+        .agenda-time {
+            min-width: 60px;
+            font-size: var(--text-xs);
+        }
+
+        .agenda-list {
+            max-height: 400px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .hero-greeting {
+            font-size: var(--text-2xl) !important;
+        }
+
+        .hero-date {
+            font-size: var(--text-base) !important;
+        }
+
+        .hero-event-count {
+            font-size: var(--text-lg) !important;
+        }
+    }
+</style>
+
 @code {
+    private bool _isLoading = true;
     private int _todayEvents;
-    private int _upcomingEvents;
-    private int _totalEvents;
-    private int _pendingTasks;
-    private int _meetingCount;
-    private int _taskCount;
-    private int _appointmentCount;
-    private List<Event> _recentEvents = new();
+    private Event? _nextEvent;
+    private List<Event> _todayEventsList = new();
 
     private string _userId = string.Empty;
+    private string _userName = "there";
     private string _userTimeZone = TimeZoneInfo.Local.Id;
     private CalendarSettings? _settings;
 
@@ -233,6 +418,12 @@
             {
                 _userId = appUser.Id;
                 _userTimeZone = appUser.TimeZone;
+
+                // Get user's first name for greeting
+                _userName = !string.IsNullOrWhiteSpace(appUser.FirstName)
+                    ? appUser.FirstName
+                    : (!string.IsNullOrWhiteSpace(appUser.Email) ? appUser.Email.Split('@')[0] : "there");
+
                 // Load user's calendar settings for time format preference
                 _settings = await SettingsService.GetOrCreateDefaultSettingsAsync(_userId);
             }
@@ -242,26 +433,69 @@
 
     private async Task LoadDashboardData()
     {
-        var today = DateTime.Today;
-        var endOfWeek = today.AddDays(7);
+        try
+        {
+            _isLoading = true;
+            var today = DateTime.Today;
+            var now = DateTime.Now;
 
-        var allEvents = await EventRepository.GetAllAsync(_userId);
-        _totalEvents = allEvents.Count;
+            var allEvents = await EventRepository.GetAllAsync(_userId);
 
-        _todayEvents = allEvents.Count(e => e.StartTime.Date == today);
-        _upcomingEvents = allEvents.Count(e => e.StartTime >= today && e.StartTime <= endOfWeek);
-        _pendingTasks = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task && !e.IsCompleted);
+            // Count today's events
+            _todayEvents = allEvents.Count(e => GetDisplayTime(e).Date == today);
 
-        // Event type distribution
-        _meetingCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Meeting);
-        _taskCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Task);
-        _appointmentCount = allEvents.Count(e => e.EventType == Core.Enums.EventType.Appointment);
+            // Get today's events list (sorted by time)
+            _todayEventsList = allEvents
+                .Where(e => GetDisplayTime(e).Date == today)
+                .OrderBy(e => GetDisplayTime(e))
+                .ToList();
 
-        _recentEvents = allEvents
-            .Where(e => e.StartTime >= DateTime.Now)
-            .OrderBy(e => e.StartTime)
-            .Take(5)
-            .ToList();
+            // Get the next upcoming event (could be today or future)
+            _nextEvent = allEvents
+                .Where(e => GetDisplayTime(e) >= now)
+                .OrderBy(e => GetDisplayTime(e))
+                .FirstOrDefault();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetGreeting()
+    {
+        var hour = DateTime.Now.Hour;
+        string timeGreeting;
+
+        if (hour >= 5 && hour < 12)
+        {
+            timeGreeting = "Good morning";
+        }
+        else if (hour >= 12 && hour < 17)
+        {
+            timeGreeting = "Good afternoon";
+        }
+        else
+        {
+            timeGreeting = "Good evening";
+        }
+
+        return $"{timeGreeting}, {_userName}";
+    }
+
+    private string GetEventTypeClass(Core.Enums.EventType eventType)
+    {
+        return eventType.ToString().ToLower();
+    }
+
+    private void NavigateToEvent(Guid eventId)
+    {
+        NavigationManager.NavigateTo($"/events/{eventId}");
+    }
+
+    private async Task JoinMeeting(string joinUrl)
+    {
+        await JSRuntime.InvokeVoidAsync("open", joinUrl, "_blank");
     }
 
     private async Task DownloadTodayAgenda()
@@ -269,13 +503,6 @@
         try
         {
             var today = DateTime.Today;
-
-            // Get all events for today
-            var allEvents = await EventRepository.GetAllAsync(_userId);
-            var todayEvents = allEvents
-                .Where(e => e.StartTime.Date == today)
-                .OrderBy(e => e.StartTime)
-                .ToList();
 
             // Get user name
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -295,7 +522,7 @@
             }
 
             // Generate PDF
-            var pdfBytes = PdfAgendaService.GenerateDailyAgenda(todayEvents, today, userName);
+            var pdfBytes = PdfAgendaService.GenerateDailyAgenda(_todayEventsList, today, userName);
 
             // Download file using inline JavaScript to avoid timing issues
             var fileName = $"Daily-Agenda-{today:yyyy-MM-dd}.pdf";
@@ -347,11 +574,11 @@
             {
                 var tz = TimeZoneInfo.FindSystemTimeZoneById(evt.TimeZoneId);
                 var abbreviation = GetTimeZoneAbbreviation(tz);
-                return $" 🌍 ({abbreviation})";
+                return $" ({abbreviation})";
             }
             catch
             {
-                return " 🌍";
+                return "";
             }
         }
         return string.Empty;
