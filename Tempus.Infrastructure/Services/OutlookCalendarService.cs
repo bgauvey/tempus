@@ -278,7 +278,9 @@ public class OutlookCalendarService : IOutlookCalendarService
                 .Build();
 
             // MSAL maintains token cache automatically
+#pragma warning disable CS0618 // GetAccountsAsync is obsolete but required without token cache serialization
             var accounts = await app.GetAccountsAsync();
+#pragma warning restore CS0618
             AuthenticationResult result;
 
             if (accounts.Any())
@@ -296,6 +298,10 @@ public class OutlookCalendarService : IOutlookCalendarService
             integration.TokenExpiry = result.ExpiresOn.UtcDateTime;
             await _integrationRepository.UpdateAsync(integration);
         }
+
+        // Verify access token is available
+        if (string.IsNullOrEmpty(integration.AccessToken))
+            throw new InvalidOperationException("Access token is not available. User must re-authenticate.");
 
         return CreateGraphClient(integration.AccessToken);
     }
