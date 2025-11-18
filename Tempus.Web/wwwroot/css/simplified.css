@@ -507,6 +507,41 @@ a.rz-button {
     box-shadow: var(--shadow-md);
 }
 
+/* Non-working hours shading (Outlook-style) */
+/* Target time slots in day/week view for hours outside 9 AM - 5 PM */
+.rz-scheduler-table tr[style*="--hour: 0"] td,
+.rz-scheduler-table tr[style*="--hour: 1"] td,
+.rz-scheduler-table tr[style*="--hour: 2"] td,
+.rz-scheduler-table tr[style*="--hour: 3"] td,
+.rz-scheduler-table tr[style*="--hour: 4"] td,
+.rz-scheduler-table tr[style*="--hour: 5"] td,
+.rz-scheduler-table tr[style*="--hour: 6"] td,
+.rz-scheduler-table tr[style*="--hour: 7"] td,
+.rz-scheduler-table tr[style*="--hour: 8"] td,
+.rz-scheduler-table tr[style*="--hour: 17"] td,
+.rz-scheduler-table tr[style*="--hour: 18"] td,
+.rz-scheduler-table tr[style*="--hour: 19"] td,
+.rz-scheduler-table tr[style*="--hour: 20"] td,
+.rz-scheduler-table tr[style*="--hour: 21"] td,
+.rz-scheduler-table tr[style*="--hour: 22"] td,
+.rz-scheduler-table tr[style*="--hour: 23"] td {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Alternative: Use nth-child to target rows representing non-working hours */
+/* Rows 1-9 represent hours 0-8 (12 AM - 8 AM) */
+.rz-scheduler-view-day .rz-scheduler-table tbody tr:nth-child(-n+18),
+.rz-scheduler-view-week .rz-scheduler-table tbody tr:nth-child(-n+18) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Rows representing hours 17-23 (5 PM - 11 PM) */
+/* Assuming 30-minute slots, hour 17 starts at row 35 (17 * 2 + 1) */
+.rz-scheduler-view-day .rz-scheduler-table tbody tr:nth-child(n+35),
+.rz-scheduler-view-week .rz-scheduler-table tbody tr:nth-child(n+35) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
 /* ============================================
    11. Form Input Simplification
    ============================================ */
