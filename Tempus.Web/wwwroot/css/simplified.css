@@ -507,45 +507,6 @@ a.rz-button {
     box-shadow: var(--shadow-md);
 }
 
-/* Non-working hours shading (like Outlook) */
-/* Shade hours before 9 AM and after 5 PM by default */
-.rz-scheduler-timeslot[data-hour="0"],
-.rz-scheduler-timeslot[data-hour="1"],
-.rz-scheduler-timeslot[data-hour="2"],
-.rz-scheduler-timeslot[data-hour="3"],
-.rz-scheduler-timeslot[data-hour="4"],
-.rz-scheduler-timeslot[data-hour="5"],
-.rz-scheduler-timeslot[data-hour="6"],
-.rz-scheduler-timeslot[data-hour="7"],
-.rz-scheduler-timeslot[data-hour="8"],
-.rz-scheduler-timeslot[data-hour="17"],
-.rz-scheduler-timeslot[data-hour="18"],
-.rz-scheduler-timeslot[data-hour="19"],
-.rz-scheduler-timeslot[data-hour="20"],
-.rz-scheduler-timeslot[data-hour="21"],
-.rz-scheduler-timeslot[data-hour="22"],
-.rz-scheduler-timeslot[data-hour="23"] {
-    background-color: rgba(0, 0, 0, 0.02);
-    background-image: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(0, 0, 0, 0.01) 10px,
-        rgba(0, 0, 0, 0.01) 20px
-    );
-}
-
-/* Alternative approach: Use nth-child selectors if data-hour not available */
-/* Hours 0-8 (before 9 AM) */
-.rz-scheduler-view .rz-scheduler-timeslot:nth-child(-n+9) {
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* Hours 17-23 (after 5 PM) */
-.rz-scheduler-view .rz-scheduler-timeslot:nth-child(n+18) {
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
 /* ============================================
    11. Form Input Simplification
    ============================================ */
