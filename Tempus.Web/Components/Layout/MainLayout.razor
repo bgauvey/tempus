@@ -52,6 +52,14 @@
             <RadzenHeader>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <!-- Mobile Hamburger Menu Button (44px touch target) -->
+                        <RadzenButton Icon="menu"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => _drawerOpen = !_drawerOpen)"
+                                      Class="mobile-menu-toggle"
+                                      Style="min-width: 44px; min-height: 44px; padding: 0;"
+                                      title="Toggle navigation menu" />
+
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenImage Path="./images/favicon2.png" Style="width: 32px; height: 32px; background-color: transparent;" Class="tempus-icon" AlternateText="Tempus Icon" />
                             <RadzenText TextStyle="TextStyle.H5">
