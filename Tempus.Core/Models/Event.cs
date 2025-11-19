@@ -41,6 +41,9 @@ public class Event
     public DateTime? UpdatedAt { get; set; }
     public bool IsCompleted { get; set; }
 
+    // Privacy - when true, event details are hidden from team members
+    public bool IsPrivate { get; set; } = false;
+
     // RSVP Configuration
     public bool RequireRSVP { get; set; } = false; // Whether attendees must RSVP
     public DateTime? RSVPDeadline { get; set; } // Deadline for RSVP responses

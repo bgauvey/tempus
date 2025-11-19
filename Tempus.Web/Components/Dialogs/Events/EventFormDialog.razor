@@ -78,9 +78,15 @@
                                     Placeholder="Select a calendar..." />
                 </RadzenFormField>
 
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenCheckBox @bind-Value="@IsAllDay" />
-                    <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenCheckBox @bind-Value="@IsAllDay" />
+                        <RadzenLabel Text="All Day Event" Style="margin: 0; cursor: pointer;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenCheckBox @bind-Value="@_event.IsPrivate" />
+                        <RadzenLabel Text="Private" Style="margin: 0; cursor: pointer;" title="Hide event details from team members" />
+                    </RadzenStack>
                 </RadzenStack>
             </RadzenStack>
         </div>
