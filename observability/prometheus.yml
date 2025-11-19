@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'tempus-monitor'
+
+scrape_configs:
+  # Scrape Tempus Web Application metrics
+  - job_name: 'tempus-web'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:5000']  # Adjust port if different
+        labels:
+          app: 'tempus'
+          environment: 'development'
+
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape OpenTelemetry Collector metrics
+  - job_name: 'otel-collector'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['otel-collector:8888']
+
+  # Scrape Jaeger metrics
+  - job_name: 'jaeger'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['jaeger:14269']
