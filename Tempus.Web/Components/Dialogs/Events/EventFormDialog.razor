@@ -123,31 +123,6 @@
                         <RadzenLabel Text="Color" Style="margin: 0; min-width: 80px;" />
                         <RadzenColorPicker @bind-Value="@_event.Color" />
                     </RadzenStack>
-
-                    <RadzenFormField Text="Time Zone" Variant="Variant.Outlined">
-                        <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
-                            <div style="flex: 1; min-width: 0;">
-                                <RadzenDropDown @bind-Value="@SelectedTimeZoneId"
-                                              Data="@_availableTimeZones"
-                                              TextProperty="DisplayName"
-                                              ValueProperty="Id"
-                                              FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                              AllowFiltering="true"
-                                              Placeholder="Select timezone..."
-                                              Style="width: 100%;" />
-                            </div>
-                            <RadzenButton Icon="refresh"
-                                        ButtonStyle="ButtonStyle.Light"
-                                        Size="ButtonSize.Small"
-                                        Click="@ResetToUserTimeZone"
-                                        title="Reset to your timezone"
-                                        Style="flex-shrink: 0;" />
-                        </div>
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: #718096; margin-top: 0.5rem; display: block;">
-                            <RadzenIcon Icon="info" Style="font-size: 0.875rem; vertical-align: middle;" />
-                            Set timezone for multi-location meetings. Current: @GetTimeZoneAbbreviation()
-                        </RadzenText>
-                    </RadzenFormField>
                 </RadzenStack>
             </ChildContent>
         </RadzenExpander>
@@ -402,60 +377,6 @@
             </RadzenExpander>
         }
 
-        <!-- REMINDERS SECTION -->
-        <RadzenExpander class="event-form-section" Expanded="@_remindersExpanded">
-            <HeaderTemplate>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="notifications" />
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">Reminders</RadzenText>
-                </RadzenStack>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                    <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0.5rem;">
-                        Choose when you want to be reminded about this event
-                    </RadzenText>
-
-                    <RadzenFormField Text="Reminder Times" Variant="Variant.Outlined">
-                        <RadzenCheckBoxList @bind-Value="@_selectedReminders"
-                                            TValue="int"
-                                            Orientation="Orientation.Vertical"
-                                            Data="@_reminderOptions"
-                                            TextProperty="Text"
-                                            ValueProperty="Value" />
-                    </RadzenFormField>
-
-                    @if (_selectedReminders != null && _selectedReminders.Any())
-                    {
-                        <div style="padding: 0.75rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
-                            <RadzenIcon Icon="notifications_active" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                            <strong>Active Reminders:</strong>
-                            <div style="margin-top: 0.5rem;">
-                                @foreach (var minutes in _selectedReminders.OrderBy(m => m))
-                                {
-                                    <div style="margin-left: 1.5rem; color: #718096;">
-                                        • @GetReminderDescription(minutes) before event start
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div style="padding: 0.75rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
-                            <RadzenIcon Icon="notifications_off" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                            No reminders set. You won't receive notifications for this event.
-                        </div>
-                    }
-
-                    <div style="padding: 0.75rem; background: #e7f3ff; border-radius: 8px; font-size: 0.85rem; color: #0c5394; margin-top: 1rem;">
-                        <RadzenIcon Icon="info" Style="font-size: 1rem; vertical-align: middle; margin-right: 0.25rem;" />
-                        <strong>Note:</strong> Notifications will be delivered via browser push notifications. Make sure your browser has notification permissions enabled.
-                    </div>
-                </RadzenStack>
-            </ChildContent>
-        </RadzenExpander>
-
         <!-- ATTACHMENTS SECTION -->
         <RadzenExpander class="event-form-section" Expanded="@_attachmentsExpanded">
             <HeaderTemplate>
@@ -634,9 +555,6 @@
     private List<Calendar> _calendars = new();
     private Guid? _selectedCalendarId;
 
-    // Timezone management
-    private List<TimeZoneOption> _availableTimeZones = new();
-
     // Attendee management
     private string _newAttendeeName = string.Empty;
     private string _selectedContactEmail = string.Empty;
@@ -722,21 +640,6 @@
         }
     }
 
-    // Reminder management
-    private IEnumerable<int> _selectedReminders = new List<int>();
-    private readonly List<ReminderOption> _reminderOptions = new()
-    {
-        new ReminderOption { Text = "1 minute before", Value = 1 },
-        new ReminderOption { Text = "5 minutes before", Value = 5 },
-        new ReminderOption { Text = "15 minutes before", Value = 15 },
-        new ReminderOption { Text = "30 minutes before", Value = 30 },
-        new ReminderOption { Text = "1 hour before", Value = 60 },
-        new ReminderOption { Text = "2 hours before", Value = 120 },
-        new ReminderOption { Text = "1 day before", Value = 1440 },
-        new ReminderOption { Text = "2 days before", Value = 2880 },
-        new ReminderOption { Text = "1 week before", Value = 10080 }
-    };
-
     // Attachment management
     private List<EventAttachment> _attachments = new();
 
@@ -758,25 +661,6 @@
     {
         public string Text { get; set; } = string.Empty;
         public int Value { get; set; }
-    }
-
-    private class TimeZoneOption
-    {
-        public string Id { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-    }
-
-    private class ReminderOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public int Value { get; set; }
-    }
-
-    // Timezone property that binds to event's TimeZoneId
-    private string SelectedTimeZoneId
-    {
-        get => _event.TimeZoneId ?? _userTimeZone;
-        set => _event.TimeZoneId = value;
     }
 
     protected override async Task OnInitializedAsync()
@@ -812,9 +696,6 @@
                 _userName = !string.IsNullOrEmpty(name) ? name : _userEmail.Split('@')[0];
             }
         }
-
-        // Load timezones for selection
-        LoadTimeZones();
 
         // Load contacts for autocomplete
         _contacts = await ContactRepository.GetAllAsync(_userId);
@@ -866,9 +747,6 @@
             _eventDuration = _event.EndTime - _event.StartTime;
             _isExistingEvent = true;
 
-            // Load reminders from instance
-            LoadReminders();
-
             // Auto-expand sections that have content (progressive disclosure)
             SetSmartExpanderDefaults();
         }
@@ -895,9 +773,6 @@
 
                 // Set selected calendar
                 _selectedCalendarId = _event.CalendarId;
-
-                // Load existing reminders
-                LoadReminders();
 
                 // Load existing attachments
                 await LoadAttachments();
@@ -994,9 +869,6 @@
                 _event.MeetingCost = CalculateMeetingCost();
             }
 
-            // Save reminder selections
-            SaveReminders();
-
             if (EditSingleOccurrence)
             {
                 // Create exception event for single occurrence edit
@@ -1081,51 +953,6 @@
             return "Update";
         else
             return "Create";
-    }
-
-    private string GetReminderDescription(int minutes)
-    {
-        return minutes switch
-        {
-            1 => "1 minute",
-            5 => "5 minutes",
-            15 => "15 minutes",
-            30 => "30 minutes",
-            60 => "1 hour",
-            120 => "2 hours",
-            1440 => "1 day",
-            2880 => "2 days",
-            10080 => "1 week",
-            _ => $"{minutes} minutes"
-        };
-    }
-
-    private void LoadReminders()
-    {
-        if (!string.IsNullOrEmpty(_event.ReminderMinutes))
-        {
-            _selectedReminders = _event.ReminderMinutes
-                .Split(',')
-                .Select(s => int.TryParse(s.Trim(), out var minutes) ? minutes : 0)
-                .Where(m => m > 0)
-                .ToList();
-        }
-        else
-        {
-            _selectedReminders = new List<int>();
-        }
-    }
-
-    private void SaveReminders()
-    {
-        if (_selectedReminders != null && _selectedReminders.Any())
-        {
-            _event.ReminderMinutes = string.Join(",", _selectedReminders.OrderBy(r => r));
-        }
-        else
-        {
-            _event.ReminderMinutes = null;
-        }
     }
 
     private void Cancel()
@@ -1272,92 +1099,6 @@
         _event.Attendees.Insert(0, organizer); // Insert at the beginning so organizer is always first
     }
 
-    // Timezone management methods
-    private void LoadTimeZones()
-    {
-        // Get all available timezones from the service
-        var allTimeZones = TimeZoneService.GetAvailableTimeZones();
-
-        // Get common timezones for quick access
-        var commonTimeZones = TimeZoneService.GetCommonTimeZones();
-
-        // Create option list with common zones first, then separator, then all zones
-        _availableTimeZones = new List<TimeZoneOption>();
-
-        // Add common timezones
-        _availableTimeZones.Add(new TimeZoneOption
-        {
-            Id = "",
-            DisplayName = "─── Common Timezones ───"
-        });
-
-        foreach (var tz in commonTimeZones)
-        {
-            _availableTimeZones.Add(new TimeZoneOption
-            {
-                Id = tz.Id,
-                DisplayName = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset:hh\\:mm})"
-            });
-        }
-
-        // Add separator
-        _availableTimeZones.Add(new TimeZoneOption
-        {
-            Id = "",
-            DisplayName = "─── All Timezones ───"
-        });
-
-        // Add all timezones
-        foreach (var tz in allTimeZones)
-        {
-            // Skip if already in common list
-            if (commonTimeZones.Any(c => c.Id == tz.Id))
-                continue;
-
-            _availableTimeZones.Add(new TimeZoneOption
-            {
-                Id = tz.Id,
-                DisplayName = $"{tz.DisplayName} (UTC{tz.BaseUtcOffset:hh\\:mm})"
-            });
-        }
-    }
-
-    private void ResetToUserTimeZone()
-    {
-        _event.TimeZoneId = _userTimeZone;
-        StateHasChanged();
-    }
-
-    private string GetTimeZoneAbbreviation()
-    {
-        try
-        {
-            var tzId = _event.TimeZoneId ?? _userTimeZone;
-            var tz = TimeZoneInfo.FindSystemTimeZoneById(tzId);
-
-            // Get the abbreviation (e.g., PST, EST, UTC)
-            var abbreviation = tz.IsDaylightSavingTime(DateTime.Now)
-                ? tz.DaylightName
-                : tz.StandardName;
-
-            // Try to get a shorter abbreviation
-            if (abbreviation.Contains("Standard") || abbreviation.Contains("Daylight"))
-            {
-                var words = abbreviation.Split(' ');
-                if (words.Length > 1)
-                {
-                    abbreviation = string.Join("", words.Select(w => w.First()));
-                }
-            }
-
-            return abbreviation;
-        }
-        catch
-        {
-            return "UTC";
-        }
-    }
-
     // Attachment management methods
     private void OnAttachmentsChanged(List<EventAttachment> attachments)
     {
@@ -1416,7 +1157,6 @@
     private bool _eventDetailsExpanded = true;  // Always start expanded - important fields
     private bool _meetingDetailsExpanded = true;  // Start expanded for meetings - important
     private bool _recurrenceExpanded = false;  // Start collapsed - only needed for recurring
-    private bool _remindersExpanded = false;  // Start collapsed - optional feature
     private bool _attachmentsExpanded = false;  // Start collapsed - rarely used
     private bool _videoExpanded = false;  // Start collapsed - only needed sometimes
     private bool _roomsExpanded = false;  // Start collapsed - only needed sometimes
@@ -1563,9 +1303,6 @@
 
         // Recurrence: Expand if event is recurring
         _recurrenceExpanded = _event.IsRecurring;
-
-        // Reminders: Expand if event has reminders
-        _remindersExpanded = _selectedReminders?.Any() ?? false;
 
         // Attachments: Expand if event has attachments
         _attachmentsExpanded = _attachments.Any();
