@@ -933,9 +933,9 @@
 
             if (PrefilledDate.HasValue)
             {
-                // Set start and end times based on prefilled date
-                _event.StartTime = PrefilledDate.Value.Date.AddHours(9); // 9 AM
-                _event.EndTime = PrefilledDate.Value.Date.AddHours(9).AddMinutes(30); // 9:30 AM
+                // Set start and end times based on prefilled date/time from clicked slot
+                _event.StartTime = PrefilledDate.Value; // Use the actual clicked time
+                _event.EndTime = PrefilledDate.Value.AddMinutes(30); // 30 minutes after clicked time
             }
 
             // Add current user as organizer for new meetings
