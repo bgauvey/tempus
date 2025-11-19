@@ -40,8 +40,8 @@ exporters:
       app: tempus-web
 
   # Console exporter for debugging
-  logging:
-    loglevel: debug
+  debug:
+    verbosity: detailed
 
   # Export metrics to Prometheus Remote Write (optional)
   prometheusremotewrite:
@@ -55,13 +55,13 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch, resource]
-      exporters: [otlp/jaeger, logging]
+      exporters: [otlp/jaeger, debug]
 
     # Metrics pipeline
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch, resource]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, debug]
 
   extensions: [health_check, pprof, zpages]
 
