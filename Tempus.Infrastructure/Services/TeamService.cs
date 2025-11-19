@@ -82,6 +82,7 @@ public class TeamService : ITeamService
     {
         return await _context.Teams
             .Include(t => t.Members)
+                .ThenInclude(m => m.User)
             .Where(t => t.Members.Any(m => m.UserId == userId))
             .Where(t => t.IsActive)
             .OrderByDescending(t => t.CreatedAt)

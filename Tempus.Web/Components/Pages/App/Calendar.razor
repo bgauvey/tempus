@@ -605,6 +605,18 @@
                 Logger.LogDebug("Loaded {SharedEventCount} shared calendar events", sharedEvents.Count);
             }
 
+            // Load events from selected team members
+            if (_selectedTeamMemberIds.Any())
+            {
+                _teamMemberEvents.Clear();
+                foreach (var userId in _selectedTeamMemberIds)
+                {
+                    var memberEvents = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, userId);
+                    _teamMemberEvents[userId] = memberEvents;
+                    Logger.LogDebug("Loaded {MemberEventCount} events for team member {UserId}", memberEvents.Count, userId);
+                }
+            }
+
             // Combine both lists
             _events = ownEvents.Concat(sharedEvents).OrderBy(e => e.StartTime).ToList();
             Logger.LogDebug("Loaded {EventCount} total events", _events.Count);
@@ -1699,7 +1711,6 @@
         if (isSelected)
         {
             _selectedTeamMemberIds.Add(userId);
-            await LoadTeamMemberEvents(userId);
         }
         else
         {
@@ -1707,9 +1718,9 @@
             _teamMemberEvents.Remove(userId);
         }
 
-        // Refresh the calendar view to show/hide team member events
-        ConvertEventsToAppointments();
-        StateHasChanged();
+        // Reload calendar data for the current visible date range
+        // This will trigger OnLoadData which loads team member events
+        await LoadEvents();
 
         var member = _teamMembers.FirstOrDefault(m => m.UserId == userId);
         var memberName = $"{member?.User?.FirstName} {member?.User?.LastName}".Trim();
@@ -1725,19 +1736,5 @@
             Detail = $"{memberName}'s calendar is now {(isSelected ? "visible" : "hidden")}",
             Duration = 2000
         });
-    }
-
-    private async Task LoadTeamMemberEvents(string userId)
-    {
-        try
-        {
-            var events = await EventRepository.GetAllAsync(userId);
-            _teamMemberEvents[userId] = events;
-            Logger.LogDebug("Loaded {EventCount} events for team member {UserId}", events.Count, userId);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading events for team member {UserId}", userId);
-        }
     }
 }
