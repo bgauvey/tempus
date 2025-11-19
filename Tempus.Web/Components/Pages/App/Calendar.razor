@@ -16,6 +16,7 @@
 @inject IEventRepository EventRepository
 @inject ICalendarRepository CalendarRepository
 @inject ICalendarSharingService CalendarSharingService
+@inject ITeamService TeamService
 @inject ISettingsService SettingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -309,6 +310,30 @@
                         </div>
                     }
                 }
+
+                @if (_teamMembers.Any())
+                {
+                    <hr style="border: none; border-top: 1px solid var(--rz-border-color); margin: 0.5rem 0;" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700; margin: 0;">Team Members</RadzenText>
+
+                    @foreach (var member in _teamMembers)
+                    {
+                        var displayName = $"{member.User?.FirstName} {member.User?.LastName}".Trim();
+                        if (string.IsNullOrWhiteSpace(displayName))
+                        {
+                            displayName = member.User?.Email ?? "Unknown";
+                        }
+
+                        <div class="calendar-item @(_selectedTeamMemberIds.Contains(member.UserId) ? "" : "calendar-item-hidden")">
+                            <div class="calendar-color-indicator" style="background-color: #9b59b6;"></div>
+                            <div class="calendar-item-name" title="@member.Team?.Name">
+                                @displayName
+                            </div>
+                            <RadzenCheckBox Value="@_selectedTeamMemberIds.Contains(member.UserId)"
+                                          Change="@((bool value) => ToggleTeamMemberSelection(member.UserId, value))" />
+                        </div>
+                    }
+                }
             </RadzenStack>
         </RadzenCard>
     </div>
@@ -384,7 +409,8 @@
         public DateTime Start { get; set; }
         public DateTime End { get; set; }
         public string Text { get; set; } = string.Empty;
-        public Event Event { get; set; } = null!;
+        public Event? Event { get; set; } // Nullable for team member events
+        public bool IsReadOnly { get; set; } // True for team member events
     }
 
     // State variables
@@ -406,6 +432,11 @@
     // Calendar management
     private List<Tempus.Core.Models.Calendar> _calendars = new();
     private List<CalendarShare> _sharedCalendars = new();
+
+    // Team member calendar comparison
+    private List<TeamMember> _teamMembers = new();
+    private HashSet<string> _selectedTeamMemberIds = new();
+    private Dictionary<string, List<Event>> _teamMemberEvents = new();
 
     // Bulk operations
     private bool _selectionMode = false;
@@ -454,6 +485,9 @@
                 // Load shared calendars (only accepted shares)
                 _sharedCalendars = await CalendarSharingService.GetCalendarsSharedWithUserAsync(_userId, includeUnaccepted: false);
                 Logger.LogDebug("Loaded {SharedCalendarCount} shared calendars", _sharedCalendars.Count);
+
+                // Load team members for calendar comparison
+                await LoadTeamMembers();
             }
         }
 
@@ -633,35 +667,51 @@
             .Concat(visibleSharedCalendarIds)
             .ToHashSet();
 
-        _appointments = _events
+        // Convert owned/shared calendar events
+        var ownAppointments = _events
             .Where(e => !e.CalendarId.HasValue || visibleCalendarIds.Contains(e.CalendarId.Value))
-            .Select(e =>
-            {
-                // CRITICAL FIX: Events from database may have DateTimeKind.Unspecified
-                // We need to explicitly mark them as UTC since we store everything in UTC
-                if (e.StartTime.Kind == DateTimeKind.Unspecified && e.TimeZoneId == "UTC")
-                {
-                    e.StartTime = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
-                    e.EndTime = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
-                }
+            .Select(e => ConvertEventToAppointment(e, isOwn: true))
+            .ToList();
 
-                var displayEvent = e;
+        // Convert team member events
+        var teamAppointments = _teamMemberEvents
+            .Where(kvp => _selectedTeamMemberIds.Contains(kvp.Key))
+            .SelectMany(kvp => kvp.Value.Select(e => ConvertEventToAppointment(e, isOwn: false)))
+            .ToList();
 
-                // Convert from UTC to user's timezone for display
-                // Events are always stored in UTC (TimeZoneId = "UTC")
-                if (!string.IsNullOrEmpty(e.TimeZoneId))
-                {
-                    displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
-                }
+        _appointments = ownAppointments.Concat(teamAppointments).ToList();
+    }
 
-                return new AppointmentData
-                {
-                    Start = displayEvent.StartTime,
-                    End = displayEvent.EndTime,
-                    Text = displayEvent.Title,
-                    Event = e // Keep original event for editing
-                };
-            }).ToList();
+    private AppointmentData ConvertEventToAppointment(Event e, bool isOwn)
+    {
+        // CRITICAL FIX: Events from database may have DateTimeKind.Unspecified
+        // We need to explicitly mark them as UTC since we store everything in UTC
+        if (e.StartTime.Kind == DateTimeKind.Unspecified && e.TimeZoneId == "UTC")
+        {
+            e.StartTime = DateTime.SpecifyKind(e.StartTime, DateTimeKind.Utc);
+            e.EndTime = DateTime.SpecifyKind(e.EndTime, DateTimeKind.Utc);
+        }
+
+        var displayEvent = e;
+
+        // Convert from UTC to user's timezone for display
+        // Events are always stored in UTC (TimeZoneId = "UTC")
+        if (!string.IsNullOrEmpty(e.TimeZoneId))
+        {
+            displayEvent = TimeZoneConversionService.ConvertEventToUserTimeZone(e, _userTimeZone);
+        }
+
+        // Filter private events for team members (non-own events)
+        var displayTitle = (!isOwn && e.IsPrivate) ? "Private Appointment" : displayEvent.Title;
+
+        return new AppointmentData
+        {
+            Start = displayEvent.StartTime,
+            End = displayEvent.EndTime,
+            Text = displayTitle,
+            Event = isOwn ? e : null, // Only set Event for own events (allows editing)
+            IsReadOnly = !isOwn // Team member events are read-only
+        };
     }
 
     private async Task DownloadDailyAgenda()
@@ -733,6 +783,20 @@
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AppointmentData> args)
     {
         var appointment = args.Data;
+
+        // Prevent interaction with read-only team member events
+        if (appointment?.IsReadOnly == true)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Read-Only Event",
+                Detail = "This is a team member's event and cannot be edited",
+                Duration = 2000
+            });
+            return;
+        }
+
         if (appointment?.Event != null)
         {
             // Check if user has permission to view details
@@ -1598,5 +1662,82 @@
             Detail = $"{calendarName} is now {(isVisible ? "visible" : "hidden")}",
             Duration = 2000
         });
+    }
+
+    private async Task LoadTeamMembers()
+    {
+        try
+        {
+            var teams = await TeamService.GetUserTeamsAsync(_userId);
+            _teamMembers = teams
+                .SelectMany(t => t.Members
+                    .Where(m => m.UserId != _userId) // Exclude self
+                    .Select(m => new TeamMember
+                    {
+                        Id = m.Id,
+                        TeamId = t.Id,
+                        Team = t,
+                        UserId = m.UserId,
+                        User = m.User,
+                        Role = m.Role
+                    }))
+                .GroupBy(m => m.UserId)
+                .Select(g => g.First()) // Remove duplicates if user is in multiple teams
+                .OrderBy(m => m.User?.FirstName ?? m.User?.Email ?? "")
+                .ToList();
+
+            Logger.LogDebug("Loaded {TeamMemberCount} team members", _teamMembers.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading team members");
+        }
+    }
+
+    private async Task ToggleTeamMemberSelection(string userId, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _selectedTeamMemberIds.Add(userId);
+            await LoadTeamMemberEvents(userId);
+        }
+        else
+        {
+            _selectedTeamMemberIds.Remove(userId);
+            _teamMemberEvents.Remove(userId);
+        }
+
+        // Refresh the calendar view to show/hide team member events
+        ConvertEventsToAppointments();
+        StateHasChanged();
+
+        var member = _teamMembers.FirstOrDefault(m => m.UserId == userId);
+        var memberName = $"{member?.User?.FirstName} {member?.User?.LastName}".Trim();
+        if (string.IsNullOrWhiteSpace(memberName))
+        {
+            memberName = member?.User?.Email ?? "Team member";
+        }
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Team Member Calendar",
+            Detail = $"{memberName}'s calendar is now {(isSelected ? "visible" : "hidden")}",
+            Duration = 2000
+        });
+    }
+
+    private async Task LoadTeamMemberEvents(string userId)
+    {
+        try
+        {
+            var events = await EventRepository.GetAllAsync(userId);
+            _teamMemberEvents[userId] = events;
+            Logger.LogDebug("Loaded {EventCount} events for team member {UserId}", events.Count, userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading events for team member {UserId}", userId);
+        }
     }
 }
