@@ -340,16 +340,90 @@
 
     <!-- Calendar Content -->
     <div class="calendar-content">
-        <RadzenCard class="calendar-scheduler-card">
-            @if (_loading)
-            {
-                <div class="loading-container">
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        @if (_selectedTeamMemberIds.Any())
+        {
+            <!-- Side-by-side comparison view -->
+            <div style="display: flex; gap: 1rem; overflow-x: auto;">
+                <!-- Own Calendar -->
+                <div style="flex: 1; min-width: 600px;">
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 0.5rem;">My Calendar</RadzenText>
+                        @if (_loading)
+                        {
+                            <div class="loading-container">
+                                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+                            </div>
+                        }
+                        else
+                        {
+                            <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
+                                       StartProperty="Start" EndProperty="End" TextProperty="Text"
+                                       SelectedIndex="@_selectedViewIndex"
+                                       AppointmentSelect="@OnAppointmentSelect"
+                                       SlotSelect="@OnSlotSelect"
+                                       SlotRender="@OnSlotRender"
+                                       AppointmentRender="@OnAppointmentRender"
+                                       AppointmentMove="@OnAppointmentMove"
+                                       LoadData="@OnLoadData"
+                                       @oncontextmenu:preventDefault
+                                       Style="height: 600px;">
+                                <ChildContent>
+                                    <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                    <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                </ChildContent>
+                            </RadzenScheduler>
+                        }
+                    </RadzenCard>
                 </div>
-            }
-            else
-            {
-                <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
+
+                <!-- Team Member Calendars -->
+                @foreach (var userId in _selectedTeamMemberIds)
+                {
+                    var member = _teamMembers.FirstOrDefault(m => m.UserId == userId);
+                    var memberName = GetMemberDisplayName(member);
+                    var memberAppointments = GetTeamMemberAppointments(userId);
+
+                    <div style="flex: 1; min-width: 600px;">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 0.5rem;">@memberName</RadzenText>
+                            @if (_loading)
+                            {
+                                <div class="loading-container">
+                                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+                                </div>
+                            }
+                            else
+                            {
+                                <RadzenScheduler TItem="AppointmentData" Data="@memberAppointments"
+                                           StartProperty="Start" EndProperty="End" TextProperty="Text"
+                                           SelectedIndex="@_selectedViewIndex"
+                                           AppointmentSelect="@OnTeamMemberAppointmentSelect"
+                                           LoadData="@((args) => OnTeamMemberLoadData(args, userId))"
+                                           Style="height: 600px;">
+                                    <ChildContent>
+                                        <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                        <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                    </ChildContent>
+                                </RadzenScheduler>
+                            }
+                        </RadzenCard>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Single calendar view -->
+            <RadzenCard class="calendar-scheduler-card">
+                @if (_loading)
+                {
+                    <div class="loading-container">
+                        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    </div>
+                }
+                else
+                {
+                    <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                            SelectedIndex="@_selectedViewIndex"
                            AppointmentSelect="@OnAppointmentSelect"
@@ -390,8 +464,9 @@
                     </RadzenStack>
                 </NavigationTemplate>
             </RadzenScheduler>
+                }
+            </RadzenCard>
         }
-    </RadzenCard>
     </div>
 </div>
 
@@ -1734,6 +1809,73 @@
             Severity = NotificationSeverity.Info,
             Summary = "Team Member Calendar",
             Detail = $"{memberName}'s calendar is now {(isSelected ? "visible" : "hidden")}",
+            Duration = 2000
+        });
+    }
+
+    private string GetMemberDisplayName(TeamMember? member)
+    {
+        if (member?.User == null) return "Unknown";
+
+        var displayName = $"{member.User.FirstName} {member.User.LastName}".Trim();
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = member.User.Email ?? "Unknown";
+        }
+        return displayName;
+    }
+
+    private List<AppointmentData> GetTeamMemberAppointments(string userId)
+    {
+        if (!_teamMemberEvents.TryGetValue(userId, out var events))
+        {
+            return new List<AppointmentData>();
+        }
+
+        return events.Select(e => ConvertEventToAppointment(e, isOwn: false)).ToList();
+    }
+
+    private async Task OnTeamMemberLoadData(SchedulerLoadDataEventArgs args, string userId)
+    {
+        Logger.LogDebug("Loading data for team member {UserId}", userId);
+
+        try
+        {
+            // Convert date range from user's timezone to UTC (same logic as OnLoadData)
+            var startLocal = args.Start.Date.AddDays(-1);
+            var endLocal = args.End.Date.AddDays(1);
+
+            var startUtc = TimeZoneConversionService.ConvertTime(
+                DateTime.SpecifyKind(startLocal, DateTimeKind.Unspecified),
+                _userTimeZone,
+                "UTC"
+            );
+            var endUtc = TimeZoneConversionService.ConvertTime(
+                DateTime.SpecifyKind(endLocal, DateTimeKind.Unspecified),
+                _userTimeZone,
+                "UTC"
+            );
+
+            var memberEvents = await EventRepository.GetEventsByDateRangeAsync(startUtc, endUtc, userId);
+            _teamMemberEvents[userId] = memberEvents;
+            Logger.LogDebug("Loaded {MemberEventCount} events for team member {UserId}", memberEvents.Count, userId);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading data for team member {UserId}", userId);
+        }
+    }
+
+    private void OnTeamMemberAppointmentSelect(SchedulerAppointmentSelectEventArgs<AppointmentData> args)
+    {
+        // Team member events are read-only
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Read-Only Event",
+            Detail = "This is a team member's event and cannot be edited",
             Duration = 2000
         });
     }
