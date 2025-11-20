@@ -284,7 +284,9 @@
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenFormField Text="Who can see my free/busy times" Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenDropDown @bind-Value="_settings.FreeBusySharingLevel"
-                                                            Data="@(Enum.GetValues<FreeBusySharingLevel>())"
+                                                            Data="@_freeBusySharingLevels"
+                                                            TextProperty="Text"
+                                                            ValueProperty="Value"
                                                             Disabled="@(!_settings.PublishFreeBusyInformation)"
                                                             Style="width: 100%;" />
                                         </RadzenFormField>
@@ -598,6 +600,15 @@
     private bool _isSyncingApple = false;
     private bool _isSyncingOutlook = false;
     private string _userId = string.Empty;
+
+    // Free/Busy sharing level dropdown data
+    private List<DropdownItem<FreeBusySharingLevel>> _freeBusySharingLevels = new()
+    {
+        new DropdownItem<FreeBusySharingLevel> { Text = "Don't share", Value = FreeBusySharingLevel.None },
+        new DropdownItem<FreeBusySharingLevel> { Text = "Team members only", Value = FreeBusySharingLevel.TeamMembers },
+        new DropdownItem<FreeBusySharingLevel> { Text = "Everyone in organization", Value = FreeBusySharingLevel.Organization },
+        new DropdownItem<FreeBusySharingLevel> { Text = "Public (anyone with link)", Value = FreeBusySharingLevel.Public }
+    };
 
     private string TimeFormatString => _settings?.TimeFormat == TimeFormat.TwelveHour ? "hh:mm tt" : "HH:mm";
     private string HourFormat => _settings?.TimeFormat == TimeFormat.TwelveHour ? "12" : "24";
@@ -965,5 +976,12 @@
             FreeBusySharingLevel.Public => "Anyone with a link can see when you're free or busy",
             _ => ""
         };
+    }
+
+    // Helper class for dropdown items
+    private class DropdownItem<T>
+    {
+        public string Text { get; set; } = string.Empty;
+        public T Value { get; set; } = default!;
     }
 }
