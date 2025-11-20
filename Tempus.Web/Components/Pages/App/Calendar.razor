@@ -368,8 +368,12 @@
                                        @oncontextmenu:preventDefault
                                        Style="height: 600px;">
                                 <ChildContent>
+                                    <RadzenMonthView />
                                     <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
                                     <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                    <RadzenYearView />
+                                    <RadzenYearPlannerView />
+                                    <RadzenYearTimelineView />
                                 </ChildContent>
                             </RadzenScheduler>
                         }
@@ -401,8 +405,12 @@
                                            LoadData="@((args) => OnTeamMemberLoadData(args, userId))"
                                            Style="height: 600px;">
                                     <ChildContent>
+                                        <RadzenMonthView />
                                         <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
                                         <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                        <RadzenYearView />
+                                        <RadzenYearPlannerView />
+                                        <RadzenYearTimelineView />
                                     </ChildContent>
                                 </RadzenScheduler>
                             }
@@ -631,7 +639,8 @@
         if (firstRender)
         {
             // Scroll to the current time when the component is first rendered
-            await Task.Delay(500); // Wait for scheduler to fully render
+            // Longer delay to ensure Radzen scheduler is fully rendered
+            await Task.Delay(1000);
 
             var now = DateTime.Now;
             var hour = now.Hour;
@@ -641,7 +650,17 @@
             var scrollPosition = (hour * 60 + minute) - 180; // Offset by 3 hours (180 minutes)
             scrollPosition = Math.Max(0, scrollPosition);
 
-            await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
+            Logger.LogInformation("Scrolling calendar to current time: {Hour}:{Minute:00}, position: {Position}px",
+                hour, minute, scrollPosition);
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to invoke scrollSchedulerToTime");
+            }
         }
     }
 

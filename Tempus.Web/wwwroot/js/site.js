@@ -152,19 +152,47 @@ window.getNotificationPermission = function() {
 window.scrollSchedulerToTime = function(scrollPosition) {
     console.log('[Tempus.Calendar] Scrolling scheduler to position:', scrollPosition, 'px');
 
-    // Try multiple selectors for Radzen scheduler views
-    const schedulerView = document.querySelector('.rz-view-container') ||
-                         document.querySelector('.rz-scheduler .rz-view') ||
-                         document.querySelector('.rz-week-view') ||
-                         document.querySelector('.rz-day-view') ||
-                         document.querySelector('.rz-scheduler-content');
+    // Function to attempt scrolling
+    const attemptScroll = (attempt = 1, maxAttempts = 5) => {
+        console.log(`[Tempus.Calendar] Scroll attempt ${attempt}/${maxAttempts}`);
 
-    if (schedulerView) {
-        schedulerView.scrollTop = scrollPosition;
-        console.log('[Tempus.Calendar] Scrolled successfully to:', scrollPosition, 'px');
-    } else {
-        console.warn('[Tempus.Calendar] Could not find scheduler view element');
-        console.log('[Tempus.Calendar] Available scheduler elements:',
-            document.querySelectorAll('[class*="scheduler"], [class*="rz-"]'));
-    }
+        // Try multiple selectors for Radzen scheduler views
+        const selectors = [
+            '.rz-view-content',
+            '.rz-scheduler .rz-view',
+            '.rz-week-view .rz-view-content',
+            '.rz-day-view .rz-view-content',
+            '.rz-scheduler-content',
+            '.rz-view-container'
+        ];
+
+        let schedulerView = null;
+        for (const selector of selectors) {
+            schedulerView = document.querySelector(selector);
+            if (schedulerView) {
+                console.log(`[Tempus.Calendar] Found scheduler using selector: ${selector}`);
+                break;
+            }
+        }
+
+        if (schedulerView) {
+            schedulerView.scrollTop = scrollPosition;
+            console.log('[Tempus.Calendar] ✅ Scrolled successfully to:', scrollPosition, 'px');
+            console.log('[Tempus.Calendar] Element:', schedulerView);
+        } else if (attempt < maxAttempts) {
+            console.warn(`[Tempus.Calendar] Could not find scheduler view element, retrying in 200ms...`);
+            setTimeout(() => attemptScroll(attempt + 1, maxAttempts), 200);
+        } else {
+            console.error('[Tempus.Calendar] ❌ Failed to find scheduler element after', maxAttempts, 'attempts');
+            console.log('[Tempus.Calendar] Available elements with "rz" in class:',
+                Array.from(document.querySelectorAll('[class*="rz"]')).map(el => ({
+                    tag: el.tagName,
+                    classes: el.className,
+                    hasScrollHeight: el.scrollHeight > el.clientHeight
+                })));
+        }
+    };
+
+    // Start the scroll attempts
+    attemptScroll();
 };
