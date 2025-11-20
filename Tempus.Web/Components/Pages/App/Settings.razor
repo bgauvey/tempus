@@ -259,6 +259,55 @@
                                     </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
+
+                            <!-- Privacy & Sharing -->
+                            <RadzenStack Gap="var(--space-lg)">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" class="font-medium text-secondary">Free/Busy Information Sharing</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary">
+                                    Control who can see when you're available or busy without revealing event details.
+                                </RadzenText>
+                                <RadzenRow Gap="var(--space-lg)">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="var(--space-md)">
+                                            <RadzenStack Gap="var(--space-sm)" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                                <RadzenCheckBox @bind-Value="_settings.PublishFreeBusyInformation" Name="publishFreeBusy" />
+                                                <RadzenLabel Text="Share my free/busy information" Component="publishFreeBusy" />
+                                            </RadzenStack>
+
+                                            <RadzenStack Gap="var(--space-sm)" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                                <RadzenCheckBox @bind-Value="_settings.ShowPrivateEventsAsBusy" Name="showPrivateAsBusy" />
+                                                <RadzenLabel Text="Show private events as 'Busy'" Component="showPrivateAsBusy" />
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Who can see my free/busy times" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenDropDown @bind-Value="_settings.FreeBusySharingLevel"
+                                                            Data="@(Enum.GetValues<FreeBusySharingLevel>())"
+                                                            Disabled="@(!_settings.PublishFreeBusyInformation)"
+                                                            Style="width: 100%;" />
+                                        </RadzenFormField>
+                                        <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs);">
+                                            @GetFreeBusySharingLevelDescription(_settings.FreeBusySharingLevel)
+                                        </RadzenText>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenFormField Text="Look-ahead period (days)" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenNumeric @bind-Value="_settings.FreeBusyLookAheadDays"
+                                                           Min="7"
+                                                           Max="365"
+                                                           Step="7"
+                                                           Disabled="@(!_settings.PublishFreeBusyInformation)"
+                                                           Style="width: 100%;" />
+                                        </RadzenFormField>
+                                        <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs);">
+                                            How many days ahead to share your availability
+                                        </RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
                         </RadzenStack>
                     </ChildContent>
                 </RadzenExpander>
@@ -904,5 +953,17 @@
                 });
             }
         }
+    }
+
+    private string GetFreeBusySharingLevelDescription(FreeBusySharingLevel level)
+    {
+        return level switch
+        {
+            FreeBusySharingLevel.None => "Your free/busy information will not be shared with anyone",
+            FreeBusySharingLevel.TeamMembers => "Only team members can see when you're free or busy",
+            FreeBusySharingLevel.Organization => "All users in your organization can see when you're free or busy",
+            FreeBusySharingLevel.Public => "Anyone with a link can see when you're free or busy",
+            _ => ""
+        };
     }
 }

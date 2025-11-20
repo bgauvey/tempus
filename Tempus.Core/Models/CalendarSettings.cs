@@ -67,6 +67,12 @@ public class CalendarSettings
     public bool AutoDeclineMeetingsOutsideWorkingHours { get; set; } = false;
     public bool AllowMeetingsDuringLunchBreak { get; set; } = true;
 
+    // Free/Busy Information Sharing
+    public bool PublishFreeBusyInformation { get; set; } = true; // Allow others to see when you're free or busy
+    public FreeBusySharingLevel FreeBusySharingLevel { get; set; } = FreeBusySharingLevel.TeamMembers; // Who can see your free/busy times
+    public int FreeBusyLookAheadDays { get; set; } = 60; // How many days ahead to share free/busy information
+    public bool ShowPrivateEventsAsBusy { get; set; } = true; // Show private events as "Busy" in free/busy view
+
     // Other
     public Guid? DefaultCalendarId { get; set; } // For future multi-calendar support
 

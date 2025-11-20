@@ -148,6 +148,7 @@ builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IVideoConferenceService, VideoConferenceService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<ICalendarSharingService, CalendarSharingService>();
+builder.Services.AddScoped<IFreeBusyService, FreeBusyService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOutOfOfficeService, OutOfOfficeService>();
 builder.Services.AddScoped<IBookingPageService, BookingPageService>();
