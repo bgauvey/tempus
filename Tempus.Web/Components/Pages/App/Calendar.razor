@@ -522,6 +522,9 @@
     private CalendarDragDropManager? _dragDropManager;
     private CalendarFormatter? _formatter;
 
+    // Scroll tracking
+    private bool _hasScrolledToTime = false;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -624,7 +627,53 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
 
+        // Scroll to current time on first render
+        if (firstRender && !_hasScrolledToTime)
+        {
+            _hasScrolledToTime = true;
+            await ScrollToCurrentTime();
+        }
+    }
+
+    private async Task ScrollToCurrentTime()
+    {
+        try
+        {
+            // Get current time in user's timezone
+            var now = DateTime.Now;
+            var currentHour = now.Hour;
+            var currentMinute = now.Minute;
+
+            // Calculate scroll position (each hour is typically 60px in Radzen scheduler)
+            // We want to show current time in the middle of the view, so offset by a few hours
+            var pixelsPerHour = 60;
+            var scrollOffset = (currentHour * pixelsPerHour) + (currentMinute * pixelsPerHour / 60);
+
+            // Offset to show current time in upper-middle portion (subtract 2 hours worth of pixels)
+            scrollOffset = Math.Max(0, scrollOffset - (2 * pixelsPerHour));
+
+            // Scroll the scheduler container
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                setTimeout(function() {{
+                    var scheduler = document.querySelector('.rz-scheduler-content');
+                    if (scheduler) {{
+                        scheduler.scrollTop = {scrollOffset};
+                    }}
+                }}, 100);
+            ");
+
+            Logger.LogDebug("Scrolled calendar to current time: {Hour}:{Minute:00} (offset: {Offset}px)",
+                currentHour, currentMinute, scrollOffset);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to scroll calendar to current time");
+        }
+    }
 
     private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
