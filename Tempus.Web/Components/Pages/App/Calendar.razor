@@ -638,29 +638,44 @@
 
         if (firstRender)
         {
-            // Scroll to the current time when the component is first rendered
-            // Longer delay to ensure Radzen scheduler is fully rendered
-            await Task.Delay(1000);
+            Logger.LogInformation("OnAfterRenderAsync - firstRender triggered");
 
-            var now = DateTime.Now;
-            var hour = now.Hour;
-            var minute = now.Minute;
-
-            // Calculate scroll position: 60px per hour
-            var scrollPosition = (hour * 60 + minute) - 180; // Offset by 3 hours (180 minutes)
-            scrollPosition = Math.Max(0, scrollPosition);
-
-            Logger.LogInformation("Scrolling calendar to current time: {Hour}:{Minute:00}, position: {Position}px",
-                hour, minute, scrollPosition);
-
-            try
+            // Schedule the scroll to happen after a delay
+            _ = Task.Run(async () =>
             {
-                await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Failed to invoke scrollSchedulerToTime");
-            }
+                try
+                {
+                    await Task.Delay(1500);
+
+                    var now = DateTime.Now;
+                    var hour = now.Hour;
+                    var minute = now.Minute;
+
+                    // Calculate scroll position: 60px per hour
+                    var scrollPosition = (hour * 60 + minute) - 180; // Offset by 3 hours (180 minutes)
+                    scrollPosition = Math.Max(0, scrollPosition);
+
+                    Logger.LogInformation("About to scroll calendar to current time: {Hour}:{Minute:00}, position: {Position}px",
+                        hour, minute, scrollPosition);
+
+                    await InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
+                            Logger.LogInformation("JSRuntime.InvokeVoidAsync completed successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, "Failed to invoke scrollSchedulerToTime: {Message}", ex.Message);
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error in scroll task: {Message}", ex.Message);
+                }
+            });
         }
     }
 

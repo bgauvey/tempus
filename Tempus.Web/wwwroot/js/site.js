@@ -150,10 +150,12 @@ window.getNotificationPermission = function() {
 
 // Scroll Radzen Scheduler to current time
 window.scrollSchedulerToTime = function(scrollPosition) {
+    console.log('=== SCROLL FUNCTION CALLED ===');
     console.log('[Tempus.Calendar] Scrolling scheduler to position:', scrollPosition, 'px');
+    console.log('[Tempus.Calendar] Current time:', new Date().toLocaleTimeString());
 
     // Function to attempt scrolling
-    const attemptScroll = (attempt = 1, maxAttempts = 5) => {
+    const attemptScroll = (attempt = 1, maxAttempts = 10) => {
         console.log(`[Tempus.Calendar] Scroll attempt ${attempt}/${maxAttempts}`);
 
         // Try multiple selectors for Radzen scheduler views
@@ -162,37 +164,45 @@ window.scrollSchedulerToTime = function(scrollPosition) {
             '.rz-scheduler .rz-view',
             '.rz-week-view .rz-view-content',
             '.rz-day-view .rz-view-content',
+            '.rz-month-view .rz-view-content',
             '.rz-scheduler-content',
-            '.rz-view-container'
+            '.rz-view-container',
+            '.rz-scheduler',
+            'div[class*="rz-view"]'
         ];
 
         let schedulerView = null;
         for (const selector of selectors) {
             schedulerView = document.querySelector(selector);
-            if (schedulerView) {
-                console.log(`[Tempus.Calendar] Found scheduler using selector: ${selector}`);
+            if (schedulerView && schedulerView.scrollHeight > schedulerView.clientHeight) {
+                console.log(`[Tempus.Calendar] ✅ Found scrollable scheduler using selector: ${selector}`);
+                console.log('[Tempus.Calendar] Element scrollHeight:', schedulerView.scrollHeight, 'clientHeight:', schedulerView.clientHeight);
                 break;
+            } else if (schedulerView) {
+                console.log(`[Tempus.Calendar] Found element with ${selector} but it's not scrollable`);
+                schedulerView = null;
             }
         }
 
         if (schedulerView) {
             schedulerView.scrollTop = scrollPosition;
-            console.log('[Tempus.Calendar] ✅ Scrolled successfully to:', scrollPosition, 'px');
-            console.log('[Tempus.Calendar] Element:', schedulerView);
+            console.log('[Tempus.Calendar] ✅ SCROLLED successfully to:', scrollPosition, 'px');
+            console.log('[Tempus.Calendar] New scrollTop:', schedulerView.scrollTop);
+            return true;
         } else if (attempt < maxAttempts) {
-            console.warn(`[Tempus.Calendar] Could not find scheduler view element, retrying in 200ms...`);
-            setTimeout(() => attemptScroll(attempt + 1, maxAttempts), 200);
+            console.warn(`[Tempus.Calendar] ⏳ Could not find scheduler view element, retrying in 300ms... (attempt ${attempt}/${maxAttempts})`);
+            setTimeout(() => attemptScroll(attempt + 1, maxAttempts), 300);
         } else {
-            console.error('[Tempus.Calendar] ❌ Failed to find scheduler element after', maxAttempts, 'attempts');
-            console.log('[Tempus.Calendar] Available elements with "rz" in class:',
-                Array.from(document.querySelectorAll('[class*="rz"]')).map(el => ({
-                    tag: el.tagName,
-                    classes: el.className,
-                    hasScrollHeight: el.scrollHeight > el.clientHeight
-                })));
+            console.error('[Tempus.Calendar] ❌ FAILED to find scheduler element after', maxAttempts, 'attempts');
+            console.log('[Tempus.Calendar] All elements with "rz" in class name:');
+            const rzElements = Array.from(document.querySelectorAll('[class*="rz"]'));
+            rzElements.forEach(el => {
+                console.log(`  - ${el.tagName}.${el.className} (scrollable: ${el.scrollHeight > el.clientHeight})`);
+            });
         }
+        return false;
     };
 
-    // Start the scroll attempts
+    // Start the scroll attempts immediately
     attemptScroll();
 };
