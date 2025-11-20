@@ -147,3 +147,24 @@ window.getNotificationPermission = function() {
     console.log('[Tempus.Notifications] getNotificationPermission:', permission);
     return permission;
 };
+
+// Scroll Radzen Scheduler to current time
+window.scrollSchedulerToTime = function(scrollPosition) {
+    console.log('[Tempus.Calendar] Scrolling scheduler to position:', scrollPosition, 'px');
+
+    // Try multiple selectors for Radzen scheduler views
+    const schedulerView = document.querySelector('.rz-view-container') ||
+                         document.querySelector('.rz-scheduler .rz-view') ||
+                         document.querySelector('.rz-week-view') ||
+                         document.querySelector('.rz-day-view') ||
+                         document.querySelector('.rz-scheduler-content');
+
+    if (schedulerView) {
+        schedulerView.scrollTop = scrollPosition;
+        console.log('[Tempus.Calendar] Scrolled successfully to:', scrollPosition, 'px');
+    } else {
+        console.warn('[Tempus.Calendar] Could not find scheduler view element');
+        console.log('[Tempus.Calendar] Available scheduler elements:',
+            document.querySelectorAll('[class*="scheduler"], [class*="rz-"]'));
+    }
+};

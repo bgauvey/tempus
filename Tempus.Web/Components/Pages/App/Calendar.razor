@@ -522,9 +522,6 @@
     private CalendarDragDropManager? _dragDropManager;
     private CalendarFormatter? _formatter;
 
-    // Scroll tracking
-    private bool _hasScrolledToTime = false;
-
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -630,57 +627,21 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
-        // Note: Scrolling is handled in OnLoadData after the scheduler has data
-    }
 
-    private async Task ScrollToCurrentTime()
-    {
-        try
+        if (firstRender)
         {
-            // Get current LOCAL time (not UTC)
+            // Scroll to the current time when the component is first rendered
+            await Task.Delay(500); // Wait for scheduler to fully render
+
             var now = DateTime.Now;
-            var currentHour = now.Hour;
-            var currentMinute = now.Minute;
+            var hour = now.Hour;
+            var minute = now.Minute;
 
-            // Calculate scroll position
-            // Radzen scheduler uses 60px per hour by default
-            var pixelsPerHour = 60;
-            var totalMinutes = (currentHour * 60) + currentMinute;
-            var scrollOffset = (totalMinutes * pixelsPerHour) / 60;
+            // Calculate scroll position: 60px per hour
+            var scrollPosition = (hour * 60 + minute) - 180; // Offset by 3 hours (180 minutes)
+            scrollPosition = Math.Max(0, scrollPosition);
 
-            // Offset by 3 hours to show current time in middle of view
-            // This means if it's 9 PM, we show 6 PM at the top
-            scrollOffset = Math.Max(0, scrollOffset - (3 * pixelsPerHour));
-
-            Logger.LogInformation("Attempting to scroll calendar to current time: {Hour}:{Minute:00} (offset: {Offset}px)",
-                currentHour, currentMinute, scrollOffset);
-
-            // Use multiple selectors to find the scheduler content area
-            // Add longer timeout to ensure DOM is fully rendered
-            await JSRuntime.InvokeVoidAsync("eval", $@"
-                setTimeout(function() {{
-                    console.log('Attempting to scroll calendar to current time: {currentHour}:{currentMinute:00}');
-
-                    // Try multiple selectors for Radzen scheduler
-                    var scheduler = document.querySelector('.rz-scheduler .rz-view') ||
-                                  document.querySelector('.rz-scheduler-content') ||
-                                  document.querySelector('.rz-week-view') ||
-                                  document.querySelector('.rz-day-view') ||
-                                  document.querySelector('[class*=""scheduler""] [class*=""view""]');
-
-                    if (scheduler) {{
-                        scheduler.scrollTop = {scrollOffset};
-                        console.log('Scrolled scheduler to offset: {scrollOffset}px');
-                    }} else {{
-                        console.warn('Could not find scheduler element to scroll');
-                        console.log('Available elements:', document.querySelectorAll('[class*=""scheduler""]'));
-                    }}
-                }}, 500);
-            ");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to scroll calendar to current time");
+            await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
         }
     }
 
@@ -762,13 +723,6 @@
 
             ConvertEventsToAppointments();
             Logger.LogDebug("Converted to {AppointmentCount} appointments", _appointments.Count);
-
-            // Scroll to current time after loading data (backup in case OnAfterRenderAsync was too early)
-            if (!_hasScrolledToTime)
-            {
-                _hasScrolledToTime = true;
-                await ScrollToCurrentTime();
-            }
         }
         catch (Exception ex)
         {
