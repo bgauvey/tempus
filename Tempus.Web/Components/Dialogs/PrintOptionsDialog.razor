@@ -1,0 +1,144 @@
+@using Tempus.Web.Services.Pdf
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.Subtitle1">Print Range</RadzenText>
+
+    <RadzenRadioButtonList @bind-Value="@PrintRange" Orientation="Orientation.Vertical">
+        <Items>
+            <RadzenRadioButtonListItem Text="Today" Value="@("today")" />
+            <RadzenRadioButtonListItem Text="This Week" Value="@("week")" />
+            <RadzenRadioButtonListItem Text="This Month" Value="@("month")" />
+            <RadzenRadioButtonListItem Text="Custom Range" Value="@("custom")" />
+        </Items>
+    </RadzenRadioButtonList>
+
+    @if (PrintRange == "custom")
+    {
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="Start Date" Variant="@Variant.Outlined">
+                    <RadzenDatePicker @bind-Value="@CustomStartDate" Style="width: 100%;" DateFormat="MM/dd/yyyy" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenFormField Text="End Date" Variant="@Variant.Outlined">
+                    <RadzenDatePicker @bind-Value="@CustomEndDate" Style="width: 100%;" DateFormat="MM/dd/yyyy" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-top: 1rem;">Layout</RadzenText>
+
+    <RadzenRadioButtonList @bind-Value="@Layout" Orientation="Orientation.Horizontal">
+        <Items>
+            <RadzenRadioButtonListItem Text="Day View" Value="@("day")" />
+            <RadzenRadioButtonListItem Text="Week View" Value="@("week")" />
+            <RadzenRadioButtonListItem Text="Month View" Value="@("month")" />
+        </Items>
+    </RadzenRadioButtonList>
+
+    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-top: 1rem;">Options</RadzenText>
+
+    <RadzenStack Gap="0.5rem">
+        <RadzenCheckBox @bind-Value="@Options.IncludeDescription" Name="includeDesc" />
+        <RadzenLabel Text="Include event descriptions" Component="includeDesc" Style="margin-left: 0.5rem;" />
+
+        <RadzenCheckBox @bind-Value="@Options.IncludeLocation" Name="includeLoc" />
+        <RadzenLabel Text="Include locations" Component="includeLoc" Style="margin-left: 0.5rem;" />
+
+        <RadzenCheckBox @bind-Value="@Options.IncludeAttendees" Name="includeAttendees" />
+        <RadzenLabel Text="Include attendees" Component="includeAttendees" Style="margin-left: 0.5rem;" />
+
+        <RadzenCheckBox @bind-Value="@Options.IncludeNotesSection" Name="includeNotes" />
+        <RadzenLabel Text="Include notes section (for handwritten notes)" Component="includeNotes" Style="margin-left: 0.5rem;" />
+
+        <RadzenCheckBox @bind-Value="@Options.CompactView" Name="compact" />
+        <RadzenLabel Text="Compact view" Component="compact" Style="margin-left: 0.5rem;" />
+    </RadzenStack>
+
+    <RadzenFormField Text="Time Format" Variant="@Variant.Outlined" Style="margin-top: 0.5rem;">
+        <RadzenDropDown @bind-Value="@Options.TimeFormat" Data="@timeFormats" Style="width: 100%;"
+                        TextProperty="Text" ValueProperty="Value" />
+    </RadzenFormField>
+</RadzenStack>
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1.5rem;">
+    <RadzenButton Click="@Cancel" ButtonStyle="ButtonStyle.Light" Text="Cancel" />
+    <RadzenButton Click="@Print" ButtonStyle="ButtonStyle.Primary" Text="Generate PDF" Icon="print" />
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public DateTime CurrentDate { get; set; } = DateTime.Today;
+
+    private string PrintRange { get; set; } = "today";
+    private string Layout { get; set; } = "day";
+    private DateTime? CustomStartDate { get; set; }
+    private DateTime? CustomEndDate { get; set; }
+    private PrintOptions Options { get; set; } = new();
+
+    private List<object> timeFormats = new()
+    {
+        new { Text = "12-hour (AM/PM)", Value = "12" },
+        new { Text = "24-hour", Value = "24" }
+    };
+
+    protected override void OnInitialized()
+    {
+        CustomStartDate = CurrentDate;
+        CustomEndDate = CurrentDate.AddDays(7);
+    }
+
+    private void Print()
+    {
+        // Calculate date range based on selection
+        DateTime startDate, endDate;
+
+        switch (PrintRange)
+        {
+            case "today":
+                startDate = CurrentDate.Date;
+                endDate = CurrentDate.Date;
+                break;
+            case "week":
+                // Get start of week (Sunday)
+                startDate = CurrentDate.Date.AddDays(-(int)CurrentDate.DayOfWeek);
+                endDate = startDate.AddDays(6);
+                break;
+            case "month":
+                startDate = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
+                endDate = startDate.AddMonths(1).AddDays(-1);
+                break;
+            case "custom":
+            default:
+                startDate = CustomStartDate?.Date ?? CurrentDate.Date;
+                endDate = CustomEndDate?.Date ?? CurrentDate.Date;
+                break;
+        }
+
+        var result = new PrintDialogResult
+        {
+            StartDate = startDate,
+            EndDate = endDate,
+            Layout = Layout,
+            Options = Options
+        };
+
+        DialogService.Close(result);
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    public class PrintDialogResult
+    {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string Layout { get; set; } = "day";
+        public PrintOptions Options { get; set; } = new();
+    }
+}

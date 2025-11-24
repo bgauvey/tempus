@@ -10,6 +10,7 @@
 @using Tempus.Web.Components.Dialogs.Events
 @using Tempus.Web.Components.Shared
 @using Tempus.Web.Services
+@using Tempus.Web.Services.Pdf
 @using Tempus.Web.Helpers
 @using Microsoft.JSInterop
 @attribute [Authorize]
@@ -217,6 +218,7 @@
                             title="Toggle event selection mode" />
                 <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
                 <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
+                <RadzenButton Icon="print" ButtonStyle="ButtonStyle.Info" Click="OpenPrintOptionsDialog" Size="ButtonSize.Medium" Text="Print/Export" title="Print or export calendar with custom options" />
                 @if (_isSearchActive)
                 {
                     <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Warning" Click="ClearSearch" Size="ButtonSize.Medium" Text="Clear Search" title="Show all events" />
@@ -864,6 +866,111 @@
             .Where(e => e.StartTime.Date == date.Date)
             .OrderBy(e => e.StartTime)
             .ToList();
+    }
+
+    private async Task OpenPrintOptionsDialog()
+    {
+        var result = await DialogService.OpenAsync<PrintOptionsDialog>("Print/Export Calendar",
+            new Dictionary<string, object>
+            {
+                { "CurrentDate", _selectedDate }
+            },
+            new DialogOptions { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
+
+        if (result is PrintOptionsDialog.PrintDialogResult printResult)
+        {
+            await GeneratePdfFromOptions(printResult);
+        }
+    }
+
+    private async Task GeneratePdfFromOptions(PrintOptionsDialog.PrintDialogResult options)
+    {
+        try
+        {
+            // Get user name
+            var userName = await GetCurrentUserName();
+
+            // Get events for the date range
+            var events = await EventRepository.GetEventsByDateRangeAsync(options.StartDate, options.EndDate.AddDays(1), _userId);
+
+            byte[] pdfBytes;
+            string fileName;
+
+            // Generate PDF based on layout selection
+            switch (options.Layout)
+            {
+                case "week":
+                    // Find the start of the week for the start date
+                    var weekStart = options.StartDate.AddDays(-(int)options.StartDate.DayOfWeek);
+                    pdfBytes = PdfAgendaService.GenerateWeeklyAgenda(events, weekStart, userName, options.Options);
+                    fileName = $"Weekly-Agenda-{weekStart:yyyy-MM-dd}.pdf";
+                    break;
+
+                case "month":
+                    pdfBytes = PdfAgendaService.GenerateMonthlyCalendar(events, options.StartDate.Month, options.StartDate.Year, userName, options.Options);
+                    fileName = $"Monthly-Calendar-{options.StartDate:yyyy-MM}.pdf";
+                    break;
+
+                case "day":
+                default:
+                    if (options.StartDate == options.EndDate)
+                    {
+                        // Single day
+                        pdfBytes = PdfAgendaService.GenerateDailyAgenda(events, options.StartDate, userName, options.Options);
+                        fileName = $"Daily-Agenda-{options.StartDate:yyyy-MM-dd}.pdf";
+                    }
+                    else
+                    {
+                        // Date range
+                        pdfBytes = PdfAgendaService.GenerateDateRangeAgenda(events, options.StartDate, options.EndDate, userName, options.Options);
+                        fileName = $"Agenda-{options.StartDate:yyyy-MM-dd}-to-{options.EndDate:yyyy-MM-dd}.pdf";
+                    }
+                    break;
+            }
+
+            // Download the file
+            var base64 = Convert.ToBase64String(pdfBytes);
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64, "application/pdf");
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "PDF Generated",
+                Detail = $"Your calendar has been exported to {fileName}",
+                Duration = 4000
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error generating PDF from options");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to generate PDF. Please try again.",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task<string> GetCurrentUserName()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userName = "User";
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var appUser = await IdentityUserAccessor.GetUserAsync(user);
+            if (appUser != null)
+            {
+                userName = $"{appUser.FirstName} {appUser.LastName}".Trim();
+                if (string.IsNullOrWhiteSpace(userName))
+                {
+                    userName = appUser.Email ?? "User";
+                }
+            }
+        }
+        return userName;
     }
 
 
