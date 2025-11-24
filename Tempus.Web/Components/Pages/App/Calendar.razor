@@ -189,6 +189,36 @@
     .calendar-item-hidden {
         opacity: 0.5;
     }
+
+    /* Outlook-style All-Day Events */
+    .all-day-event {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .all-day-event:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    }
+
+    /* RadzenScheduler all-day event container styling */
+    .rz-scheduler .rz-scheduler-header .rz-event,
+    .rz-scheduler .rz-all-day .rz-event {
+        margin: 1px 2px;
+        min-height: 22px;
+        line-height: 18px;
+    }
+
+    /* Ensure text doesn't overflow in all-day events */
+    .rz-scheduler .rz-event.all-day-event .rz-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 4px;
+    }
 </style>
 
 <div class="calendar-page-container">
@@ -1144,8 +1174,34 @@
             // Get event's own color for background (from booking page, category, or custom)
             var backgroundColor = _formatter.GetEventBackgroundColor(evt);
 
-            // Add selection styling if selected
-            if (isSelected)
+            // Outlook-style rendering for all-day events
+            if (evt.IsAllDay)
+            {
+                // All-day events get a banner/pill style like Outlook
+                var allDayStyle = isSelected
+                    ? $"background: linear-gradient(135deg, {backgroundColor} 0%, {AdjustColorBrightness(backgroundColor, -15)} 100%); " +
+                      $"border: 2px solid #FFD700; " +
+                      $"box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4); " +
+                      $"border-radius: 4px; " +
+                      $"color: white; " +
+                      $"font-weight: 600; " +
+                      $"text-shadow: 0 1px 2px rgba(0,0,0,0.2); " +
+                      $"padding: 2px 8px;"
+                    : $"background: linear-gradient(135deg, {backgroundColor} 0%, {AdjustColorBrightness(backgroundColor, -15)} 100%); " +
+                      $"border: none; " +
+                      $"border-left: 4px solid {AdjustColorBrightness(calendarColor, -20)}; " +
+                      $"border-radius: 4px; " +
+                      $"color: white; " +
+                      $"font-weight: 600; " +
+                      $"text-shadow: 0 1px 2px rgba(0,0,0,0.2); " +
+                      $"padding: 2px 8px; " +
+                      $"box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);";
+
+                args.Attributes["style"] = allDayStyle;
+                args.Attributes["class"] = "all-day-event";
+            }
+            // Add selection styling if selected (for timed events)
+            else if (isSelected)
             {
                 args.Attributes["style"] = $"background-color: {backgroundColor}; border: 3px solid #FFD700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);";
             }
@@ -1230,6 +1286,34 @@
         return abbreviation;
     }
 
+    /// <summary>
+    /// Adjusts the brightness of a hex color by a percentage.
+    /// Positive values lighten, negative values darken.
+    /// </summary>
+    private string AdjustColorBrightness(string hexColor, int percent)
+    {
+        try
+        {
+            // Remove # if present
+            hexColor = hexColor.TrimStart('#');
+
+            // Parse the hex color
+            int r = Convert.ToInt32(hexColor.Substring(0, 2), 16);
+            int g = Convert.ToInt32(hexColor.Substring(2, 2), 16);
+            int b = Convert.ToInt32(hexColor.Substring(4, 2), 16);
+
+            // Adjust brightness
+            r = Math.Clamp(r + (r * percent / 100), 0, 255);
+            g = Math.Clamp(g + (g * percent / 100), 0, 255);
+            b = Math.Clamp(b + (b * percent / 100), 0, 255);
+
+            return $"#{r:X2}{g:X2}{b:X2}";
+        }
+        catch
+        {
+            return hexColor; // Return original if parsing fails
+        }
+    }
 
     private async Task OpenEventDialogAsync(Guid? eventId, DateTime? prefilledDate = null)
     {
