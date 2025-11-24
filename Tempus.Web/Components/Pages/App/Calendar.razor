@@ -370,8 +370,12 @@
                                        @oncontextmenu:preventDefault
                                        Style="height: 600px;">
                                 <ChildContent>
+                                    <RadzenMonthView />
                                     <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
                                     <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                    <RadzenYearView />
+                                    <RadzenYearPlannerView />
+                                    <RadzenYearTimelineView />
                                 </ChildContent>
                             </RadzenScheduler>
                         }
@@ -403,8 +407,12 @@
                                            LoadData="@((args) => OnTeamMemberLoadData(args, userId))"
                                            Style="height: 600px;">
                                     <ChildContent>
+                                        <RadzenMonthView />
                                         <RadzenWeekView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
                                         <RadzenDayView StartTime="@TimeSpan.FromHours(0)" EndTime="@TimeSpan.FromHours(24)" />
+                                        <RadzenYearView />
+                                        <RadzenYearPlannerView />
+                                        <RadzenYearTimelineView />
                                     </ChildContent>
                                 </RadzenScheduler>
                             }
@@ -626,7 +634,52 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
 
+        if (firstRender)
+        {
+            Logger.LogInformation("OnAfterRenderAsync - firstRender triggered");
+
+            // Schedule the scroll to happen after a delay
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(1500);
+
+                    var now = DateTime.Now;
+                    var hour = now.Hour;
+                    var minute = now.Minute;
+
+                    // Calculate scroll position: 60px per hour
+                    var scrollPosition = (hour * 60 + minute) - 180; // Offset by 3 hours (180 minutes)
+                    scrollPosition = Math.Max(0, scrollPosition);
+
+                    Logger.LogInformation("About to scroll calendar to current time: {Hour}:{Minute:00}, position: {Position}px",
+                        hour, minute, scrollPosition);
+
+                    await InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await JSRuntime.InvokeVoidAsync("scrollSchedulerToTime", scrollPosition);
+                            Logger.LogInformation("JSRuntime.InvokeVoidAsync completed successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, "Failed to invoke scrollSchedulerToTime: {Message}", ex.Message);
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error in scroll task: {Message}", ex.Message);
+                }
+            });
+        }
+    }
 
     private async Task OnLoadData(SchedulerLoadDataEventArgs args)
     {
