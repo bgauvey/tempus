@@ -1,467 +1,301 @@
-/* Tempus Component Professional Styling Enhancements */
+/* Tempus Component Professional Styling - Global Override */
+/* All Radzen component styling with !important to ensure they override */
 
 /* ============================================
-   Radzen Dropdown & Select Styling
+   BUTTONS - Professional Gradient Style
    ============================================ */
-::deep .rz-dropdown {
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-md);
-    background: var(--bg-primary);
-    transition: all var(--transition-fast);
+.rz-button {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
 }
 
-::deep .rz-dropdown:hover {
-    border-color: var(--border-dark);
-    background: var(--bg-secondary);
+.rz-button-md {
+    min-height: 40px !important;
 }
 
-::deep .rz-dropdown.rz-state-active,
-::deep .rz-dropdown:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), inset 0 0 0 1px rgba(102, 126, 234, 0.05);
+/* Primary Button with Gradient */
+.rz-button.rz-button-md.rz-variant-filled.rz-primary,
+.rz-button.rz-variant-filled.rz-primary,
+button.rz-button.rz-primary {
+    background: linear-gradient(135deg, #667eea 0%, #4d5fd1 100%) !important;
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2) !important;
 }
 
-::deep .rz-dropdown-panel {
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    margin-top: 0.5rem;
-    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+.rz-button.rz-button-md.rz-variant-filled.rz-primary:hover,
+.rz-button.rz-variant-filled.rz-primary:hover,
+button.rz-button.rz-primary:hover {
+    background: linear-gradient(135deg, #4d5fd1 0%, #3d4f9f 100%) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
-::deep .rz-dropdown-item {
-    padding: 0.75rem 1rem;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: all var(--transition-fast);
-    border-bottom: 1px solid var(--border-light);
+/* Secondary/Light Buttons */
+.rz-button.rz-variant-outlined,
+.rz-button.rz-secondary,
+.rz-button.rz-light {
+    background: transparent !important;
+    border: 1.5px solid #d1d5db !important;
+    color: #374151 !important;
 }
 
-::deep .rz-dropdown-item:last-child {
-    border-bottom: none;
+.rz-button.rz-variant-outlined:hover,
+.rz-button.rz-secondary:hover,
+.rz-button.rz-light:hover {
+    background: #f9fafb !important;
+    border-color: #667eea !important;
+    color: #667eea !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15) !important;
 }
 
-::deep .rz-dropdown-item:hover {
-    background: var(--bg-secondary);
-    color: var(--color-primary);
-    padding-left: 1.25rem;
+/* Success Button */
+.rz-button.rz-success {
+    background: linear-gradient(135deg, #10b981 0%, rgba(16, 185, 129, 0.8) 100%) !important;
+    color: white !important;
 }
 
-::deep .rz-dropdown-item.rz-state-selected {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
-    color: var(--color-primary);
-    font-weight: 500;
-    border-left: 3px solid var(--color-primary);
-    padding-left: calc(1rem - 3px);
+.rz-button.rz-success:hover {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Info Button */
+.rz-button.rz-info {
+    background: linear-gradient(135deg, #667eea 0%, #4d5fd1 100%) !important;
+    color: white !important;
 }
 
 /* ============================================
-   Checkboxes & Radio Buttons
+   CARDS - Professional Elevation
    ============================================ */
-::deep .rz-checkbox {
-    margin: 0;
-    transition: all var(--transition-fast);
+.rz-card {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-::deep .rz-checkbox .rz-chkbox {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-medium);
-    border-radius: var(--radius-sm);
-    background: var(--bg-primary);
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.rz-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    border-color: #d1d5db !important;
 }
 
-::deep .rz-checkbox:hover .rz-chkbox {
-    border-color: var(--color-primary);
-    background: var(--bg-secondary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-::deep .rz-checkbox.rz-state-checked .rz-chkbox {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    border-color: var(--color-primary-dark);
-    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-}
-
-::deep .rz-checkbox.rz-state-checked .rz-chkbox::after {
-    content: '✓';
-    color: white;
-    font-weight: bold;
-    font-size: 12px;
-}
-
-/* Radio Button */
-::deep .rz-radiobutton .rz-helper {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-medium);
-    border-radius: 50%;
-    background: var(--bg-primary);
-    transition: all var(--transition-fast);
-}
-
-::deep .rz-radiobutton:hover .rz-helper {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-::deep .rz-radiobutton.rz-state-checked .rz-helper {
-    border-color: var(--color-primary);
-    background: var(--color-primary);
-    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-}
-
-::deep .rz-radiobutton.rz-state-checked .rz-helper::after {
-    background: white;
-    width: 6px;
-    height: 6px;
+.rz-card-content {
+    padding: 24px !important;
 }
 
 /* ============================================
-   Switch/Toggle
+   HEADER - Professional Gradient
    ============================================ */
-::deep .rz-switch {
-    width: 48px;
-    height: 26px;
-    background: var(--border-light);
-    border-radius: 13px;
-    position: relative;
-    transition: background var(--transition-fast);
-    border: none;
-    cursor: pointer;
-}
-
-::deep .rz-switch::before {
-    content: '';
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: white;
-    top: 2px;
-    left: 2px;
-    transition: left var(--transition-fast);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-::deep .rz-switch.rz-state-checked {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-}
-
-::deep .rz-switch.rz-state-checked::before {
-    left: 24px;
+.rz-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    height: 64px !important;
 }
 
 /* ============================================
-   DatePicker & TimePicker
+   SIDEBAR - Professional Navigation
    ============================================ */
-::deep .rz-datepicker {
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-md);
-    background: var(--bg-primary);
+.rz-sidebar {
+    background: white !important;
+    border-right: 1px solid #e5e7eb !important;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05) !important;
 }
 
-::deep .rz-datepicker:hover {
-    border-color: var(--border-dark);
+/* Panel Menu Styling */
+.rz-panelmenu {
+    border: none !important;
+    background: transparent !important;
 }
 
-::deep .rz-datepicker:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.rz-panelmenu-item {
+    border-radius: 12px !important;
+    margin-bottom: 8px !important;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
 }
 
-::deep .rz-calendar {
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+.rz-panelmenu-item:hover {
+    background: #f9fafb !important;
 }
 
-::deep .rz-calendar .rz-weekday {
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    padding: 0.75rem 0;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.rz-panelmenu-item.rz-state-active,
+.rz-panelmenu-item-link.rz-state-active {
+    background: linear-gradient(135deg, #667eea 0%, #4d5fd1 100%) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
 }
 
-::deep .rz-calendar .rz-day {
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
-    font-size: 0.875rem;
-}
-
-::deep .rz-calendar .rz-day:hover {
-    background: var(--bg-secondary);
-    color: var(--color-primary);
-}
-
-::deep .rz-calendar .rz-day.rz-state-selected {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: white;
-    font-weight: 600;
-}
-
-::deep .rz-calendar .rz-day.rz-other-month {
-    color: var(--text-tertiary);
-    opacity: 0.5;
+.rz-panelmenu-item-text {
+    font-size: 14px !important;
+    font-weight: 500 !important;
 }
 
 /* ============================================
-   Slider
+   FORMS - Professional Input Styling
    ============================================ */
-::deep .rz-slider {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--border-light);
-    transition: all var(--transition-fast);
+.rz-textbox,
+.rz-dropdown,
+.rz-datepicker input,
+.rz-numeric input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    background: white !important;
+    transition: all 150ms ease !important;
 }
 
-::deep .rz-slider:hover {
-    background: var(--border-medium);
+.rz-textbox:hover,
+.rz-dropdown:hover,
+input:hover,
+textarea:hover,
+select:hover {
+    border-color: #9ca3af !important;
+    background: #f9fafb !important;
 }
 
-::deep .rz-slider .rz-slider-track {
-    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    height: 100%;
-    border-radius: 3px;
-}
-
-::deep .rz-slider .rz-slider-handle {
-    width: 18px;
-    height: 18px;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    border: 2px solid white;
-    border-radius: 50%;
-    cursor: grab;
-    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-    transition: all var(--transition-fast);
-}
-
-::deep .rz-slider .rz-slider-handle:hover {
-    transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-::deep .rz-slider .rz-slider-handle:active {
-    cursor: grabbing;
+.rz-textbox:focus,
+.rz-dropdown:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none !important;
+    border-color: #667eea !important;
+    background: white !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), inset 0 0 0 1px rgba(102, 126, 234, 0.05) !important;
 }
 
 /* ============================================
-   Spinner/Numeric Input
+   DROPDOWN PANELS
    ============================================ */
-::deep .rz-spinner {
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+.rz-dropdown-panel,
+.rz-menu,
+.rz-calendar {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-::deep .rz-spinner:hover {
-    border-color: var(--border-dark);
+.rz-dropdown-item,
+.rz-menuitem {
+    padding: 12px 16px !important;
+    transition: all 150ms ease !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
-::deep .rz-spinner:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.rz-dropdown-item:hover,
+.rz-menuitem:hover {
+    background: #f9fafb !important;
+    color: #667eea !important;
 }
 
-::deep .rz-spinner .rz-spinner-up,
-::deep .rz-spinner .rz-spinner-down {
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border: none;
-    transition: all var(--transition-fast);
-    cursor: pointer;
-}
-
-::deep .rz-spinner .rz-spinner-up:hover,
-::deep .rz-spinner .rz-spinner-down:hover {
-    background: var(--bg-tertiary);
-    color: var(--color-primary);
+.rz-dropdown-item.rz-state-selected {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%) !important;
+    color: #667eea !important;
+    font-weight: 500 !important;
+    border-left: 3px solid #667eea !important;
 }
 
 /* ============================================
-   ColorPicker
+   DIALOGS - Professional Modal
    ============================================ */
-::deep .rz-colorpicker {
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+.rz-dialog {
+    border-radius: 12px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    animation: scaleIn 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-::deep .rz-colorpicker .rz-color-picker-preview {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
-    border: 2px solid var(--border-light);
-    cursor: pointer;
-    transition: all var(--transition-fast);
+.rz-dialog-header {
+    background: linear-gradient(135deg, white 0%, #f9fafb 100%) !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 24px !important;
 }
 
-::deep .rz-colorpicker .rz-color-picker-preview:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.rz-dialog-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+}
+
+.rz-dialog-content {
+    padding: 24px !important;
 }
 
 /* ============================================
-   Tooltip
+   TABS - Modern Tab Styling
    ============================================ */
-::deep .rz-tooltip {
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--color-gray-700) 100%);
-    color: white;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-md);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    box-shadow: var(--shadow-lg);
-    animation: fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: var(--z-tooltip);
+.rz-tabs-header {
+    border-bottom: 2px solid #e5e7eb !important;
 }
 
-::deep .rz-tooltip::after {
-    border-top-color: var(--text-primary);
+.rz-tabs-item {
+    padding: 16px 24px !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+    position: relative !important;
+    transition: color 150ms ease !important;
+}
+
+.rz-tabs-item:hover {
+    color: #667eea !important;
+}
+
+.rz-tabs-item.rz-state-active {
+    color: #667eea !important;
+}
+
+.rz-tabs-item.rz-state-active::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -2px !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
 }
 
 /* ============================================
-   PopUp / Popover
+   SCHEDULER - Calendar Styling
    ============================================ */
-::deep .rz-popup {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    animation: slideInDown 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: var(--z-popover);
+.rz-scheduler {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+.rz-scheduler-header {
+    background: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 /* ============================================
-   Breadcrumbs
+   TOOLTIPS
    ============================================ */
-::deep .rz-breadcrumb {
-    padding: 0.75rem 0;
-}
-
-::deep .rz-breadcrumb-item {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    transition: color var(--transition-fast);
-}
-
-::deep .rz-breadcrumb-item:hover {
-    color: var(--color-primary);
-}
-
-::deep .rz-breadcrumb-item.rz-state-active {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-::deep .rz-breadcrumb-item-separator {
-    color: var(--text-tertiary);
-    margin: 0 0.5rem;
+.rz-tooltip {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* ============================================
-   Menu
-   ============================================ */
-::deep .rz-menu {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    animation: slideInDown 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: var(--z-dropdown);
-}
-
-::deep .rz-menuitem {
-    padding: 0.75rem 1rem;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: all var(--transition-fast);
-    border-bottom: 1px solid var(--border-light);
-    cursor: pointer;
-}
-
-::deep .rz-menuitem:last-child {
-    border-bottom: none;
-}
-
-::deep .rz-menuitem:hover {
-    background: var(--bg-secondary);
-    color: var(--color-primary);
-    padding-left: 1.25rem;
-}
-
-::deep .rz-menuitem.rz-state-selected {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
-    color: var(--color-primary);
-    font-weight: 500;
-    border-left: 3px solid var(--color-primary);
-    padding-left: calc(1rem - 3px);
-}
-
-/* ============================================
-   Loading & Progress
-   ============================================ */
-::deep .rz-progress {
-    height: 6px;
-    background: var(--border-light);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-::deep .rz-progressbar {
-    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    height: 100%;
-    transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-::deep .rz-progress-label {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
-
-/* Spinner/Loader */
-::deep .rz-spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Skeleton Loader */
-.skeleton {
-    background: linear-gradient(
-        90deg,
-        var(--bg-secondary) 25%,
-        var(--bg-tertiary) 50%,
-        var(--bg-secondary) 75%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-}
-
-/* ============================================
-   Animation Helpers
+   ANIMATIONS
    ============================================ */
 @keyframes scaleIn {
     from {
@@ -474,41 +308,20 @@
     }
 }
 
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-16px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
 /* ============================================
-   Responsive Component Adjustments
+   RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-    ::deep .rz-dropdown-panel {
-        width: 100% !important;
-        max-width: calc(100vw - 2rem) !important;
+    .rz-button {
+        min-height: 48px !important;
+        font-size: 16px !important;
     }
 
-    ::deep .rz-calendar {
-        width: 100% !important;
-    }
-
-    ::deep .rz-colorpicker {
-        width: 100% !important;
-    }
-
-    ::deep .rz-menu {
-        width: 100% !important;
-        max-width: calc(100vw - 2rem) !important;
+    input,
+    textarea,
+    select,
+    .rz-textbox {
+        font-size: 16px !important;
+        min-height: 48px !important;
     }
 }
