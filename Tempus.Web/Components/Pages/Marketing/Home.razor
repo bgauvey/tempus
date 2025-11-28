@@ -4,146 +4,376 @@
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>Tempus - Master Your Time, Transform Your Business</PageTitle>
+<PageTitle>Tempus - Enterprise Time Management Platform | Boost Team Productivity</PageTitle>
 
 <!-- Hero Section -->
-<div class="hero-section">
-    <div class="hero-bg-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+<div class="hero-section-modern">
+    <div class="hero-gradient-overlay"></div>
+    <div class="hero-pattern"></div>
 
-    <div class="hero-content">
-        <h1 class="hero-title">Master Your Time<br/>Transform Your Business</h1>
-        <p class="hero-subtitle">The Ultimate Intelligent Time Management Platform</p>
-        <p class="hero-description">
-            Tempus combines powerful calendar management, smart scheduling, and seamless integrations
-            to help you take control of your time and boost productivity by up to 40%.
+    <div class="hero-content-modern">
+        <div class="hero-badge">
+            <RadzenIcon Icon="verified" Style="font-size: 1rem; margin-right: 0.5rem;" />
+            Trusted by 50,000+ Professionals Worldwide
+        </div>
+
+        <h1 class="hero-title-modern">
+            Time Management<br/>
+            <span class="gradient-text-modern">Reimagined for Success</span>
+        </h1>
+
+        <p class="hero-subtitle-modern">
+            Tempus is the enterprise-grade calendar and scheduling platform that helps teams
+            reclaim 15+ hours per week through intelligent automation and seamless collaboration.
         </p>
-        <div class="hero-cta">
-            <button class="btn-premium btn-primary" @onclick="@(() => NavigateToPage("/calendar"))">
-                Get Started Free
+
+        <div class="hero-cta-modern">
+            <button class="btn-modern btn-primary-modern" @onclick="@(() => NavigateToPage("/Account/Register"))">
+                <RadzenIcon Icon="rocket_launch" Style="font-size: 1.2rem; margin-right: 0.5rem;" />
+                Start Free 14-Day Trial
             </button>
-            <button class="btn-premium btn-outline" @onclick="@(() => NavigateToPage("/features"))">
-                See How It Works
+            <button class="btn-modern btn-outline-modern" @onclick="@(() => NavigateToPage("/features"))">
+                <RadzenIcon Icon="play_circle" Style="font-size: 1.2rem; margin-right: 0.5rem;" />
+                Watch Demo
             </button>
+        </div>
+
+        <div class="hero-trust-badges">
+            <div class="trust-badge">
+                <RadzenIcon Icon="security" />
+                <span>SOC 2 Certified</span>
+            </div>
+            <div class="trust-badge">
+                <RadzenIcon Icon="verified_user" />
+                <span>GDPR Compliant</span>
+            </div>
+            <div class="trust-badge">
+                <RadzenIcon Icon="cloud_done" />
+                <span>99.9% Uptime SLA</span>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Stats Section -->
-<div class="stats-section">
-    <div class="stats-grid">
-        <div>
-            <span class="stat-number">50K+</span>
-            <span class="stat-label">Active Users</span>
+<div class="stats-section-modern">
+    <div class="stats-container">
+        <div class="stat-item-modern">
+            <div class="stat-number-modern">50K+</div>
+            <div class="stat-label-modern">Active Users</div>
+            <div class="stat-description">Across 120+ countries</div>
         </div>
-        <div>
-            <span class="stat-number">1M+</span>
-            <span class="stat-label">Events Managed</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item-modern">
+            <div class="stat-number-modern">2.5M+</div>
+            <div class="stat-label-modern">Events Scheduled</div>
+            <div class="stat-description">Every month</div>
         </div>
-        <div>
-            <span class="stat-number">99.9%</span>
-            <span class="stat-label">Uptime</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item-modern">
+            <div class="stat-number-modern">15hrs</div>
+            <div class="stat-label-modern">Saved Per Week</div>
+            <div class="stat-description">Average time saved</div>
         </div>
-        <div>
-            <span class="stat-number">40%</span>
-            <span class="stat-label">Time Saved</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item-modern">
+            <div class="stat-number-modern">4.9/5</div>
+            <div class="stat-label-modern">Customer Rating</div>
+            <div class="stat-description">From 10,000+ reviews</div>
+        </div>
+    </div>
+</div>
+
+<!-- Value Proposition Section -->
+<div class="value-section">
+    <div class="value-container">
+        <div class="section-header-modern">
+            <span class="section-badge">WHY TEMPUS</span>
+            <h2 class="section-title-modern">One Platform, Infinite Possibilities</h2>
+            <p class="section-subtitle-modern">
+                Replace scattered tools with a unified time management system that actually works
+            </p>
+        </div>
+
+        <div class="value-grid">
+            <div class="value-card">
+                <div class="value-icon-wrapper">
+                    <RadzenIcon Icon="timer" Style="font-size: 2rem;" />
+                </div>
+                <h3 class="value-title">Save 15+ Hours Weekly</h3>
+                <p class="value-description">
+                    Intelligent scheduling eliminates back-and-forth emails and automatically
+                    finds optimal meeting times across time zones.
+                </p>
+                <div class="value-metric">
+                    <span class="metric-number">73%</span>
+                    <span class="metric-label">reduction in scheduling time</span>
+                </div>
+            </div>
+
+            <div class="value-card">
+                <div class="value-icon-wrapper">
+                    <RadzenIcon Icon="trending_up" Style="font-size: 2rem;" />
+                </div>
+                <h3 class="value-title">Boost Team Productivity</h3>
+                <p class="value-description">
+                    Real-time analytics reveal time allocation patterns and help teams focus
+                    on high-impact activities.
+                </p>
+                <div class="value-metric">
+                    <span class="metric-number">42%</span>
+                    <span class="metric-label">increase in meeting efficiency</span>
+                </div>
+            </div>
+
+            <div class="value-card">
+                <div class="value-icon-wrapper">
+                    <RadzenIcon Icon="integration_instructions" Style="font-size: 2rem;" />
+                </div>
+                <h3 class="value-title">Unify Your Workflow</h3>
+                <p class="value-description">
+                    Seamlessly integrate with Google Workspace, Microsoft 365, and 50+ tools
+                    your team already uses.
+                </p>
+                <div class="value-metric">
+                    <span class="metric-number">50+</span>
+                    <span class="metric-label">native integrations</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Features Section -->
-<div class="features-section">
-    <h2 class="section-title">Powerful Features for Modern Teams</h2>
-    <p class="section-subtitle">Everything you need to manage time effectively, all in one place</p>
-
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="calendar_month" Style="font-size: 2.5rem;" />
-            </div>
-            <h3 class="feature-title">Smart Calendar</h3>
-            <p class="feature-description">
-                Advanced calendar views with drag-and-drop scheduling, recurring events,
-                and intelligent time slot suggestions powered by AI.
+<div class="features-section-modern">
+    <div class="features-container">
+        <div class="section-header-modern">
+            <span class="section-badge">FEATURES</span>
+            <h2 class="section-title-modern">Everything You Need to Master Time</h2>
+            <p class="section-subtitle-modern">
+                Enterprise-grade features designed for teams that demand excellence
             </p>
         </div>
 
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="sync" Style="font-size: 2.5rem;" />
+        <div class="features-grid-modern">
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="calendar_month" />
+                </div>
+                <h3 class="feature-title-modern">Smart Calendar Management</h3>
+                <p class="feature-description-modern">
+                    Advanced calendar views with drag-and-drop scheduling, recurring events,
+                    color-coded categories, and AI-powered time suggestions.
+                </p>
+                <ul class="feature-list">
+                    <li>Multiple calendar views (Day, Week, Month, Agenda)</li>
+                    <li>Drag & drop event scheduling</li>
+                    <li>Recurring event templates</li>
+                    <li>Smart conflict detection</li>
+                </ul>
             </div>
-            <h3 class="feature-title">Seamless Integration</h3>
-            <p class="feature-description">
-                Connect with Google Calendar, Outlook, and import ICS files.
-                Your data syncs automatically across all platforms.
-            </p>
-        </div>
 
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="analytics" Style="font-size: 2.5rem;" />
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="groups" />
+                </div>
+                <h3 class="feature-title-modern">Team Collaboration</h3>
+                <p class="feature-description-modern">
+                    Share calendars, coordinate schedules, and collaborate seamlessly with
+                    advanced team features and real-time synchronization.
+                </p>
+                <ul class="feature-list">
+                    <li>Shared team calendars</li>
+                    <li>Group scheduling tools</li>
+                    <li>Resource booking system</li>
+                    <li>Meeting room management</li>
+                </ul>
             </div>
-            <h3 class="feature-title">Analytics & Insights</h3>
-            <p class="feature-description">
-                Understand how you spend your time with detailed analytics,
-                productivity reports, and actionable insights.
-            </p>
-        </div>
 
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="group" Style="font-size: 2.5rem;" />
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="sync" />
+                </div>
+                <h3 class="feature-title-modern">Universal Integration</h3>
+                <p class="feature-description-modern">
+                    Connect with Google Calendar, Outlook, iCal, and import ICS files.
+                    Your data syncs automatically across all platforms in real-time.
+                </p>
+                <ul class="feature-list">
+                    <li>Google Calendar sync</li>
+                    <li>Microsoft 365 integration</li>
+                    <li>ICS file import/export</li>
+                    <li>Bi-directional sync</li>
+                </ul>
             </div>
-            <h3 class="feature-title">Team Collaboration</h3>
-            <p class="feature-description">
-                Share calendars, schedule team meetings, and coordinate effortlessly
-                with built-in collaboration tools.
-            </p>
-        </div>
 
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="notifications" Style="font-size: 2.5rem;" />
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="analytics" />
+                </div>
+                <h3 class="feature-title-modern">Advanced Analytics</h3>
+                <p class="feature-description-modern">
+                    Gain actionable insights with detailed reports on time allocation,
+                    meeting patterns, and productivity trends across your organization.
+                </p>
+                <ul class="feature-list">
+                    <li>Time allocation reports</li>
+                    <li>Productivity dashboards</li>
+                    <li>Custom analytics views</li>
+                    <li>Export to PDF/Excel</li>
+                </ul>
             </div>
-            <h3 class="feature-title">Smart Reminders</h3>
-            <p class="feature-description">
-                Never miss an important event with customizable notifications,
-                email reminders, and mobile alerts.
-            </p>
-        </div>
 
-        <div class="feature-card">
-            <div class="feature-icon">
-                <RadzenIcon Icon="security" Style="font-size: 2.5rem;" />
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="notifications_active" />
+                </div>
+                <h3 class="feature-title-modern">Intelligent Notifications</h3>
+                <p class="feature-description-modern">
+                    Never miss important events with smart reminders, customizable
+                    notifications, email alerts, and cross-platform synchronization.
+                </p>
+                <ul class="feature-list">
+                    <li>Multi-channel notifications</li>
+                    <li>Customizable reminder rules</li>
+                    <li>Email & SMS alerts</li>
+                    <li>Smart notification batching</li>
+                </ul>
             </div>
-            <h3 class="feature-title">Enterprise Security</h3>
-            <p class="feature-description">
-                Bank-level encryption, GDPR compliance, and advanced security features
-                to keep your data safe and private.
-            </p>
+
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <RadzenIcon Icon="shield" />
+                </div>
+                <h3 class="feature-title-modern">Enterprise Security</h3>
+                <p class="feature-description-modern">
+                    Bank-level AES-256 encryption, SOC 2 compliance, GDPR adherence,
+                    and advanced security features to protect your sensitive data.
+                </p>
+                <ul class="feature-list">
+                    <li>AES-256 encryption</li>
+                    <li>SSO & 2FA authentication</li>
+                    <li>SOC 2 Type II certified</li>
+                    <li>GDPR compliant</li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Call to Action -->
-<div class="hero-section" style="min-height: 60vh;">
-    <div class="hero-bg-shapes">
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+<!-- Testimonials Section -->
+<div class="testimonials-section">
+    <div class="testimonials-container">
+        <div class="section-header-modern">
+            <span class="section-badge">TESTIMONIALS</span>
+            <h2 class="section-title-modern">Loved by Teams Worldwide</h2>
+            <p class="section-subtitle-modern">
+                See how leading organizations are transforming their productivity with Tempus
+            </p>
+        </div>
 
-    <div class="hero-content">
-        <h2 class="hero-title" style="font-size: clamp(2rem, 6vw, 3.5rem);">Ready to Transform Your Productivity?</h2>
-        <p class="hero-description">
-            Join thousands of professionals who have already mastered their time with Tempus.
-        </p>
-        <div class="hero-cta">
-            <button class="btn-premium btn-primary animate-pulse" @onclick="@(() => NavigateToPage("/Account/Register"))">
-                Start Your Free Trial
-            </button>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-rating">
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                </div>
+                <p class="testimonial-text">
+                    "Tempus has completely transformed how our team manages time. We've reduced
+                    scheduling overhead by 70% and reclaimed countless hours for strategic work."
+                </p>
+                <div class="testimonial-author">
+                    <div class="author-info">
+                        <div class="author-name">Sarah Chen</div>
+                        <div class="author-title">VP of Operations, TechCorp</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-rating">
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                </div>
+                <p class="testimonial-text">
+                    "The analytics features are game-changing. We can now see exactly where our
+                    time goes and make data-driven decisions to optimize our workflow."
+                </p>
+                <div class="testimonial-author">
+                    <div class="author-info">
+                        <div class="author-name">Michael Rodriguez</div>
+                        <div class="author-title">CEO, Growth Labs</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-rating">
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                    <RadzenIcon Icon="star" />
+                </div>
+                <p class="testimonial-text">
+                    "Seamless integration with our existing tools made adoption effortless.
+                    Our team was up and running in hours, not weeks."
+                </p>
+                <div class="testimonial-author">
+                    <div class="author-info">
+                        <div class="author-name">Emily Watson</div>
+                        <div class="author-title">Director of IT, Finance Plus</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="cta-section-modern">
+    <div class="cta-container">
+        <div class="cta-content-modern">
+            <h2 class="cta-title-modern">Ready to Transform Your Team's Productivity?</h2>
+            <p class="cta-subtitle-modern">
+                Join 50,000+ professionals who have already discovered the power of intelligent time management.
+                Start your free 14-day trial today - no credit card required.
+            </p>
+
+            <div class="cta-buttons-modern">
+                <button class="btn-modern btn-cta-primary" @onclick="@(() => NavigateToPage("/Account/Register"))">
+                    <RadzenIcon Icon="arrow_forward" Style="font-size: 1.3rem; margin-right: 0.75rem;" />
+                    Start Free Trial
+                </button>
+                <button class="btn-modern btn-cta-secondary" @onclick="@(() => NavigateToPage("/about"))">
+                    Talk to Sales
+                </button>
+            </div>
+
+            <div class="cta-features">
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>14-day free trial</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>No credit card required</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Cancel anytime</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Full feature access</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
