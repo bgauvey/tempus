@@ -1,0 +1,514 @@
+/* Tempus Component Professional Styling Enhancements */
+
+/* ============================================
+   Radzen Dropdown & Select Styling
+   ============================================ */
+::deep .rz-dropdown {
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-dropdown:hover {
+    border-color: var(--border-dark);
+    background: var(--bg-secondary);
+}
+
+::deep .rz-dropdown.rz-state-active,
+::deep .rz-dropdown:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), inset 0 0 0 1px rgba(102, 126, 234, 0.05);
+}
+
+::deep .rz-dropdown-panel {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    margin-top: 0.5rem;
+    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .rz-dropdown-item {
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--border-light);
+}
+
+::deep .rz-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+::deep .rz-dropdown-item:hover {
+    background: var(--bg-secondary);
+    color: var(--color-primary);
+    padding-left: 1.25rem;
+}
+
+::deep .rz-dropdown-item.rz-state-selected {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+    color: var(--color-primary);
+    font-weight: 500;
+    border-left: 3px solid var(--color-primary);
+    padding-left: calc(1rem - 3px);
+}
+
+/* ============================================
+   Checkboxes & Radio Buttons
+   ============================================ */
+::deep .rz-checkbox {
+    margin: 0;
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-checkbox .rz-chkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .rz-checkbox:hover .rz-chkbox {
+    border-color: var(--color-primary);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+::deep .rz-checkbox.rz-state-checked .rz-chkbox {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border-color: var(--color-primary-dark);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+::deep .rz-checkbox.rz-state-checked .rz-chkbox::after {
+    content: '✓';
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Radio Button */
+::deep .rz-radiobutton .rz-helper {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-medium);
+    border-radius: 50%;
+    background: var(--bg-primary);
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-radiobutton:hover .rz-helper {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+::deep .rz-radiobutton.rz-state-checked .rz-helper {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+::deep .rz-radiobutton.rz-state-checked .rz-helper::after {
+    background: white;
+    width: 6px;
+    height: 6px;
+}
+
+/* ============================================
+   Switch/Toggle
+   ============================================ */
+::deep .rz-switch {
+    width: 48px;
+    height: 26px;
+    background: var(--border-light);
+    border-radius: 13px;
+    position: relative;
+    transition: background var(--transition-fast);
+    border: none;
+    cursor: pointer;
+}
+
+::deep .rz-switch::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: left var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+::deep .rz-switch.rz-state-checked {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+::deep .rz-switch.rz-state-checked::before {
+    left: 24px;
+}
+
+/* ============================================
+   DatePicker & TimePicker
+   ============================================ */
+::deep .rz-datepicker {
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+}
+
+::deep .rz-datepicker:hover {
+    border-color: var(--border-dark);
+}
+
+::deep .rz-datepicker:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+::deep .rz-calendar {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .rz-calendar .rz-weekday {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 0.75rem 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+::deep .rz-calendar .rz-day {
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    font-size: 0.875rem;
+}
+
+::deep .rz-calendar .rz-day:hover {
+    background: var(--bg-secondary);
+    color: var(--color-primary);
+}
+
+::deep .rz-calendar .rz-day.rz-state-selected {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    font-weight: 600;
+}
+
+::deep .rz-calendar .rz-day.rz-other-month {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+}
+
+/* ============================================
+   Slider
+   ============================================ */
+::deep .rz-slider {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-light);
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-slider:hover {
+    background: var(--border-medium);
+}
+
+::deep .rz-slider .rz-slider-track {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    height: 100%;
+    border-radius: 3px;
+}
+
+::deep .rz-slider .rz-slider-handle {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-slider .rz-slider-handle:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+::deep .rz-slider .rz-slider-handle:active {
+    cursor: grabbing;
+}
+
+/* ============================================
+   Spinner/Numeric Input
+   ============================================ */
+::deep .rz-spinner {
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-spinner:hover {
+    border-color: var(--border-dark);
+}
+
+::deep .rz-spinner:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+::deep .rz-spinner .rz-spinner-up,
+::deep .rz-spinner .rz-spinner-down {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: none;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+::deep .rz-spinner .rz-spinner-up:hover,
+::deep .rz-spinner .rz-spinner-down:hover {
+    background: var(--bg-tertiary);
+    color: var(--color-primary);
+}
+
+/* ============================================
+   ColorPicker
+   ============================================ */
+::deep .rz-colorpicker {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    animation: scaleIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .rz-colorpicker .rz-color-picker-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-light);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+::deep .rz-colorpicker .rz-color-picker-preview:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ============================================
+   Tooltip
+   ============================================ */
+::deep .rz-tooltip {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--color-gray-700) 100%);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: var(--z-tooltip);
+}
+
+::deep .rz-tooltip::after {
+    border-top-color: var(--text-primary);
+}
+
+/* ============================================
+   PopUp / Popover
+   ============================================ */
+::deep .rz-popup {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: slideInDown 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: var(--z-popover);
+}
+
+/* ============================================
+   Breadcrumbs
+   ============================================ */
+::deep .rz-breadcrumb {
+    padding: 0.75rem 0;
+}
+
+::deep .rz-breadcrumb-item {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    transition: color var(--transition-fast);
+}
+
+::deep .rz-breadcrumb-item:hover {
+    color: var(--color-primary);
+}
+
+::deep .rz-breadcrumb-item.rz-state-active {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+::deep .rz-breadcrumb-item-separator {
+    color: var(--text-tertiary);
+    margin: 0 0.5rem;
+}
+
+/* ============================================
+   Menu
+   ============================================ */
+::deep .rz-menu {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    animation: slideInDown 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: var(--z-dropdown);
+}
+
+::deep .rz-menuitem {
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+}
+
+::deep .rz-menuitem:last-child {
+    border-bottom: none;
+}
+
+::deep .rz-menuitem:hover {
+    background: var(--bg-secondary);
+    color: var(--color-primary);
+    padding-left: 1.25rem;
+}
+
+::deep .rz-menuitem.rz-state-selected {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+    color: var(--color-primary);
+    font-weight: 500;
+    border-left: 3px solid var(--color-primary);
+    padding-left: calc(1rem - 3px);
+}
+
+/* ============================================
+   Loading & Progress
+   ============================================ */
+::deep .rz-progress {
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+::deep .rz-progressbar {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    height: 100%;
+    transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .rz-progress-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Spinner/Loader */
+::deep .rz-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Skeleton Loader */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 25%,
+        var(--bg-tertiary) 50%,
+        var(--bg-secondary) 75%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+/* ============================================
+   Animation Helpers
+   ============================================ */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ============================================
+   Responsive Component Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    ::deep .rz-dropdown-panel {
+        width: 100% !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+
+    ::deep .rz-calendar {
+        width: 100% !important;
+    }
+
+    ::deep .rz-colorpicker {
+        width: 100% !important;
+    }
+
+    ::deep .rz-menu {
+        width: 100% !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+}
