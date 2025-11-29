@@ -1,307 +1,101 @@
 /**
- * Tempus Dark Theme
- * Custom Radzen dark theme with blue/teal color scheme
- * Based on the Tempus brand identity
- * Optimized for WCAG accessibility in dark mode
+ * Tempus Dark Theme - Material Design Extension
+ * Extends Radzen's material-dark theme with Tempus brand colors
+ * Works with RadzenAppearanceToggle for dark mode
  */
 
-:root[data-theme="dark"],
-[data-theme="dark"] {
-    /* ===== Base Colors ===== */
-    --rz-white: #ffffff;
-    --rz-black: #000000;
-
-    /* Base Grayscale - Dark Mode (Inverted) */
-    --rz-base-50: #0f172a;
-    --rz-base-100: #1e293b;
-    --rz-base-200: #334155;
-    --rz-base-300: #475569;
-    --rz-base-400: #64748b;
-    --rz-base-500: #94a3b8;
-    --rz-base-600: #cbd5e1;
-    --rz-base-700: #e2e8f0;
-    --rz-base-800: #f1f5f9;
-    --rz-base-900: #f8fafc;
-
-    /* ===== Semantic Colors - Tempus Brand (Brightened for dark mode) ===== */
-    /* Primary - Blue */
+/* Only apply when Radzen is in dark mode */
+body.rz-dark-mode {
+    /* Override Radzen's material-dark theme colors with Tempus blue/teal (brightened for dark backgrounds) */
     --rz-primary: #38bdf8;
     --rz-primary-light: #7dd3fc;
     --rz-primary-lighter: rgba(56, 189, 248, 0.2);
     --rz-primary-dark: #0EA5E9;
     --rz-primary-darker: #0284c7;
 
-    /* Secondary - Teal */
     --rz-secondary: #2dd4bf;
     --rz-secondary-light: #5eead4;
     --rz-secondary-lighter: rgba(45, 212, 191, 0.2);
     --rz-secondary-dark: #14B8A6;
     --rz-secondary-darker: #0d9488;
 
-    /* Info - Cyan */
-    --rz-info: #22d3ee;
-    --rz-info-light: #67e8f9;
-    --rz-info-lighter: rgba(34, 211, 238, 0.2);
-    --rz-info-dark: #06b6d4;
-    --rz-info-darker: #0891b2;
-
-    /* Success - Green */
+    /* Success - Green (brightened) */
     --rz-success: #34d399;
     --rz-success-light: #6ee7b7;
     --rz-success-lighter: rgba(52, 211, 153, 0.2);
     --rz-success-dark: #10b981;
     --rz-success-darker: #059669;
 
-    /* Warning - Amber */
+    /* Info - Cyan (brightened) */
+    --rz-info: #22d3ee;
+    --rz-info-light: #67e8f9;
+    --rz-info-lighter: rgba(34, 211, 238, 0.2);
+    --rz-info-dark: #06b6d4;
+    --rz-info-darker: #0891b2;
+
+    /* Warning - Amber (brightened) */
     --rz-warning: #fbbf24;
     --rz-warning-light: #fcd34d;
     --rz-warning-lighter: rgba(251, 191, 36, 0.2);
     --rz-warning-dark: #f59e0b;
     --rz-warning-darker: #d97706;
 
-    /* Danger - Red */
+    /* Danger - Red (brightened) */
     --rz-danger: #f87171;
     --rz-danger-light: #fca5a5;
     --rz-danger-lighter: rgba(248, 113, 113, 0.2);
     --rz-danger-dark: #ef4444;
     --rz-danger-darker: #dc2626;
-
-    /* ===== Gradients ===== */
-    --rz-primary-gradient: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
-    --rz-secondary-gradient: linear-gradient(135deg, #2dd4bf 0%, #14B8A6 100%);
-    --rz-hero-gradient: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
-    --rz-accent-gradient: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
-    --rz-success-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-    --rz-warning-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-
-    /* ===== Typography ===== */
-    --rz-text-title-color: var(--rz-base-900);
-    --rz-text-primary-color: var(--rz-base-800);
-    --rz-text-secondary-color: var(--rz-base-600);
-    --rz-text-disabled-color: var(--rz-base-400);
-    --rz-text-contrast-color: var(--rz-base-50);
-
-    /* Font Families */
-    --rz-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --rz-font-family-monospace: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, monospace;
-
-    /* Font Sizes */
-    --rz-body-font-size: 0.875rem;
-    --rz-body-line-height: 1.429;
-
-    /* ===== Layout & Spacing ===== */
-    --rz-border-radius: 8px;
-    --rz-border-radius-sm: 4px;
-    --rz-border-radius-lg: 12px;
-    --rz-border-radius-xl: 16px;
-
-    /* Shadows - Dark mode with subtle glow */
-    --rz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-    --rz-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
-    --rz-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-    --rz-shadow-lg: 0 10px 30px rgba(56, 189, 248, 0.2);
-    --rz-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-
-    /* Transitions */
-    --rz-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --rz-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* ===== Component-Specific ===== */
-    /* Body */
-    --rz-body-background-color: #0a0f1a;
-    --rz-body-text-color: var(--rz-text-primary-color);
-
-    /* Content */
-    --rz-content-background-color: var(--rz-base-50);
-    --rz-content-border-color: var(--rz-base-200);
-
-    /* Cards */
-    --rz-card-background-color: var(--rz-base-100);
-    --rz-card-border-color: var(--rz-base-200);
-    --rz-card-shadow: var(--rz-shadow);
-
-    /* Buttons */
-    --rz-button-primary-background-color: var(--rz-primary);
-    --rz-button-primary-background-color-hover: var(--rz-primary-light);
-    --rz-button-primary-text-color: var(--rz-base-50);
-
-    --rz-button-secondary-background-color: var(--rz-secondary);
-    --rz-button-secondary-background-color-hover: var(--rz-secondary-light);
-    --rz-button-secondary-text-color: var(--rz-base-50);
-
-    /* Inputs */
-    --rz-input-background-color: var(--rz-base-100);
-    --rz-input-border-color: var(--rz-base-200);
-    --rz-input-border-color-focus: var(--rz-primary);
-    --rz-input-text-color: var(--rz-text-primary-color);
-    --rz-input-placeholder-color: var(--rz-base-400);
-
-    /* Links */
-    --rz-link-color: var(--rz-primary);
-    --rz-link-color-hover: var(--rz-primary-light);
-
-    /* Navigation */
-    --rz-sidebar-background-color: var(--rz-base-100);
-    --rz-sidebar-border-color: var(--rz-base-200);
-    --rz-sidebar-item-color: var(--rz-text-primary-color);
-    --rz-sidebar-item-color-hover: var(--rz-primary-light);
-    --rz-sidebar-item-background-color-hover: var(--rz-primary-lighter);
-    --rz-sidebar-item-color-active: var(--rz-primary-light);
-    --rz-sidebar-item-background-color-active: var(--rz-primary-lighter);
-
-    /* Header */
-    --rz-header-background-color: var(--rz-base-100);
-    --rz-header-border-color: var(--rz-base-200);
-    --rz-header-text-color: var(--rz-text-title-color);
-
-    /* Tables */
-    --rz-table-background-color: var(--rz-base-100);
-    --rz-table-border-color: var(--rz-base-200);
-    --rz-table-header-background-color: var(--rz-base-50);
-    --rz-table-row-background-color-hover: var(--rz-base-50);
-    --rz-table-row-background-color-selected: var(--rz-primary-lighter);
-
-    /* Series Colors for Charts (Brightened for dark mode) */
-    --rz-series-1: #38bdf8;
-    --rz-series-2: #2dd4bf;
-    --rz-series-3: #34d399;
-    --rz-series-4: #fbbf24;
-    --rz-series-5: #f87171;
-    --rz-series-6: #a78bfa;
-    --rz-series-7: #22d3ee;
-    --rz-series-8: #a3e635;
-    --rz-series-9: #fb923c;
-    --rz-series-10: #f472b6;
-    --rz-series-11: #818cf8;
-    --rz-series-12: #4ade80;
 }
 
-/* ===== Component Overrides for Dark Mode ===== */
-
-[data-theme="dark"] body {
-    background-color: var(--rz-body-background-color);
-    color: var(--rz-body-text-color);
-}
-
-/* Radzen Card Enhancements */
-[data-theme="dark"] .rz-card {
-    background-color: var(--rz-card-background-color);
-    border: 1px solid var(--rz-card-border-color);
-    border-radius: var(--rz-border-radius);
-    box-shadow: var(--rz-card-shadow);
-    transition: var(--rz-transition-smooth);
-}
-
-[data-theme="dark"] .rz-card:hover {
-    box-shadow: var(--rz-shadow-md);
-    border-color: var(--rz-base-300);
-}
-
-/* Radzen Button Enhancements */
-[data-theme="dark"] .rz-button {
-    border-radius: var(--rz-border-radius-sm);
-    transition: var(--rz-transition-fast);
-}
-
-[data-theme="dark"] .rz-button-primary {
-    background: var(--rz-primary-gradient);
+/* Enhanced button styles for dark mode */
+body.rz-dark-mode .rz-button-primary {
+    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
     border: none;
-    color: var(--rz-base-50);
 }
 
-[data-theme="dark"] .rz-button-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+body.rz-dark-mode .rz-button-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7dd3fc 0%, #5eead4 100%);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
 }
 
-/* Radzen Input Enhancements */
-[data-theme="dark"] .rz-textbox,
-[data-theme="dark"] .rz-dropdown,
-[data-theme="dark"] .rz-multiselect {
-    background-color: var(--rz-input-background-color);
-    border-radius: var(--rz-border-radius-sm);
-    border-color: var(--rz-input-border-color);
-    color: var(--rz-input-text-color);
-    transition: var(--rz-transition-fast);
+/* Enhanced card effects for dark mode */
+body.rz-dark-mode .rz-card:hover {
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
 }
 
-[data-theme="dark"] .rz-textbox:focus,
-[data-theme="dark"] .rz-dropdown:focus,
-[data-theme="dark"] .rz-multiselect:focus {
-    border-color: var(--rz-input-border-color-focus);
-    box-shadow: 0 0 0 3px var(--rz-primary-lighter);
+/* Progress bars for dark mode */
+body.rz-dark-mode .rz-progressbar-value {
+    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
 }
 
-/* Navigation Enhancements */
-[data-theme="dark"] .rz-navigation-item:hover {
-    background-color: var(--rz-sidebar-item-background-color-hover);
-    color: var(--rz-sidebar-item-color-hover);
-    border-radius: var(--rz-border-radius-sm);
+/* Links for dark mode */
+body.rz-dark-mode .rz-link,
+body.rz-dark-mode a {
+    color: var(--rz-primary);
 }
 
-[data-theme="dark"] .rz-navigation-item.active {
-    background-color: var(--rz-sidebar-item-background-color-active);
-    color: var(--rz-sidebar-item-color-active);
-    border-left: 3px solid var(--rz-primary-light);
+body.rz-dark-mode .rz-link:hover,
+body.rz-dark-mode a:hover {
+    color: var(--rz-primary-light);
 }
 
-/* Badge Enhancements */
-[data-theme="dark"] .rz-badge-primary {
-    background: var(--rz-primary-gradient);
-    color: var(--rz-base-50);
+/* Navigation active states for dark mode */
+body.rz-dark-mode .rz-navigation-item.rz-navigation-item-active {
+    background-color: var(--rz-primary-lighter);
+    color: var(--rz-primary-light);
+    border-left: 3px solid var(--rz-primary);
 }
 
-[data-theme="dark"] .rz-badge-secondary {
-    background: var(--rz-secondary-gradient);
-    color: var(--rz-base-50);
+body.rz-dark-mode .rz-navigation-item:hover {
+    background-color: var(--rz-primary-lighter);
 }
 
-/* Progress Bar */
-[data-theme="dark"] .rz-progressbar-value {
-    background: var(--rz-primary-gradient);
+/* Badges for dark mode */
+body.rz-dark-mode .rz-badge-primary {
+    background: var(--rz-primary);
 }
 
-/* Charts */
-[data-theme="dark"] .rz-chart {
-    border-radius: var(--rz-border-radius);
-    background-color: var(--rz-base-100);
-}
-
-/* Modals/Dialogs */
-[data-theme="dark"] .rz-dialog {
-    background-color: var(--rz-base-100);
-    border: 1px solid var(--rz-base-200);
-}
-
-[data-theme="dark"] .rz-dialog-title {
-    color: var(--rz-text-title-color);
-    border-bottom: 1px solid var(--rz-base-200);
-}
-
-/* Data Grid */
-[data-theme="dark"] .rz-datatable-data td {
-    border-color: var(--rz-base-200);
-}
-
-[data-theme="dark"] .rz-datatable-data tr:hover {
-    background-color: var(--rz-base-50);
-}
-
-/* Scrollbars (Webkit) */
-[data-theme="dark"] ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-track {
-    background: var(--rz-base-100);
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-    background: var(--rz-base-300);
-    border-radius: 6px;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-    background: var(--rz-base-400);
+body.rz-dark-mode .rz-badge-secondary {
+    background: var(--rz-secondary);
 }

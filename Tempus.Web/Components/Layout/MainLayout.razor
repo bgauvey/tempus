@@ -5,7 +5,6 @@
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Identity
 @using Tempus.Web.Components.Shared
-@using Tempus.Web.Components.Layout
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject CookieThemeService CookieThemeService
@@ -69,7 +68,6 @@
                         </RadzenStack>
                     </RadzenStack>
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                        <ThemeSwitcher @rendermode="InteractiveServer" />
                         <RadzenAppearanceToggle />
                         <NavMenu />
                     </RadzenStack>
