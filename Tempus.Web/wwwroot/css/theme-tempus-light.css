@@ -1,0 +1,253 @@
+/**
+ * Tempus Light Theme
+ * Custom Radzen theme with blue/teal color scheme
+ * Based on the Tempus brand identity
+ */
+
+:root {
+    /* ===== Base Colors ===== */
+    --rz-white: #ffffff;
+    --rz-black: #000000;
+
+    /* Base Grayscale - Light Mode */
+    --rz-base-50: #f8fafc;
+    --rz-base-100: #f1f5f9;
+    --rz-base-200: #e2e8f0;
+    --rz-base-300: #cbd5e1;
+    --rz-base-400: #94a3b8;
+    --rz-base-500: #64748b;
+    --rz-base-600: #475569;
+    --rz-base-700: #334155;
+    --rz-base-800: #1e293b;
+    --rz-base-900: #0f172a;
+
+    /* ===== Semantic Colors - Tempus Brand ===== */
+    /* Primary - Blue */
+    --rz-primary: #0EA5E9;
+    --rz-primary-light: #38bdf8;
+    --rz-primary-lighter: rgba(14, 165, 233, 0.16);
+    --rz-primary-dark: #0284c7;
+    --rz-primary-darker: #0369a1;
+
+    /* Secondary - Teal */
+    --rz-secondary: #14B8A6;
+    --rz-secondary-light: #2dd4bf;
+    --rz-secondary-lighter: rgba(20, 184, 166, 0.16);
+    --rz-secondary-dark: #0d9488;
+    --rz-secondary-darker: #0f766e;
+
+    /* Info - Cyan */
+    --rz-info: #06b6d4;
+    --rz-info-light: #22d3ee;
+    --rz-info-lighter: rgba(6, 182, 212, 0.16);
+    --rz-info-dark: #0891b2;
+    --rz-info-darker: #0e7490;
+
+    /* Success - Green */
+    --rz-success: #10b981;
+    --rz-success-light: #34d399;
+    --rz-success-lighter: rgba(16, 185, 129, 0.16);
+    --rz-success-dark: #059669;
+    --rz-success-darker: #047857;
+
+    /* Warning - Amber */
+    --rz-warning: #f59e0b;
+    --rz-warning-light: #fbbf24;
+    --rz-warning-lighter: rgba(245, 158, 11, 0.16);
+    --rz-warning-dark: #d97706;
+    --rz-warning-darker: #b45309;
+
+    /* Danger - Red */
+    --rz-danger: #ef4444;
+    --rz-danger-light: #f87171;
+    --rz-danger-lighter: rgba(239, 68, 68, 0.16);
+    --rz-danger-dark: #dc2626;
+    --rz-danger-darker: #b91c1c;
+
+    /* ===== Gradients ===== */
+    --rz-primary-gradient: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
+    --rz-secondary-gradient: linear-gradient(135deg, #14B8A6 0%, #0d9488 100%);
+    --rz-hero-gradient: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
+    --rz-accent-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    --rz-success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --rz-warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+    /* ===== Typography ===== */
+    --rz-text-title-color: var(--rz-base-900);
+    --rz-text-primary-color: var(--rz-base-800);
+    --rz-text-secondary-color: var(--rz-base-600);
+    --rz-text-disabled-color: var(--rz-base-400);
+    --rz-text-contrast-color: var(--rz-white);
+
+    /* Font Families */
+    --rz-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --rz-font-family-monospace: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, monospace;
+
+    /* Font Sizes */
+    --rz-body-font-size: 0.875rem;
+    --rz-body-line-height: 1.429;
+
+    /* ===== Layout & Spacing ===== */
+    --rz-border-radius: 8px;
+    --rz-border-radius-sm: 4px;
+    --rz-border-radius-lg: 12px;
+    --rz-border-radius-xl: 16px;
+
+    /* Shadows */
+    --rz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --rz-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --rz-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --rz-shadow-lg: 0 10px 30px rgba(14, 165, 233, 0.3);
+    --rz-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+    /* Transitions */
+    --rz-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --rz-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ===== Component-Specific ===== */
+    /* Body */
+    --rz-body-background-color: var(--rz-white);
+    --rz-body-text-color: var(--rz-text-primary-color);
+
+    /* Content */
+    --rz-content-background-color: var(--rz-base-50);
+    --rz-content-border-color: var(--rz-base-200);
+
+    /* Cards */
+    --rz-card-background-color: var(--rz-white);
+    --rz-card-border-color: var(--rz-base-200);
+    --rz-card-shadow: var(--rz-shadow);
+
+    /* Buttons */
+    --rz-button-primary-background-color: var(--rz-primary);
+    --rz-button-primary-background-color-hover: var(--rz-primary-dark);
+    --rz-button-primary-text-color: var(--rz-white);
+
+    --rz-button-secondary-background-color: var(--rz-secondary);
+    --rz-button-secondary-background-color-hover: var(--rz-secondary-dark);
+    --rz-button-secondary-text-color: var(--rz-white);
+
+    /* Inputs */
+    --rz-input-background-color: var(--rz-white);
+    --rz-input-border-color: var(--rz-base-300);
+    --rz-input-border-color-focus: var(--rz-primary);
+    --rz-input-text-color: var(--rz-text-primary-color);
+    --rz-input-placeholder-color: var(--rz-base-400);
+
+    /* Links */
+    --rz-link-color: var(--rz-primary);
+    --rz-link-color-hover: var(--rz-primary-dark);
+
+    /* Navigation */
+    --rz-sidebar-background-color: var(--rz-white);
+    --rz-sidebar-border-color: var(--rz-base-200);
+    --rz-sidebar-item-color: var(--rz-text-primary-color);
+    --rz-sidebar-item-color-hover: var(--rz-primary);
+    --rz-sidebar-item-background-color-hover: var(--rz-primary-lighter);
+    --rz-sidebar-item-color-active: var(--rz-primary);
+    --rz-sidebar-item-background-color-active: var(--rz-primary-lighter);
+
+    /* Header */
+    --rz-header-background-color: var(--rz-white);
+    --rz-header-border-color: var(--rz-base-200);
+    --rz-header-text-color: var(--rz-text-title-color);
+
+    /* Tables */
+    --rz-table-background-color: var(--rz-white);
+    --rz-table-border-color: var(--rz-base-200);
+    --rz-table-header-background-color: var(--rz-base-50);
+    --rz-table-row-background-color-hover: var(--rz-base-50);
+    --rz-table-row-background-color-selected: var(--rz-primary-lighter);
+
+    /* Series Colors for Charts */
+    --rz-series-1: #0EA5E9;
+    --rz-series-2: #14B8A6;
+    --rz-series-3: #10b981;
+    --rz-series-4: #f59e0b;
+    --rz-series-5: #ef4444;
+    --rz-series-6: #8b5cf6;
+    --rz-series-7: #06b6d4;
+    --rz-series-8: #84cc16;
+    --rz-series-9: #f97316;
+    --rz-series-10: #ec4899;
+    --rz-series-11: #6366f1;
+    --rz-series-12: #22c55e;
+}
+
+/* ===== Component Overrides ===== */
+
+/* Radzen Card Enhancements */
+.rz-card {
+    background-color: var(--rz-card-background-color);
+    border-radius: var(--rz-border-radius);
+    box-shadow: var(--rz-card-shadow);
+    transition: var(--rz-transition-smooth);
+}
+
+.rz-card:hover {
+    box-shadow: var(--rz-shadow-md);
+}
+
+/* Radzen Button Enhancements */
+.rz-button {
+    border-radius: var(--rz-border-radius-sm);
+    transition: var(--rz-transition-fast);
+}
+
+.rz-button-primary {
+    background: var(--rz-primary-gradient);
+    border: none;
+}
+
+.rz-button-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--rz-shadow-md);
+}
+
+/* Radzen Input Enhancements */
+.rz-textbox,
+.rz-dropdown,
+.rz-multiselect {
+    border-radius: var(--rz-border-radius-sm);
+    border-color: var(--rz-input-border-color);
+    transition: var(--rz-transition-fast);
+}
+
+.rz-textbox:focus,
+.rz-dropdown:focus,
+.rz-multiselect:focus {
+    border-color: var(--rz-input-border-color-focus);
+    box-shadow: 0 0 0 3px var(--rz-primary-lighter);
+}
+
+/* Navigation Enhancements */
+.rz-navigation-item:hover {
+    background-color: var(--rz-sidebar-item-background-color-hover);
+    color: var(--rz-sidebar-item-color-hover);
+    border-radius: var(--rz-border-radius-sm);
+}
+
+.rz-navigation-item.active {
+    background-color: var(--rz-sidebar-item-background-color-active);
+    color: var(--rz-sidebar-item-color-active);
+    border-left: 3px solid var(--rz-primary);
+}
+
+/* Badge Enhancements */
+.rz-badge-primary {
+    background: var(--rz-primary-gradient);
+}
+
+.rz-badge-secondary {
+    background: var(--rz-secondary-gradient);
+}
+
+/* Progress Bar */
+.rz-progressbar-value {
+    background: var(--rz-primary-gradient);
+}
+
+/* Charts */
+.rz-chart {
+    border-radius: var(--rz-border-radius);
+}
