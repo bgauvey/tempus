@@ -57,7 +57,7 @@
                 else if (string.IsNullOrEmpty(savedTheme))
                 {
                     // Check system preference
-                    var prefersDark = await JSRuntime.InvokeAsync<bool>("window.matchMedia", "(prefers-color-scheme: dark)").matches;
+                    var prefersDark = await JSRuntime.InvokeAsync<bool>("eval", "window.matchMedia('(prefers-color-scheme: dark)').matches");
                     _isDarkMode = prefersDark;
                 }
 
