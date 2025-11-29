@@ -1,191 +1,344 @@
 /**
- * Tempus Dark Theme - Material Design Extension
- * Extends Radzen's material-dark theme with Tempus brand colors
- * Works with RadzenAppearanceToggle for dark mode
+ * Tempus Dark Theme - Comprehensive Dark Mode Implementation
+ * Overrides Radzen's material theme and app.css for proper dark mode
  */
 
-/* Only apply when Radzen is in dark mode */
-body.rz-dark-mode {
-    /* Override Radzen's material-dark theme colors with Tempus blue/teal (brightened for dark backgrounds) */
-    --rz-primary: #38bdf8;
-    --rz-primary-light: #7dd3fc;
-    --rz-primary-lighter: rgba(56, 189, 248, 0.2);
-    --rz-primary-dark: #0EA5E9;
-    --rz-primary-darker: #0284c7;
-
-    --rz-secondary: #2dd4bf;
-    --rz-secondary-light: #5eead4;
-    --rz-secondary-lighter: rgba(45, 212, 191, 0.2);
-    --rz-secondary-dark: #14B8A6;
-    --rz-secondary-darker: #0d9488;
-
-    /* Success - Green (brightened) */
-    --rz-success: #34d399;
-    --rz-success-light: #6ee7b7;
-    --rz-success-lighter: rgba(52, 211, 153, 0.2);
-    --rz-success-dark: #10b981;
-    --rz-success-darker: #059669;
-
-    /* Info - Cyan (brightened) */
-    --rz-info: #22d3ee;
-    --rz-info-light: #67e8f9;
-    --rz-info-lighter: rgba(34, 211, 238, 0.2);
-    --rz-info-dark: #06b6d4;
-    --rz-info-darker: #0891b2;
-
-    /* Warning - Amber (brightened) */
-    --rz-warning: #fbbf24;
-    --rz-warning-light: #fcd34d;
-    --rz-warning-lighter: rgba(251, 191, 36, 0.2);
-    --rz-warning-dark: #f59e0b;
-    --rz-warning-darker: #d97706;
-
-    /* Danger - Red (brightened) */
-    --rz-danger: #f87171;
-    --rz-danger-light: #fca5a5;
-    --rz-danger-lighter: rgba(248, 113, 113, 0.2);
-    --rz-danger-dark: #ef4444;
-    --rz-danger-darker: #dc2626;
-
-    /* Dark Mode Base Colors */
-    --rz-base-background: #0f172a;
-    --rz-surface-background: #1e293b;
-    --rz-card-background: #1e293b;
-    --rz-text-color: #e2e8f0;
-    --rz-text-secondary-color: #94a3b8;
-    --rz-border-color: #334155;
-
-    /* Override app.css variables for dark mode */
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-
-    /* Background color for the whole app */
-    background-color: var(--rz-base-background);
-    color: var(--rz-text-color);
+/* ========== DARK MODE BASE COLORS ========== */
+body.rz-dark-mode,
+body.rz-dark-mode * {
+    /* Color scheme for dark mode */
+    color-scheme: dark;
 }
 
-/* Radzen Cards - Dark Mode */
+body.rz-dark-mode {
+    /* Brand Colors - Brightened for dark backgrounds */
+    --rz-primary: #38bdf8 !important;
+    --rz-primary-light: #7dd3fc !important;
+    --rz-primary-lighter: rgba(56, 189, 248, 0.2) !important;
+    --rz-primary-dark: #0EA5E9 !important;
+    --rz-primary-darker: #0284c7 !important;
+
+    --rz-secondary: #2dd4bf !important;
+    --rz-secondary-light: #5eead4 !important;
+    --rz-secondary-lighter: rgba(45, 212, 191, 0.2) !important;
+    --rz-secondary-dark: #14B8A6 !important;
+    --rz-secondary-darker: #0d9488 !important;
+
+    --rz-success: #34d399 !important;
+    --rz-success-light: #6ee7b7 !important;
+    --rz-success-lighter: rgba(52, 211, 153, 0.2) !important;
+
+    --rz-info: #22d3ee !important;
+    --rz-info-light: #67e8f9 !important;
+
+    --rz-warning: #fbbf24 !important;
+    --rz-warning-light: #fcd34d !important;
+
+    --rz-danger: #f87171 !important;
+    --rz-danger-light: #fca5a5 !important;
+
+    /* Background Colors */
+    --rz-base-background: #0f172a !important;
+    --rz-surface: #1e293b !important;
+    --rz-card-background: #1e293b !important;
+    --rz-panel-background: #1e293b !important;
+
+    /* Text Colors */
+    --rz-text-color: #e2e8f0 !important;
+    --rz-text-secondary-color: #94a3b8 !important;
+    --rz-text-disabled-color: #64748b !important;
+
+    /* Border Colors */
+    --rz-border-color: #334155 !important;
+    --rz-border-disabled-color: #1e293b !important;
+
+    /* Apply base background */
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+/* ========== HEADER / APPBAR ========== */
+body.rz-dark-mode .rz-header,
+body.rz-dark-mode header {
+    background-color: #1e293b !important;
+    border-bottom-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.rz-dark-mode .rz-header *,
+body.rz-dark-mode header * {
+    color: #e2e8f0 !important;
+}
+
+/* Header links */
+body.rz-dark-mode .rz-header a,
+body.rz-dark-mode header a {
+    color: #e2e8f0 !important;
+}
+
+body.rz-dark-mode .rz-header a:hover,
+body.rz-dark-mode header a:hover {
+    color: #38bdf8 !important;
+}
+
+/* ========== SIDEBAR ========== */
+body.rz-dark-mode .rz-sidebar,
+body.rz-dark-mode .rz-navigation,
+body.rz-dark-mode .rz-panelmenu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.rz-dark-mode .rz-navigation-item,
+body.rz-dark-mode .rz-panelmenu-item {
+    color: #e2e8f0 !important;
+}
+
+body.rz-dark-mode .rz-navigation-item:hover,
+body.rz-dark-mode .rz-panelmenu-item:hover {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    color: #38bdf8 !important;
+}
+
+body.rz-dark-mode .rz-navigation-item.rz-navigation-item-active,
+body.rz-dark-mode .rz-panelmenu-item-active {
+    background-color: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border-left-color: #38bdf8 !important;
+}
+
+/* ========== CARDS AND PANELS ========== */
 body.rz-dark-mode .rz-card,
 body.rz-dark-mode .rz-panel,
-body.rz-dark-mode .rz-dialog {
-    background-color: var(--rz-card-background) !important;
-    color: var(--rz-text-color) !important;
-    border-color: var(--rz-border-color) !important;
+body.rz-dark-mode .rz-dialog,
+body.rz-dark-mode .rz-dialog-content,
+body.rz-dark-mode .rz-fieldset {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
 }
 
-/* Radzen Inputs - Dark Mode */
+body.rz-dark-mode .rz-card *:not(.rz-button):not(.rz-badge),
+body.rz-dark-mode .rz-panel *:not(.rz-button):not(.rz-badge),
+body.rz-dark-mode .rz-dialog *:not(.rz-button):not(.rz-badge) {
+    color: #e2e8f0 !important;
+}
+
+/* ========== FORMS AND INPUTS ========== */
 body.rz-dark-mode .rz-textbox,
 body.rz-dark-mode .rz-dropdown,
 body.rz-dark-mode .rz-multiselect,
 body.rz-dark-mode .rz-datepicker,
+body.rz-dark-mode .rz-numeric,
 body.rz-dark-mode input[type="text"],
 body.rz-dark-mode input[type="email"],
 body.rz-dark-mode input[type="password"],
+body.rz-dark-mode input[type="number"],
+body.rz-dark-mode input[type="search"],
 body.rz-dark-mode textarea,
 body.rz-dark-mode select {
-    background-color: var(--rz-surface-background) !important;
-    color: var(--rz-text-color) !important;
-    border-color: var(--rz-border-color) !important;
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
 }
 
-/* Tables - Dark Mode */
+body.rz-dark-mode .rz-textbox:focus,
+body.rz-dark-mode .rz-dropdown:focus,
+body.rz-dark-mode input:focus,
+body.rz-dark-mode textarea:focus {
+    border-color: #38bdf8 !important;
+    background-color: #0f172a !important;
+}
+
+/* Dropdown panels */
+body.rz-dark-mode .rz-dropdown-panel,
+body.rz-dark-mode .rz-multiselect-panel {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.rz-dark-mode .rz-dropdown-item,
+body.rz-dark-mode .rz-multiselect-item {
+    color: #e2e8f0 !important;
+}
+
+body.rz-dark-mode .rz-dropdown-item:hover,
+body.rz-dark-mode .rz-multiselect-item:hover {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+}
+
+/* ========== TABLES ========== */
 body.rz-dark-mode .rz-datatable,
-body.rz-dark-mode .rz-datatable-table {
-    background-color: var(--rz-card-background) !important;
-    color: var(--rz-text-color) !important;
+body.rz-dark-mode .rz-datatable-table,
+body.rz-dark-mode .rz-grid {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
 }
 
-body.rz-dark-mode .rz-datatable-data td {
-    border-color: var(--rz-border-color) !important;
-    color: var(--rz-text-color) !important;
+body.rz-dark-mode .rz-datatable-header,
+body.rz-dark-mode .rz-grid-header,
+body.rz-dark-mode thead {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
 }
 
-body.rz-dark-mode .rz-datatable-header {
-    background-color: var(--rz-surface-background) !important;
-    color: var(--rz-text-color) !important;
+body.rz-dark-mode .rz-datatable-data td,
+body.rz-dark-mode .rz-grid-table td,
+body.rz-dark-mode tbody td {
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+    background-color: #1e293b !important;
 }
 
-/* Sidebar - Dark Mode */
-body.rz-dark-mode .rz-sidebar,
-body.rz-dark-mode .rz-navigation {
-    background-color: var(--rz-card-background) !important;
-    border-color: var(--rz-border-color) !important;
+body.rz-dark-mode .rz-datatable-data tr:hover,
+body.rz-dark-mode tbody tr:hover {
+    background-color: rgba(56, 189, 248, 0.05) !important;
 }
 
-/* Header - Dark Mode */
-body.rz-dark-mode .rz-header {
-    background-color: var(--rz-card-background) !important;
-    border-color: var(--rz-border-color) !important;
-    color: var(--rz-text-color) !important;
+/* ========== BUTTONS ========== */
+body.rz-dark-mode .rz-button-primary {
+    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%) !important;
+    border: none !important;
+    color: #0f172a !important;
 }
 
-/* Text colors - Dark Mode */
+body.rz-dark-mode .rz-button-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7dd3fc 0%, #5eead4 100%) !important;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4) !important;
+}
+
+body.rz-dark-mode .rz-button-light,
+body.rz-dark-mode .rz-button.rz-variant-flat {
+    background-color: transparent !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.rz-dark-mode .rz-button-light:hover,
+body.rz-dark-mode .rz-button.rz-variant-flat:hover {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    color: #38bdf8 !important;
+}
+
+/* ========== APPEARANCE TOGGLE BUTTON (Theme Switcher) ========== */
+body.rz-dark-mode .rz-appearance-toggle,
+body.rz-dark-mode button[class*="appearance"] {
+    background-color: transparent !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+body.rz-dark-mode .rz-appearance-toggle:hover {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+
+body.rz-dark-mode .rz-appearance-toggle .rz-button-icon,
+body.rz-dark-mode .rz-appearance-toggle i {
+    color: #e2e8f0 !important;
+}
+
+/* ========== TEXT ELEMENTS ========== */
 body.rz-dark-mode h1,
 body.rz-dark-mode h2,
 body.rz-dark-mode h3,
 body.rz-dark-mode h4,
 body.rz-dark-mode h5,
-body.rz-dark-mode h6,
+body.rz-dark-mode h6 {
+    color: #f8fafc !important;
+}
+
 body.rz-dark-mode p,
-body.rz-dark-mode span,
+body.rz-dark-mode span:not(.rz-button-text):not(.rz-badge),
 body.rz-dark-mode label,
 body.rz-dark-mode .rz-text {
-    color: var(--rz-text-color) !important;
+    color: #e2e8f0 !important;
 }
 
+body.rz-dark-mode .rz-text-secondary,
 body.rz-dark-mode .rz-text-secondary-color {
-    color: var(--rz-text-secondary-color) !important;
+    color: #94a3b8 !important;
 }
 
-/* Enhanced button styles for dark mode */
-body.rz-dark-mode .rz-button-primary {
-    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
-    border: none;
+/* ========== LINKS ========== */
+body.rz-dark-mode a,
+body.rz-dark-mode .rz-link {
+    color: #38bdf8 !important;
 }
 
-body.rz-dark-mode .rz-button-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #7dd3fc 0%, #5eead4 100%);
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+body.rz-dark-mode a:hover,
+body.rz-dark-mode .rz-link:hover {
+    color: #7dd3fc !important;
 }
 
-/* Enhanced card effects for dark mode */
-body.rz-dark-mode .rz-card:hover {
-    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+/* ========== PROGRESS BARS ========== */
+body.rz-dark-mode .rz-progressbar {
+    background-color: #334155 !important;
 }
 
-/* Progress bars for dark mode */
 body.rz-dark-mode .rz-progressbar-value {
-    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
+    background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%) !important;
 }
 
-/* Links for dark mode */
-body.rz-dark-mode .rz-link,
-body.rz-dark-mode a {
-    color: var(--rz-primary);
-}
-
-body.rz-dark-mode .rz-link:hover,
-body.rz-dark-mode a:hover {
-    color: var(--rz-primary-light);
-}
-
-/* Navigation active states for dark mode */
-body.rz-dark-mode .rz-navigation-item.rz-navigation-item-active {
-    background-color: var(--rz-primary-lighter);
-    color: var(--rz-primary-light);
-    border-left: 3px solid var(--rz-primary);
-}
-
-body.rz-dark-mode .rz-navigation-item:hover {
-    background-color: var(--rz-primary-lighter);
-}
-
-/* Badges for dark mode */
+/* ========== BADGES ========== */
 body.rz-dark-mode .rz-badge-primary {
-    background: var(--rz-primary);
+    background: #38bdf8 !important;
+    color: #0f172a !important;
 }
 
 body.rz-dark-mode .rz-badge-secondary {
-    background: var(--rz-secondary);
+    background: #2dd4bf !important;
+    color: #0f172a !important;
+}
+
+/* ========== TOOLTIPS AND POPOVERS ========== */
+body.rz-dark-mode .rz-tooltip,
+body.rz-dark-mode .rz-popover {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+/* ========== SCROLLBARS ========== */
+body.rz-dark-mode ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+body.rz-dark-mode ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+body.rz-dark-mode ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 6px;
+}
+
+body.rz-dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* ========== SPECIFIC APP OVERRIDES ========== */
+/* Override any white backgrounds from app.css */
+body.rz-dark-mode .stats-section-modern,
+body.rz-dark-mode .value-section,
+body.rz-dark-mode .features-section-modern {
+    background: #0f172a !important;
+}
+
+body.rz-dark-mode .stat-item-modern,
+body.rz-dark-mode .value-card,
+body.rz-dark-mode .feature-card-modern {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+/* Main content area */
+body.rz-dark-mode .rz-body,
+body.rz-dark-mode main {
+    background-color: #0f172a !important;
 }
