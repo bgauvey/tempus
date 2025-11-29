@@ -46,6 +46,96 @@ body.rz-dark-mode {
     --rz-danger-lighter: rgba(248, 113, 113, 0.2);
     --rz-danger-dark: #ef4444;
     --rz-danger-darker: #dc2626;
+
+    /* Dark Mode Base Colors */
+    --rz-base-background: #0f172a;
+    --rz-surface-background: #1e293b;
+    --rz-card-background: #1e293b;
+    --rz-text-color: #e2e8f0;
+    --rz-text-secondary-color: #94a3b8;
+    --rz-border-color: #334155;
+
+    /* Override app.css variables for dark mode */
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+
+    /* Background color for the whole app */
+    background-color: var(--rz-base-background);
+    color: var(--rz-text-color);
+}
+
+/* Radzen Cards - Dark Mode */
+body.rz-dark-mode .rz-card,
+body.rz-dark-mode .rz-panel,
+body.rz-dark-mode .rz-dialog {
+    background-color: var(--rz-card-background) !important;
+    color: var(--rz-text-color) !important;
+    border-color: var(--rz-border-color) !important;
+}
+
+/* Radzen Inputs - Dark Mode */
+body.rz-dark-mode .rz-textbox,
+body.rz-dark-mode .rz-dropdown,
+body.rz-dark-mode .rz-multiselect,
+body.rz-dark-mode .rz-datepicker,
+body.rz-dark-mode input[type="text"],
+body.rz-dark-mode input[type="email"],
+body.rz-dark-mode input[type="password"],
+body.rz-dark-mode textarea,
+body.rz-dark-mode select {
+    background-color: var(--rz-surface-background) !important;
+    color: var(--rz-text-color) !important;
+    border-color: var(--rz-border-color) !important;
+}
+
+/* Tables - Dark Mode */
+body.rz-dark-mode .rz-datatable,
+body.rz-dark-mode .rz-datatable-table {
+    background-color: var(--rz-card-background) !important;
+    color: var(--rz-text-color) !important;
+}
+
+body.rz-dark-mode .rz-datatable-data td {
+    border-color: var(--rz-border-color) !important;
+    color: var(--rz-text-color) !important;
+}
+
+body.rz-dark-mode .rz-datatable-header {
+    background-color: var(--rz-surface-background) !important;
+    color: var(--rz-text-color) !important;
+}
+
+/* Sidebar - Dark Mode */
+body.rz-dark-mode .rz-sidebar,
+body.rz-dark-mode .rz-navigation {
+    background-color: var(--rz-card-background) !important;
+    border-color: var(--rz-border-color) !important;
+}
+
+/* Header - Dark Mode */
+body.rz-dark-mode .rz-header {
+    background-color: var(--rz-card-background) !important;
+    border-color: var(--rz-border-color) !important;
+    color: var(--rz-text-color) !important;
+}
+
+/* Text colors - Dark Mode */
+body.rz-dark-mode h1,
+body.rz-dark-mode h2,
+body.rz-dark-mode h3,
+body.rz-dark-mode h4,
+body.rz-dark-mode h5,
+body.rz-dark-mode h6,
+body.rz-dark-mode p,
+body.rz-dark-mode span,
+body.rz-dark-mode label,
+body.rz-dark-mode .rz-text {
+    color: var(--rz-text-color) !important;
+}
+
+body.rz-dark-mode .rz-text-secondary-color {
+    color: var(--rz-text-secondary-color) !important;
 }
 
 /* Enhanced button styles for dark mode */
