@@ -125,9 +125,9 @@
     }
 
     .template-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
         border: none;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
         border-radius: 10px;
         font-weight: 600;
         transition: var(--transition-smooth);
@@ -137,23 +137,23 @@
 
     .template-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
     }
 
     .template-btn.deep-work {
-        background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);
+        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
     }
 
     .template-btn.meeting {
-        background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
+        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
     }
 
     .template-btn.break {
-        background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%);
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     }
 
     .template-btn.focus {
-        background: linear-gradient(135deg, #FB8C00 0%, #EF6C00 100%);
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
     }
 
     /* Calendar Sidebar */
@@ -224,7 +224,7 @@
 <div class="calendar-page-container">
 
 <div class="calendar-header-section">
-    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); margin-bottom: 2rem;">
+    <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg); margin-bottom: 2rem;">
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
             <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">

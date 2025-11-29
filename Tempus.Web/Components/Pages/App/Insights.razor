@@ -19,11 +19,11 @@
 
 <style>
     .benchmark-score-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--hero-gradient);
         color: white;
         border-radius: 16px;
         padding: 2rem;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        box-shadow: var(--shadow-lg);
     }
 
     .status-excellent {
@@ -69,7 +69,7 @@
 <div style="padding: 2rem;">
     <RadzenStack Gap="2rem">
         <!-- Header -->
-        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+        <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">📊 Calendar Insights</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
@@ -117,7 +117,7 @@
                                             <!-- Quick Stats Grid -->
                                             <RadzenRow Gap="1rem">
                                                 <RadzenColumn Size="6" SizeMD="6">
-                                                    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem;">
+                                                    <RadzenCard Style="background: var(--primary-gradient); color: white; padding: 1.5rem;">
                                                         <RadzenStack Gap="0.25rem">
                                                             <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">@_analytics.TotalEvents</RadzenText>
                                                             <RadzenText TextStyle="TextStyle.Body2">Total Events</RadzenText>
@@ -125,7 +125,7 @@
                                                     </RadzenCard>
                                                 </RadzenColumn>
                                                 <RadzenColumn Size="6" SizeMD="6">
-                                                    <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem;">
+                                                    <RadzenCard Style="background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%); color: white; padding: 1.5rem;">
                                                         <RadzenStack Gap="0.25rem">
                                                             <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">@_analytics.TotalHours</RadzenText>
                                                             <RadzenText TextStyle="TextStyle.Body2">Scheduled Hours</RadzenText>
@@ -133,7 +133,7 @@
                                                     </RadzenCard>
                                                 </RadzenColumn>
                                                 <RadzenColumn Size="6" SizeMD="6">
-                                                    <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 1.5rem;">
+                                                    <RadzenCard Style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 1.5rem;">
                                                         <RadzenStack Gap="0.25rem">
                                                             <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">@_analytics.MeetingCount</RadzenText>
                                                             <RadzenText TextStyle="TextStyle.Body2">Meetings</RadzenText>
@@ -141,7 +141,7 @@
                                                     </RadzenCard>
                                                 </RadzenColumn>
                                                 <RadzenColumn Size="6" SizeMD="6">
-                                                    <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 1.5rem;">
+                                                    <RadzenCard Style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; padding: 1.5rem;">
                                                         <RadzenStack Gap="0.25rem">
                                                             <RadzenText TextStyle="TextStyle.DisplayH5" Style="font-weight: 800;">$@_analytics.TotalMeetingCost.ToString("N0")</RadzenText>
                                                             <RadzenText TextStyle="TextStyle.Body2">Meeting Costs</RadzenText>
