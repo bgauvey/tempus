@@ -74,7 +74,7 @@
                                 </RadzenText>
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-md)" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
-                                        <RadzenIcon Icon="schedule" Style="font-size: 1.25rem; color: var(--text-secondary);" />
+                                        <RadzenIcon Icon="schedule" Style="font-size: 1.25rem; opacity: 0.8;" />
                                         <RadzenText TextStyle="TextStyle.Body1" class="text-secondary">
                                             @GetDisplayTime(_nextEvent).ToString(DateTimeFormatString)
                                         </RadzenText>
@@ -86,7 +86,7 @@
                             @if (!string.IsNullOrEmpty(_nextEvent.Location))
                             {
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Start">
-                                    <RadzenIcon Icon="location_on" Style="font-size: 1.25rem; color: var(--text-secondary);" />
+                                    <RadzenIcon Icon="location_on" Style="font-size: 1.25rem; opacity: 0.8;" />
                                     <RadzenText TextStyle="TextStyle.Body2" class="text-secondary">
                                         @_nextEvent.Location
                                     </RadzenText>
@@ -122,7 +122,7 @@
                 {
                     <div class="empty-state">
                         <RadzenStack Gap="var(--space-md)" AlignItems="AlignItems.Center" Style="text-align: center; padding: var(--space-2xl) var(--space-md);">
-                            <RadzenIcon Icon="event_available" Style="font-size: 4rem; color: var(--color-gray-300);" />
+                            <RadzenIcon Icon="event_available" Style="font-size: 4rem; opacity: 0.3;" />
                             <RadzenStack Gap="var(--space-xs)" AlignItems="AlignItems.Center">
                                 <RadzenText TextStyle="TextStyle.H6" class="text-secondary">
                                     No upcoming events
@@ -184,7 +184,7 @@
                                                 @if (!string.IsNullOrEmpty(evt.Location))
                                                 {
                                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
-                                                        <RadzenIcon Icon="location_on" Style="font-size: 1rem; color: var(--text-tertiary);" />
+                                                        <RadzenIcon Icon="location_on" Style="font-size: 1rem; opacity: 0.7;" />
                                                         <RadzenText TextStyle="TextStyle.Body2" class="text-tertiary">
                                                             @evt.Location
                                                         </RadzenText>
@@ -193,7 +193,7 @@
                                                 @if (evt.VideoConference != null && !string.IsNullOrEmpty(evt.VideoConference.MeetingUrl))
                                                 {
                                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
-                                                        <RadzenIcon Icon="videocam" Style="font-size: 1rem; color: var(--color-primary);" />
+                                                        <RadzenIcon Icon="videocam" Style="font-size: 1rem;" class="text-primary" />
                                                         <RadzenText TextStyle="TextStyle.Body2" class="text-primary">
                                                             Video conference available
                                                         </RadzenText>
@@ -211,7 +211,7 @@
                 {
                     <div class="empty-state">
                         <RadzenStack Gap="var(--space-md)" AlignItems="AlignItems.Center" Style="text-align: center; padding: var(--space-xl) var(--space-md);">
-                            <RadzenIcon Icon="event_note" Style="font-size: 3rem; color: var(--color-gray-300);" />
+                            <RadzenIcon Icon="event_note" Style="font-size: 3rem; opacity: 0.3;" />
                             <RadzenStack Gap="var(--space-xs)" AlignItems="AlignItems.Center">
                                 <RadzenText TextStyle="TextStyle.Body1" class="text-secondary">
                                     No events scheduled for today
@@ -270,7 +270,7 @@
     }
 
     .next-event-content {
-        background: var(--bg-secondary);
+        /* Radzen theme controls background */
         padding: var(--space-lg);
         border-radius: var(--radius-lg);
         border-left: 4px solid var(--color-primary);
@@ -294,24 +294,25 @@
     }
 
     .agenda-list::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
+        /* Radzen theme controls background */
         border-radius: var(--radius-sm);
     }
 
     .agenda-list::-webkit-scrollbar-thumb {
-        background: var(--color-gray-300);
+        /* Radzen theme controls background */
         border-radius: var(--radius-sm);
+        opacity: 0.5;
     }
 
     .agenda-list::-webkit-scrollbar-thumb:hover {
-        background: var(--color-gray-400);
+        /* Radzen theme controls background */
+        opacity: 0.7;
     }
 
     .agenda-item {
         padding: var(--space-md);
-        background: var(--bg-primary);
-        border: 1px solid var(--border-light);
-        border-left: 4px solid var(--color-gray-300);
+        /* Radzen theme controls background and borders */
+        border-left: 4px solid;
         border-radius: var(--radius-md);
         cursor: pointer;
         transition: all var(--transition-fast);
@@ -340,7 +341,7 @@
     }
 
     .empty-state {
-        background: var(--bg-secondary);
+        /* Radzen theme controls background */
         border-radius: var(--radius-lg);
     }
 
