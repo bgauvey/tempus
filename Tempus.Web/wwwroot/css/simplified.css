@@ -240,7 +240,6 @@ p {
     box-shadow: none !important;
     border: none;
     cursor: pointer;
-    display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
     position: relative;
