@@ -195,9 +195,9 @@
             }
             else
             {
-                ThemeService.SetTheme("software", true);
+                ThemeService.SetTheme("tempus", true);
                 HttpContext.Response.Cookies.Append("TempusTheme", 
-                "software" , 
+                "tempus" , 
                 new CookieOptions {
                     Secure = true, 
                     Expires = DateTimeOffset.Now.Add(Options.Value.Duration) 

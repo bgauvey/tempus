@@ -4,8 +4,15 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 
 ## Theme Files
 
+### Main Themes
 - **tempus.scss** - Light mode theme with Tempus blue/teal branding
 - **tempus-dark.scss** - Dark mode theme with brightened colors for dark backgrounds
+
+### Base Themes
+- **tempus-base.scss** - Base light mode theme (foundational variant)
+- **tempus-dark-base.scss** - Base dark mode theme (foundational variant)
+
+**Note**: Base themes are foundational variants that can be used for creating custom theme extensions. They have the `$base: true` flag set, which enables different component styling options in Radzen's theme system.
 
 ## Color Palette
 
@@ -29,9 +36,13 @@ To use these custom themes, you need to compile them to CSS:
 # Install SASS if not already installed
 npm install -g sass
 
-# Compile the themes
+# Compile main themes
 sass tempus.scss tempus.css
 sass tempus-dark.scss tempus-dark.css
+
+# Compile base themes (optional)
+sass tempus-base.scss tempus-base.css
+sass tempus-dark-base.scss tempus-dark-base.css
 ```
 
 Then reference the compiled CSS in your application:
