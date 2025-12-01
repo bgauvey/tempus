@@ -1,0 +1,406 @@
+@page "/working-location"
+@rendermode InteractiveServer
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Web.Components.Dialogs.WorkingLocation
+@inject IWorkingLocationService WorkingLocationService
+@inject ILogger<WorkingLocation> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>Working Location - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Working Location</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Set Location"
+                             Icon="add_location"
+                             Click="@OpenCreateDialog"
+                             ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="@LoadData"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading working locations...</RadzenText>
+        </RadzenStack>
+    }
+    else
+    {
+        @* Current Location Status *@
+        @if (currentLocation != null)
+        {
+            <RadzenCard Style="@GetCurrentLocationCardStyle(currentLocation.LocationType)">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="@currentLocation.GetIcon()" Style="font-size: 1.5rem;" />
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                    Currently: @currentLocation.GetDisplayName()
+                                </RadzenText>
+                            </RadzenStack>
+                            @if (!string.IsNullOrEmpty(currentLocation.LocationDescription))
+                            {
+                                <RadzenText TextStyle="TextStyle.Subtitle1">@currentLocation.LocationDescription</RadzenText>
+                            }
+                            @if (!string.IsNullOrEmpty(currentLocation.Address))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">
+                                    <RadzenIcon Icon="place" Style="font-size: 1rem;" /> @currentLocation.Address
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                        <RadzenButton Icon="edit"
+                                     Click="@(() => OpenEditDialog(currentLocation))"
+                                     Variant="Variant.Text"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Size="ButtonSize.Small" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" Wrap="FlexWrap.Wrap">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">FROM</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @currentLocation.StartDate.ToString("MMM dd, yyyy h:mm tt")
+                            </RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">UNTIL</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @currentLocation.EndDate.ToString("MMM dd, yyyy h:mm tt")
+                            </RadzenText>
+                        </div>
+                    </RadzenStack>
+
+                    @if (!string.IsNullOrEmpty(currentLocation.Notes))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
+                                <RadzenIcon Icon="info" />
+                                <span>@currentLocation.Notes</span>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Upcoming Locations *@
+        @if (upcomingLocations.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H6">Upcoming Locations (@upcomingLocations.Count)</RadzenText>
+
+            <RadzenDataList Data="@upcomingLocations" TItem="WorkingLocationStatus" AllowPaging="true" PageSize="5">
+                <Template Context="location">
+                    <RadzenCard Style="margin-bottom: 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                            <div style="width: 50px; height: 50px; border-radius: 8px; background: @(location.Color ?? GetDefaultColor(location.LocationType)); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                <RadzenIcon Icon="@location.GetIcon()" Style="color: white;" />
+                            </div>
+
+                            <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600; margin: 0;">
+                                        @location.GetDisplayName()
+                                    </RadzenText>
+                                    <RadzenBadge Text="@location.LocationType.ToString()"
+                                                BadgeStyle="@GetBadgeStyle(location.LocationType)"
+                                                IsPill="true" />
+                                    @if (location.IsRecurring)
+                                    {
+                                        <RadzenBadge Text="Recurring"
+                                                    BadgeStyle="BadgeStyle.Secondary"
+                                                    IsPill="true" />
+                                    }
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                    @location.StartDate.ToString("MMM dd, yyyy h:mm tt") - @location.EndDate.ToString("MMM dd, yyyy h:mm tt")
+                                </RadzenText>
+                                @if (!string.IsNullOrEmpty(location.Address))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        <RadzenIcon Icon="place" Style="font-size: 0.875rem;" /> @location.Address
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="edit"
+                                             Click="@(() => OpenEditDialog(location))"
+                                             Variant="Variant.Text"
+                                             ButtonStyle="ButtonStyle.Info"
+                                             Size="ButtonSize.Small"
+                                             title="Edit" />
+                                <RadzenButton Icon="delete"
+                                             Click="@(() => DeleteLocation(location.Id))"
+                                             Variant="Variant.Text"
+                                             ButtonStyle="ButtonStyle.Danger"
+                                             Size="ButtonSize.Small"
+                                             title="Delete" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+
+        @* Empty State *@
+        @if (currentLocation == null && !upcomingLocations.Any())
+        {
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                    <RadzenIcon Icon="location_off" Style="font-size: 4rem; opacity: 0.3;" />
+                    <RadzenText TextStyle="TextStyle.H6">No Working Locations Set</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="text-align: center; max-width: 400px; color: var(--rz-text-secondary-color);">
+                        Let your team know where you're working from. Set your working location for today or schedule upcoming locations.
+                    </RadzenText>
+                    <RadzenButton Text="Set Working Location"
+                                 Icon="add_location"
+                                 Click="@OpenCreateDialog"
+                                 ButtonStyle="ButtonStyle.Primary" />
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Statistics Card *@
+        @if (statistics.Any(s => s.Value > 0))
+        {
+            <RadzenText TextStyle="TextStyle.H6">Location Statistics (Last 30 Days)</RadzenText>
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    @foreach (var stat in statistics.Where(s => s.Value > 0))
+                    {
+                        <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <div style="width: 60px; height: 60px; border-radius: 50%; background: @GetDefaultColor(stat.Key); display: flex; align-items: center; justify-content: center;">
+                                    <RadzenIcon Icon="@GetLocationIcon(stat.Key)" Style="color: white; font-size: 1.75rem;" />
+                                </div>
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@stat.Value</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">
+                                    @stat.Key.ToString() @(stat.Value == 1 ? "Day" : "Days")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    }
+                </RadzenRow>
+            </RadzenCard>
+        }
+    }
+</RadzenStack>
+
+@code {
+    private bool isLoading = true;
+    private string userId = string.Empty;
+    private WorkingLocationStatus? currentLocation;
+    private List<WorkingLocationStatus> upcomingLocations = new();
+    private Dictionary<WorkingLocationType, int> statistics = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Authentication Error",
+                Detail = "User not authenticated",
+                Duration = 4000
+            });
+            return;
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Get current location
+            currentLocation = await WorkingLocationService.GetCurrentLocationAsync(userId);
+
+            // Get all active locations
+            var allLocations = await WorkingLocationService.GetUserLocationsAsync(userId);
+
+            // Filter upcoming locations (future and not current)
+            upcomingLocations = allLocations
+                .Where(l => l.IsActive &&
+                           l.StartDate > DateTime.UtcNow &&
+                           (currentLocation == null || l.Id != currentLocation.Id))
+                .OrderBy(l => l.StartDate)
+                .ToList();
+
+            // Get statistics for last 30 days
+            var statsStart = DateTime.UtcNow.AddDays(-30);
+            var statsEnd = DateTime.UtcNow;
+            statistics = await WorkingLocationService.GetLocationStatisticsAsync(userId, statsStart, statsEnd);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading working locations");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load working locations",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var result = await DialogService.OpenAsync<WorkingLocationFormDialog>("Set Working Location",
+            new Dictionary<string, object> { { "UserId", userId } },
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(WorkingLocationStatus location)
+    {
+        var result = await DialogService.OpenAsync<WorkingLocationFormDialog>("Edit Working Location",
+            new Dictionary<string, object>
+            {
+                { "UserId", userId },
+                { "LocationId", location.Id }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteLocation(Guid id)
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to delete this working location?",
+            "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await WorkingLocationService.DeleteLocationAsync(userId, id);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Working location deleted successfully",
+                    Duration = 3000
+                });
+
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting working location");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to delete working location",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+
+    private string GetCurrentLocationCardStyle(WorkingLocationType locationType)
+    {
+        var color = GetDefaultColor(locationType);
+        var lightColor = locationType switch
+        {
+            WorkingLocationType.Office => "#e0f2fe",
+            WorkingLocationType.Home => "#d1fae5",
+            WorkingLocationType.Remote => "#fed7aa",
+            WorkingLocationType.Traveling => "#fee2e2",
+            WorkingLocationType.Hybrid => "#ede9fe",
+            _ => "#f3f4f6"
+        };
+
+        return $"background: linear-gradient(135deg, {lightColor} 0%, {lightColor}dd 100%); border-left: 4px solid {color};";
+    }
+
+    private string GetDefaultColor(WorkingLocationType locationType)
+    {
+        return locationType switch
+        {
+            WorkingLocationType.Office => "#0EA5E9",
+            WorkingLocationType.Home => "#10b981",
+            WorkingLocationType.Remote => "#f59e0b",
+            WorkingLocationType.Traveling => "#ef4444",
+            WorkingLocationType.Hybrid => "#8b5cf6",
+            _ => "#6b7280"
+        };
+    }
+
+    private BadgeStyle GetBadgeStyle(WorkingLocationType locationType)
+    {
+        return locationType switch
+        {
+            WorkingLocationType.Office => BadgeStyle.Primary,
+            WorkingLocationType.Home => BadgeStyle.Success,
+            WorkingLocationType.Remote => BadgeStyle.Warning,
+            WorkingLocationType.Traveling => BadgeStyle.Danger,
+            WorkingLocationType.Hybrid => BadgeStyle.Info,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private string GetLocationIcon(WorkingLocationType locationType)
+    {
+        return locationType switch
+        {
+            WorkingLocationType.Office => "business",
+            WorkingLocationType.Home => "home",
+            WorkingLocationType.Remote => "laptop",
+            WorkingLocationType.Traveling => "flight",
+            WorkingLocationType.Hybrid => "swap_horiz",
+            _ => "location_on"
+        };
+    }
+}
