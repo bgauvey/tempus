@@ -17,7 +17,7 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 ### SCSS Base Files
 - **_variables.scss** - Theme metadata flags (material, fluent, standard, theme-dark, base)
 - **_mixins.scss** - SCSS mixins for utilities, colors, and effects
-- **_fonts.scss** - Google Fonts imports (Material Symbols Outlined, Inter)
+- **_fonts.scss** - Fonts stub (fonts loaded in App.razor head instead)
 - **_components.scss** - Components stub (outputs CSS variables only)
 
 ## Color Palette
@@ -105,14 +105,21 @@ If you need to download the full Radzen component SCSS files for deep customizat
 
 ### Font Loading
 
-The `_fonts.scss` file loads fonts from **Google Fonts API** using `@import` statements:
+Fonts are loaded directly in the HTML `<head>` section (App.razor) rather than through CSS:
 
-1. **Material Symbols Outlined** - Variable font for Radzen icons (replaces local font files)
-2. **Inter** - Tempus brand font family with weights 300-700
-3. **No 404 Errors** - Fonts are loaded from Google's CDN, no local font files needed
-4. **Automatic Fallbacks** - Google Fonts provides browser-optimized font files with system font fallbacks
+```razor
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+```
 
-The compiled CSS includes these Google Fonts imports at the top, eliminating font 404 errors while providing the full Tempus typography experience.
+**Why this approach:**
+1. **Avoids Sass Processing** - Sass @import url() can cause issues with external URLs
+2. **No 404 Errors** - Fonts load directly from Google's CDN, no local font files needed
+3. **Better Performance** - Browser can start downloading fonts immediately during HTML parse
+4. **Standard Practice** - HTML link tags are the recommended way to load Google Fonts
+
+The `_fonts.scss` file is a stub that prevents SCSS compilation errors while keeping fonts in HTML where they belong.
 
 ## Theme Structure
 
