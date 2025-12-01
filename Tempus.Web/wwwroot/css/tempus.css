@@ -1,0 +1,71 @@
+@font-face {
+  font-family: "Material Symbols";
+  src: url("https://fonts.googleapis.com/css?family=MaterialSymbolsOutlined.woff2") format("woff2 supports variations"), url("https://fonts.googleapis.com/css?family=MaterialSymbolsOutlined.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 100 700;
+}
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("https://fonts.googleapis.com/css?family=SourceSans3VF-Upright.ttf.woff2") format("woff2 supports variations"), url("https://fonts.googleapis.com/css?family=SourceSans3VF-Upright.ttf.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("https://fonts.googleapis.com/css?family=SourceSans3VF-Italic.ttf.woff2") format("woff2 supports variations"), url("https://fonts.googleapis.com/css?family=SourceSans3VF-Italic.ttf.woff2") format("woff2-variations");
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+}
+/*
+ * Tempus Theme - Components Stub
+ *
+ * This is a stub file for Radzen component styles.
+ *
+ * The full Radzen component library requires importing hundreds of individual
+ * component SCSS files from the Radzen.Blazor package. Since you're using
+ * Radzen.Blazor components directly, those component styles are already
+ * provided by the Radzen package.
+ *
+ * This stub allows the Tempus theme SCSS files to compile without errors.
+ * The actual component styling comes from:
+ * - Radzen.Blazor package's built-in CSS
+ * - Your custom CSS files (components.css, simplified.css, etc.)
+ *
+ * If you need to customize Radzen component styles beyond the theme colors,
+ * you can either:
+ * 1. Add custom CSS to your existing CSS files
+ * 2. Download the full Radzen component SCSS files from:
+ *    https://github.com/radzenhq/radzen-blazor/tree/master/Radzen.Blazor/themes/components
+ */
+/* CSS Variables will be generated from the theme SCSS variables */
+:root {
+  --rz-white: #ffffff;
+  --rz-black: #000000;
+  --rz-base: #cbd5e1;
+  --rz-primary: #0EA5E9;
+  --rz-secondary: #14B8A6;
+  --rz-info: #06b6d4;
+  --rz-success: #10b981;
+  --rz-warning: #f59e0b;
+  --rz-danger: #ef4444;
+  --rz-base-50: #ffffff;
+  --rz-base-100: #f8fafc;
+  --rz-base-200: #f1f5f9;
+  --rz-base-300: #e2e8f0;
+  --rz-base-400: #cbd5e1;
+  --rz-base-500: #94a3b8;
+  --rz-base-600: #64748b;
+  --rz-base-700: #475569;
+  --rz-base-800: #334155;
+  --rz-base-900: #1e293b;
+  --rz-primary-light: rgb(42.92, 175.8, 235.64);
+  --rz-primary-lighter: rgba(14, 165, 233, 0.16);
+  --rz-primary-dark: rgb(12.88, 151.8, 214.36);
+  --rz-primary-darker: rgb(10.5, 123.75, 174.75);
+  --rz-secondary-light: rgb(48.2, 192.52, 176.68);
+  --rz-secondary-lighter: rgba(20, 184, 166, 0.2);
+  --rz-secondary-dark: rgb(18.4, 169.28, 152.72);
+  --rz-secondary-darker: rgb(15, 138, 124.5);
+}

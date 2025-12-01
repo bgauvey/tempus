@@ -17,7 +17,7 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 ### SCSS Base Files
 - **_variables.scss** - Theme metadata flags (material, fluent, standard, theme-dark, base)
 - **_mixins.scss** - SCSS mixins for utilities, colors, and effects
-- **_fonts.scss** - Fonts stub (fonts loaded in App.razor head instead)
+- **_fonts.scss** - Font-face declarations loading from ../fonts/ directory
 - **_components.scss** - Components stub (outputs CSS variables only)
 
 ## Color Palette
@@ -105,21 +105,22 @@ If you need to download the full Radzen component SCSS files for deep customizat
 
 ### Font Loading
 
-Fonts are loaded directly in the HTML `<head>` section (App.razor) rather than through CSS:
+The `_fonts.scss` file contains @font-face declarations that load fonts from the local `../fonts/` directory:
 
-```razor
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-```
+**Font Files Required:**
+- **MaterialSymbolsOutlined.woff2** - Variable font for Radzen icons (Material Symbols)
+- **SourceSans3VF-Upright.ttf.woff2** - Source Sans Pro upright variant
+- **SourceSans3VF-Italic.ttf.woff2** - Source Sans Pro italic variant
+- **RobotoFlex.woff2** - Roboto Flex variable font
 
-**Why this approach:**
-1. **Avoids Sass Processing** - Sass @import url() can cause issues with external URLs
-2. **No 404 Errors** - Fonts load directly from Google's CDN, no local font files needed
-3. **Better Performance** - Browser can start downloading fonts immediately during HTML parse
-4. **Standard Practice** - HTML link tags are the recommended way to load Google Fonts
+**Font Families Defined:**
+1. **Material Symbols** - Icon font for Radzen components
+2. **Source Sans Pro** - Primary UI text font (weights 200-900)
+3. **Roboto Flex** - Alternative variable font (weights 100-1000)
 
-The `_fonts.scss` file is a stub that prevents SCSS compilation errors while keeping fonts in HTML where they belong.
+The compiled CSS includes these @font-face declarations with paths like `url("../fonts/MaterialSymbolsOutlined.woff2")`, which are relative to the CSS file location in `wwwroot/css/themes/`.
+
+**Note:** Google Fonts are also loaded in App.razor as a fallback via CDN links.
 
 ## Theme Structure
 
