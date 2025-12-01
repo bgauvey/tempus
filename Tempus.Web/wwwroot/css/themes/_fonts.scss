@@ -1,21 +1,13 @@
 /*
- * Tempus Theme - Fonts Stub
+ * Tempus Theme - Fonts from Google Fonts API
  *
- * Font-face declarations are NOT included because:
- * 1. Radzen.Blazor package already provides all required fonts
- * 2. Material Symbols fonts are loaded by Radzen
- * 3. Font files would need to be downloaded separately
- *
- * If you need custom fonts, you can:
- * - Add @font-face declarations to your custom CSS files
- * - Reference fonts from a CDN
- * - Download fonts from Google Fonts or other sources
- *
- * Original Radzen fonts that would be loaded:
- * - Material Symbols Outlined (for icons)
- * - Source Sans Pro (for software/standard/humanistic themes)
- * - Roboto (for material theme)
- *
- * Since Tempus themes use Inter font family (defined in theme SCSS),
- * and Radzen provides Material Symbols, no additional fonts needed.
+ * Loading fonts from Google Fonts CDN:
+ * - Material Symbols Outlined (for Radzen icons)
+ * - Inter (Tempus brand font family)
  */
+
+/* Material Symbols Outlined - Variable font for Radzen icons */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* Inter - Tempus brand font family with multiple weights */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');

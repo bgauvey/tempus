@@ -17,7 +17,7 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 ### SCSS Base Files
 - **_variables.scss** - Theme metadata flags (material, fluent, standard, theme-dark, base)
 - **_mixins.scss** - SCSS mixins for utilities, colors, and effects
-- **_fonts.scss** - Fonts stub (no font-face declarations - Radzen provides fonts)
+- **_fonts.scss** - Google Fonts imports (Material Symbols Outlined, Inter)
 - **_components.scss** - Components stub (outputs CSS variables only)
 
 ## Color Palette
@@ -105,13 +105,14 @@ If you need to download the full Radzen component SCSS files for deep customizat
 
 ### Font Loading
 
-The `_fonts.scss` file is also a **stub** with no font-face declarations because:
+The `_fonts.scss` file loads fonts from **Google Fonts API** using `@import` statements:
 
-1. **Radzen.Blazor Package** - All required fonts (Material Symbols, Roboto, etc.) are already provided by Radzen
-2. **No 404 Errors** - Prevents font file 404 errors since font files aren't included in this project
-3. **Font Family** - Tempus themes specify 'Inter' font family in the theme SCSS, which falls back to system fonts
+1. **Material Symbols Outlined** - Variable font for Radzen icons (replaces local font files)
+2. **Inter** - Tempus brand font family with weights 300-700
+3. **No 404 Errors** - Fonts are loaded from Google's CDN, no local font files needed
+4. **Automatic Fallbacks** - Google Fonts provides browser-optimized font files with system font fallbacks
 
-If you need custom fonts, add @font-face declarations to your custom CSS files or reference fonts from a CDN like Google Fonts.
+The compiled CSS includes these Google Fonts imports at the top, eliminating font 404 errors while providing the full Tempus typography experience.
 
 ## Theme Structure
 
