@@ -1,0 +1,274 @@
+/* Tempus Main Layout Professional Styling */
+
+:host {
+    --layout-header-height: 64px;
+    --layout-sidebar-width: 280px;
+}
+
+/* Header Styling */
+::deep .rz-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 1.5rem;
+    height: var(--layout-header-height);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+
+::deep .rz-header .rz-stack {
+    height: 100%;
+}
+
+/* Logo Styling */
+::deep .tempus-icon {
+    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .tempus-icon:hover {
+    transform: scale(1.05);
+}
+
+/* Header Text */
+::deep .rz-header .rz-text-h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+/* Navigation Links in Public Header */
+::deep .header-container a.rz-link {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0.5rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+::deep .header-container a.rz-link:hover {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+/* Sidebar Styling */
+::deep .rz-sidebar {
+    width: var(--layout-sidebar-width);
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-light);
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
+}
+
+::deep .rz-sidebar.rz-expanded {
+    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Panel Menu Styling */
+::deep .rz-panelmenu {
+    border: none;
+    background: transparent;
+    padding: 1rem 0.5rem;
+}
+
+::deep .rz-panelmenu-item {
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: transparent;
+    border: none;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .rz-panelmenu-item:hover {
+    background: var(--bg-secondary);
+}
+
+::deep .rz-panelmenu-item.rz-state-active {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+::deep .rz-panelmenu-item.rz-state-active:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary-darker) 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Panel Menu Item Text */
+::deep .rz-panelmenu-item-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    transition: all 150ms ease;
+}
+
+/* Panel Menu Icons */
+::deep .rz-panelmenu-item .rz-icon {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+    transition: transform 150ms ease;
+}
+
+::deep .rz-panelmenu-item:hover .rz-icon {
+    transform: translateX(2px);
+}
+
+/* Nested Menu Items */
+::deep .rz-panelmenu-item .rz-panelmenu-item {
+    background: transparent;
+    padding-left: 2rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+}
+
+::deep .rz-panelmenu-item .rz-panelmenu-item:hover {
+    background: rgba(102, 126, 234, 0.08);
+}
+
+::deep .rz-panelmenu-item.rz-state-active .rz-panelmenu-item.rz-state-active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Body / Main Content Area */
+::deep .rz-body {
+    background: var(--bg-secondary);
+    min-height: calc(100vh - var(--layout-header-height));
+}
+
+::deep main {
+    animation: fadeInUp 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Container Layout */
+::deep .container-max {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* Footer Styling */
+::deep footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+    padding: 2rem 1.5rem;
+    margin-top: 4rem;
+}
+
+::deep footer .rz-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 150ms ease;
+    display: inline-block;
+    padding: 0.25rem 0;
+}
+
+::deep footer .rz-link:hover {
+    color: var(--color-primary);
+}
+
+::deep footer .rz-text-h5,
+::deep footer .rz-text-h6 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Responsive Design - Mobile Menu Toggle */
+@media (max-width: 768px) {
+    :host {
+        --layout-sidebar-width: 100%;
+    }
+
+    ::deep .rz-sidebar {
+        position: fixed;
+        top: var(--layout-header-height);
+        left: 0;
+        height: calc(100vh - var(--layout-header-height));
+        width: 100%;
+        z-index: var(--z-fixed);
+        box-shadow: none;
+        border-right: none;
+        transform: translateX(-100%);
+        transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    ::deep .rz-sidebar.rz-expanded {
+        transform: translateX(0);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    ::deep .rz-sidebar::before {
+        content: '';
+        position: fixed;
+        top: var(--layout-header-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 300ms ease;
+        z-index: -1;
+    }
+
+    ::deep .rz-sidebar.rz-expanded::before {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    ::deep .mobile-menu-toggle {
+        display: flex !important;
+    }
+
+    ::deep .rz-header {
+        padding: 0 1rem;
+    }
+
+    ::deep .header-container {
+        padding: 0;
+    }
+
+    ::deep .rz-header .rz-stack {
+        gap: 0.5rem !important;
+    }
+
+    ::deep .rz-header .rz-text-h5 {
+        font-size: 1.125rem;
+    }
+}
+
+@media (max-width: 640px) {
+    ::deep .rz-header {
+        padding: 0 0.75rem;
+    }
+
+    ::deep .tempus-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    ::deep .rz-header .rz-text-h5 {
+        font-size: 1rem;
+    }
+
+    ::deep footer {
+        padding: 1.5rem 0.75rem;
+    }
+
+    ::deep .container-max {
+        padding: 0 0.75rem;
+    }
+}

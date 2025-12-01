@@ -1,0 +1,6 @@
+# Ignore compiled CSS files from SCSS
+*.css
+*.css.map
+
+# Keep only SCSS source files
+!*.scss

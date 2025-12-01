@@ -1,0 +1,45 @@
+/*
+ * Tempus Theme - Font Declarations
+ *
+ * Loading fonts from local ../fonts/ directory
+ */
+
+$fonts-path: '../fonts' !default;
+
+/* Material Symbols Outlined - Variable font for icons */
+@font-face {
+  font-family: 'Material Symbols';
+  src: url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2 supports variations'),
+       url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2-variations');
+  font-style: normal;
+  font-weight: 100 700;
+}
+
+/* Source Sans Pro - Variable font for UI text */
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('#{$fonts-path}/SourceSans3VF-Upright.ttf.woff2') format('woff2 supports variations'),
+       url('#{$fonts-path}/SourceSans3VF-Upright.ttf.woff2') format('woff2-variations');
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('#{$fonts-path}/SourceSans3VF-Italic.ttf.woff2') format('woff2 supports variations'),
+       url('#{$fonts-path}/SourceSans3VF-Italic.ttf.woff2') format('woff2-variations');
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+/* Roboto Flex - Variable font alternative */
+@font-face {
+  font-family: 'Roboto Flex';
+  src: url('#{$fonts-path}/RobotoFlex.woff2') format('woff2 supports variations'),
+       url('#{$fonts-path}/RobotoFlex.woff2') format('woff2-variations');
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}

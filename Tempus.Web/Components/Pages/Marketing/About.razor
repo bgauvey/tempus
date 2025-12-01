@@ -1,121 +1,212 @@
 @page "/about"
 @inject NavigationManager NavigationManager
 
-<PageTitle>About - Tempus</PageTitle>
+<PageTitle>About Tempus - Enterprise Time Management Platform | Our Story & Mission</PageTitle>
 
 <!-- Hero Section -->
-<div class="hero-section" style="min-height: 60vh;">
-    <div class="hero-bg-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+<div class="about-hero-section">
+    <div class="hero-gradient-overlay"></div>
+    <div class="hero-pattern"></div>
 
-    <div class="hero-content">
-        <h1 class="hero-title" style="font-size: clamp(2.5rem, 7vw, 4.5rem);">About Tempus</h1>
-        <p class="hero-subtitle">Empowering professionals to master their time</p>
-        <p class="hero-description">
-            Founded in 2024, Tempus has been on a mission to revolutionize how businesses
-            and individuals manage their most precious resource: time.
+    <div class="about-hero-content">
+        <div class="hero-badge">
+            <RadzenIcon Icon="apartment" Style="font-size: 1rem; margin-right: 0.5rem;" />
+            Trusted by 50,000+ Professionals in 120+ Countries
+        </div>
+
+        <h1 class="about-hero-title">
+            Building the Future of<br/>
+            <span class="gradient-text-modern">Professional Time Management</span>
+        </h1>
+
+        <p class="about-hero-subtitle">
+            Since 2024, we've been on a mission to transform how teams manage their most valuable
+            resource: time. Our enterprise-grade platform empowers organizations to work smarter,
+            collaborate better, and achieve more.
         </p>
     </div>
 </div>
 
-<!-- Mission Section -->
-<div class="features-section" style="background: white;">
-    <div class="container-max">
-        <RadzenRow Gap="3rem" AlignItems="AlignItems.Center">
-            <RadzenColumn Size="12" SizeLG="6">
-                <div class="image-placeholder">
-                    <RadzenIcon Icon="access_time" Style="font-size: 2.5rem;"/>
+<!-- Story Section -->
+<div class="about-story-section">
+    <div class="about-story-container">
+        <div class="section-header-modern">
+            <span class="section-badge">OUR STORY</span>
+            <h2 class="section-title-modern">Why We Built Tempus</h2>
+        </div>
+
+        <div class="story-content">
+            <div class="story-text">
+                <p class="story-paragraph">
+                    In 2024, we noticed a critical problem plaguing modern workplaces: professionals were
+                    drowning in meetings, losing hours to scheduling conflicts, and struggling to find time
+                    for deep, meaningful work. Traditional calendar tools were static and reactive, offering
+                    no insights into how time was actually being spent.
+                </p>
+                <p class="story-paragraph">
+                    We envisioned something better—a platform that would be intelligent, proactive, and
+                    actually help teams optimize their time. Not just manage it, but master it. That vision
+                    became Tempus.
+                </p>
+                <p class="story-paragraph">
+                    Today, we're proud to serve over 50,000 professionals across 120+ countries, helping
+                    them reclaim an average of 15+ hours per week. But we're just getting started.
+                </p>
+            </div>
+
+            <div class="story-highlights">
+                <div class="story-highlight-card">
+                    <div class="story-highlight-icon">
+                        <RadzenIcon Icon="lightbulb" />
+                    </div>
+                    <h3 class="story-highlight-title">Innovation First</h3>
+                    <p class="story-highlight-text">
+                        We pioneered AI-powered scheduling recommendations and calendar health scoring.
+                    </p>
                 </div>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeLG="6">
-                <h2 class="gradient-text" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem;">Our Mission</h2>
-                <p style="font-size: 1.2rem; line-height: 1.8; color: #4a5568; margin-bottom: 1rem;">
-                    At Tempus, we believe that time is the most valuable asset in business and life.
-                    Our mission is to provide cutting-edge tools that help individuals and teams
-                    maximize productivity, reduce scheduling conflicts, and achieve more.
+
+                <div class="story-highlight-card">
+                    <div class="story-highlight-icon">
+                        <RadzenIcon Icon="groups" />
+                    </div>
+                    <h3 class="story-highlight-title">Team-Focused</h3>
+                    <p class="story-highlight-text">
+                        Built from the ground up for teams who need to coordinate across time zones and departments.
+                    </p>
+                </div>
+
+                <div class="story-highlight-card">
+                    <div class="story-highlight-icon">
+                        <RadzenIcon Icon="shield" />
+                    </div>
+                    <h3 class="story-highlight-title">Enterprise Ready</h3>
+                    <p class="story-highlight-text">
+                        SOC 2 certified, GDPR compliant, and trusted by organizations that demand the best.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mission & Vision Section -->
+<div class="mission-vision-section">
+    <div class="mission-vision-container">
+        <div class="mission-vision-grid">
+            <div class="mission-card">
+                <div class="mission-icon-wrapper">
+                    <RadzenIcon Icon="flag" />
+                </div>
+                <h3 class="mission-title">Our Mission</h3>
+                <p class="mission-description">
+                    To empower every professional and team with intelligent time management tools that
+                    transform how they work. We believe time is the ultimate currency, and everyone
+                    deserves the tools to spend it wisely.
                 </p>
-                <p style="font-size: 1.2rem; line-height: 1.8; color: #4a5568;">
-                    We're committed to creating intuitive, powerful software that makes time management
-                    effortless, so you can focus on what truly matters.
+                <ul class="mission-list">
+                    <li>Eliminate 70% of scheduling overhead</li>
+                    <li>Provide actionable insights into time usage</li>
+                    <li>Enable seamless cross-platform collaboration</li>
+                    <li>Maintain 99.9% uptime and enterprise security</li>
+                </ul>
+            </div>
+
+            <div class="mission-card">
+                <div class="mission-icon-wrapper" style="background: var(--accent-gradient);">
+                    <RadzenIcon Icon="visibility" />
+                </div>
+                <h3 class="mission-title">Our Vision</h3>
+                <p class="mission-description">
+                    To become the global standard for professional time management, where every organization
+                    uses data-driven insights to optimize their schedules, reduce burnout, and achieve
+                    unprecedented productivity.
                 </p>
-            </RadzenColumn>
-        </RadzenRow>
+                <ul class="mission-list">
+                    <li>AI that predicts and prevents scheduling conflicts</li>
+                    <li>Universal integration with every business tool</li>
+                    <li>Real-time collaboration across global teams</li>
+                    <li>Personalized productivity coaching and insights</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Values Section -->
-<div class="features-section">
-    <div class="container-max">
-        <h2 class="section-title">Our Core Values</h2>
-        <p class="section-subtitle">The principles that guide everything we do</p>
+<div class="values-section">
+    <div class="values-container">
+        <div class="section-header-modern">
+            <span class="section-badge">OUR VALUES</span>
+            <h2 class="section-title-modern">The Principles That Guide Us</h2>
+            <p class="section-subtitle-modern">
+                These core values shape every decision we make and every feature we build
+            </p>
+        </div>
 
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <RadzenIcon Icon="bolt" Style="font-size: 2.5rem;" />
+        <div class="values-grid">
+            <div class="value-card-about">
+                <div class="value-icon-about">
+                    <RadzenIcon Icon="psychology" />
                 </div>
-                <h3 class="feature-title">Innovation</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">Innovation</h3>
+                <p class="value-description-about">
                     We constantly push boundaries to deliver cutting-edge features that anticipate
-                    our users' needs and set new industry standards.
+                    our users' needs and set new industry standards for time management.
                 </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <RadzenIcon Icon="favorite" Style="font-size: 2.5rem;" />
+            <div class="value-card-about">
+                <div class="value-icon-about" style="background: var(--accent-gradient);">
+                    <RadzenIcon Icon="favorite" />
                 </div>
-                <h3 class="feature-title">User-Centric</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">User-Centric</h3>
+                <p class="value-description-about">
                     Every decision we make starts with our users. We listen, learn, and build
-                    features that solve real problems.
+                    features that solve real problems faced by professionals every day.
                 </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                    <RadzenIcon Icon="verified" Style="font-size: 2.5rem;" />
+            <div class="value-card-about">
+                <div class="value-icon-about" style="background: var(--success-gradient);">
+                    <RadzenIcon Icon="verified_user" />
                 </div>
-                <h3 class="feature-title">Reliability</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">Reliability</h3>
+                <p class="value-description-about">
                     We maintain 99.9% uptime and enterprise-grade security because your trust
-                    and data are paramount to us.
+                    and data are paramount. Your calendar is always accessible when you need it.
                 </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                    <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem;" />
+            <div class="value-card-about">
+                <div class="value-icon-about" style="background: var(--warning-gradient);">
+                    <RadzenIcon Icon="trending_up" />
                 </div>
-                <h3 class="feature-title">Growth</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">Continuous Growth</h3>
+                <p class="value-description-about">
                     We're committed to continuous improvement, both in our product and in
-                    helping our users achieve their goals.
+                    helping our users achieve their personal and professional goals.
                 </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <RadzenIcon Icon="diversity_3" Style="font-size: 2.5rem;" />
+            <div class="value-card-about">
+                <div class="value-icon-about" style="background: var(--secondary-gradient);">
+                    <RadzenIcon Icon="diversity_3" />
                 </div>
-                <h3 class="feature-title">Collaboration</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">Collaboration</h3>
+                <p class="value-description-about">
                     We believe in the power of teamwork and build tools that bring people
-                    together to accomplish amazing things.
+                    together across time zones and departments to accomplish amazing things.
                 </p>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <RadzenIcon Icon="insights" Style="font-size: 2.5rem;" />
+            <div class="value-card-about">
+                <div class="value-icon-about" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);">
+                    <RadzenIcon Icon="policy" />
                 </div>
-                <h3 class="feature-title">Transparency</h3>
-                <p class="feature-description">
+                <h3 class="value-title-about">Transparency</h3>
+                <p class="value-description-about">
                     We operate with honesty and openness, keeping our users informed and
-                    building trust through clear communication.
+                    building trust through clear communication and ethical practices.
                 </p>
             </div>
         </div>
@@ -123,108 +214,188 @@
 </div>
 
 <!-- Stats Section -->
-<div class="stats-section">
-    <div class="container-max">
-        <h2 style="font-size: 3rem; font-weight: 700; text-align: center; margin-bottom: 3rem;">Tempus by the Numbers</h2>
+<div class="stats-section-about">
+    <div class="stats-container-about">
+        <div class="section-header-modern" style="margin-bottom: 3rem;">
+            <h2 class="section-title-modern" style="color: white;">Tempus by the Numbers</h2>
+            <p class="section-subtitle-modern" style="color: rgba(255, 255, 255, 0.9);">
+                Real metrics that demonstrate our impact on professional productivity
+            </p>
+        </div>
 
-        <div class="stats-grid">
-            <div>
-                <span class="stat-number">50,000+</span>
-                <span class="stat-label">Active Users Worldwide</span>
+        <div class="stats-grid-about">
+            <div class="stat-item-about">
+                <div class="stat-number-about">50,000+</div>
+                <div class="stat-label-about">Active Users</div>
+                <div class="stat-description-about">Professionals worldwide</div>
             </div>
-            <div>
-                <span class="stat-number">1M+</span>
-                <span class="stat-label">Events Managed Daily</span>
+            <div class="stat-item-about">
+                <div class="stat-number-about">2.5M+</div>
+                <div class="stat-label-about">Events Scheduled</div>
+                <div class="stat-description-about">Every month</div>
             </div>
-            <div>
-                <span class="stat-number">150+</span>
-                <span class="stat-label">Countries Served</span>
+            <div class="stat-item-about">
+                <div class="stat-number-about">120+</div>
+                <div class="stat-label-about">Countries</div>
+                <div class="stat-description-about">Across the globe</div>
             </div>
-            <div>
-                <span class="stat-number">99.9%</span>
-                <span class="stat-label">System Uptime</span>
+            <div class="stat-item-about">
+                <div class="stat-number-about">99.9%</div>
+                <div class="stat-label-about">Uptime SLA</div>
+                <div class="stat-description-about">Always available</div>
             </div>
-            <div>
-                <span class="stat-number">24/7</span>
-                <span class="stat-label">Customer Support</span>
+            <div class="stat-item-about">
+                <div class="stat-number-about">15hrs</div>
+                <div class="stat-label-about">Saved Per Week</div>
+                <div class="stat-description-about">Average per user</div>
             </div>
-            <div>
-                <span class="stat-number">4.9/5</span>
-                <span class="stat-label">User Rating</span>
+            <div class="stat-item-about">
+                <div class="stat-number-about">4.9/5</div>
+                <div class="stat-label-about">User Rating</div>
+                <div class="stat-description-about">10,000+ reviews</div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Team Section -->
-<div class="features-section" style="background: white;">
-    <div class="container-max">
-        <h2 class="section-title">Built by Time Management Experts</h2>
-        <p class="section-subtitle">Our team combines decades of experience in productivity, software engineering, and design</p>
+<div class="team-section">
+    <div class="team-container">
+        <div class="section-header-modern">
+            <span class="section-badge">OUR TEAM</span>
+            <h2 class="section-title-modern">Built by Experts, Driven by Passion</h2>
+            <p class="section-subtitle-modern">
+                Our diverse team combines decades of experience in productivity, software engineering,
+                design, and customer success to deliver an exceptional product
+            </p>
+        </div>
 
-        <RadzenRow Gap="2rem" class="rz-mt-4">
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="feature-card" style="text-align: center;">
-                    <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <RadzenIcon Icon="person" Style="font-size: 4rem; color: white;" />
-                    </div>
-                    <h4 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Engineering Team</h4>
-                    <p style="color: #718096;">World-class developers building robust, scalable solutions</p>
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-icon">
+                    <RadzenIcon Icon="code" />
                 </div>
-            </RadzenColumn>
+                <h3 class="team-title">Engineering</h3>
+                <p class="team-description">
+                    World-class developers building robust, scalable solutions with cutting-edge
+                    technology and best practices in software architecture.
+                </p>
+                <div class="team-stats">
+                    <div class="team-stat">
+                        <span class="team-stat-number">20+</span>
+                        <span class="team-stat-label">Engineers</span>
+                    </div>
+                    <div class="team-stat">
+                        <span class="team-stat-number">50+</span>
+                        <span class="team-stat-label">Years Experience</span>
+                    </div>
+                </div>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="feature-card" style="text-align: center;">
-                    <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <RadzenIcon Icon="design_services" Style="font-size: 4rem; color: white;" />
-                    </div>
-                    <h4 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Design Team</h4>
-                    <p style="color: #718096;">Creating beautiful, intuitive user experiences</p>
+            <div class="team-card">
+                <div class="team-icon" style="background: var(--accent-gradient);">
+                    <RadzenIcon Icon="palette" />
                 </div>
-            </RadzenColumn>
+                <h3 class="team-title">Product & Design</h3>
+                <p class="team-description">
+                    Creating beautiful, intuitive user experiences that make complex time management
+                    effortless and enjoyable for everyone.
+                </p>
+                <div class="team-stats">
+                    <div class="team-stat">
+                        <span class="team-stat-number">10+</span>
+                        <span class="team-stat-label">Designers</span>
+                    </div>
+                    <div class="team-stat">
+                        <span class="team-stat-number">100+</span>
+                        <span class="team-stat-label">User Studies</span>
+                    </div>
+                </div>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="feature-card" style="text-align: center;">
-                    <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <RadzenIcon Icon="support_agent" Style="font-size: 4rem; color: white;" />
-                    </div>
-                    <h4 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Support Team</h4>
-                    <p style="color: #718096;">Dedicated to helping you succeed every step of the way</p>
+            <div class="team-card">
+                <div class="team-icon" style="background: var(--success-gradient);">
+                    <RadzenIcon Icon="support_agent" />
                 </div>
-            </RadzenColumn>
+                <h3 class="team-title">Customer Success</h3>
+                <p class="team-description">
+                    Dedicated to helping you succeed every step of the way with 24/7 support,
+                    onboarding assistance, and ongoing training.
+                </p>
+                <div class="team-stats">
+                    <div class="team-stat">
+                        <span class="team-stat-number">15+</span>
+                        <span class="team-stat-label">Support Agents</span>
+                    </div>
+                    <div class="team-stat">
+                        <span class="team-stat-number">&lt;2min</span>
+                        <span class="team-stat-label">Response Time</span>
+                    </div>
+                </div>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                <div class="feature-card" style="text-align: center;">
-                    <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <RadzenIcon Icon="campaign" Style="font-size: 4rem; color: white;" />
-                    </div>
-                    <h4 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Growth Team</h4>
-                    <p style="color: #718096;">Spreading the word and growing our community</p>
+            <div class="team-card">
+                <div class="team-icon" style="background: var(--warning-gradient);">
+                    <RadzenIcon Icon="campaign" />
                 </div>
-            </RadzenColumn>
-        </RadzenRow>
+                <h3 class="team-title">Growth & Marketing</h3>
+                <p class="team-description">
+                    Spreading the word and growing our community of productivity enthusiasts
+                    while building meaningful partnerships.
+                </p>
+                <div class="team-stats">
+                    <div class="team-stat">
+                        <span class="team-stat-number">12+</span>
+                        <span class="team-stat-label">Team Members</span>
+                    </div>
+                    <div class="team-stat">
+                        <span class="team-stat-number">30+</span>
+                        <span class="team-stat-label">Partners</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Call to Action -->
-<div class="hero-section" style="min-height: 60vh;">
-    <div class="hero-bg-shapes">
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+<!-- CTA Section -->
+<div class="cta-section-modern">
+    <div class="cta-container">
+        <div class="cta-content-modern">
+            <h2 class="cta-title-modern">Ready to Join the Tempus Community?</h2>
+            <p class="cta-subtitle-modern">
+                Join 50,000+ professionals who have already transformed their productivity.
+                Start your free 14-day trial today and experience the difference.
+            </p>
 
-    <div class="hero-content">
-        <h2 class="hero-title" style="font-size: clamp(2rem, 6vw, 3.5rem);">Join the Tempus Community</h2>
-        <p class="hero-description">
-            Be part of a growing community of professionals who have taken control of their time.
-        </p>
-        <div class="hero-cta">
-            <button class="btn-premium btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/calendar"))">
-                Get Started Today
-            </button>
-            <button class="btn-premium btn-outline" @onclick="@(() => NavigationManager.NavigateTo("/features"))">
-                Explore Features
-            </button>
+            <div class="cta-buttons-modern">
+                <button class="btn-modern btn-cta-primary" @onclick="@(() => NavigationManager.NavigateTo("/Account/Register"))">
+                    <RadzenIcon Icon="rocket_launch" Style="font-size: 1.3rem; margin-right: 0.75rem;" />
+                    Start Free Trial
+                </button>
+                <button class="btn-modern btn-cta-secondary" @onclick="@(() => NavigationManager.NavigateTo("/features"))">
+                    Explore Features
+                </button>
+            </div>
+
+            <div class="cta-features">
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>14-day free trial</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>No credit card required</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Full feature access</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Cancel anytime</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>

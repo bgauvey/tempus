@@ -1,0 +1,613 @@
+/* Tempus Accessibility & WCAG Compliance Styling */
+
+/* ============================================
+   1. Focus Management & Keyboard Navigation
+   ============================================ */
+
+/* Visible focus for keyboard navigation */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Better focus for form controls */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* High contrast focus for links */
+a:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 4px;
+    text-decoration: underline;
+}
+
+/* Button focus states */
+button:focus-visible,
+.rz-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: var(--z-fixed);
+    border-radius: 0 0 4px 0;
+}
+
+.skip-to-main:focus {
+    top: 0;
+}
+
+/* ============================================
+   2. Color & Contrast
+   ============================================ */
+
+/* Ensure sufficient color contrast (WCAG AA: 4.5:1 for text, 3:1 for UI) */
+body {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+/* Link colors with sufficient contrast */
+a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+a:visited {
+    color: var(--color-accent);
+}
+
+a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+}
+
+a:active {
+    color: var(--color-primary-dark);
+}
+
+/* Button text contrast */
+.rz-button {
+    min-contrast-ratio: 4.5;
+}
+
+.rz-button.rz-primary {
+    color: white;
+    background: var(--color-primary);
+}
+
+.rz-button.rz-primary:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Form label contrast */
+label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Ensure placeholder text has sufficient contrast */
+::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+}
+
+/* Error message contrast */
+.error,
+.form-field-error {
+    color: var(--color-error);
+    font-weight: 500;
+}
+
+/* Warning colors */
+.warning {
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+/* Success colors */
+.success {
+    color: var(--color-success);
+    font-weight: 500;
+}
+
+/* ============================================
+   3. Text Spacing & Readability
+   ============================================ */
+
+/* Ensure readable line length (60-80 characters) */
+body,
+p,
+li {
+    line-height: var(--line-normal);
+}
+
+/* Better spacing in lists */
+ul,
+ol {
+    padding-left: 2rem;
+    margin: 1rem 0;
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    line-height: var(--line-tight);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-top: 2rem;
+}
+
+/* Word spacing for readability */
+body {
+    word-spacing: 0.1em;
+}
+
+/* Better contrast for disabled elements */
+:disabled {
+    opacity: 0.6;
+}
+
+input:disabled,
+button:disabled,
+select:disabled {
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+}
+
+/* ============================================
+   4. Motion & Animation Accessibility
+   ============================================ */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    * {
+        scroll-behavior: smooth;
+    }
+}
+
+/* ============================================
+   5. Semantic HTML & ARIA
+   ============================================ */
+
+/* Main content landmark */
+main {
+    min-height: 200px;
+}
+
+/* Navigation landmarks */
+nav {
+    display: block;
+}
+
+/* Article landmark */
+article {
+    display: block;
+}
+
+/* Aside landmark */
+aside {
+    display: block;
+}
+
+/* Section landmark */
+section {
+    display: block;
+}
+
+/* Footer landmark */
+footer {
+    display: block;
+    margin-top: 2rem;
+}
+
+/* ============================================
+   6. Touch Target Size
+   ============================================ */
+
+/* Minimum 44x44 px touch targets (WCAG 2.5.5) */
+button,
+a.rz-button,
+input[type="checkbox"],
+input[type="radio"],
+[role="button"],
+[role="link"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Proper spacing between interactive elements */
+button + button,
+.rz-button + .rz-button {
+    margin-left: 0.5rem;
+}
+
+/* ============================================
+   7. Image Accessibility
+   ============================================ */
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure alt text is visible when images fail to load */
+img[alt] {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* SVG Icons accessibility */
+svg {
+    display: block;
+}
+
+.icon {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* ============================================
+   8. Form Accessibility
+   ============================================ */
+
+/* Form field labels */
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+/* Required field indicator */
+.required {
+    color: var(--color-error);
+    margin-left: 0.25rem;
+    font-weight: bold;
+    aria-label: "required";
+}
+
+/* Form field grouping */
+fieldset {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+legend {
+    padding: 0 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Error messages near form fields */
+.form-field-error {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-error);
+}
+
+.form-field-error::before {
+    content: "⚠ ";
+}
+
+/* Help text */
+.form-field-help {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+/* ============================================
+   9. Table Accessibility
+   ============================================ */
+
+/* Table headers */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--border-medium);
+}
+
+td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+tr:hover {
+    background: var(--bg-secondary);
+}
+
+/* ============================================
+   10. Heading Hierarchy
+   ============================================ */
+
+/* Ensure proper heading hierarchy for screen readers */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+}
+
+h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+h6 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ============================================
+   11. Responsive Text Sizing
+   ============================================ */
+
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.375rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    body {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+}
+
+/* ============================================
+   12. Visible Loading States
+   ============================================ */
+
+/* Loading indicator */
+[aria-busy="true"] {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Spinner animation */
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   13. High Contrast Mode Support
+   ============================================ */
+
+@media (prefers-contrast: more) {
+    body {
+        color: var(--text-primary);
+        background: var(--bg-primary);
+    }
+
+    a {
+        text-decoration: underline;
+        font-weight: 600;
+    }
+
+    button,
+    .rz-button {
+        border: 2px solid currentColor;
+        font-weight: 600;
+    }
+
+    input,
+    textarea,
+    select {
+        border: 2px solid var(--text-primary);
+    }
+
+    *:focus-visible {
+        outline: 3px solid var(--text-primary);
+        outline-offset: 2px;
+    }
+}
+
+/* ============================================
+   14. Light Text on Dark Background
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: var(--text-primary);
+        color: var(--bg-primary);
+    }
+
+    .dark-mode-support {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* ============================================
+   15. Zoom & Text Scaling
+   ============================================ */
+
+/* Support browser zoom up to 200% */
+html {
+    font-size: 16px; /* Base for responsive units */
+}
+
+/* Avoid fixed widths that prevent zooming */
+body,
+.container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Allow content to reflow */
+@media (min-width: 1px) {
+    body {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   16. Print Accessibility
+   ============================================ */
+
+@media print {
+    body {
+        color: black;
+        background: white;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.875rem;
+    }
+
+    /* Hide non-essential elements when printing */
+    .no-print,
+    nav,
+    footer,
+    .sidebar {
+        display: none;
+    }
+
+    /* Better page breaks */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+
+    table {
+        page-break-inside: avoid;
+    }
+}
+
+/* ============================================
+   17. Responsive Accessibility
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Larger touch targets on mobile */
+    button,
+    a.rz-button,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 48px;
+        min-width: 48px;
+    }
+
+    /* More spacing between interactive elements */
+    button + button {
+        margin-top: 0.75rem;
+    }
+
+    /* Prevent zoom on input focus (mobile) */
+    input,
+    textarea,
+    select {
+        font-size: 16px;
+    }
+
+    /* Ensure modals are accessible */
+    [role="dialog"] {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+    }
+}
+
+/* ============================================
+   18. ARIA Labels & Hidden Content
+   ============================================ */
+
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Required indicator for screen readers */
+.required::after {
+    content: " (required)";
+    clip-path: polygon(0 0, 0 0);
+}

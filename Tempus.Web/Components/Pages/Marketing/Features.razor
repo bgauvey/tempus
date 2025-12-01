@@ -1,228 +1,515 @@
 @page "/features"
 @inject NavigationManager NavigationManager
 
-<PageTitle>Features - Tempus</PageTitle>
+<PageTitle>Features - Enterprise Time Management Platform | Tempus</PageTitle>
 
 <!-- Hero Section -->
-<div class="hero-section" style="min-height: 50vh;">
-    <div class="hero-bg-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-    </div>
+<div class="features-hero-section">
+    <div class="hero-gradient-overlay"></div>
+    <div class="hero-pattern"></div>
 
-    <div class="hero-content">
-        <h1 class="hero-title" style="font-size: clamp(2.5rem, 7vw, 4rem);">Powerful Features</h1>
-        <p class="hero-subtitle">Everything you need to master your time</p>
+    <div class="features-hero-content">
+        <div class="hero-badge">
+            <RadzenIcon Icon="stars" Style="font-size: 1rem; margin-right: 0.5rem;" />
+            All Features Included in Every Plan
+        </div>
+
+        <h1 class="features-hero-title">
+            Every Feature You Need<br/>
+            <span class="gradient-text-modern">To Master Your Time</span>
+        </h1>
+
+        <p class="features-hero-subtitle">
+            Comprehensive tools designed for modern teams who demand excellence.
+            No feature tiers. No hidden costs. Everything you need, right from the start.
+        </p>
     </div>
 </div>
 
-<!-- Main Features -->
-<div class="features-section">
-    <div class="container-max">
-        <div class="features-grid">
-            <!-- Smart Calendar -->
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <RadzenIcon Icon="calendar_month" Style="font-size: 2.5rem;" />
-                </div>
-                <h3 class="feature-title">Smart Calendar Management</h3>
-                <p class="feature-description">
-                    Experience the power of intelligent scheduling with our advanced calendar system.
-                    Features include:
-                </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li>Multiple calendar views (Day, Week, Month, Year)</li>
-                    <li>Drag-and-drop event scheduling</li>
-                    <li>Recurring events with custom patterns</li>
-                    <li>Color-coded categories</li>
-                    <li>Custom calendar ranges</li>
-                </ul>
-            </div>
+<!-- Core Features Section -->
+<div class="features-section-modern">
+    <div class="features-container">
+        <div class="section-header-modern">
+            <span class="section-badge">CORE FEATURES</span>
+            <h2 class="section-title-modern">Built for Professional Teams</h2>
+            <p class="section-subtitle-modern">
+                Enterprise-grade capabilities that scale with your organization
+            </p>
+        </div>
 
-            <!-- Integration -->
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <RadzenIcon Icon="sync" Style="font-size: 2.5rem;" />
+        <div class="features-detail-grid">
+            <!-- Smart Calendar -->
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large">
+                        <RadzenIcon Icon="calendar_month" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Smart Calendar Management</h3>
+                        <p class="feature-detail-subtitle">Intelligent scheduling at your fingertips</p>
+                    </div>
                 </div>
-                <h3 class="feature-title">Seamless Integrations</h3>
-                <p class="feature-description">
-                    Connect all your calendars in one place. Tempus integrates with:
+                <p class="feature-detail-description">
+                    Experience the power of our advanced calendar system with intuitive controls,
+                    flexible views, and AI-powered scheduling suggestions that learn from your patterns.
                 </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li>Google Calendar sync</li>
-                    <li>Microsoft Outlook integration</li>
-                    <li>ICS file import/export</li>
-                    <li>Third-party API support</li>
-                    <li>Real-time synchronization</li>
-                </ul>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Multiple Calendar Views</strong>
+                            <p>Day, Week, Month, Year, and custom agenda views</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Drag & Drop Scheduling</strong>
+                            <p>Effortlessly move and resize events with visual feedback</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Recurring Events</strong>
+                            <p>Complex patterns with exceptions and custom rules</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Color-Coded Categories</strong>
+                            <p>Organize events visually by project, priority, or type</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Analytics -->
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                    <RadzenIcon Icon="analytics" Style="font-size: 2.5rem;" />
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large" style="background: var(--accent-gradient);">
+                        <RadzenIcon Icon="analytics" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Advanced Analytics & Insights</h3>
+                        <p class="feature-detail-subtitle">Data-driven decision making</p>
+                    </div>
                 </div>
-                <h3 class="feature-title">Advanced Analytics & Insights</h3>
-                <p class="feature-description">
-                    Transform your calendar data into actionable insights with our comprehensive analytics dashboard:
+                <p class="feature-detail-description">
+                    Transform your calendar data into actionable insights with comprehensive analytics
+                    that reveal time allocation patterns, productivity metrics, and optimization opportunities.
                 </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li><strong>Time Usage Analysis</strong> - Breakdown by event type, day, and hour</li>
-                    <li><strong>Meeting Cost Tracking</strong> - Monitor and optimize meeting expenses</li>
-                    <li><strong>Productivity Metrics</strong> - Focus time, task completion, fragmentation</li>
-                    <li><strong>AI-Powered Recommendations</strong> - Smart suggestions for optimization</li>
-                    <li><strong>Burnout Prevention</strong> - Early warning system for overbooked schedules</li>
-                </ul>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Time Usage Analysis</strong>
+                            <p>Detailed breakdown by event type, day, hour, and category</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Meeting Cost Tracking</strong>
+                            <p>Monitor and optimize meeting expenses across your organization</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Productivity Metrics</strong>
+                            <p>Focus time, task completion, schedule fragmentation analysis</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>AI-Powered Recommendations</strong>
+                            <p>Smart suggestions for schedule optimization and time blocking</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Burnout Prevention</strong>
+                            <p>Early warning system for overbooked schedules and fatigue</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration -->
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large" style="background: var(--secondary-gradient);">
+                        <RadzenIcon Icon="sync" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Seamless Integrations</h3>
+                        <p class="feature-detail-subtitle">Connect your entire workflow</p>
+                    </div>
+                </div>
+                <p class="feature-detail-description">
+                    Connect all your calendars and tools in one unified platform. Real-time
+                    bi-directional sync ensures your data is always up-to-date everywhere.
+                </p>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Google Calendar Sync</strong>
+                            <p>Full two-way synchronization with Google Workspace</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Microsoft 365 Integration</strong>
+                            <p>Native Outlook and Exchange calendar support</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>ICS Import/Export</strong>
+                            <p>Universal calendar format for maximum compatibility</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>API Access</strong>
+                            <p>RESTful API for custom integrations and automation</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Collaboration -->
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                    <RadzenIcon Icon="group" Style="font-size: 2.5rem;" />
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large" style="background: var(--success-gradient);">
+                        <RadzenIcon Icon="groups" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Team Collaboration</h3>
+                        <p class="feature-detail-subtitle">Work together seamlessly</p>
+                    </div>
                 </div>
-                <h3 class="feature-title">Team Collaboration</h3>
-                <p class="feature-description">
-                    Work together seamlessly with powerful collaboration tools:
+                <p class="feature-detail-description">
+                    Powerful collaboration tools that make scheduling, coordination, and teamwork
+                    effortless across your entire organization.
                 </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li>Shared calendars</li>
-                    <li>Team event scheduling</li>
-                    <li>Meeting coordination</li>
-                    <li>Attendee management</li>
-                    <li>Permission controls</li>
-                </ul>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Shared Team Calendars</strong>
+                            <p>Create and manage calendars accessible to multiple users</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Group Scheduling</strong>
+                            <p>Find optimal meeting times across multiple participants</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Resource Booking</strong>
+                            <p>Manage conference rooms, equipment, and shared resources</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Permission Controls</strong>
+                            <p>Granular access control for viewing and editing calendars</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Notifications -->
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <RadzenIcon Icon="notifications" Style="font-size: 2.5rem;" />
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large" style="background: var(--warning-gradient);">
+                        <RadzenIcon Icon="notifications_active" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Intelligent Notifications</h3>
+                        <p class="feature-detail-subtitle">Never miss a beat</p>
+                    </div>
                 </div>
-                <h3 class="feature-title">Smart Notifications</h3>
-                <p class="feature-description">
-                    Never miss an important moment with intelligent reminders:
+                <p class="feature-detail-description">
+                    Smart notification system that keeps you informed without overwhelming you.
+                    Customizable alerts across multiple channels ensure you're always prepared.
                 </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li>Customizable notification timing</li>
-                    <li>Email reminders</li>
-                    <li>Browser notifications</li>
-                    <li>Mobile push alerts</li>
-                    <li>Smart notification grouping</li>
-                </ul>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Multi-Channel Alerts</strong>
+                            <p>Email, browser, and mobile push notifications</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Custom Reminder Rules</strong>
+                            <p>Set multiple reminders with flexible timing options</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Smart Notification Batching</strong>
+                            <p>Group related notifications to reduce interruptions</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Do Not Disturb Modes</strong>
+                            <p>Automatic quiet hours based on your schedule</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Security -->
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <RadzenIcon Icon="security" Style="font-size: 2.5rem;" />
+            <div class="feature-detail-card">
+                <div class="feature-detail-header">
+                    <div class="feature-icon-large" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);">
+                        <RadzenIcon Icon="shield" />
+                    </div>
+                    <div>
+                        <h3 class="feature-detail-title">Enterprise Security</h3>
+                        <p class="feature-detail-subtitle">Bank-level protection</p>
+                    </div>
                 </div>
-                <h3 class="feature-title">Enterprise-Grade Security</h3>
-                <p class="feature-description">
-                    Your data is protected with industry-leading security:
+                <p class="feature-detail-description">
+                    Your data is protected with industry-leading security measures, compliance
+                    certifications, and robust backup systems.
                 </p>
-                <ul style="color: #718096; line-height: 1.8;">
-                    <li>End-to-end encryption</li>
-                    <li>GDPR compliance</li>
-                    <li>SOC 2 certified</li>
-                    <li>Regular security audits</li>
-                    <li>Data backup and recovery</li>
-                </ul>
+                <div class="feature-detail-list">
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>AES-256 Encryption</strong>
+                            <p>Military-grade encryption for data at rest and in transit</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>SOC 2 Type II Certified</strong>
+                            <p>Independently audited security controls and procedures</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>GDPR Compliant</strong>
+                            <p>Full compliance with European data protection regulations</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>SSO & 2FA</strong>
+                            <p>Single sign-on and two-factor authentication support</p>
+                        </div>
+                    </div>
+                    <div class="feature-detail-item">
+                        <RadzenIcon Icon="check_circle" Style="color: #14B8A6; margin-right: 0.75rem;" />
+                        <div>
+                            <strong>Automated Backups</strong>
+                            <p>Daily backups with point-in-time recovery options</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Additional Features Section -->
-<div class="stats-section">
-    <div class="container-max">
-        <h2 style="font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; text-align: center; margin-bottom: 3rem; color: white;">More Amazing Features</h2>
+<div class="additional-features-section">
+    <div class="additional-features-container">
+        <div class="section-header-modern">
+            <span class="section-badge">ADDITIONAL CAPABILITIES</span>
+            <h2 class="section-title-modern">Even More to Love</h2>
+            <p class="section-subtitle-modern">
+                Comprehensive features that make Tempus the complete time management solution
+            </p>
+        </div>
 
-        <RadzenRow Gap="2rem">
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="mobile_friendly" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Mobile Responsive</h3>
-                    <p style="opacity: 0.9;">Access your calendar anywhere, on any device. Fully optimized for mobile and tablet.</p>
+        <div class="additional-features-grid">
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="mobile_friendly" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Mobile Responsive</h3>
+                <p class="additional-feature-description">
+                    Access your calendar anywhere, on any device. Fully optimized for mobile and tablet with native app experience.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="schedule" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Time Zone Support</h3>
-                    <p style="opacity: 0.9;">Automatically handles multiple time zones for global teams and international meetings.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="public" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Global Time Zone Support</h3>
+                <p class="additional-feature-description">
+                    Automatically handles multiple time zones for global teams and international meetings with intelligent conversion.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="search" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Powerful Search</h3>
-                    <p style="opacity: 0.9;">Find any event instantly with advanced search and filtering capabilities.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="search" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Advanced Search</h3>
+                <p class="additional-feature-description">
+                    Find any event instantly with powerful search and filtering. Search by keyword, date, attendee, or category.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="palette" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Customizable Themes</h3>
-                    <p style="opacity: 0.9;">Personalize your experience with custom colors, layouts, and themes.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="palette" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Customizable Themes</h3>
+                <p class="additional-feature-description">
+                    Personalize your experience with custom colors, layouts, and themes to match your brand or preference.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="cloud_upload" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Cloud Sync</h3>
-                    <p style="opacity: 0.9;">Your data automatically syncs across all devices in real-time.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="cloud_done" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Real-Time Cloud Sync</h3>
+                <p class="additional-feature-description">
+                    Your data automatically syncs across all devices in real-time. Never lose an update or miss a change.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="health_and_safety" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Calendar Health Score</h3>
-                    <p style="opacity: 0.9;">Monitor your schedule wellness with a 0-100 health score that identifies burnout risks and optimization opportunities.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="health_and_safety" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">Calendar Health Score</h3>
+                <p class="additional-feature-description">
+                    Monitor your schedule wellness with a 0-100 health score that identifies burnout risks and optimization opportunities.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="insights" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">AI-Powered Insights</h3>
-                    <p style="opacity: 0.9;">Get smart recommendations for optimizing your schedule based on your time usage patterns and productivity metrics.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="auto_awesome" />
                 </div>
-            </RadzenColumn>
+                <h3 class="additional-feature-title">AI-Powered Insights</h3>
+                <p class="additional-feature-description">
+                    Get smart recommendations for optimizing your schedule based on your time usage patterns and productivity metrics.
+                </p>
+            </div>
 
-            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                <div class="glass-card">
-                    <RadzenIcon Icon="support_agent" Style="font-size: 3rem; margin-bottom: 1rem;" />
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">24/7 Support</h3>
-                    <p style="opacity: 0.9;">Get help whenever you need it with our dedicated support team.</p>
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="support_agent" />
                 </div>
-            </RadzenColumn>
-        </RadzenRow>
+                <h3 class="additional-feature-title">24/7 Priority Support</h3>
+                <p class="additional-feature-description">
+                    Get help whenever you need it with our dedicated support team. Live chat, email, and phone support available.
+                </p>
+            </div>
+
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="print" />
+                </div>
+                <h3 class="additional-feature-title">Print & Export</h3>
+                <p class="additional-feature-description">
+                    Generate professional PDF agendas, weekly schedules, and monthly calendars. Export to Excel, CSV, or ICS formats.
+                </p>
+            </div>
+
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="language" />
+                </div>
+                <h3 class="additional-feature-title">Multi-Language Support</h3>
+                <p class="additional-feature-description">
+                    Interface available in 20+ languages. Automatic locale detection for dates, times, and number formatting.
+                </p>
+            </div>
+
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="accessibility" />
+                </div>
+                <h3 class="additional-feature-title">Accessibility First</h3>
+                <p class="additional-feature-description">
+                    WCAG 2.1 AA compliant with full keyboard navigation, screen reader support, and high contrast modes.
+                </p>
+            </div>
+
+            <div class="additional-feature-card">
+                <div class="additional-feature-icon">
+                    <RadzenIcon Icon="webhook" />
+                </div>
+                <h3 class="additional-feature-title">Webhooks & Automation</h3>
+                <p class="additional-feature-description">
+                    Trigger custom workflows with webhooks. Automate tasks with Zapier, Make, and other automation platforms.
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Call to Action -->
-<div class="features-section" style="padding: 6rem 2rem; background: white; text-align: center;">
-    <div class="container-max">
-        <h2 class="section-title">Ready to Experience These Features?</h2>
-        <p class="section-subtitle">Start your free trial today and discover the power of Tempus</p>
-        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
-            <RadzenButton ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large"
-                          Icon="arrow_forward" IconPosition="IconPosition.Right"
-                          Style="padding: 1rem 3rem; font-size: 1.2rem; border-radius: 50px; font-weight: 600;"
-                          Click="@(() => NavigationManager.NavigateTo("/calendar"))">
-                Get Started Free
-            </RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Large"
-                          Icon="info"
-                          Style="padding: 1rem 3rem; font-size: 1.2rem; border-radius: 50px;"
-                          Click="@(() => NavigationManager.NavigateTo("/about"))">
-                Learn More
-            </RadzenButton>
+<!-- CTA Section -->
+<div class="cta-section-modern">
+    <div class="cta-container">
+        <div class="cta-content-modern">
+            <h2 class="cta-title-modern">Ready to Experience These Features?</h2>
+            <p class="cta-subtitle-modern">
+                Start your free 14-day trial today and discover why 50,000+ professionals trust Tempus
+                to manage their time. No credit card required.
+            </p>
+
+            <div class="cta-buttons-modern">
+                <button class="btn-modern btn-cta-primary" @onclick="@(() => NavigationManager.NavigateTo("/Account/Register"))">
+                    <RadzenIcon Icon="rocket_launch" Style="font-size: 1.3rem; margin-right: 0.75rem;" />
+                    Start Free Trial
+                </button>
+                <button class="btn-modern btn-cta-secondary" @onclick="@(() => NavigationManager.NavigateTo("/about"))">
+                    Contact Sales
+                </button>
+            </div>
+
+            <div class="cta-features">
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>All features included</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>No credit card required</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Cancel anytime</span>
+                </div>
+                <div class="cta-feature-item">
+                    <RadzenIcon Icon="check_circle" />
+                    <span>Setup in minutes</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>

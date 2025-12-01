@@ -1,0 +1,114 @@
+@import 'variables';
+@import 'mixins';
+$theme-name: tempus;
+
+// Tempus Theme Colors - Professional Blue/Teal Branding
+
+$rz-white: #ffffff !default;
+$rz-black: #000000 !default;
+
+$rz-base: #cbd5e1 !default;
+$rz-primary: #0EA5E9 !default;  // Tempus Blue
+$rz-secondary: #14B8A6 !default;  // Tempus Teal
+$rz-info: #06b6d4 !default;  // Cyan
+$rz-success: #10b981 !default;  // Green
+$rz-warning: #f59e0b !default;  // Amber
+$rz-danger: #ef4444 !default;  // Red
+
+// Data Visualization Series Colors - Professional Palette
+$rz-series-1: #0EA5E9 !default;  // Primary Blue
+$rz-series-2: #14B8A6 !default;  // Secondary Teal
+$rz-series-3: #8b5cf6 !default;  // Purple
+$rz-series-4: #f97316 !default;  // Orange
+$rz-series-5: #10b981 !default;  // Green
+$rz-series-6: #ec4899 !default;  // Pink
+$rz-series-7: #eab308 !default;  // Yellow
+$rz-series-8: #6366f1 !default;  // Indigo
+$rz-series-9: #38bdf8 !default;  // Light Blue
+$rz-series-10: #2dd4bf !default;  // Light Teal
+$rz-series-11: #a78bfa !default;  // Light Purple
+$rz-series-12: #fb923c !default;  // Light Orange
+$rz-series-13: #34d399 !default;  // Light Green
+$rz-series-14: #f472b6 !default;  // Light Pink
+$rz-series-15: #fde047 !default;  // Light Yellow
+$rz-series-16: #818cf8 !default;  // Light Indigo
+$rz-series-17: #0284c7 !default;  // Dark Blue
+$rz-series-18: #0d9488 !default;  // Dark Teal
+$rz-series-19: #7c3aed !default;  // Dark Purple
+$rz-series-20: #ea580c !default;  // Dark Orange
+$rz-series-21: #059669 !default;  // Dark Green
+$rz-series-22: #db2777 !default;  // Dark Pink
+$rz-series-23: #ca8a04 !default;  // Dark Yellow
+$rz-series-24: #4f46e5 !default;  // Dark Indigo
+
+// Base Grayscale Palette - Slate
+$rz-base-50: #ffffff !default;
+$rz-base-100: #f8fafc !default;
+$rz-base-200: #f1f5f9 !default;
+$rz-base-300: #e2e8f0 !default;
+$rz-base-400: #cbd5e1 !default;
+$rz-base-500: #94a3b8 !default;
+$rz-base-600: #64748b !default;
+$rz-base-700: #475569 !default;
+$rz-base-800: #334155 !default;
+$rz-base-900: #1e293b !default;
+$rz-base-light: #e2e8f0 !default;
+$rz-base-lighter: #ffffff !default;
+$rz-base-dark: #64748b !default;
+$rz-base-darker: #1e293b !default;
+
+// Primary Color Variants
+$rz-primary-light: mix($rz-white, $rz-primary, 12%) !default;
+$rz-primary-lighter: rgba($rz-primary, .16) !default;
+$rz-primary-dark: mix($rz-black, $rz-primary, 8%) !default;
+$rz-primary-darker: mix($rz-black, $rz-primary, 25%) !default;
+
+// Secondary Color Variants
+$rz-secondary-light: mix($rz-white, $rz-secondary, 12%) !default;
+$rz-secondary-lighter: rgba($rz-secondary, .20) !default;
+$rz-secondary-dark: mix($rz-black, $rz-secondary, 8%) !default;
+$rz-secondary-darker: mix($rz-black, $rz-secondary, 25%) !default;
+
+// Info Color Variants
+$rz-info-light: mix($rz-white, $rz-info, 16%) !default;
+$rz-info-lighter: rgba($rz-info, .20) !default;
+$rz-info-dark: mix($rz-black, $rz-info, 16%) !default;
+$rz-info-darker: mix($rz-black, $rz-info, 25%) !default;
+
+// Success Color Variants
+$rz-success-light: mix($rz-white, $rz-success, 16%) !default;
+$rz-success-lighter: rgba($rz-success, .16) !default;
+$rz-success-dark: mix($rz-black, $rz-success, 16%) !default;
+$rz-success-darker: mix($rz-black, $rz-success, 25%) !default;
+
+// Warning Color Variants
+$rz-warning-light: mix($rz-white, $rz-warning, 16%) !default;
+$rz-warning-lighter: rgba($rz-warning, .20) !default;
+$rz-warning-dark: mix($rz-black, $rz-warning, 16%) !default;
+$rz-warning-darker: mix($rz-black, $rz-warning, 25%) !default;
+
+// Danger Color Variants
+$rz-danger-light: mix($rz-white, $rz-danger, 16%) !default;
+$rz-danger-lighter: rgba($rz-danger, .20) !default;
+$rz-danger-dark: mix($rz-black, $rz-danger, 16%) !default;
+$rz-danger-darker: mix($rz-black, $rz-danger, 25%) !default;
+
+// Theme Constants
+$rz-border-width: 1px !default;
+$rz-border-radius: 8px !default;  // Slightly more rounded for modern look
+$rz-root-font-size: 16px !default;
+$rz-body-font-size: 0.875rem !default;
+$rz-body-line-height: 1.5 !default;  // Improved readability
+$rz-body-background-color: var(--rz-base-50) !default;
+$rz-text-font-family: 'Inter', 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont,
+'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+'Segoe UI Emoji', 'Segoe UI Symbol' !default;
+$rz-outline-offset: 2px !default;
+$rz-outline-width: 2px !default;
+$rz-outline-color: var(--rz-primary) !default;
+
+// Grid Filter Icon
+$rz-grid-filter-icon: 'filter_list' !default;
+
+@import 'fonts';
+@import 'components';

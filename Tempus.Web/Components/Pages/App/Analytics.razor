@@ -20,7 +20,7 @@
 <div style="padding: 2rem;">
     <RadzenStack Gap="2rem">
         <!-- Header -->
-        <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+        <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.H3" Style="font-weight: 700; margin: 0;">📊 Calendar Analytics & Insights</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">
@@ -85,7 +85,7 @@
             <!-- Quick Stats -->
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                    <RadzenCard Style="background: var(--primary-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
                         <RadzenStack Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.TotalEvents</RadzenText>
                             <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Total Events</RadzenText>
@@ -94,7 +94,7 @@
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                    <RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);">
+                    <RadzenCard Style="background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
                         <RadzenStack Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.MeetingCount</RadzenText>
                             <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Meetings</RadzenText>
@@ -103,7 +103,7 @@
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                    <RadzenCard Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3);">
+                    <RadzenCard Style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
                         <RadzenStack Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">@_analytics.TotalHours</RadzenText>
                             <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Scheduled Hours</RadzenText>
@@ -112,7 +112,7 @@
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
-                    <RadzenCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(250, 112, 154, 0.3);">
+                    <RadzenCard Style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
                         <RadzenStack Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.DisplayH3" Style="font-weight: 800; margin: 0;">$@_analytics.TotalMeetingCost.ToString("N0")</RadzenText>
                             <RadzenText TextStyle="TextStyle.Body1" Style="opacity: 0.9;">Meeting Costs</RadzenText>
@@ -174,7 +174,7 @@
                                                               CategoryProperty="Day"
                                                               ValueProperty="EventCount"
                                                               Title="Events"
-                                                              Fill="#667eea">
+                                                              Fill="#0EA5E9">
                                                 <TooltipTemplate Context="data">
                                                     <div style="padding: 0.5rem;">
                                                         <strong>@data.Day</strong><br/>
@@ -394,7 +394,7 @@
                                                 <RadzenText Style="font-weight: 600;">@attendee.Name</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.7;">@attendee.Email</RadzenText>
                                             </RadzenStack>
-                                            <RadzenBadge Text="@($"{attendee.MeetingCount} meetings")" Style="background: #667eea;" />
+                                            <RadzenBadge Text="@($"{attendee.MeetingCount} meetings")" Style="background: #0EA5E9;" />
                                         </RadzenStack>
                                     }
                                 }
@@ -486,7 +486,7 @@
                 <!-- Key Insights -->
                 @if (_trendAnalysis.KeyInsights.Any() || _trendAnalysis.Warnings.Any())
                 {
-                    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 2rem;">
+                    <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem;">
                         <RadzenStack Gap="1rem">
                             <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 700;">🔮 Predictive Insights</RadzenText>
                             <RadzenText Style="opacity: 0.9;">@_trendAnalysis.WorkloadPattern</RadzenText>
@@ -518,7 +518,7 @@
                             @foreach (var trend in _trendAnalysis.Trends)
                             {
                                 <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                                    <RadzenCard Style="background: rgba(102, 126, 234, 0.05);">
+                                    <RadzenCard Style="background: rgba(14, 165, 233, 0.05);">
                                         <RadzenStack Gap="0.5rem">
                                             <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 600;">@trend.MetricName</RadzenText>
                                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
@@ -584,9 +584,9 @@
                                                 CategoryProperty="Description"
                                                 ValueProperty="PredictedEventCount"
                                                 Title="Predicted Events"
-                                                Stroke="#667eea"
+                                                Stroke="#0EA5E9"
                                                 StrokeWidth="2"
-                                                Fill="rgba(102, 126, 234, 0.3)">
+                                                Fill="rgba(14, 165, 233, 0.3)">
                                     <TooltipTemplate Context="data">
                                         <div style="padding: 0.5rem;">
                                             <strong>@data.Description</strong><br/>
@@ -601,7 +601,7 @@
                                                 CategoryProperty="Description"
                                                 ValueProperty="PredictedHours"
                                                 Title="Predicted Hours"
-                                                Stroke="#43e97b"
+                                                Stroke="#10B981"
                                                 StrokeWidth="2"
                                                 LineType="LineType.Dashed">
                                 </RadzenLineSeries>
@@ -661,7 +661,7 @@
                                 {
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Start">
-                                            <RadzenIcon Icon="insights" Style="color: #667eea;" />
+                                            <RadzenIcon Icon="insights" Style="color: #0EA5E9;" />
                                             <RadzenText>@pattern</RadzenText>
                                         </RadzenStack>
                                     </RadzenColumn>
@@ -868,13 +868,13 @@
 
     private string GetHealthScoreColor()
     {
-        if (_analytics == null) return "#667eea";
+        if (_analytics == null) return "#0EA5E9";
 
         var score = _analytics.Productivity.CalendarHealthScore;
-        if (score >= 80) return "#43e97b";
-        if (score >= 60) return "#667eea";
-        if (score >= 40) return "#fa709a";
-        return "#ff6b6b";
+        if (score >= 80) return "#10B981";
+        if (score >= 60) return "#0EA5E9";
+        if (score >= 40) return "#F59E0B";
+        return "#EF4444";
     }
 
     private string GetHealthScoreLabel()
@@ -971,11 +971,11 @@
     {
         return direction switch
         {
-            TrendDirection.Increasing => "color: #43e97b;",
-            TrendDirection.Decreasing => "color: #fa709a;",
-            TrendDirection.Stable => "color: #667eea;",
-            TrendDirection.Volatile => "color: #ffa500;",
-            _ => "color: #667eea;"
+            TrendDirection.Increasing => "color: #10B981;",
+            TrendDirection.Decreasing => "color: #EF4444;",
+            TrendDirection.Stable => "color: #0EA5E9;",
+            TrendDirection.Volatile => "color: #F59E0B;",
+            _ => "color: #0EA5E9;"
         };
     }
 
@@ -1006,10 +1006,10 @@
     // Chart visualization helper methods
     private string GetHeatmapColor(double intensity)
     {
-        // Generate color gradient from light to dark purple
-        var r = (int)(102 + (255 - 102) * (1 - intensity));
-        var g = (int)(126 + (255 - 126) * (1 - intensity));
-        var b = (int)(234 + (255 - 234) * (1 - intensity));
+        // Generate color gradient from light to dark blue
+        var r = (int)(14 + (255 - 14) * (1 - intensity));
+        var g = (int)(165 + (255 - 165) * (1 - intensity));
+        var b = (int)(233 + (255 - 233) * (1 - intensity));
         return $"rgb({r}, {g}, {b})";
     }
 
@@ -1017,11 +1017,11 @@
     {
         return direction switch
         {
-            TrendDirection.Increasing => "#43e97b",
-            TrendDirection.Decreasing => "#fa709a",
-            TrendDirection.Stable => "#667eea",
-            TrendDirection.Volatile => "#ffa500",
-            _ => "#667eea"
+            TrendDirection.Increasing => "#10B981",
+            TrendDirection.Decreasing => "#EF4444",
+            TrendDirection.Stable => "#0EA5E9",
+            TrendDirection.Volatile => "#F59E0B",
+            _ => "#0EA5E9"
         };
     }
 }

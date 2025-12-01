@@ -1,0 +1,117 @@
+@import 'variables';
+@import 'mixins';
+$theme-dark: true;
+$base: true;
+$theme-name: tempus-dark;
+
+// Tempus Dark Theme Colors - Brightened for Dark Backgrounds
+
+$rz-white: #ffffff !default;
+$rz-black: #000000 !default;
+
+$rz-base: #475569 !default;
+$rz-primary: #38bdf8 !default;  // Lighter Tempus Blue for dark mode
+$rz-secondary: #2dd4bf !default;  // Lighter Tempus Teal for dark mode
+$rz-info: #22d3ee !default;  // Lighter Cyan
+$rz-success: #34d399 !default;  // Lighter Green
+$rz-warning: #fbbf24 !default;  // Lighter Amber
+$rz-danger: #f87171 !default;  // Lighter Red
+
+// Data Visualization Series Colors - Brightened for Dark Mode
+$rz-series-1: #38bdf8 !default;  // Light Blue
+$rz-series-2: #2dd4bf !default;  // Light Teal
+$rz-series-3: #a78bfa !default;  // Light Purple
+$rz-series-4: #fb923c !default;  // Light Orange
+$rz-series-5: #34d399 !default;  // Light Green
+$rz-series-6: #f472b6 !default;  // Light Pink
+$rz-series-7: #fde047 !default;  // Light Yellow
+$rz-series-8: #818cf8 !default;  // Light Indigo
+$rz-series-9: #7dd3fc !default;  // Lighter Blue
+$rz-series-10: #5eead4 !default;  // Lighter Teal
+$rz-series-11: #c4b5fd !default;  // Lighter Purple
+$rz-series-12: #fdba74 !default;  // Lighter Orange
+$rz-series-13: #6ee7b7 !default;  // Lighter Green
+$rz-series-14: #f9a8d4 !default;  // Lighter Pink
+$rz-series-15: #fef08a !default;  // Lighter Yellow
+$rz-series-16: #a5b4fc !default;  // Lighter Indigo
+$rz-series-17: #0EA5E9 !default;  // Primary Blue
+$rz-series-18: #14B8A6 !default;  // Primary Teal
+$rz-series-19: #8b5cf6 !default;  // Purple
+$rz-series-20: #f97316 !default;  // Orange
+$rz-series-21: #10b981 !default;  // Green
+$rz-series-22: #ec4899 !default;  // Pink
+$rz-series-23: #eab308 !default;  // Yellow
+$rz-series-24: #6366f1 !default;  // Indigo
+
+// Base Grayscale Palette - Slate (Dark Mode)
+$rz-base-50: #0f172a !default;  // Darkest background
+$rz-base-100: #1e293b !default;  // Dark surface
+$rz-base-200: #334155 !default;  // Dark border
+$rz-base-300: #475569 !default;  // Medium dark
+$rz-base-400: #64748b !default;  // Medium
+$rz-base-500: #94a3b8 !default;  // Medium light
+$rz-base-600: #cbd5e1 !default;  // Light
+$rz-base-700: #e2e8f0 !default;  // Lighter
+$rz-base-800: #f1f5f9 !default;  // Very light
+$rz-base-900: #f8fafc !default;  // Lightest text
+$rz-base-light: #64748b !default;
+$rz-base-lighter: #0f172a !default;
+$rz-base-dark: #334155 !default;
+$rz-base-darker: #0f172a !default;
+
+// Primary Color Variants - Adjusted for dark mode
+$rz-primary-light: mix($rz-white, $rz-primary, 12%) !default;
+$rz-primary-lighter: rgba($rz-primary, .20) !default;
+$rz-primary-dark: mix($rz-black, $rz-primary, 8%) !default;
+$rz-primary-darker: mix($rz-black, $rz-primary, 25%) !default;
+
+// Secondary Color Variants - Adjusted for dark mode
+$rz-secondary-light: mix($rz-white, $rz-secondary, 12%) !default;
+$rz-secondary-lighter: rgba($rz-secondary, .20) !default;
+$rz-secondary-dark: mix($rz-black, $rz-secondary, 8%) !default;
+$rz-secondary-darker: mix($rz-black, $rz-secondary, 25%) !default;
+
+// Info Color Variants
+$rz-info-light: mix($rz-white, $rz-info, 16%) !default;
+$rz-info-lighter: rgba($rz-info, .20) !default;
+$rz-info-dark: mix($rz-black, $rz-info, 16%) !default;
+$rz-info-darker: mix($rz-black, $rz-info, 25%) !default;
+
+// Success Color Variants
+$rz-success-light: mix($rz-white, $rz-success, 16%) !default;
+$rz-success-lighter: rgba($rz-success, .16) !default;
+$rz-success-dark: mix($rz-black, $rz-success, 16%) !default;
+$rz-success-darker: mix($rz-black, $rz-success, 25%) !default;
+
+// Warning Color Variants
+$rz-warning-light: mix($rz-white, $rz-warning, 16%) !default;
+$rz-warning-lighter: rgba($rz-warning, .20) !default;
+$rz-warning-dark: mix($rz-black, $rz-warning, 16%) !default;
+$rz-warning-darker: mix($rz-black, $rz-warning, 25%) !default;
+
+// Danger Color Variants
+$rz-danger-light: mix($rz-white, $rz-danger, 16%) !default;
+$rz-danger-lighter: rgba($rz-danger, .20) !default;
+$rz-danger-dark: mix($rz-black, $rz-danger, 16%) !default;
+$rz-danger-darker: mix($rz-black, $rz-danger, 25%) !default;
+
+// Theme Constants
+$rz-border-width: 1px !default;
+$rz-border-radius: 8px !default;  // Slightly more rounded for modern look
+$rz-root-font-size: 16px !default;
+$rz-body-font-size: 0.875rem !default;
+$rz-body-line-height: 1.5 !default;  // Improved readability
+$rz-body-background-color: var(--rz-base-50) !default;  // Dark background
+$rz-text-font-family: 'Inter', 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont,
+'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+'Segoe UI Emoji', 'Segoe UI Symbol' !default;
+$rz-outline-offset: 2px !default;
+$rz-outline-width: 2px !default;
+$rz-outline-color: var(--rz-secondary) !default;
+
+// Grid
+$grid-simple-filter-icon-active-color: var(--rz-secondary-darker) !default;
+$grid-simple-filter-icon-active-background-color: var(--rz-secondary-lighter) !default;
+
+@import 'fonts';
+@import 'components';
