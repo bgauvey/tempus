@@ -14,6 +14,12 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 
 **Note**: Base themes are foundational variants that can be used for creating custom theme extensions. They have the `$base: true` flag set, which enables different component styling options in Radzen's theme system.
 
+### SCSS Base Files
+- **_variables.scss** - Theme metadata flags (material, fluent, standard, theme-dark, base)
+- **_mixins.scss** - SCSS mixins for utilities, colors, and effects
+- **_fonts.scss** - Font-face declarations for Material Symbols and Source Sans Pro
+- **_components.scss** - Stub file for component styles (outputs CSS variables)
+
 ## Color Palette
 
 ### Light Mode (tempus.scss)
@@ -28,30 +34,46 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 
 ## Usage
 
-### Option 1: Compile SCSS (Requires SASS Compiler)
+### Option 1: Compile SCSS (Ready to Use!)
 
-To use these custom themes, you need to compile them to CSS:
+The required Radzen base files have been included, so you can compile the themes immediately:
 
 ```bash
-# Install SASS if not already installed
-npm install -g sass
+# Navigate to themes directory
+cd wwwroot/css/themes
 
 # Compile main themes
-sass tempus.scss tempus.css
-sass tempus-dark.scss tempus-dark.css
+sass tempus.scss tempus.css --no-source-map
+sass tempus-dark.scss tempus-dark.css --no-source-map
 
 # Compile base themes (optional)
-sass tempus-base.scss tempus-base.css
-sass tempus-dark-base.scss tempus-dark-base.css
+sass tempus-base.scss tempus-base.css --no-source-map
+sass tempus-dark-base.scss tempus-dark-base.css --no-source-map
 ```
 
-Then reference the compiled CSS in your application:
+**Note**: If you see deprecation warnings about `@import` and global built-in functions, these are harmless. The themes will compile successfully.
+
+#### Compiled CSS Files
+
+After compilation, you'll have CSS files that define Tempus-branded CSS variables. These files are already compiled and available:
+- `tempus.css` - Light mode CSS variables
+- `tempus-dark.css` - Dark mode CSS variables
+- `tempus-base.css` - Base light mode CSS variables
+- `tempus-dark-base.css` - Base dark mode CSS variables
+
+To use the compiled theme in your application:
 
 ```razor
-<RadzenTheme Theme="tempus" @rendermode="RenderMode.InteractiveServer" />
+<!-- Add to App.razor <head> section -->
+<link rel="stylesheet" href="css/themes/tempus.css" />
+<link rel="stylesheet" href="css/themes/tempus-dark.css" />
 ```
 
-**Note**: The SCSS files import Radzen's base `variables`, `mixins`, `fonts`, and `components` files which are part of the Radzen.Blazor package. You may need to copy these from the Radzen.Blazor NuGet package location or download them from the Radzen GitHub repository.
+Then use RadzenTheme with the software theme (which these CSS files will override):
+
+```razor
+<RadzenTheme Theme="software" @rendermode="RenderMode.InteractiveServer" />
+```
 
 ### Option 2: CSS Variable Overrides (Recommended - Current Approach)
 
@@ -67,9 +89,23 @@ Current setup in App.razor:
 <RadzenTheme Theme="software" @rendermode="RenderMode.InteractiveServer" />
 ```
 
+## Important Notes
+
+### Component Styles
+
+The `_components.scss` file is a **stub** that only outputs CSS variables. It does NOT include the full Radzen component library styles because:
+
+1. **Radzen.Blazor Package** - Component styles are already provided by the Radzen.Blazor NuGet package
+2. **Complexity** - The full component library includes hundreds of SCSS files
+3. **Not Needed** - Since you're using Radzen components directly, their styles are already loaded
+
+The compiled CSS files define **CSS variables only**, which work with Radzen's existing component styles to apply the Tempus color scheme.
+
+If you need to download the full Radzen component SCSS files for deep customization, see: https://github.com/radzenhq/radzen-blazor/tree/master/Radzen.Blazor/themes/components
+
 ## Theme Structure
 
-Both theme files follow the Radzen theme structure:
+All theme files follow the Radzen theme structure:
 
 1. **Theme Metadata**
    - `$theme-name`: Theme identifier

@@ -1,0 +1,56 @@
+/*
+ * Tempus Theme - Components Stub
+ *
+ * This is a stub file for Radzen component styles.
+ *
+ * The full Radzen component library requires importing hundreds of individual
+ * component SCSS files from the Radzen.Blazor package. Since you're using
+ * Radzen.Blazor components directly, those component styles are already
+ * provided by the Radzen package.
+ *
+ * This stub allows the Tempus theme SCSS files to compile without errors.
+ * The actual component styling comes from:
+ * - Radzen.Blazor package's built-in CSS
+ * - Your custom CSS files (components.css, simplified.css, etc.)
+ *
+ * If you need to customize Radzen component styles beyond the theme colors,
+ * you can either:
+ * 1. Add custom CSS to your existing CSS files
+ * 2. Download the full Radzen component SCSS files from:
+ *    https://github.com/radzenhq/radzen-blazor/tree/master/Radzen.Blazor/themes/components
+ */
+
+/* CSS Variables will be generated from the theme SCSS variables */
+:root {
+  --rz-white: #{$rz-white};
+  --rz-black: #{$rz-black};
+
+  --rz-base: #{$rz-base};
+  --rz-primary: #{$rz-primary};
+  --rz-secondary: #{$rz-secondary};
+  --rz-info: #{$rz-info};
+  --rz-success: #{$rz-success};
+  --rz-warning: #{$rz-warning};
+  --rz-danger: #{$rz-danger};
+
+  --rz-base-50: #{$rz-base-50};
+  --rz-base-100: #{$rz-base-100};
+  --rz-base-200: #{$rz-base-200};
+  --rz-base-300: #{$rz-base-300};
+  --rz-base-400: #{$rz-base-400};
+  --rz-base-500: #{$rz-base-500};
+  --rz-base-600: #{$rz-base-600};
+  --rz-base-700: #{$rz-base-700};
+  --rz-base-800: #{$rz-base-800};
+  --rz-base-900: #{$rz-base-900};
+
+  --rz-primary-light: #{$rz-primary-light};
+  --rz-primary-lighter: #{$rz-primary-lighter};
+  --rz-primary-dark: #{$rz-primary-dark};
+  --rz-primary-darker: #{$rz-primary-darker};
+
+  --rz-secondary-light: #{$rz-secondary-light};
+  --rz-secondary-lighter: #{$rz-secondary-lighter};
+  --rz-secondary-dark: #{$rz-secondary-dark};
+  --rz-secondary-darker: #{$rz-secondary-darker};
+}

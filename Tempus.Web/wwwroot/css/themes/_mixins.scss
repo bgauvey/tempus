@@ -1,0 +1,136 @@
+@mixin rz-color-css($property, $map) {
+  @each $token,
+  $value in $map {
+    .rz-#{$property}-#{$token} {
+      #{$property}: var(--rz-#{$token}) !important;
+    }
+  }
+}
+
+@mixin rz-utility-map-css($property, $map) {
+  @each $token,
+  $value in $map {
+    .rz-#{$token} {
+      #{$property}: var(--rz-#{$token}) !important;
+    }
+  }
+}
+
+@mixin rz-utility-list-css($property, $list, $shorthand: 'none', $unit: 'none') {
+  @each $value in $list {
+    @if $shorthand != none {
+      .rz-#{$shorthand}-#{$value} {
+        @if $unit != 'none' {
+          @if $unit == 'percent' {
+            #{$property}: #{$value}#{'%'} !important;
+          } @else {
+            #{$property}: #{$value}#{$unit} !important;
+          }
+        } @else {
+          #{$property}: #{$value} !important;
+        }
+      }
+    } @else {
+      .rz-#{$property}-#{$value} {
+        @if $unit != 'none' {
+          @if $unit == 'percent' {
+            #{$property}: #{$value}#{'%'} !important;
+          } @else {
+            #{$property}: #{$value}#{$unit} !important;
+          }
+        } @else {
+          #{$property}: #{$value} !important;
+        }
+      }
+    }
+  }
+}
+
+@mixin rz-utility-list-breakpoints-css($property, $list, $breakpoints, $shorthand: 'none', $unit: 'none') {
+  @each $breakpoint, $breakpoint-value in $breakpoints {
+    @media (min-width: #{$breakpoint-value}) {
+      @each $value in $list {
+        @if $shorthand != 'none' {
+          .rz-#{$shorthand}-#{$breakpoint}-#{$value} {
+            @if $unit != 'none' {
+              @if $unit == 'percent' {
+                #{$property}: #{$value}#{'%'} !important;
+              } @else {
+                #{$property}: #{$value}#{$unit} !important;
+              }
+            } @else {
+              #{$property}: #{$value} !important;
+            }
+          }
+        } @else {
+          .rz-#{$property}-#{$breakpoint}-#{$value} {
+            @if $unit != 'none' {
+              @if $unit == 'percent' {
+                #{$property}: #{$value}#{'%'} !important;
+              } @else {
+                #{$property}: #{$value}#{$unit} !important;
+              }
+            } @else {
+              #{$property}: #{$value} !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@mixin rz-ripple($ripple-background: rgba(0,0,0,.12), $pseudo: false) {
+  @if $pseudo == true {
+
+    position: relative;
+    overflow: hidden;
+
+    &:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background-position: center;
+      background: radial-gradient(circle, currentColor 1%, transparent 1%) center/15000%;
+      transition: background-size 0.8s, opacity 0.8s;
+      pointer-events: none;
+    }
+
+    &.rz-state-disabled:before {
+      background: transparent;
+    }
+
+    &:active {
+      &:before {
+        transition: background-size 0s, opacity 0s;
+        opacity: .32;
+        background-size: 0%;
+      }
+    }
+
+  } @else {
+
+    background-position: center;
+    transition: background-size 0.8s;
+    background: radial-gradient(circle, transparent 1%, $ripple-background 1%)  center/15000%;
+
+    &:active {
+        background-color: $ripple-background;
+        transition: background-size 0s;
+        background-size: 0%;
+    }
+
+    &.rz-state-disabled:active {
+        background-color: transparent;
+    }
+  }
+}
+
+@mixin rz-hover-state {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @content;
+    }
+  }
+}
