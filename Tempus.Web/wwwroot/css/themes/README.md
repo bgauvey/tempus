@@ -17,8 +17,8 @@ This directory contains the Tempus custom theme definitions for Radzen Blazor co
 ### SCSS Base Files
 - **_variables.scss** - Theme metadata flags (material, fluent, standard, theme-dark, base)
 - **_mixins.scss** - SCSS mixins for utilities, colors, and effects
-- **_fonts.scss** - Font-face declarations for Material Symbols and Source Sans Pro
-- **_components.scss** - Stub file for component styles (outputs CSS variables)
+- **_fonts.scss** - Fonts stub (no font-face declarations - Radzen provides fonts)
+- **_components.scss** - Components stub (outputs CSS variables only)
 
 ## Color Palette
 
@@ -102,6 +102,16 @@ The `_components.scss` file is a **stub** that only outputs CSS variables. It do
 The compiled CSS files define **CSS variables only**, which work with Radzen's existing component styles to apply the Tempus color scheme.
 
 If you need to download the full Radzen component SCSS files for deep customization, see: https://github.com/radzenhq/radzen-blazor/tree/master/Radzen.Blazor/themes/components
+
+### Font Loading
+
+The `_fonts.scss` file is also a **stub** with no font-face declarations because:
+
+1. **Radzen.Blazor Package** - All required fonts (Material Symbols, Roboto, etc.) are already provided by Radzen
+2. **No 404 Errors** - Prevents font file 404 errors since font files aren't included in this project
+3. **Font Family** - Tempus themes specify 'Inter' font family in the theme SCSS, which falls back to system fonts
+
+If you need custom fonts, add @font-face declarations to your custom CSS files or reference fonts from a CDN like Google Fonts.
 
 ## Theme Structure
 

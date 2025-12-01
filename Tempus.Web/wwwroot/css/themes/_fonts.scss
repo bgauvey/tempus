@@ -1,39 +1,21 @@
-$fonts-path: '../fonts';
-
-@font-face {
-  font-family: 'Material Symbols';
-  src: url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2 supports variations'),
-         url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2-variations');
-  font-style: normal;
-  font-weight: 100 700;
-}
-
-@if $material == false and $fluent == false {
-  @font-face {
-    font-family: 'Source Sans Pro';
-    src: url('#{$fonts-path}/SourceSans3VF-Upright.ttf.woff2') format('woff2 supports variations'),
-         url('#{$fonts-path}/SourceSans3VF-Upright.ttf.woff2') format('woff2-variations');
-    font-style: normal;
-    font-weight: 200 900;
-    font-display: swap;
-  }
-
-  @font-face {
-    font-family: 'Source Sans Pro';
-    src: url('#{$fonts-path}/SourceSans3VF-Italic.ttf.woff2') format('woff2 supports variations'),
-         url('#{$fonts-path}/SourceSans3VF-Italic.ttf.woff2') format('woff2-variations');
-    font-style: italic;
-    font-weight: 200 900;
-    font-display: swap;
-  }
-}
-
-@if $material == true {
-  @font-face {
-    font-family: 'Roboto';
-    src: url('#{$fonts-path}/RobotoFlex.woff2') format('woff2 supports variations'),
-         url('#{$fonts-path}/RobotoFlex.woff2') format('woff2-variations');
-    font-weight: 100 1000;
-    font-display: swap;
-  }
-}
+/*
+ * Tempus Theme - Fonts Stub
+ *
+ * Font-face declarations are NOT included because:
+ * 1. Radzen.Blazor package already provides all required fonts
+ * 2. Material Symbols fonts are loaded by Radzen
+ * 3. Font files would need to be downloaded separately
+ *
+ * If you need custom fonts, you can:
+ * - Add @font-face declarations to your custom CSS files
+ * - Reference fonts from a CDN
+ * - Download fonts from Google Fonts or other sources
+ *
+ * Original Radzen fonts that would be loaded:
+ * - Material Symbols Outlined (for icons)
+ * - Source Sans Pro (for software/standard/humanistic themes)
+ * - Roboto (for material theme)
+ *
+ * Since Tempus themes use Inter font family (defined in theme SCSS),
+ * and Radzen provides Material Symbols, no additional fonts needed.
+ */
