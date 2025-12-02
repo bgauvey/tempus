@@ -35,6 +35,7 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Resource> Resources { get; set; }
     public DbSet<RoomBooking> RoomBookings { get; set; }
     public DbSet<ResourceReservation> ResourceReservations { get; set; }
+    public DbSet<WorkingLocationStatus> WorkingLocationStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -563,6 +564,27 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(rr => new { rr.ResourceId, rr.EventId });
             entity.HasIndex(rr => new { rr.ResourceId, rr.Status });
+        });
+
+        modelBuilder.Entity<WorkingLocationStatus>(entity =>
+        {
+            entity.HasKey(w => w.Id);
+            entity.Property(w => w.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(w => w.LocationDescription).HasMaxLength(200);
+            entity.Property(w => w.Address).HasMaxLength(500);
+            entity.Property(w => w.Notes).HasMaxLength(1000);
+            entity.Property(w => w.Color).HasMaxLength(50);
+            entity.Property(w => w.RecurrenceDaysOfWeek).HasMaxLength(50);
+
+            entity.HasOne(w => w.User)
+                  .WithMany()
+                  .HasForeignKey(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(w => new { w.UserId, w.IsActive });
+            entity.HasIndex(w => new { w.UserId, w.StartDate, w.EndDate });
+            entity.HasIndex(w => new { w.StartDate, w.EndDate, w.IsActive });
+            entity.HasIndex(w => new { w.UserId, w.LocationType });
         });
     }
 }

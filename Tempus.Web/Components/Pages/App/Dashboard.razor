@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
+@using Tempus.Core.Enums
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Web.Services
@@ -18,6 +19,7 @@
 @inject IPdfAgendaService PdfAgendaService
 @inject IJSRuntime JSRuntime
 @inject ITimeZoneConversionService TimeZoneConversionService
+@inject IWorkingLocationService WorkingLocationService
 @inject ILogger<Dashboard> Logger
 
 <PageTitle>Dashboard - Tempus</PageTitle>
@@ -56,6 +58,39 @@
                 </RadzenText>
             </RadzenStack>
         </RadzenCard>
+
+        <!-- Current Working Location Widget -->
+        @if (_currentLocation != null)
+        {
+            <RadzenCard class="location-card">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-md)" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-md)" AlignItems="AlignItems.Center">
+                        <div class="location-icon" style="background: @GetLocationColor(_currentLocation.LocationType);">
+                            <RadzenIcon Icon="@_currentLocation.GetIcon()" Style="color: white; font-size: 1.5rem;" />
+                        </div>
+                        <RadzenStack Gap="var(--space-xs)">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="font-semibold" Style="margin: 0;">
+                                Currently: @_currentLocation.GetDisplayName()
+                            </RadzenText>
+                            @if (!string.IsNullOrEmpty(_currentLocation.Address))
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="var(--space-xs)" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="place" Style="font-size: 1rem; opacity: 0.7;" />
+                                    <RadzenText TextStyle="TextStyle.Body2" class="text-secondary">
+                                        @_currentLocation.Address
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                  Icon="settings"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => NavigationManager.NavigateTo("/working-location"))"
+                                  title="Manage working locations" />
+                </RadzenStack>
+            </RadzenCard>
+        }
 
         <!-- Card 2: Next Up -->
         <RadzenCard class="next-up-card">
@@ -262,6 +297,23 @@
         opacity: 0.95;
     }
 
+    /* Location Card */
+    .location-card {
+        padding: var(--space-lg);
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .location-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
     /* Next Up Card */
     .next-up-card {
         padding: var(--space-xl);
@@ -398,6 +450,7 @@
     private int _todayEvents;
     private Event? _nextEvent;
     private List<Event> _todayEventsList = new();
+    private WorkingLocationStatus? _currentLocation;
 
     private string _userId = string.Empty;
     private string _userName = "there";
@@ -456,6 +509,9 @@
                 .Where(e => GetDisplayTime(e) >= now)
                 .OrderBy(e => GetDisplayTime(e))
                 .FirstOrDefault();
+
+            // Get current working location
+            _currentLocation = await WorkingLocationService.GetCurrentLocationAsync(_userId);
         }
         finally
         {
@@ -608,5 +664,18 @@
         }
 
         return abbreviation;
+    }
+
+    private string GetLocationColor(Core.Enums.WorkingLocationType locationType)
+    {
+        return locationType switch
+        {
+            Core.Enums.WorkingLocationType.Office => "#0EA5E9",
+            Core.Enums.WorkingLocationType.Home => "#10b981",
+            Core.Enums.WorkingLocationType.Remote => "#f59e0b",
+            Core.Enums.WorkingLocationType.Traveling => "#ef4444",
+            Core.Enums.WorkingLocationType.Hybrid => "#8b5cf6",
+            _ => "#6b7280"
+        };
     }
 }

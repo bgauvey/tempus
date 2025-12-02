@@ -85,6 +85,9 @@
 
                 <!-- Simplified Navigation -->
                 <RadzenPanelMenu @rendermode="InteractiveServer" class="sidebar-menu">
+                    <!-- Dashboard: Overview and quick access -->
+                    <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
+
                     <!-- Calendar: Main view -->
                     <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
 
@@ -107,6 +110,7 @@
                         <RadzenPanelMenuItem Text="Integrations" Path="/integrations" Icon="sync" />
                         <RadzenPanelMenuItem Text="Import/Export" Path="/import" Icon="upload" />
                         <RadzenPanelMenuItem Text="Availability" Path="/out-of-office" Icon="beach_access" />
+                        <RadzenPanelMenuItem Text="Working Location" Path="/working-location" Icon="location_on" />
                     </RadzenPanelMenuItem>
                 </RadzenPanelMenu>
 
