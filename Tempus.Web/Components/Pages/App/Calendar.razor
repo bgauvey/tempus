@@ -28,6 +28,7 @@
 @inject ContextMenuService ContextMenuService
 @inject ITimeZoneConversionService TimeZoneConversionService
 @inject NotificationService NotificationService
+@inject IWorkingLocationService WorkingLocationService
 @inject ILogger<Calendar> Logger
 
 <PageTitle>Calendar - Tempus</PageTitle>
@@ -557,6 +558,9 @@
     private bool _selectionMode = false;
     private HashSet<Guid> _selectedEventIds = new();
 
+    // Working locations
+    private List<WorkingLocationStatus> _workingLocations = new();
+
     // Helper classes
     private CalendarEventManager? _eventManager;
     private CalendarDragDropManager? _dragDropManager;
@@ -648,6 +652,10 @@
             // Combine both lists
             _events = ownEvents.Concat(sharedEvents).OrderBy(e => e.StartTime).ToList();
             Logger.LogDebug("Loaded {EventCount} total events", _events.Count);
+
+            // Load working locations for the date range
+            _workingLocations = await WorkingLocationService.GetLocationsInRangeAsync(_userId, startDate, endDate);
+            Logger.LogDebug("Loaded {LocationCount} working locations", _workingLocations.Count);
 
             ConvertEventsToAppointments();
 
@@ -786,6 +794,10 @@
                 var maxDate = _events.Max(e => e.StartTime);
                 Logger.LogDebug("Event date range: {MinDate:yyyy-MM-dd} to {MaxDate:yyyy-MM-dd}", minDate, maxDate);
             }
+
+            // Load working locations for the date range
+            _workingLocations = await WorkingLocationService.GetLocationsInRangeAsync(_userId, startUtc, endUtc);
+            Logger.LogDebug("Loaded {LocationCount} working locations", _workingLocations.Count);
 
             ConvertEventsToAppointments();
             Logger.LogDebug("Converted to {AppointmentCount} appointments", _appointments.Count);
@@ -1122,11 +1134,31 @@
 
     private void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
+        // Check if there's a working location for this slot's date
+        var slotDate = args.Start.Date;
+        var location = _workingLocations.FirstOrDefault(l =>
+            l.StartDate.Date <= slotDate && l.EndDate.Date >= slotDate);
+
+        if (location != null)
+        {
+            // Add working location indicator
+            var locationColor = GetLocationColor(location.LocationType);
+            var classes = args.Attributes.ContainsKey("class") ? args.Attributes["class"].ToString() : "";
+
+            // Add a subtle left border to indicate working location
+            var style = args.Attributes.ContainsKey("style") ? args.Attributes["style"].ToString() : "";
+            style += $" border-left: 3px solid {locationColor};";
+            args.Attributes["style"] = style;
+            args.Attributes["title"] = $"{location.GetDisplayName()}" +
+                (!string.IsNullOrEmpty(location.Address) ? $" - {location.Address}" : "");
+        }
+
         // Shade non-working hours (before 9 AM and after 5 PM)
         var hour = args.Start.Hour;
         if (hour < 9 || hour >= 17)
         {
-            args.Attributes["class"] = "non-working-hours";
+            var classes = args.Attributes.ContainsKey("class") ? args.Attributes["class"].ToString() : "";
+            args.Attributes["class"] = classes + " non-working-hours";
         }
     }
 
@@ -2122,5 +2154,18 @@
             Detail = "This is a team member's event and cannot be edited",
             Duration = 2000
         });
+    }
+
+    private string GetLocationColor(WorkingLocationType locationType)
+    {
+        return locationType switch
+        {
+            WorkingLocationType.Office => "#0EA5E9",
+            WorkingLocationType.Home => "#10b981",
+            WorkingLocationType.Remote => "#f59e0b",
+            WorkingLocationType.Traveling => "#ef4444",
+            WorkingLocationType.Hybrid => "#8b5cf6",
+            _ => "#6b7280"
+        };
     }
 }

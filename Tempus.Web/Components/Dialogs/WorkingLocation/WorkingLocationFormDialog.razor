@@ -1,0 +1,299 @@
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IWorkingLocationService WorkingLocationService
+@inject ILogger<WorkingLocationFormDialog> Logger
+
+<RadzenStack Gap="1rem" Style="width: 100%;">
+    <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H3">
+        @(LocationId.HasValue ? "Edit" : "Set") Working Location
+    </RadzenText>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @errorMessage
+        </RadzenAlert>
+    }
+
+    <RadzenFormField Text="Location Type" Variant="Variant.Outlined">
+        <RadzenDropDown @bind-Value="@locationType"
+                       Data="@locationTypes"
+                       TextProperty="Label"
+                       ValueProperty="Value"
+                       Style="width: 100%;"
+                       Change="@OnLocationTypeChanged" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Location Description (Optional)" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@locationDescription"
+                      Placeholder="@GetPlaceholderText()"
+                      Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Address (Optional)" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@address"
+                      Placeholder="Physical address or location details"
+                      Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Start Date & Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@startDate"
+                                 ShowTime="true"
+                                 DateFormat="MM/dd/yyyy"
+                                 TimeFormat="h:mm tt"
+                                 Style="width: 100%;"
+                                 Min="@DateTime.Now.AddDays(-1)" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="End Date & Time" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@endDate"
+                                 ShowTime="true"
+                                 DateFormat="MM/dd/yyyy"
+                                 TimeFormat="h:mm tt"
+                                 Style="width: 100%;"
+                                 Min="@startDate" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Notes (Optional)" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@notes"
+                       Placeholder="Add any additional information about your location..."
+                       Rows="3"
+                       Style="width: 100%;"
+                       MaxLength="1000" />
+    </RadzenFormField>
+
+    <RadzenFieldset Text="Quick Date Options">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton Text="Today"
+                         Click="@(() => SetDateRange(0))"
+                         Variant="Variant.Outlined"
+                         Size="ButtonSize.Small" />
+            <RadzenButton Text="Tomorrow"
+                         Click="@(() => SetDateRange(1))"
+                         Variant="Variant.Outlined"
+                         Size="ButtonSize.Small" />
+            <RadzenButton Text="This Week"
+                         Click="@SetThisWeek"
+                         Variant="Variant.Outlined"
+                         Size="ButtonSize.Small" />
+            <RadzenButton Text="Next Week"
+                         Click="@SetNextWeek"
+                         Variant="Variant.Outlined"
+                         Size="ButtonSize.Small" />
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenFieldset Text="Visibility">
+        <RadzenStack Gap="0.75rem">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <RadzenCheckBox @bind-Value="@showInCalendar" Name="showInCalendar" />
+                <RadzenLabel Text="Show this location in calendar view" Component="showInCalendar" Style="cursor: pointer;" />
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <RadzenCheckBox @bind-Value="@isPublic" Name="isPublic" />
+                <RadzenLabel Text="Visible to team members" Component="isPublic" Style="cursor: pointer;" />
+            </div>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="margin-top: 1rem;">
+        <RadzenButton Text="Cancel"
+                     Click="@Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Secondary" />
+        <RadzenButton Text="@(LocationId.HasValue ? "Update" : "Save")"
+                     Click="@Submit"
+                     Disabled="@isSaving"
+                     Icon="@(isSaving ? "" : "check")"
+                     IsBusy="@isSaving"
+                     ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid? LocationId { get; set; }
+    [Parameter] public string UserId { get; set; } = string.Empty;
+
+    private WorkingLocationType locationType = WorkingLocationType.Office;
+    private string? locationDescription;
+    private string? address;
+    private string? notes;
+    private DateTime startDate = DateTime.Now;
+    private DateTime endDate = DateTime.Now.AddHours(8);
+    private bool showInCalendar = true;
+    private bool isPublic = true;
+    private bool isSaving = false;
+    private string? errorMessage;
+
+    private List<LocationTypeOption> locationTypes = new()
+    {
+        new() { Value = WorkingLocationType.Office, Label = "🏢 Office" },
+        new() { Value = WorkingLocationType.Home, Label = "🏠 Working from Home" },
+        new() { Value = WorkingLocationType.Remote, Label = "💻 Remote" },
+        new() { Value = WorkingLocationType.Traveling, Label = "✈️ Traveling" },
+        new() { Value = WorkingLocationType.Hybrid, Label = "🔄 Hybrid" }
+    };
+
+    [Inject] private DialogService DialogService { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (LocationId.HasValue)
+        {
+            await LoadLocation();
+        }
+    }
+
+    private async Task LoadLocation()
+    {
+        try
+        {
+            var location = await WorkingLocationService.GetByIdAsync(LocationId!.Value);
+
+            if (location != null)
+            {
+                locationType = location.LocationType;
+                locationDescription = location.LocationDescription;
+                address = location.Address;
+                notes = location.Notes;
+                startDate = location.StartDate.ToLocalTime();
+                endDate = location.EndDate.ToLocalTime();
+                showInCalendar = location.ShowInCalendar;
+                isPublic = location.IsPublic;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading working location {LocationId}", LocationId);
+            errorMessage = "Failed to load working location";
+        }
+    }
+
+    private async Task Submit()
+    {
+        errorMessage = null;
+
+        // Validation
+        if (startDate >= endDate)
+        {
+            errorMessage = "End date must be after start date";
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+
+            if (LocationId.HasValue)
+            {
+                // Update existing location
+                await WorkingLocationService.UpdateLocationAsync(
+                    UserId,
+                    LocationId.Value,
+                    locationType,
+                    startDate.ToUniversalTime(),
+                    endDate.ToUniversalTime(),
+                    locationDescription,
+                    address,
+                    notes
+                );
+            }
+            else
+            {
+                // Create new location
+                await WorkingLocationService.SetLocationAsync(
+                    UserId,
+                    locationType,
+                    startDate.ToUniversalTime(),
+                    endDate.ToUniversalTime(),
+                    locationDescription,
+                    address,
+                    notes
+                );
+            }
+
+            DialogService.Close(true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogWarning(ex, "Validation error saving working location");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving working location");
+            errorMessage = "An error occurred while saving the working location";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+
+    private void OnLocationTypeChanged()
+    {
+        // Update placeholder when location type changes
+        StateHasChanged();
+    }
+
+    private string GetPlaceholderText()
+    {
+        return locationType switch
+        {
+            WorkingLocationType.Office => "e.g., Main Office, Headquarters, Building A",
+            WorkingLocationType.Home => "e.g., Home Office",
+            WorkingLocationType.Remote => "e.g., Coffee Shop, Co-working Space",
+            WorkingLocationType.Traveling => "e.g., Client Site, Conference",
+            WorkingLocationType.Hybrid => "e.g., Office/Home Split",
+            _ => "Location name or description"
+        };
+    }
+
+    private void SetDateRange(int daysFromNow)
+    {
+        var date = DateTime.Now.AddDays(daysFromNow).Date;
+        startDate = date.AddHours(9); // 9 AM
+        endDate = date.AddHours(17); // 5 PM
+    }
+
+    private void SetThisWeek()
+    {
+        var today = DateTime.Now.Date;
+        var daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
+        var monday = today.AddDays(daysUntilMonday == 0 && today.DayOfWeek != DayOfWeek.Monday ? -7 : -daysUntilMonday);
+        var friday = monday.AddDays(4);
+
+        startDate = monday.AddHours(9);
+        endDate = friday.AddHours(17);
+    }
+
+    private void SetNextWeek()
+    {
+        var today = DateTime.Now.Date;
+        var daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
+        var thisMonday = today.AddDays(daysUntilMonday == 0 && today.DayOfWeek != DayOfWeek.Monday ? -7 : -daysUntilMonday);
+        var nextMonday = thisMonday.AddDays(7);
+        var nextFriday = nextMonday.AddDays(4);
+
+        startDate = nextMonday.AddHours(9);
+        endDate = nextFriday.AddHours(17);
+    }
+
+    private class LocationTypeOption
+    {
+        public WorkingLocationType Value { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
+}
