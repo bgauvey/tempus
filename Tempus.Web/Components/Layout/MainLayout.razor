@@ -79,16 +79,19 @@
     <!-- Sidebar only for Authenticated Users -->
     <AuthorizeView>
         <Authorized>
-            <RadzenSidebar FullHeight="true" @bind-Expanded="_drawerOpen">
+            <div class="custom-sidebar @(_sidebarPinned ? "pinned" : "collapsed") @(_sidebarHovered ? "hovered" : "") @(!_drawerOpen ? "hidden" : "")"
+                 @onmouseenter="@(() => { if (!_sidebarPinned) _sidebarHovered = true; })"
+                 @onmouseleave="@(() => _sidebarHovered = false)">
+
                 <!-- Simplified Navigation -->
-                <RadzenPanelMenu @rendermode="InteractiveServer">
+                <RadzenPanelMenu @rendermode="InteractiveServer" class="sidebar-menu">
                     <!-- Dashboard: Overview and quick access -->
                     <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
 
                     <!-- Calendar: Main view -->
                     <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
 
-                    <!-- Tasks: Task-focused view (new) -->
+                    <!-- Tasks: Task-focused view -->
                     <RadzenPanelMenuItem Text="Tasks" Path="/tasks" Icon="check_circle" />
 
                     <!-- People: Contacts + Teams -->
@@ -111,12 +114,16 @@
                     </RadzenPanelMenuItem>
                 </RadzenPanelMenu>
 
-                <!-- Hidden but accessible features (moved to contextual locations) -->
-                <!-- Meeting Polls → Calendar contextual menu -->
-                <!-- Booking Pages → Settings > Integrations -->
-                <!-- Rooms/Resources → Event creation flow -->
-                <!-- My/Shared/Public Calendars → Calendar Sources -->
-            </RadzenSidebar>
+                <!-- Pin/Unpin Button -->
+                <div class="sidebar-pin-button">
+                    <RadzenButton Icon="@(_sidebarPinned ? "push_pin" : "push_pin")"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@(() => _sidebarPinned = !_sidebarPinned)"
+                                  Size="ButtonSize.Small"
+                                  Style="@(_sidebarPinned ? "" : "transform: rotate(45deg);")"
+                                  title="@(_sidebarPinned ? "Unpin sidebar" : "Pin sidebar")" />
+                </div>
+            </div>
         </Authorized>
     </AuthorizeView>
     <RadzenBody>
@@ -177,12 +184,135 @@
 <!-- Help Popover Component -->
 <HelpPopover @ref="_helpPopover" />
 
+<style>
+    /* Custom Collapsible Sidebar */
+    .custom-sidebar {
+        position: fixed;
+        left: 0;
+        top: 60px;
+        bottom: 0;
+        background: var(--rz-sidebar-background-color, var(--rz-base-background-color));
+        border-right: 1px solid var(--rz-base-border-color);
+        transition: width 0.3s ease, box-shadow 0.3s ease;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Collapsed state (icon-only) */
+    .custom-sidebar.collapsed {
+        width: 64px;
+    }
+
+    /* Pinned state (expanded inline) */
+    .custom-sidebar.pinned {
+        width: 260px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Hovered state (expanded overlay) */
+    .custom-sidebar.collapsed.hovered {
+        width: 260px;
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+
+    /* Hidden state (mobile) */
+    .custom-sidebar.hidden {
+        transform: translateX(-100%);
+    }
+
+    /* Sidebar menu styling */
+    .custom-sidebar .sidebar-menu {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* Hide text in collapsed mode */
+    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-text {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    /* Center icons in collapsed mode */
+    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-icon {
+        margin-right: 0 !important;
+    }
+
+    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-link {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Pin button at bottom */
+    .sidebar-pin-button {
+        padding: 1rem;
+        border-top: 1px solid var(--rz-base-border-color);
+        display: flex;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .custom-sidebar.collapsed:not(.hovered) .sidebar-pin-button {
+        padding: 0.5rem;
+    }
+
+    /* Adjust body when sidebar is pinned */
+    .custom-sidebar.pinned ~ .rz-body {
+        margin-left: 260px;
+    }
+
+    .custom-sidebar.collapsed ~ .rz-body {
+        margin-left: 64px;
+    }
+
+    .custom-sidebar.hidden ~ .rz-body {
+        margin-left: 0;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .custom-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-sidebar:not(.hidden) {
+            transform: translateX(0);
+            width: 260px !important;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-sidebar ~ .rz-body {
+            margin-left: 0 !important;
+        }
+    }
+
+    /* Smooth transitions for menu items */
+    .custom-sidebar .rz-navigation-item {
+        transition: all 0.3s ease;
+    }
+
+    /* Tooltip for collapsed items */
+    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-link {
+        position: relative;
+    }
+</style>
+
 @code {
     private HelpPopover? _helpPopover;
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
     private bool _drawerOpen = true;
+    private bool _sidebarPinned = false;
+    private bool _sidebarHovered = false;
 
     protected override void OnInitialized()
     {
