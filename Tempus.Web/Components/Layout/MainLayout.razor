@@ -80,8 +80,11 @@
     <AuthorizeView>
         <Authorized>
             <RadzenSidebar FullHeight="true" @bind-Expanded="_drawerOpen">
-                <!-- Simplified Navigation: 5 Primary Items -->
+                <!-- Simplified Navigation -->
                 <RadzenPanelMenu @rendermode="InteractiveServer">
+                    <!-- Dashboard: Overview and quick access -->
+                    <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
+
                     <!-- Calendar: Main view -->
                     <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
 
@@ -112,7 +115,6 @@
                 <!-- Meeting Polls → Calendar contextual menu -->
                 <!-- Booking Pages → Settings > Integrations -->
                 <!-- Rooms/Resources → Event creation flow -->
-                <!-- Dashboard → Removed (Calendar is primary view) -->
                 <!-- My/Shared/Public Calendars → Calendar Sources -->
             </RadzenSidebar>
         </Authorized>
