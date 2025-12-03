@@ -1,0 +1,457 @@
+@page "/goals/analytics"
+@rendermode InteractiveServer
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Web.Components.Shared
+@inject IGoalService GoalService
+@inject ILogger<GoalsAnalytics> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Goals Analytics - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenButton Icon="arrow_back"
+                             Click="@(() => NavigationManager.NavigateTo("/goals"))"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light"
+                             Size="ButtonSize.Small" />
+                <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1" Style="margin: 0;">Goals Analytics</RadzenText>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenDropDown @bind-Value="@selectedPeriod"
+                               Data="@periods"
+                               TextProperty="Text"
+                               ValueProperty="Value"
+                               Change="@((object value) => LoadAnalytics())"
+                               Style="width: 150px;" />
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="@LoadAnalytics"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading analytics...</RadzenText>
+        </RadzenStack>
+    }
+    else if (analytics != null)
+    {
+        @* Overview Cards *@
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem;">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.9;">Total Goals</RadzenText>
+                        <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 700; margin: 0;">@analytics.TotalGoals</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">All time</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem;">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.9;">Active Goals</RadzenText>
+                        <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 700; margin: 0;">@analytics.ActiveGoals</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">In progress</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1.5rem;">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.9;">Completed</RadzenText>
+                        <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 700; margin: 0;">@analytics.CompletedGoals</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">Finished</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
+                <RadzenCard Style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 1.5rem;">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.9;">Avg Completion</RadzenText>
+                        <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 700; margin: 0;">@analytics.AverageCompletionRate.ToString("0")%</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;">Success rate</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Streaks and Activity *@
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6">Streaks & Activity</RadzenText>
+                        <RadzenStack Gap="1.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Longest Active Streak</RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                        <RadzenIcon Icon="local_fire_department" Style="color: #ef4444; font-size: 1.5rem;" />
+                                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@analytics.CurrentLongestStreak days</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Goals with Active Streaks</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@analytics.TotalActiveStreaks</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Total Completions</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">@analytics.TotalCompletions</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6">Completions by Day of Week</RadzenText>
+                        @if (analytics.CompletionsByDay.Any())
+                        {
+                            <RadzenChart>
+                                <RadzenColumnSeries Data="@GetDayOfWeekData()" CategoryProperty="Day" ValueProperty="Count" Title="Completions">
+                                    <RadzenSeriesDataLabels Visible="true" />
+                                </RadzenColumnSeries>
+                                <RadzenValueAxis>
+                                    <RadzenGridLines Visible="true" />
+                                    <RadzenAxisTitle Text="Completions" />
+                                </RadzenValueAxis>
+                                <RadzenCategoryAxis>
+                                    <RadzenAxisTitle Text="Day of Week" />
+                                </RadzenCategoryAxis>
+                            </RadzenChart>
+                        }
+                        else
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">No completion data available</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Category Breakdown *@
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6">Completions by Category</RadzenText>
+                        @if (analytics.CompletionsByCategory.Any())
+                        {
+                            <RadzenChart>
+                                <RadzenDonutSeries Data="@GetCategoryData()" CategoryProperty="Category" ValueProperty="Count" Title="Completions">
+                                    <RadzenSeriesDataLabels Visible="true" />
+                                </RadzenDonutSeries>
+                            </RadzenChart>
+                        }
+                        else
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">No category data available</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6">Category Details</RadzenText>
+                        @if (analytics.CompletionsByCategory.Any())
+                        {
+                            <RadzenStack Gap="0.5rem">
+                                @foreach (var category in analytics.CompletionsByCategory.OrderByDescending(c => c.Value))
+                                {
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                <div style="width: 12px; height: 12px; border-radius: 50%; background: @GetCategoryColor(category.Key);"></div>
+                                                <RadzenText TextStyle="TextStyle.Body2">@category.Key.ToString()</RadzenText>
+                                            </RadzenStack>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">@category.Value</RadzenText>
+                                        </RadzenStack>
+                                        <RadzenProgressBar Value="@GetCategoryPercentage(category.Value)" ShowValue="false" Style="height: 4px;" />
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">No category data available</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Top Performing Goals *@
+        @if (goalsWithProgress.Any())
+        {
+            <RadzenCard>
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6">Top Performing Goals</RadzenText>
+                    <RadzenDataList Data="@goalsWithProgress.OrderByDescending(g => g.GetCurrentPeriodCompletionPercentage()).Take(5)" TItem="Goal">
+                        <Template Context="goal">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Style="padding: 0.75rem;">
+                                <div style="width: 40px; height: 40px; border-radius: 8px; background: @goal.GetDefaultColor(); display: flex; align-items: center; justify-content: center;">
+                                    <RadzenIcon Icon="@goal.GetIcon()" Style="color: white; font-size: 20px;" />
+                                </div>
+                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">@goal.Title</RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Streak: @goal.GetCurrentStreak() days
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Total: @goal.GetTotalCompletionCount() completions
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                                <RadzenStack Gap="0.25rem" AlignItems="AlignItems.End">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
+                                        @goal.GetCurrentPeriodCompletionPercentage().ToString("0")%
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">completion</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataList>
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Insights *@
+        <RadzenCard Style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); border: 1px solid rgba(102, 126, 234, 0.2);">
+            <RadzenStack Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="lightbulb" Style="color: #667eea; font-size: 1.5rem;" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Insights</RadzenText>
+                </RadzenStack>
+                <RadzenStack Gap="0.75rem">
+                    @foreach (var insight in GetInsights())
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenIcon Icon="arrow_right" Style="color: #667eea; font-size: 1rem;" />
+                            <RadzenText TextStyle="TextStyle.Body2">@insight</RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    private bool isLoading = true;
+    private string userId = string.Empty;
+    private GoalAnalytics? analytics;
+    private List<Goal> goalsWithProgress = new();
+    private int selectedPeriod = 30;
+
+    private List<PeriodOption> periods = new()
+    {
+        new() { Text = "Last 7 Days", Value = 7 },
+        new() { Text = "Last 30 Days", Value = 30 },
+        new() { Text = "Last 90 Days", Value = 90 },
+        new() { Text = "Last Year", Value = 365 }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Authentication Error",
+                Detail = "User not authenticated",
+                Duration = 4000
+            });
+            return;
+        }
+
+        await LoadAnalytics();
+    }
+
+    private async Task LoadAnalytics()
+    {
+        try
+        {
+            isLoading = true;
+            var endDate = DateTime.UtcNow;
+            var startDate = endDate.AddDays(-selectedPeriod);
+
+            analytics = await GoalService.GetGoalAnalyticsAsync(userId, startDate, endDate);
+            goalsWithProgress = await GoalService.GetGoalsWithProgressAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading analytics");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load analytics",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<DayOfWeekData> GetDayOfWeekData()
+    {
+        if (analytics == null) return new();
+
+        var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        return daysOfWeek.Select(day => new DayOfWeekData
+        {
+            Day = day,
+            Count = analytics.CompletionsByDay.TryGetValue(day, out var count) ? count : 0
+        }).ToList();
+    }
+
+    private List<CategoryData> GetCategoryData()
+    {
+        if (analytics == null) return new();
+
+        return analytics.CompletionsByCategory.Select(c => new CategoryData
+        {
+            Category = c.Key.ToString(),
+            Count = c.Value
+        }).ToList();
+    }
+
+    private string GetCategoryColor(GoalCategory category)
+    {
+        return category switch
+        {
+            GoalCategory.Health => "#10b981",
+            GoalCategory.Fitness => "#ef4444",
+            GoalCategory.Productivity => "#8b5cf6",
+            GoalCategory.Learning => "#3b82f6",
+            GoalCategory.Finance => "#f59e0b",
+            GoalCategory.Social => "#ec4899",
+            GoalCategory.Career => "#06b6d4",
+            GoalCategory.Personal => "#6366f1",
+            _ => "#6b7280"
+        };
+    }
+
+    private double GetCategoryPercentage(int count)
+    {
+        if (analytics == null || analytics.TotalCompletions == 0) return 0;
+        return (count * 100.0) / analytics.TotalCompletions;
+    }
+
+    private List<string> GetInsights()
+    {
+        var insights = new List<string>();
+
+        if (analytics == null) return insights;
+
+        // Completion rate insight
+        if (analytics.AverageCompletionRate >= 80)
+        {
+            insights.Add("Excellent work! You're maintaining a high completion rate above 80%.");
+        }
+        else if (analytics.AverageCompletionRate >= 50)
+        {
+            insights.Add("Good progress! You're completing more than half of your goals.");
+        }
+        else if (analytics.AverageCompletionRate > 0)
+        {
+            insights.Add("Keep going! Consider reducing your goal count to focus on consistency.");
+        }
+
+        // Streak insight
+        if (analytics.CurrentLongestStreak >= 7)
+        {
+            insights.Add($"Amazing {analytics.CurrentLongestStreak}-day streak! Consistency is key to building lasting habits.");
+        }
+        else if (analytics.CurrentLongestStreak > 0)
+        {
+            insights.Add("You're building momentum. Try to extend your streak for maximum impact.");
+        }
+
+        // Active goals insight
+        if (analytics.ActiveGoals == 0 && analytics.TotalGoals > 0)
+        {
+            insights.Add("All your goals are paused or completed. Consider starting new goals or resuming existing ones.");
+        }
+        else if (analytics.ActiveGoals > 10)
+        {
+            insights.Add("You have many active goals. Consider focusing on your top priorities for better results.");
+        }
+
+        // Category insight
+        if (analytics.CompletionsByCategory.Any())
+        {
+            var topCategory = analytics.CompletionsByCategory.OrderByDescending(c => c.Value).First();
+            insights.Add($"Most progress in {topCategory.Key} with {topCategory.Value} completions.");
+        }
+
+        // Day of week insight
+        if (analytics.CompletionsByDay.Any())
+        {
+            var mostProductiveDay = analytics.CompletionsByDay.OrderByDescending(d => d.Value).First();
+            insights.Add($"{mostProductiveDay.Key} is your most productive day with {mostProductiveDay.Value} completions.");
+        }
+
+        // Default insight if no specific insights
+        if (!insights.Any())
+        {
+            insights.Add("Start tracking your goals to see personalized insights here.");
+        }
+
+        return insights;
+    }
+
+    private class PeriodOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public int Value { get; set; }
+    }
+
+    private class DayOfWeekData
+    {
+        public string Day { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+
+    private class CategoryData
+    {
+        public string Category { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}

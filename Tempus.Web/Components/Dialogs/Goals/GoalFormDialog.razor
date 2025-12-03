@@ -1,0 +1,254 @@
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IGoalService GoalService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject ILogger<GoalFormDialog> Logger
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Title" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@goal.Title" Style="width: 100%;" Placeholder="e.g., Exercise 3x per week" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Description" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@goal.Description" Style="width: 100%;" Rows="3" Placeholder="Describe your goal..." />
+    </RadzenFormField>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Category" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@goal.Category"
+                               Data="@categories"
+                               Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Priority" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@goal.Priority"
+                               Data="@priorities"
+                               Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Frequency" Variant="Variant.Outlined">
+                <RadzenDropDown @bind-Value="@goal.Frequency"
+                               Data="@frequencies"
+                               Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Target Count" Variant="Variant.Outlined">
+                <RadzenNumeric @bind-Value="@goal.TargetCount" Min="1" Style="width: 100%;" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (goal.Frequency == GoalFrequency.Weekly)
+    {
+        <RadzenFormField Text="Target Days of Week" Variant="Variant.Outlined">
+            <RadzenCheckBoxList @bind-Value="@selectedDays"
+                               TValue="DayOfWeek"
+                               Orientation="Orientation.Horizontal">
+                <Items>
+                    <RadzenCheckBoxListItem Text="Mon" Value="DayOfWeek.Monday" />
+                    <RadzenCheckBoxListItem Text="Tue" Value="DayOfWeek.Tuesday" />
+                    <RadzenCheckBoxListItem Text="Wed" Value="DayOfWeek.Wednesday" />
+                    <RadzenCheckBoxListItem Text="Thu" Value="DayOfWeek.Thursday" />
+                    <RadzenCheckBoxListItem Text="Fri" Value="DayOfWeek.Friday" />
+                    <RadzenCheckBoxListItem Text="Sat" Value="DayOfWeek.Saturday" />
+                    <RadzenCheckBoxListItem Text="Sun" Value="DayOfWeek.Sunday" />
+                </Items>
+            </RadzenCheckBoxList>
+        </RadzenFormField>
+    }
+
+    <RadzenFormField Text="Session Duration (minutes)" Variant="Variant.Outlined">
+        <RadzenNumeric @bind-Value="@goal.TargetDurationMinutes" Min="1" Style="width: 100%;" Placeholder="Optional" />
+    </RadzenFormField>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Start Date" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@goal.StartDate" Style="width: 100%;" ShowTime="false" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="End Date (Optional)" Variant="Variant.Outlined">
+                <RadzenDatePicker @bind-Value="@goal.EndDate" Style="width: 100%;" ShowTime="false" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Preferred Time of Day (HH:mm)" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@goal.PreferredTimeOfDay" Style="width: 100%;" Placeholder="e.g., 09:00" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Color" Variant="Variant.Outlined">
+        <RadzenColorPicker @bind-Value="@goal.Color" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+        <RadzenCheckBox @bind-Value="@goal.EnableSmartScheduling" Name="smartScheduling" />
+        <RadzenLabel Text="Enable smart scheduling (automatically schedule time blocks)" Component="smartScheduling" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+        <RadzenCheckBox @bind-Value="@goal.SendReminders" Name="sendReminders" />
+        <RadzenLabel Text="Send reminders" Component="sendReminders" />
+    </RadzenStack>
+
+    @if (goal.SendReminders)
+    {
+        <RadzenFormField Text="Reminder (minutes before)" Variant="Variant.Outlined">
+            <RadzenNumeric @bind-Value="@goal.ReminderMinutesBefore" Min="1" Style="width: 100%;" />
+        </RadzenFormField>
+    }
+
+    <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@goal.Notes" Style="width: 100%;" Rows="2" Placeholder="Additional notes..." />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel"
+                     Click="@Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="@(isEdit ? "Update" : "Create")"
+                     Click="@Save"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Disabled="@isSaving" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    [Parameter]
+    public Guid? GoalId { get; set; }
+
+    private Goal goal = new();
+    private bool isEdit = false;
+    private bool isSaving = false;
+    private IEnumerable<DayOfWeek> selectedDays = new List<DayOfWeek>();
+
+    private List<GoalCategory> categories = Enum.GetValues<GoalCategory>().ToList();
+    private List<Priority> priorities = Enum.GetValues<Priority>().ToList();
+    private List<GoalFrequency> frequencies = Enum.GetValues<GoalFrequency>().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (GoalId.HasValue)
+        {
+            isEdit = true;
+            try
+            {
+                var existingGoal = await GoalService.GetByIdAsync(GoalId.Value);
+                if (existingGoal != null)
+                {
+                    goal = existingGoal;
+
+                    // Parse selected days from comma-separated string
+                    if (!string.IsNullOrEmpty(goal.TargetDaysOfWeek))
+                    {
+                        var days = goal.TargetDaysOfWeek.Split(',')
+                            .Select(d => (DayOfWeek)int.Parse(d.Trim()))
+                            .ToList();
+                        selectedDays = days;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error loading goal");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to load goal",
+                    Duration = 4000
+                });
+            }
+        }
+        else
+        {
+            goal.UserId = UserId;
+            goal.StartDate = DateTime.UtcNow;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(goal.Title))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Validation",
+                Detail = "Please enter a title",
+                Duration = 3000
+            });
+            return;
+        }
+
+        // Convert selected days to comma-separated string
+        if (goal.Frequency == GoalFrequency.Weekly && selectedDays.Any())
+        {
+            goal.TargetDaysOfWeek = string.Join(",", selectedDays.Select(d => (int)d));
+        }
+
+        isSaving = true;
+
+        try
+        {
+            if (isEdit)
+            {
+                await GoalService.UpdateGoalAsync(UserId, GoalId!.Value, goal);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Goal updated successfully",
+                    Duration = 3000
+                });
+            }
+            else
+            {
+                await GoalService.CreateGoalAsync(UserId, goal);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Goal created successfully",
+                    Duration = 3000
+                });
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving goal");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to save goal: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

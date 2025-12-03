@@ -1,0 +1,144 @@
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@inject IGoalService GoalService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject ILogger<LogProgressDialog> Logger
+
+<RadzenStack Gap="1rem">
+    @if (goal != null)
+    {
+        <RadzenStack Gap="0.5rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: @goal.GetDefaultColor(); display: flex; align-items: center; justify-content: center;">
+                    <RadzenIcon Icon="@goal.GetIcon()" Style="color: white; font-size: 20px;" />
+                </div>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">@goal.Title</RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    }
+
+    <RadzenFormField Text="Completed At" Variant="Variant.Outlined">
+        <RadzenDatePicker @bind-Value="@progress.CompletedAt" Style="width: 100%;" ShowTime="true" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Duration (minutes)" Variant="Variant.Outlined">
+        <RadzenNumeric @bind-Value="@progress.DurationMinutes" Min="1" Style="width: 100%;" Placeholder="Optional" />
+    </RadzenFormField>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="8">
+            <RadzenFormField Text="Value" Variant="Variant.Outlined">
+                <RadzenNumeric @bind-Value="@progress.Value" Style="width: 100%;" Placeholder="Optional (e.g., weight, distance)" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenFormField Text="Unit" Variant="Variant.Outlined">
+                <RadzenTextBox @bind-Value="@progress.ValueUnit" Style="width: 100%;" Placeholder="kg, miles, etc." />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Rating (1-5)" Variant="Variant.Outlined">
+        <RadzenRating @bind-Value="@ratingValue" Stars="5" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Notes" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@progress.Notes" Style="width: 100%;" Rows="3" Placeholder="How did it go?" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel"
+                     Click="@Cancel"
+                     Variant="Variant.Text"
+                     ButtonStyle="ButtonStyle.Light" />
+        <RadzenButton Text="Log Progress"
+                     Click="@Save"
+                     ButtonStyle="ButtonStyle.Success"
+                     Disabled="@isSaving" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    [Parameter]
+    public Guid GoalId { get; set; }
+
+    private Goal? goal;
+    private GoalProgress progress = new() { CompletedAt = DateTime.Now };
+    private bool isSaving = false;
+    private int ratingValue = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            goal = await GoalService.GetByIdAsync(GoalId);
+            if (goal == null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Goal not found",
+                    Duration = 4000
+                });
+                DialogService.Close(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading goal");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load goal",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task Save()
+    {
+        isSaving = true;
+
+        try
+        {
+            progress.Rating = ratingValue > 0 ? ratingValue : null;
+            await GoalService.LogProgressAsync(UserId, GoalId, progress);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Progress logged successfully",
+                Duration = 3000
+            });
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error logging progress");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to log progress: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}

@@ -36,6 +36,8 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RoomBooking> RoomBookings { get; set; }
     public DbSet<ResourceReservation> ResourceReservations { get; set; }
     public DbSet<WorkingLocationStatus> WorkingLocationStatuses { get; set; }
+    public DbSet<Goal> Goals { get; set; }
+    public DbSet<GoalProgress> GoalProgress { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -585,6 +587,48 @@ public class TempusDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(w => new { w.UserId, w.StartDate, w.EndDate });
             entity.HasIndex(w => new { w.StartDate, w.EndDate, w.IsActive });
             entity.HasIndex(w => new { w.UserId, w.LocationType });
+        });
+
+        modelBuilder.Entity<Goal>(entity =>
+        {
+            entity.HasKey(g => g.Id);
+            entity.Property(g => g.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(g => g.Title).IsRequired().HasMaxLength(200);
+            entity.Property(g => g.Description).HasMaxLength(2000);
+            entity.Property(g => g.TargetDaysOfWeek).HasMaxLength(50);
+            entity.Property(g => g.PreferredTimeOfDay).HasMaxLength(10);
+            entity.Property(g => g.Color).HasMaxLength(50);
+            entity.Property(g => g.Icon).HasMaxLength(100);
+            entity.Property(g => g.Notes).HasMaxLength(2000);
+
+            entity.HasOne(g => g.User)
+                  .WithMany()
+                  .HasForeignKey(g => g.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(g => g.ProgressEntries)
+                  .WithOne(p => p.Goal)
+                  .HasForeignKey(p => p.GoalId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(g => new { g.UserId, g.Status });
+            entity.HasIndex(g => new { g.UserId, g.Category });
+            entity.HasIndex(g => new { g.UserId, g.Status, g.StartDate });
+        });
+
+        modelBuilder.Entity<GoalProgress>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Notes).HasMaxLength(1000);
+            entity.Property(p => p.ValueUnit).HasMaxLength(50);
+
+            entity.HasOne(p => p.Goal)
+                  .WithMany(g => g.ProgressEntries)
+                  .HasForeignKey(p => p.GoalId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => new { p.GoalId, p.CompletedAt });
+            entity.HasIndex(p => p.CompletedAt);
         });
     }
 }

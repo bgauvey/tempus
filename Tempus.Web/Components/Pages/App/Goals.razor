@@ -1,0 +1,372 @@
+@page "/goals"
+@rendermode InteractiveServer
+@using Tempus.Core.Enums
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Web.Components.Dialogs.Goals
+@using Tempus.Web.Components.Shared
+@inject IGoalService GoalService
+@inject ILogger<Goals> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Goals & Habits - Tempus</PageTitle>
+
+<RadzenStack Gap="1.5rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Goals & Habits</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Analytics"
+                             Icon="insights"
+                             Click="@(() => NavigationManager.NavigateTo("/goals/analytics"))"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Info" />
+                <RadzenButton Text="New Goal"
+                             Icon="add"
+                             Click="@OpenCreateDialog"
+                             ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Refresh"
+                             Icon="refresh"
+                             Click="@LoadData"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading goals...</RadzenText>
+        </RadzenStack>
+    }
+    else
+    {
+        @* Filter Tabs *@
+        <RadzenTabs @bind-SelectedIndex="@selectedTabIndex" Change="@OnTabChange">
+            <Tabs>
+                <RadzenTabsItem Text="All Goals" />
+                <RadzenTabsItem Text="Active" />
+                <RadzenTabsItem Text="Completed" />
+                <RadzenTabsItem Text="Paused" />
+            </Tabs>
+        </RadzenTabs>
+
+        @* Goals Grid *@
+        @if (filteredGoals.Any())
+        {
+            <RadzenDataList Data="@filteredGoals" TItem="Goal" AllowPaging="true" PageSize="10">
+                <Template Context="goal">
+                    <RadzenCard Style="margin-bottom: 1rem;">
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                    <div style="width: 48px; height: 48px; border-radius: 8px; background: @goal.GetDefaultColor(); display: flex; align-items: center; justify-content: center;">
+                                        <RadzenIcon Icon="@goal.GetIcon()" Style="color: white; font-size: 24px;" />
+                                    </div>
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">@goal.Title</RadzenText>
+                                        @if (!string.IsNullOrEmpty(goal.Description))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">@goal.Description</RadzenText>
+                                        }
+                                    </RadzenStack>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                    <RadzenButton Icon="edit"
+                                                 Click="@(() => OpenEditDialog(goal.Id))"
+                                                 Variant="Variant.Text"
+                                                 ButtonStyle="ButtonStyle.Info"
+                                                 Size="ButtonSize.Small"
+                                                 title="Edit" />
+                                    <RadzenButton Icon="add_circle"
+                                                 Click="@(() => OpenLogProgressDialog(goal.Id))"
+                                                 Variant="Variant.Text"
+                                                 ButtonStyle="ButtonStyle.Success"
+                                                 Size="ButtonSize.Small"
+                                                 title="Log Progress" />
+                                    <RadzenButton Icon="delete"
+                                                 Click="@(() => DeleteGoal(goal.Id))"
+                                                 Variant="Variant.Text"
+                                                 ButtonStyle="ButtonStyle.Danger"
+                                                 Size="ButtonSize.Small"
+                                                 title="Delete" />
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                <RadzenBadge Text="@goal.Category.ToString()" BadgeStyle="BadgeStyle.Secondary" IsPill="true" />
+                                <RadzenBadge Text="@goal.Frequency.ToString()" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                                <RadzenBadge Text="@goal.Priority.ToString()" BadgeStyle="@GetPriorityBadgeStyle(goal.Priority)" IsPill="true" />
+                                @if (goal.Status != GoalStatus.Active)
+                                {
+                                    <RadzenBadge Text="@goal.Status.ToString()" BadgeStyle="BadgeStyle.Light" IsPill="true" />
+                                }
+                            </RadzenStack>
+
+                            @* Progress Section *@
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Current Period Progress
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="font-weight: 600;">
+                                        @goal.GetCurrentPeriodCompletionPercentage().ToString("0")%
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenProgressBar Value="@goal.GetCurrentPeriodCompletionPercentage()" ShowValue="false" Style="height: 6px;" />
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" Wrap="FlexWrap.Wrap">
+                                    <RadzenStack Gap="0">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Target</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@goal.TargetCount @goal.Frequency.ToString()</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Gap="0">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Streak</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@goal.GetCurrentStreak() days</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Gap="0">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Total Completions</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@goal.GetTotalCompletionCount()</RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+                    <RadzenIcon Icon="flag" Style="font-size: 4rem; opacity: 0.3;" />
+                    <RadzenText TextStyle="TextStyle.H6">@GetEmptyStateMessage()</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Style="text-align: center; max-width: 400px; color: var(--rz-text-secondary-color);">
+                        @GetEmptyStateDescription()
+                    </RadzenText>
+                    @if (selectedTabIndex == 0)
+                    {
+                        <RadzenButton Text="Create Your First Goal"
+                                     Icon="add"
+                                     Click="@OpenCreateDialog"
+                                     ButtonStyle="ButtonStyle.Primary" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+    }
+</RadzenStack>
+
+@code {
+    private bool isLoading = true;
+    private string userId = string.Empty;
+    private List<Goal> goals = new();
+    private List<Goal> filteredGoals = new();
+    private int selectedTabIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Authentication Error",
+                Detail = "User not authenticated",
+                Duration = 4000
+            });
+            return;
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            goals = await GoalService.GetGoalsWithProgressAsync(userId);
+            FilterGoals();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading goals");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load goals",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnTabChange(int index)
+    {
+        selectedTabIndex = index;
+        FilterGoals();
+    }
+
+    private void FilterGoals()
+    {
+        filteredGoals = selectedTabIndex switch
+        {
+            0 => goals, // All
+            1 => goals.Where(g => g.Status == GoalStatus.Active).ToList(), // Active
+            2 => goals.Where(g => g.Status == GoalStatus.Completed).ToList(), // Completed
+            3 => goals.Where(g => g.Status == GoalStatus.Paused).ToList(), // Paused
+            _ => goals
+        };
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var result = await DialogService.OpenAsync<GoalFormDialog>("Create Goal",
+            new Dictionary<string, object> { { "UserId", userId } },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(Guid goalId)
+    {
+        var result = await DialogService.OpenAsync<GoalFormDialog>("Edit Goal",
+            new Dictionary<string, object>
+            {
+                { "UserId", userId },
+                { "GoalId", goalId }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenLogProgressDialog(Guid goalId)
+    {
+        var result = await DialogService.OpenAsync<LogProgressDialog>("Log Progress",
+            new Dictionary<string, object>
+            {
+                { "UserId", userId },
+                { "GoalId", goalId }
+            },
+            new DialogOptions
+            {
+                Width = "500px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteGoal(Guid goalId)
+    {
+        var goal = goals.FirstOrDefault(g => g.Id == goalId);
+        if (goal == null) return;
+
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete '{goal.Title}'?",
+            "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await GoalService.DeleteGoalAsync(userId, goalId);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Goal deleted successfully",
+                    Duration = 3000
+                });
+
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting goal");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to delete goal",
+                    Duration = 4000
+                });
+            }
+        }
+    }
+
+    private BadgeStyle GetPriorityBadgeStyle(Priority priority)
+    {
+        return priority switch
+        {
+            Priority.Urgent => BadgeStyle.Danger,
+            Priority.High => BadgeStyle.Warning,
+            Priority.Medium => BadgeStyle.Info,
+            Priority.Low => BadgeStyle.Light,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private string GetEmptyStateMessage()
+    {
+        return selectedTabIndex switch
+        {
+            0 => "No Goals Yet",
+            1 => "No Active Goals",
+            2 => "No Completed Goals",
+            3 => "No Paused Goals",
+            _ => "No Goals"
+        };
+    }
+
+    private string GetEmptyStateDescription()
+    {
+        return selectedTabIndex switch
+        {
+            0 => "Start tracking your goals and habits to achieve your aspirations. Create your first goal to get started!",
+            1 => "You don't have any active goals at the moment. Create a new goal or resume a paused one.",
+            2 => "You haven't completed any goals yet. Keep working on your active goals!",
+            3 => "You don't have any paused goals. Goals can be paused temporarily and resumed later.",
+            _ => ""
+        };
+    }
+}
