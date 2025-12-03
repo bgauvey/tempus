@@ -11,6 +11,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Goals & Habits - Tempus</PageTitle>
 
@@ -21,6 +22,11 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Analytics"
+                             Icon="insights"
+                             Click="@(() => NavigationManager.NavigateTo("/goals/analytics"))"
+                             Variant="Variant.Text"
+                             ButtonStyle="ButtonStyle.Info" />
                 <RadzenButton Text="New Goal"
                              Icon="add"
                              Click="@OpenCreateDialog"
