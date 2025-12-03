@@ -1,0 +1,87 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="secondary-nav">
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+        @foreach (var item in Items)
+        {
+            <a href="@item.Path" class="secondary-nav-item @(IsActive(item.Path) ? "active" : "")">
+                <RadzenIcon Icon="@item.Icon" Style="font-size: 1.25rem;" />
+                <span class="secondary-nav-text">@item.Text</span>
+            </a>
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    .secondary-nav {
+        background: var(--rz-base-background-color);
+        border-bottom: 1px solid var(--rz-base-border-color);
+        padding: 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .secondary-nav-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        text-decoration: none;
+        color: var(--rz-text-color);
+        transition: all 0.2s ease;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+    }
+
+    .secondary-nav-item:hover {
+        background: var(--rz-base-100);
+        border-bottom-color: var(--rz-primary);
+    }
+
+    .secondary-nav-item.active {
+        color: var(--rz-primary);
+        border-bottom-color: var(--rz-primary);
+        font-weight: 600;
+    }
+
+    .secondary-nav-text {
+        font-size: 0.9375rem;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .secondary-nav-item {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .secondary-nav-item .rz-icon {
+            font-size: 1.125rem !important;
+        }
+
+        .secondary-nav-text {
+            font-size: 0.875rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<SecondaryNavItem> Items { get; set; } = new();
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private bool IsActive(string path)
+    {
+        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        return currentPath.Equals(path.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public class SecondaryNavItem
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+    }
+}

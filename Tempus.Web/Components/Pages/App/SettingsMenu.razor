@@ -1,0 +1,161 @@
+@page "/settings-menu"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Tempus.Web.Components.Shared
+@attribute [Authorize]
+
+<PageTitle>Settings - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
+
+<div class="settings-container">
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Settings</RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1" Style="margin-top: 1rem;">
+        Configure your Tempus preferences and integrations.
+    </RadzenText>
+
+    <RadzenRow Gap="1.5rem" Style="margin-top: 2rem;">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="tune" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">General</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Personal preferences, appearance, and general settings.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/settings"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="event" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Calendar Sources</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Manage your calendar sources and subscriptions.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/calendar-sources"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="sync" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Integrations</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Connect with external services and tools.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/integrations"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="upload" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Import/Export</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Import and export your calendar data.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/import"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="beach_access" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Availability</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Set your out-of-office and availability status.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/out-of-office"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="location_on" Style="font-size: 1.75rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Working Location</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Manage your working location and office status.
+                    </RadzenText>
+                    <RadzenButton Text="Open"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/working-location"))"
+                                  Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto; align-self: flex-start;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+<style>
+    .settings-container {
+        padding: 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+</style>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
+}

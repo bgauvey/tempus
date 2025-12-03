@@ -79,11 +79,11 @@
     <!-- Sidebar only for Authenticated Users -->
     <AuthorizeView>
         <Authorized>
-            <div class="custom-sidebar @(_sidebarPinned ? "pinned" : "collapsed") @(_sidebarHovered ? "hovered" : "") @(!_drawerOpen ? "hidden" : "")"
-                 @onmouseenter="@(() => { if (!_sidebarPinned) _sidebarHovered = true; })"
+            <div class="custom-sidebar collapsed @(_sidebarHovered ? "hovered" : "") @(!_drawerOpen ? "hidden" : "")"
+                 @onmouseenter="@(() => _sidebarHovered = true)"
                  @onmouseleave="@(() => _sidebarHovered = false)">
 
-                <!-- Simplified Navigation -->
+                <!-- Flat Navigation (No Sublevels) -->
                 <RadzenPanelMenu @rendermode="InteractiveServer" class="sidebar-menu">
                     <!-- Dashboard: Overview and quick access -->
                     <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
@@ -94,35 +94,15 @@
                     <!-- Tasks: Task-focused view -->
                     <RadzenPanelMenuItem Text="Tasks" Path="/tasks" Icon="check_circle" />
 
-                    <!-- People: Contacts + Teams -->
-                    <RadzenPanelMenuItem Text="People" Icon="people">
-                        <RadzenPanelMenuItem Text="Contacts" Path="/addresses" Icon="contact_mail" />
-                        <RadzenPanelMenuItem Text="Teams" Path="/teams" Icon="groups" />
-                    </RadzenPanelMenuItem>
+                    <!-- People: Landing page with secondary nav -->
+                    <RadzenPanelMenuItem Text="People" Path="/people" Icon="people" />
 
                     <!-- Insights: Analytics + Benchmarks -->
                     <RadzenPanelMenuItem Text="Insights" Path="/insights" Icon="insights" />
 
-                    <!-- Settings: All configuration -->
-                    <RadzenPanelMenuItem Text="Settings" Icon="settings">
-                        <RadzenPanelMenuItem Text="General" Path="/settings" Icon="tune" />
-                        <RadzenPanelMenuItem Text="Calendar Sources" Path="/calendar-sources" Icon="event" />
-                        <RadzenPanelMenuItem Text="Integrations" Path="/integrations" Icon="sync" />
-                        <RadzenPanelMenuItem Text="Import/Export" Path="/import" Icon="upload" />
-                        <RadzenPanelMenuItem Text="Availability" Path="/out-of-office" Icon="beach_access" />
-                        <RadzenPanelMenuItem Text="Working Location" Path="/working-location" Icon="location_on" />
-                    </RadzenPanelMenuItem>
+                    <!-- Settings: Landing page with secondary nav -->
+                    <RadzenPanelMenuItem Text="Settings" Path="/settings-menu" Icon="settings" />
                 </RadzenPanelMenu>
-
-                <!-- Pin/Unpin Button -->
-                <div class="sidebar-pin-button">
-                    <RadzenButton Icon="@(_sidebarPinned ? "push_pin" : "push_pin")"
-                                  ButtonStyle="ButtonStyle.Light"
-                                  Click="@(() => _sidebarPinned = !_sidebarPinned)"
-                                  Size="ButtonSize.Small"
-                                  Style="@(_sidebarPinned ? "" : "transform: rotate(45deg);")"
-                                  title="@(_sidebarPinned ? "Unpin sidebar" : "Pin sidebar")" />
-                </div>
             </div>
         </Authorized>
     </AuthorizeView>
@@ -185,7 +165,7 @@
 <HelpPopover @ref="_helpPopover" />
 
 <style>
-    /* Custom Collapsible Sidebar */
+    /* Custom Always-Collapsed Sidebar */
     .custom-sidebar {
         position: fixed;
         left: 0;
@@ -198,22 +178,11 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-    }
-
-    /* Collapsed state (icon-only) */
-    .custom-sidebar.collapsed {
         width: 64px;
     }
 
-    /* Pinned state (expanded inline) */
-    .custom-sidebar.pinned {
-        width: 260px;
-        position: relative;
-        z-index: 1;
-    }
-
     /* Hovered state (expanded overlay) */
-    .custom-sidebar.collapsed.hovered {
+    .custom-sidebar.hovered {
         width: 260px;
         box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
         z-index: 1000;
@@ -232,7 +201,7 @@
     }
 
     /* Hide text in collapsed mode */
-    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-text {
+    .custom-sidebar:not(.hovered) .rz-navigation-item-text {
         opacity: 0;
         width: 0;
         overflow: hidden;
@@ -240,35 +209,18 @@
     }
 
     /* Center icons in collapsed mode */
-    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-icon {
+    .custom-sidebar:not(.hovered) .rz-navigation-item-icon {
         margin-right: 0 !important;
     }
 
-    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-link {
+    .custom-sidebar:not(.hovered) .rz-navigation-item-link {
         justify-content: center;
         padding-left: 0;
         padding-right: 0;
     }
 
-    /* Pin button at bottom */
-    .sidebar-pin-button {
-        padding: 1rem;
-        border-top: 1px solid var(--rz-base-border-color);
-        display: flex;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .custom-sidebar.collapsed:not(.hovered) .sidebar-pin-button {
-        padding: 0.5rem;
-    }
-
-    /* Adjust body when sidebar is pinned */
-    .custom-sidebar.pinned ~ .rz-body {
-        margin-left: 260px;
-    }
-
-    .custom-sidebar.collapsed ~ .rz-body {
+    /* Adjust body - always 64px margin for icon sidebar */
+    .custom-sidebar ~ .rz-body {
         margin-left: 64px;
     }
 
@@ -298,11 +250,6 @@
     .custom-sidebar .rz-navigation-item {
         transition: all 0.3s ease;
     }
-
-    /* Tooltip for collapsed items */
-    .custom-sidebar.collapsed:not(.hovered) .rz-navigation-item-link {
-        position: relative;
-    }
 </style>
 
 @code {
@@ -311,7 +258,6 @@
     private HttpContext? HttpContext { get; set; }
 
     private bool _drawerOpen = true;
-    private bool _sidebarPinned = false;
     private bool _sidebarHovered = false;
 
     protected override void OnInitialized()
