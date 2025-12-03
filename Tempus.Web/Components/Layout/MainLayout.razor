@@ -79,29 +79,26 @@
     <!-- Sidebar only for Authenticated Users -->
     <AuthorizeView>
         <Authorized>
-            <div class="custom-sidebar collapsed @(_sidebarHovered ? "hovered" : "") @(!_drawerOpen ? "hidden" : "")"
-                 @onmouseenter="@(() => _sidebarHovered = true)"
-                 @onmouseleave="@(() => _sidebarHovered = false)">
-
-                <!-- Flat Navigation (No Sublevels) -->
+            <div class="custom-sidebar @(!_drawerOpen ? "hidden" : "")">
+                <!-- Flat Navigation (Icons Only) -->
                 <RadzenPanelMenu @rendermode="InteractiveServer" class="sidebar-menu">
                     <!-- Dashboard: Overview and quick access -->
-                    <RadzenPanelMenuItem Text="Dashboard" Path="/dashboard" Icon="dashboard" />
+                    <RadzenPanelMenuItem Text="" Path="/dashboard" Icon="dashboard" title="Dashboard" />
 
                     <!-- Calendar: Main view -->
-                    <RadzenPanelMenuItem Text="Calendar" Path="/calendar" Icon="calendar_month" />
+                    <RadzenPanelMenuItem Text="" Path="/calendar" Icon="calendar_month" title="Calendar" />
 
                     <!-- Tasks: Task-focused view -->
-                    <RadzenPanelMenuItem Text="Tasks" Path="/tasks" Icon="check_circle" />
+                    <RadzenPanelMenuItem Text="" Path="/tasks" Icon="check_circle" title="Tasks" />
 
                     <!-- People: Landing page with secondary nav -->
-                    <RadzenPanelMenuItem Text="People" Path="/people" Icon="people" />
+                    <RadzenPanelMenuItem Text="" Path="/people" Icon="people" title="People" />
 
                     <!-- Insights: Analytics + Benchmarks -->
-                    <RadzenPanelMenuItem Text="Insights" Path="/insights" Icon="insights" />
+                    <RadzenPanelMenuItem Text="" Path="/insights" Icon="insights" title="Insights" />
 
                     <!-- Settings: Landing page with secondary nav -->
-                    <RadzenPanelMenuItem Text="Settings" Path="/settings-menu" Icon="settings" />
+                    <RadzenPanelMenuItem Text="" Path="/settings-menu" Icon="settings" title="Settings" />
                 </RadzenPanelMenu>
             </div>
         </Authorized>
@@ -165,7 +162,7 @@
 <HelpPopover @ref="_helpPopover" />
 
 <style>
-    /* Custom Always-Collapsed Sidebar */
+    /* Custom Icon-Only Sidebar */
     .custom-sidebar {
         position: fixed;
         left: 0;
@@ -173,19 +170,11 @@
         bottom: 0;
         background: var(--rz-sidebar-background-color, var(--rz-base-background-color));
         border-right: 1px solid var(--rz-base-border-color);
-        transition: width 0.3s ease, box-shadow 0.3s ease;
         z-index: 999;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        width: 64px;
-    }
-
-    /* Hovered state (expanded overlay) */
-    .custom-sidebar.hovered {
-        width: 260px;
-        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
-        z-index: 1000;
+        width: 52px;
     }
 
     /* Hidden state (mobile) */
@@ -200,28 +189,38 @@
         overflow-x: hidden;
     }
 
-    /* Hide text in collapsed mode */
-    .custom-sidebar:not(.hovered) .rz-navigation-item-text {
-        opacity: 0;
-        width: 0;
-        overflow: hidden;
-        white-space: nowrap;
+    /* Hide all text - icons only */
+    .custom-sidebar .rz-navigation-item-text {
+        display: none !important;
     }
 
-    /* Center icons in collapsed mode */
-    .custom-sidebar:not(.hovered) .rz-navigation-item-icon {
+    /* Icon styling - 32x32 with 5px padding */
+    .custom-sidebar .rz-navigation-item-icon {
         margin-right: 0 !important;
-    }
-
-    .custom-sidebar:not(.hovered) .rz-navigation-item-link {
+        font-size: 32px !important;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
         justify-content: center;
-        padding-left: 0;
-        padding-right: 0;
     }
 
-    /* Adjust body - always 64px margin for icon sidebar */
+    .custom-sidebar .rz-navigation-item-link {
+        justify-content: center;
+        align-items: center;
+        padding: 5px !important;
+        min-height: 42px;
+        display: flex;
+    }
+
+    /* Remove expand arrow for items with children */
+    .custom-sidebar .rz-navigation-item-expand {
+        display: none !important;
+    }
+
+    /* Adjust body for icon sidebar */
     .custom-sidebar ~ .rz-body {
-        margin-left: 64px;
+        margin-left: 52px;
     }
 
     .custom-sidebar.hidden ~ .rz-body {
@@ -237,18 +236,12 @@
 
         .custom-sidebar:not(.hidden) {
             transform: translateX(0);
-            width: 260px !important;
-            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+            width: 52px !important;
         }
 
         .custom-sidebar ~ .rz-body {
             margin-left: 0 !important;
         }
-    }
-
-    /* Smooth transitions for menu items */
-    .custom-sidebar .rz-navigation-item {
-        transition: all 0.3s ease;
     }
 </style>
 
@@ -258,7 +251,6 @@
     private HttpContext? HttpContext { get; set; }
 
     private bool _drawerOpen = true;
-    private bool _sidebarHovered = false;
 
     protected override void OnInitialized()
     {
