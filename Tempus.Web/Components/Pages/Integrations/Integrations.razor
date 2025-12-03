@@ -23,6 +23,8 @@
 
 <PageTitle>Integrations & Booking - Tempus</PageTitle>
 
+<SecondaryNav Items="@_navItems" />
+
 <RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Calendar Integrations</RadzenText>
 <RadzenText class="rz-mb-4">Connect your existing calendars to sync events with Tempus</RadzenText>
 
@@ -272,6 +274,16 @@ else
 }
 
 @code {
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
+
     // Calendar integration state
     private CalendarIntegration? _googleIntegration;
     private CalendarIntegration? _appleIntegration;

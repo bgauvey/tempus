@@ -5,6 +5,7 @@
 @using Tempus.Core.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using Tempus.Web.Components.Dialogs.WorkingLocation
+@using Tempus.Web.Components.Shared
 @inject IWorkingLocationService WorkingLocationService
 @inject ILogger<WorkingLocation> Logger
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -12,6 +13,8 @@
 @inject DialogService DialogService
 
 <PageTitle>Working Location - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
 
 <RadzenStack Gap="1.5rem">
     <RadzenRow AlignItems="AlignItems.Center">
@@ -205,6 +208,16 @@
 </RadzenStack>
 
 @code {
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
+
     private bool isLoading = true;
     private string userId = string.Empty;
     private WorkingLocationStatus? currentLocation;
