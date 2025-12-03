@@ -6,6 +6,7 @@
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Web.Components.Account
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject IIcsImportService IcsImportService
 @inject IPstImportService PstImportService
@@ -17,6 +18,8 @@
 @inject ILogger<Import> Logger
 
 <PageTitle>Import Calendar - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
 
 <RadzenText TextStyle="TextStyle.H3" class="rz-mb-2">Import Calendar File</RadzenText>
 <RadzenText class="rz-mb-4">Upload an ICS or PST calendar file to import events into Tempus</RadzenText>
@@ -172,6 +175,16 @@
 </RadzenRow>
 
 @code {
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
+
     private IBrowserFile? _selectedFile;
     private bool _importing;
     private bool _saving;

@@ -16,6 +16,8 @@
 
 <PageTitle>Address Book - Tempus</PageTitle>
 
+<SecondaryNav Items="@_navItems" />
+
 <div style="padding: 2rem;">
     <RadzenStack Gap="2rem">
         <!-- Header Card -->
@@ -64,6 +66,12 @@
     private List<Tempus.Core.Models.Contact> _contacts = new();
     private bool _loading = true;
     private string _userId = string.Empty;
+
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "Contacts", Path = "/addresses", Icon = "contact_mail" },
+        new() { Text = "Teams", Path = "/teams", Icon = "groups" }
+    };
 
     protected override async Task OnInitializedAsync()
     {

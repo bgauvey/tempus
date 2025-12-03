@@ -1,0 +1,75 @@
+@page "/people"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Tempus.Web.Components.Shared
+@attribute [Authorize]
+
+<PageTitle>People - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
+
+<div class="people-container">
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">People</RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1" Style="margin-top: 1rem;">
+        Select an option from the menu above to manage your contacts and teams.
+    </RadzenText>
+
+    <RadzenRow Gap="2rem" Style="margin-top: 2rem;">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="contact_mail" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Contacts</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Manage your personal and business contacts. Add, edit, and organize contact information.
+                    </RadzenText>
+                    <RadzenButton Text="Go to Contacts"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/addresses"))"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="groups" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Teams</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Create and manage teams. Collaborate with team members and share calendars.
+                    </RadzenText>
+                    <RadzenButton Text="Go to Teams"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/teams"))"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+<style>
+    .people-container {
+        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+</style>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "Contacts", Path = "/addresses", Icon = "contact_mail" },
+        new() { Text = "Teams", Path = "/teams", Icon = "groups" }
+    };
+}

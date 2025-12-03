@@ -1,0 +1,122 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="secondary-nav">
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+        @foreach (var item in Items)
+        {
+            <a href="@item.Path" class="secondary-nav-item @(IsActive(item.Path) ? "active" : "")">
+                <RadzenIcon Icon="@item.Icon" Style="font-size: 1.25rem;" />
+                <span class="secondary-nav-text">@item.Text</span>
+            </a>
+        }
+    </RadzenStack>
+</div>
+
+<style>
+    .secondary-nav {
+        background: transparent;
+        border-bottom: 1px solid var(--rz-base-border-color);
+        padding: 0.5rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .secondary-nav-item {
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        margin: 0 0.25rem;
+        text-decoration: none;
+        color: var(--rz-text-secondary-color);
+        transition: all 0.15s ease;
+        border-radius: 6px;
+        white-space: nowrap;
+        font-weight: 400;
+        position: relative;
+    }
+
+    .secondary-nav-item::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background: var(--rz-primary);
+        transition: width 0.2s ease;
+    }
+
+    .secondary-nav-item:hover {
+        color: var(--rz-text-color);
+        background: rgba(var(--rz-primary-rgb), 0.05);
+    }
+
+    .secondary-nav-item.active {
+        color: var(--rz-primary);
+        font-weight: 500;
+    }
+
+    .secondary-nav-item.active::after {
+        width: 100%;
+    }
+
+    .secondary-nav-item .rz-icon {
+        font-weight: 300;
+        opacity: 0.8;
+    }
+
+    .secondary-nav-item.active .rz-icon {
+        opacity: 1;
+    }
+
+    .secondary-nav-text {
+        font-size: 0.875rem;
+        letter-spacing: 0.01em;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .secondary-nav {
+            padding: 0.25rem 0;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .secondary-nav-item {
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.125rem;
+        }
+
+        .secondary-nav-item .rz-icon {
+            font-size: 1.125rem !important;
+        }
+
+        .secondary-nav-text {
+            font-size: 0.8125rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<SecondaryNavItem> Items { get; set; } = new();
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private bool IsActive(string path)
+    {
+        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        return currentPath.Equals(path.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public class SecondaryNavItem
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+    }
+}

@@ -6,6 +6,7 @@
 @using Tempus.Core.Interfaces
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject ISettingsService SettingsService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -19,6 +20,8 @@
 @inject DialogService DialogService
 
 <PageTitle>Settings - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
 
 <div style="padding: var(--space-xl);">
     <RadzenStack Gap="var(--space-xl)">
@@ -600,6 +603,16 @@
     private bool _isSyncingApple = false;
     private bool _isSyncingOutlook = false;
     private string _userId = string.Empty;
+
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
 
     // Free/Busy sharing level dropdown data
     private List<DropdownItem<FreeBusySharingLevel>> _freeBusySharingLevels = new()

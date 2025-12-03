@@ -6,6 +6,7 @@
 @using Tempus.Core.Models
 @using Tempus.Core.Enums
 @using Tempus.Web.Components.Account
+@using Tempus.Web.Components.Shared
 @attribute [Authorize]
 @inject ITeamService TeamService
 @inject IdentityUserAccessor IdentityUserAccessor
@@ -16,6 +17,8 @@
 @inject ILogger<Teams> Logger
 
 <PageTitle>Teams - Tempus</PageTitle>
+
+<SecondaryNav Items="@_navItems" />
 
 <RadzenStack Gap="1.5rem">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
@@ -102,6 +105,12 @@
     private List<Team> _teams = new();
     private string _userId = string.Empty;
     private bool _isLoading = true;
+
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "Contacts", Path = "/addresses", Icon = "contact_mail" },
+        new() { Text = "Teams", Path = "/teams", Icon = "groups" }
+    };
 
     protected override async Task OnInitializedAsync()
     {

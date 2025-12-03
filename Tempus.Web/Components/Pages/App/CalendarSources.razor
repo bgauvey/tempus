@@ -15,6 +15,8 @@
 
 <PageTitle>Calendar Sources - Tempus</PageTitle>
 
+<SecondaryNav Items="@_navItems" />
+
 <RadzenStack Gap="1.5rem">
     <!-- Header -->
     <RadzenRow AlignItems="AlignItems.Center">
@@ -387,6 +389,16 @@
 </RadzenStack>
 
 @code {
+    private List<SecondaryNav.SecondaryNavItem> _navItems = new()
+    {
+        new() { Text = "General", Path = "/settings", Icon = "tune" },
+        new() { Text = "Calendar Sources", Path = "/calendar-sources", Icon = "event" },
+        new() { Text = "Integrations", Path = "/integrations", Icon = "sync" },
+        new() { Text = "Import/Export", Path = "/import", Icon = "upload" },
+        new() { Text = "Availability", Path = "/out-of-office", Icon = "beach_access" },
+        new() { Text = "Working Location", Path = "/working-location", Icon = "location_on" }
+    };
+
     // My Calendars
     private List<Tempus.Core.Models.Calendar> myCalendars = new();
     private Dictionary<Guid, List<CalendarShare>> calendarShares = new();
