@@ -49,6 +49,60 @@
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
+    /* Horizontal Menu Bar Styling */
+    .horizontal-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+        background: transparent;
+        border: none;
+    }
+
+    .horizontal-menu .rz-navigation-item {
+        display: inline-block;
+        position: relative;
+    }
+
+    .horizontal-menu > .rz-navigation-item {
+        border: none;
+        background: transparent;
+    }
+
+    .horizontal-menu .rz-navigation-item-link {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .horizontal-menu .rz-navigation-item-link:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Hide expand icons for top-level items in horizontal menu */
+    .horizontal-menu > .rz-navigation-item > .rz-navigation-item-link .rz-navigation-item-icon-right {
+        display: none;
+    }
+
+    /* Style nested menu items (dropdowns) */
+    .horizontal-menu .rz-navigation-item .rz-navigation-item-wrapper {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 200px;
+        background: white;
+        border: 1px solid var(--rz-border-color);
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+
+    /* Ensure nested items display vertically */
+    .horizontal-menu .rz-navigation-item .rz-navigation-item-wrapper .rz-navigation-item {
+        display: block;
+        width: 100%;
+    }
+
     .calendar-main-section {
         flex: 1;
         display: flex;
@@ -175,84 +229,55 @@
 
 <div class="calendar-page-container">
 
-<!-- Outlook-style Toolbar -->
+<!-- Outlook-style Menu Bar -->
 <div class="calendar-toolbar">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 0.5rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
 
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-            <!-- Title -->
-            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
+        <!-- Title -->
+        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
 
-            <!-- New Event Button -->
-            <RadzenButton Icon="add" Text="New Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Now))"
-                        ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+        <!-- Horizontal Menu Bar -->
+        <RadzenPanelMenu class="horizontal-menu" Multiple="false">
+            <RadzenPanelMenuItem Text="New" Icon="add">
+                <RadzenPanelMenuItem Text="New Event" Icon="event" Click="@((args) => OnMenuItemClick("new-event"))" />
+                <RadzenPanelMenuItem Text="Quick Time Blocks">
+                    <RadzenPanelMenuItem Text="Deep Work (2h)" Icon="psychology" Click="@((args) => OnMenuItemClick("deep-work"))" />
+                    <RadzenPanelMenuItem Text="Meeting (30m)" Icon="groups" Click="@((args) => OnMenuItemClick("meeting"))" />
+                    <RadzenPanelMenuItem Text="Focus Block (1.5h)" Icon="lightbulb" Click="@((args) => OnMenuItemClick("focus"))" />
+                    <RadzenPanelMenuItem Text="Break (15m)" Icon="local_cafe" Click="@((args) => OnMenuItemClick("break"))" />
+                    <RadzenPanelMenuItem Text="Planning (1h)" Icon="task" Click="@((args) => OnMenuItemClick("planning"))" />
+                    <RadzenPanelMenuItem Text="Review (45m)" Icon="checklist" Click="@((args) => OnMenuItemClick("review"))" />
+                </RadzenPanelMenuItem>
+            </RadzenPanelMenuItem>
 
-            <!-- Quick Time Blocks Menu -->
-            <RadzenSplitButton Icon="schedule" Text="Quick Blocks" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Click="@(() => CreateFromTemplate("Deep Work", 120))">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Deep Work (2h)" Value="deep-work" Icon="psychology"
-                                         Click="@(() => CreateFromTemplate("Deep Work", 120))" />
-                    <RadzenSplitButtonItem Text="Meeting (30m)" Value="meeting" Icon="groups"
-                                         Click="@(() => CreateFromTemplate("Meeting", 30))" />
-                    <RadzenSplitButtonItem Text="Focus Block (1.5h)" Value="focus" Icon="lightbulb"
-                                         Click="@(() => CreateFromTemplate("Focus Block", 90))" />
-                    <RadzenSplitButtonItem Text="Break (15m)" Value="break" Icon="local_cafe"
-                                         Click="@(() => CreateFromTemplate("Break", 15))" />
-                    <RadzenSplitButtonItem Text="Planning (1h)" Value="planning" Icon="task"
-                                         Click="@(() => CreateFromTemplate("Planning", 60))" />
-                    <RadzenSplitButtonItem Text="Review (45m)" Value="review" Icon="checklist"
-                                         Click="@(() => CreateFromTemplate("Review", 45))" />
-                </ChildContent>
-            </RadzenSplitButton>
+            <RadzenPanelMenuItem Text="View" Icon="view_module">
+                <RadzenPanelMenuItem Text="Month" Icon="calendar_view_month" Click="@((args) => OnMenuItemClick("view-month"))" />
+                <RadzenPanelMenuItem Text="Week" Icon="calendar_view_week" Click="@((args) => OnMenuItemClick("view-week"))" />
+                <RadzenPanelMenuItem Text="Day" Icon="calendar_view_day" Click="@((args) => OnMenuItemClick("view-day"))" />
+                <RadzenPanelMenuItem Text="Year" Icon="calendar_today" Click="@((args) => OnMenuItemClick("view-year"))" />
+            </RadzenPanelMenuItem>
 
-            <!-- Actions Menu -->
-            <RadzenSplitButton Icon="more_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Text="Actions" Click="OpenCalendarManagement">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Manage Calendars" Icon="event_available"
-                                         Click="OpenCalendarManagement" />
-                    <RadzenSplitButtonItem Text="Find Time" Icon="schedule"
-                                         Click="OpenFindTimeDialog" />
-                    <RadzenSplitButtonItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
-                                         Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
-                                         Click="ToggleSelectionMode" />
-                    <RadzenSplitButtonItem Text="Advanced Search" Icon="search"
-                                         Click="OpenAdvancedSearch" />
-                    <RadzenSplitButtonItem Text="Day Agenda PDF" Icon="picture_as_pdf"
-                                         Click="DownloadDailyAgenda" />
-                    <RadzenSplitButtonItem Text="Print/Export" Icon="print"
-                                         Click="OpenPrintOptionsDialog" />
-                    @if (_isSearchActive)
-                    {
-                        <RadzenSplitButtonItem Text="Clear Search" Icon="clear"
-                                             Click="ClearSearch" />
-                    }
-                </ChildContent>
-            </RadzenSplitButton>
-        </RadzenStack>
+            <RadzenPanelMenuItem Text="Navigate" Icon="navigation">
+                <RadzenPanelMenuItem Text="Previous" Icon="chevron_left" Click="@((args) => OnMenuItemClick("nav-previous"))" />
+                <RadzenPanelMenuItem Text="Today" Icon="today" Click="@((args) => OnMenuItemClick("nav-today"))" />
+                <RadzenPanelMenuItem Text="Next" Icon="chevron_right" Click="@((args) => OnMenuItemClick("nav-next"))" />
+            </RadzenPanelMenuItem>
 
-        <!-- Right Side: View + Navigation -->
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <!-- View Menu -->
-            <RadzenDropDown Data="@_viewOptions" @bind-Value="_selectedViewValue"
-                          Change="@OnViewChangeFromDropdown"
-                          Style="width: 120px;" Size="ButtonSize.Small"
-                          TextProperty="Text" ValueProperty="Value" />
-
-            <!-- Navigate Menu -->
-            <RadzenSplitButton Icon="navigation" Text="Navigate" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Click="NavigateToday">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Previous" Icon="chevron_left"
-                                         Click="NavigatePrevious" />
-                    <RadzenSplitButtonItem Text="Today" Icon="today"
-                                         Click="NavigateToday" />
-                    <RadzenSplitButtonItem Text="Next" Icon="chevron_right"
-                                         Click="NavigateNext" />
-                </ChildContent>
-            </RadzenSplitButton>
-        </RadzenStack>
+            <RadzenPanelMenuItem Text="Actions" Icon="more_horiz">
+                <RadzenPanelMenuItem Text="Manage Calendars" Icon="event_available" Click="@((args) => OnMenuItemClick("manage-calendars"))" />
+                <RadzenPanelMenuItem Text="Find Time" Icon="schedule" Click="@((args) => OnMenuItemClick("find-time"))" />
+                <RadzenPanelMenuItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
+                                   Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
+                                   Click="@((args) => OnMenuItemClick("select-events"))" />
+                <RadzenPanelMenuItem Text="Advanced Search" Icon="search" Click="@((args) => OnMenuItemClick("advanced-search"))" />
+                <RadzenPanelMenuItem Text="Day Agenda PDF" Icon="picture_as_pdf" Click="@((args) => OnMenuItemClick("day-agenda"))" />
+                <RadzenPanelMenuItem Text="Print/Export" Icon="print" Click="@((args) => OnMenuItemClick("print-export"))" />
+                @if (_isSearchActive)
+                {
+                    <RadzenPanelMenuItem Text="Clear Search" Icon="clear" Click="@((args) => OnMenuItemClick("clear-search"))" />
+                }
+            </RadzenPanelMenuItem>
+        </RadzenPanelMenu>
     </RadzenStack>
 </div>
 
@@ -491,22 +516,6 @@
     private QuickEditEventPopover? _quickEditPopover;
     private Event? _pendingEventForFullDialog;
     private List<Event> _allEvents = new(); // Store all events when search is active
-
-    // View dropdown options
-    private string _selectedViewValue = "Week";
-    private List<ViewOption> _viewOptions = new()
-    {
-        new ViewOption { Text = "Month", Value = "Month" },
-        new ViewOption { Text = "Week", Value = "Week" },
-        new ViewOption { Text = "Day", Value = "Day" },
-        new ViewOption { Text = "Year", Value = "Year" }
-    };
-
-    public class ViewOption
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
-    }
 
     // Calendar management
     private List<Tempus.Core.Models.Calendar> _calendars = new();
@@ -1601,22 +1610,84 @@
         StateHasChanged();
     }
 
-    // View Change Handler
-    private async Task OnViewChangeFromDropdown(object value)
+    // Menu Click Handler
+    private async void OnMenuItemClick(string value)
     {
-        if (value == null) return;
-        var viewValue = value.ToString();
-        if (string.IsNullOrEmpty(viewValue)) return;
+        if (string.IsNullOrEmpty(value)) return;
 
-        var viewIndex = viewValue switch
+        switch (value)
         {
-            "Month" => 0,
-            "Week" => 1,
-            "Day" => 2,
-            "Year" => 3,
-            _ => 1
-        };
-        await ChangeView(viewIndex);
+            // New menu items
+            case "new-event":
+                await OpenEventDialogAsync(null, DateTime.Now);
+                break;
+            case "deep-work":
+                await CreateFromTemplate("Deep Work", 120);
+                break;
+            case "meeting":
+                await CreateFromTemplate("Meeting", 30);
+                break;
+            case "focus":
+                await CreateFromTemplate("Focus Block", 90);
+                break;
+            case "break":
+                await CreateFromTemplate("Break", 15);
+                break;
+            case "planning":
+                await CreateFromTemplate("Planning", 60);
+                break;
+            case "review":
+                await CreateFromTemplate("Review", 45);
+                break;
+
+            // View menu items
+            case "view-month":
+                await ChangeView(0);
+                break;
+            case "view-week":
+                await ChangeView(1);
+                break;
+            case "view-day":
+                await ChangeView(2);
+                break;
+            case "view-year":
+                await ChangeView(3);
+                break;
+
+            // Navigate menu items
+            case "nav-previous":
+                await NavigatePrevious();
+                break;
+            case "nav-today":
+                await NavigateToday();
+                break;
+            case "nav-next":
+                await NavigateNext();
+                break;
+
+            // Actions menu items
+            case "manage-calendars":
+                await OpenCalendarManagement();
+                break;
+            case "find-time":
+                await OpenFindTimeDialog();
+                break;
+            case "select-events":
+                ToggleSelectionMode();
+                break;
+            case "advanced-search":
+                await OpenAdvancedSearch();
+                break;
+            case "day-agenda":
+                await DownloadDailyAgenda();
+                break;
+            case "print-export":
+                await OpenPrintOptionsDialog();
+                break;
+            case "clear-search":
+                await ClearSearch();
+                break;
+        }
     }
 
     // Date Navigation
