@@ -242,6 +242,86 @@
                                 </RadzenRow>
                             </RadzenStack>
 
+                            <!-- Speedy Meetings -->
+                            <RadzenStack Gap="var(--space-lg)">
+                                <RadzenStack Gap="var(--space-sm)">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="font-medium text-secondary">Speedy Meetings</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary">
+                                        Automatically shorten meetings to build in buffer time and prevent back-to-back scheduling.
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenRow Gap="var(--space-lg)">
+                                    <RadzenColumn Size="12">
+                                        <RadzenStack Gap="var(--space-sm)" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                            <RadzenCheckBox @bind-Value="_settings.EnableSpeedyMeetings" Name="enableSpeedyMeetings" />
+                                            <RadzenLabel Text="Enable Speedy Meetings" Component="enableSpeedyMeetings" />
+                                        </RadzenStack>
+                                        <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs); margin-left: 30px;">
+                                            Automatically end meetings early to provide transition time between events.
+                                        </RadzenText>
+                                    </RadzenColumn>
+
+                                    @if (_settings.EnableSpeedyMeetings)
+                                    {
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="Shorten Meetings By (minutes)" Variant="Variant.Outlined" Style="width: 100%;">
+                                                <RadzenNumeric @bind-Value="_settings.SpeedyMeetingsMinutes"
+                                                               Min="5"
+                                                               Max="15"
+                                                               Step="1"
+                                                               Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs);">
+                                                Recommended: 5-10 minutes. This time will be automatically removed from meeting end times.
+                                            </RadzenText>
+                                        </RadzenColumn>
+
+                                        <RadzenColumn Size="12" SizeMD="6">
+                                            <RadzenFormField Text="Apply to Meetings Longer Than (minutes)" Variant="Variant.Outlined" Style="width: 100%;">
+                                                <RadzenNumeric @bind-Value="_settings.SpeedyMeetingsThresholdMinutes"
+                                                               Min="15"
+                                                               Max="120"
+                                                               Step="15"
+                                                               Style="width: 100%;" />
+                                            </RadzenFormField>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs);">
+                                                Speedy meetings will only apply to events longer than this duration.
+                                            </RadzenText>
+                                        </RadzenColumn>
+
+                                        <RadzenColumn Size="12">
+                                            <RadzenStack Gap="var(--space-sm)" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                                <RadzenCheckBox @bind-Value="_settings.ApplySpeedyMeetingsToShortEvents" Name="applyToShortEvents" />
+                                                <RadzenLabel Text="Also apply to short meetings (under threshold)" Component="applyToShortEvents" />
+                                            </RadzenStack>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="text-tertiary" Style="margin-top: var(--space-xs); margin-left: 30px;">
+                                                When enabled, speedy meetings will apply to all meetings, regardless of duration.
+                                            </RadzenText>
+                                        </RadzenColumn>
+
+                                        <RadzenColumn Size="12">
+                                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                                <RadzenStack Gap="var(--space-xs)">
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">How Speedy Meetings Works</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        • A 60-minute meeting becomes 55 minutes (with 5-minute buffer)
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        • A 30-minute meeting becomes 25 minutes (if threshold allows)
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        • Helps prevent burnout and allows time to prepare for the next meeting
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption">
+                                                        • Works with your existing calendar and buffer time settings
+                                                    </RadzenText>
+                                                </RadzenStack>
+                                            </RadzenAlert>
+                                        </RadzenColumn>
+                                    }
+                                </RadzenRow>
+                            </RadzenStack>
+
                             <!-- Event Defaults -->
                             <RadzenStack Gap="var(--space-lg)">
                                 <RadzenText TextStyle="TextStyle.Subtitle1" class="font-medium text-secondary">Event Defaults</RadzenText>

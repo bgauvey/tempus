@@ -155,6 +155,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOutOfOfficeService, OutOfOfficeService>();
 builder.Services.AddScoped<IWorkingLocationService, WorkingLocationService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<ISpeedyMeetingsService, SpeedyMeetingsService>();
 builder.Services.AddScoped<IBookingPageService, BookingPageService>();
 builder.Services.AddScoped<IRoomBookingService, RoomBookingService>();
 builder.Services.AddScoped<IResourceReservationService, ResourceReservationService>();
