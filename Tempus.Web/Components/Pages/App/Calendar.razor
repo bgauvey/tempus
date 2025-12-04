@@ -51,16 +51,18 @@
 
     /* Horizontal Menu Bar Styling */
     .horizontal-menu {
-        display: flex;
-        flex-direction: row;
+        display: flex !important;
+        flex-direction: row !important;
         align-items: center;
         gap: 0;
         background: transparent;
         border: none;
+        height: auto;
+        min-height: 40px;
     }
 
     .horizontal-menu .rz-navigation-item {
-        display: inline-block;
+        display: inline-block !important;
         position: relative;
     }
 
@@ -73,6 +75,9 @@
         padding: 0.5rem 1rem;
         border-radius: 4px;
         transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .horizontal-menu .rz-navigation-item-link:hover {
@@ -95,12 +100,24 @@
         border-radius: 4px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         z-index: 1000;
+        display: none;
+    }
+
+    /* Show dropdown on parent hover */
+    .horizontal-menu .rz-navigation-item:hover > .rz-navigation-item-wrapper,
+    .horizontal-menu .rz-navigation-item.rz-navigation-item-expanded > .rz-navigation-item-wrapper {
+        display: block;
     }
 
     /* Ensure nested items display vertically */
     .horizontal-menu .rz-navigation-item .rz-navigation-item-wrapper .rz-navigation-item {
-        display: block;
+        display: block !important;
         width: 100%;
+    }
+
+    /* Hide scheduler default header with navigation */
+    .rz-scheduler .rz-scheduler-header {
+        display: none !important;
     }
 
     .calendar-main-section {
