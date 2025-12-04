@@ -179,14 +179,17 @@
 <div class="calendar-toolbar">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
 
-        <!-- Left side: Title + Actions -->
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <!-- Title -->
             <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
 
-            <!-- New Event Menu -->
-            <RadzenSplitButton Icon="add" Text="New" Click="@(() => OpenEventDialogAsync(null, DateTime.Now))"
-                             ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                             @onclick:stopPropagation="true">
+            <!-- New Event Button -->
+            <RadzenButton Icon="add" Text="New Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Now))"
+                        ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+
+            <!-- Quick Time Blocks Menu -->
+            <RadzenSplitButton Icon="schedule" Text="Quick Blocks" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Click="@(() => CreateFromTemplate("Deep Work", 120))">
                 <ChildContent>
                     <RadzenSplitButtonItem Text="Deep Work (2h)" Value="deep-work" Icon="psychology"
                                          Click="@(() => CreateFromTemplate("Deep Work", 120))" />
@@ -205,52 +208,50 @@
 
             <!-- Actions Menu -->
             <RadzenSplitButton Icon="more_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Text="Actions" Click="OpenCalendarManagement"
-                             @onclick:stopPropagation="true">
+                             Text="Actions" Click="OpenCalendarManagement">
                 <ChildContent>
-                    <RadzenSplitButtonItem Text="Manage Calendars" Value="manage-calendars" Icon="event_available"
+                    <RadzenSplitButtonItem Text="Manage Calendars" Icon="event_available"
                                          Click="OpenCalendarManagement" />
-                    <RadzenSplitButtonItem Text="Find Time" Value="find-time" Icon="schedule"
+                    <RadzenSplitButtonItem Text="Find Time" Icon="schedule"
                                          Click="OpenFindTimeDialog" />
-                    <RadzenSplitButtonItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")" Value="select-events"
+                    <RadzenSplitButtonItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
                                          Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
                                          Click="ToggleSelectionMode" />
-                    <RadzenSplitButtonItem Text="Advanced Search" Value="advanced-search" Icon="search"
+                    <RadzenSplitButtonItem Text="Advanced Search" Icon="search"
                                          Click="OpenAdvancedSearch" />
-                    <RadzenSplitButtonItem Text="Day Agenda PDF" Value="day-agenda" Icon="picture_as_pdf"
+                    <RadzenSplitButtonItem Text="Day Agenda PDF" Icon="picture_as_pdf"
                                          Click="DownloadDailyAgenda" />
-                    <RadzenSplitButtonItem Text="Print/Export" Value="print-export" Icon="print"
+                    <RadzenSplitButtonItem Text="Print/Export" Icon="print"
                                          Click="OpenPrintOptionsDialog" />
                     @if (_isSearchActive)
                     {
-                        <RadzenSplitButtonItem Text="Clear Search" Value="clear-search" Icon="clear"
+                        <RadzenSplitButtonItem Text="Clear Search" Icon="clear"
                                              Click="ClearSearch" />
                     }
                 </ChildContent>
             </RadzenSplitButton>
         </RadzenStack>
 
-        <!-- Right side: View Buttons + Navigation -->
+        <!-- Right Side: View + Navigation -->
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <!-- View Switcher -->
-            <RadzenButtonGroup>
-                <RadzenButton Text="Month" Click="@(() => ChangeView(0))" Variant="@(_selectedViewIndex == 0 ? Variant.Filled : Variant.Outlined)"
-                            ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
-                <RadzenButton Text="Week" Click="@(() => ChangeView(1))" Variant="@(_selectedViewIndex == 1 ? Variant.Filled : Variant.Outlined)"
-                            ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
-                <RadzenButton Text="Day" Click="@(() => ChangeView(2))" Variant="@(_selectedViewIndex == 2 ? Variant.Filled : Variant.Outlined)"
-                            ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
-                <RadzenButton Text="Year" Click="@(() => ChangeView(3))" Variant="@(_selectedViewIndex == 3 ? Variant.Filled : Variant.Outlined)"
-                            ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
-            </RadzenButtonGroup>
+            <!-- View Menu -->
+            <RadzenDropDown Data="@_viewOptions" @bind-Value="_selectedViewValue"
+                          Change="@OnViewChangeFromDropdown"
+                          Style="width: 120px;" Size="ButtonSize.Small"
+                          TextProperty="Text" ValueProperty="Value" />
 
-            <!-- Date Navigation -->
-            <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
-                        Click="@NavigatePrevious" title="Previous" />
-            <RadzenButton Text="Today" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                        Click="@NavigateToday" title="Go to today" />
-            <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
-                        Click="@NavigateNext" title="Next" />
+            <!-- Navigate Menu -->
+            <RadzenSplitButton Icon="navigation" Text="Navigate" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Click="NavigateToday">
+                <ChildContent>
+                    <RadzenSplitButtonItem Text="Previous" Icon="chevron_left"
+                                         Click="NavigatePrevious" />
+                    <RadzenSplitButtonItem Text="Today" Icon="today"
+                                         Click="NavigateToday" />
+                    <RadzenSplitButtonItem Text="Next" Icon="chevron_right"
+                                         Click="NavigateNext" />
+                </ChildContent>
+            </RadzenSplitButton>
         </RadzenStack>
     </RadzenStack>
 </div>
@@ -490,6 +491,22 @@
     private QuickEditEventPopover? _quickEditPopover;
     private Event? _pendingEventForFullDialog;
     private List<Event> _allEvents = new(); // Store all events when search is active
+
+    // View dropdown options
+    private string _selectedViewValue = "Week";
+    private List<ViewOption> _viewOptions = new()
+    {
+        new ViewOption { Text = "Month", Value = "Month" },
+        new ViewOption { Text = "Week", Value = "Week" },
+        new ViewOption { Text = "Day", Value = "Day" },
+        new ViewOption { Text = "Year", Value = "Year" }
+    };
+
+    public class ViewOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
 
     // Calendar management
     private List<Tempus.Core.Models.Calendar> _calendars = new();
@@ -1582,6 +1599,24 @@
         }
 
         StateHasChanged();
+    }
+
+    // View Change Handler
+    private async Task OnViewChangeFromDropdown(object value)
+    {
+        if (value == null) return;
+        var viewValue = value.ToString();
+        if (string.IsNullOrEmpty(viewValue)) return;
+
+        var viewIndex = viewValue switch
+        {
+            "Month" => 0,
+            "Week" => 1,
+            "Day" => 2,
+            "Year" => 3,
+            _ => 1
+        };
+        await ChangeView(viewIndex);
     }
 
     // Date Navigation
