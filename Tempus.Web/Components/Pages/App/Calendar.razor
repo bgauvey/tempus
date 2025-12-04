@@ -54,6 +54,25 @@
         display: none !important;
     }
 
+    /* RadzenMenu horizontal styling */
+    .rz-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .rz-menu > .rz-navigation-item {
+        display: inline-block;
+        position: relative;
+    }
+
+    .rz-menu .rz-navigation-item-link {
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     .calendar-main-section {
         flex: 1;
         display: flex;
@@ -180,93 +199,54 @@
 
 <div class="calendar-page-container">
 
-<!-- Outlook-style Toolbar -->
+<!-- Outlook-style Menu Bar -->
 <div class="calendar-toolbar">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 0.5rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
 
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-            <!-- Title -->
-            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
+        <!-- Title -->
+        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
 
-            <!-- New Event Button -->
-            <RadzenButton Icon="add" Text="New Event" Click="@(() => OpenEventDialogAsync(null, DateTime.Now))"
-                        ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
+        <!-- Menu Bar -->
+        <RadzenMenu Click="@OnMenuClick">
+            <RadzenMenuItem Text="New" Icon="add">
+                <RadzenMenuItem Text="New Event" Icon="event" />
+                <RadzenMenuItem Text="Quick Time Blocks" Icon="schedule">
+                    <RadzenMenuItem Text="Deep Work (2h)" Icon="psychology" />
+                    <RadzenMenuItem Text="Meeting (30m)" Icon="groups" />
+                    <RadzenMenuItem Text="Focus Block (1.5h)" Icon="lightbulb" />
+                    <RadzenMenuItem Text="Break (15m)" Icon="local_cafe" />
+                    <RadzenMenuItem Text="Planning (1h)" Icon="task" />
+                    <RadzenMenuItem Text="Review (45m)" Icon="checklist" />
+                </RadzenMenuItem>
+            </RadzenMenuItem>
 
-            <!-- Quick Time Blocks Menu -->
-            <RadzenSplitButton Icon="schedule" Text="Quick Blocks" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Click="@(() => CreateFromTemplate("Deep Work", 120))">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Deep Work (2h)" Value="deep-work" Icon="psychology"
-                                         Click="@(() => CreateFromTemplate("Deep Work", 120))" />
-                    <RadzenSplitButtonItem Text="Meeting (30m)" Value="meeting" Icon="groups"
-                                         Click="@(() => CreateFromTemplate("Meeting", 30))" />
-                    <RadzenSplitButtonItem Text="Focus Block (1.5h)" Value="focus" Icon="lightbulb"
-                                         Click="@(() => CreateFromTemplate("Focus Block", 90))" />
-                    <RadzenSplitButtonItem Text="Break (15m)" Value="break" Icon="local_cafe"
-                                         Click="@(() => CreateFromTemplate("Break", 15))" />
-                    <RadzenSplitButtonItem Text="Planning (1h)" Value="planning" Icon="task"
-                                         Click="@(() => CreateFromTemplate("Planning", 60))" />
-                    <RadzenSplitButtonItem Text="Review (45m)" Value="review" Icon="checklist"
-                                         Click="@(() => CreateFromTemplate("Review", 45))" />
-                </ChildContent>
-            </RadzenSplitButton>
+            <RadzenMenuItem Text="View" Icon="view_module">
+                <RadzenMenuItem Text="Month" Icon="calendar_view_month" />
+                <RadzenMenuItem Text="Week" Icon="calendar_view_week" />
+                <RadzenMenuItem Text="Day" Icon="calendar_view_day" />
+                <RadzenMenuItem Text="Year" Icon="calendar_today" />
+            </RadzenMenuItem>
 
-            <!-- Actions Menu -->
-            <RadzenSplitButton Icon="more_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Text="Actions" Click="OpenCalendarManagement">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Manage Calendars" Icon="event_available"
-                                         Click="OpenCalendarManagement" />
-                    <RadzenSplitButtonItem Text="Find Time" Icon="schedule"
-                                         Click="OpenFindTimeDialog" />
-                    <RadzenSplitButtonItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
-                                         Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
-                                         Click="ToggleSelectionMode" />
-                    <RadzenSplitButtonItem Text="Advanced Search" Icon="search"
-                                         Click="OpenAdvancedSearch" />
-                    <RadzenSplitButtonItem Text="Day Agenda PDF" Icon="picture_as_pdf"
-                                         Click="DownloadDailyAgenda" />
-                    <RadzenSplitButtonItem Text="Print/Export" Icon="print"
-                                         Click="OpenPrintOptionsDialog" />
-                    @if (_isSearchActive)
-                    {
-                        <RadzenSplitButtonItem Text="Clear Search" Icon="clear"
-                                             Click="ClearSearch" />
-                    }
-                </ChildContent>
-            </RadzenSplitButton>
-        </RadzenStack>
+            <RadzenMenuItem Text="Navigate" Icon="navigation">
+                <RadzenMenuItem Text="Previous" Icon="chevron_left" />
+                <RadzenMenuItem Text="Today" Icon="today" />
+                <RadzenMenuItem Text="Next" Icon="chevron_right" />
+            </RadzenMenuItem>
 
-        <!-- Right Side: View + Navigation -->
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <!-- View Menu -->
-            <RadzenSplitButton Icon="view_module" Text="View" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Click="@(() => ChangeView(_selectedViewIndex))">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Month" Icon="calendar_view_month"
-                                         Click="@(() => ChangeView(0))" />
-                    <RadzenSplitButtonItem Text="Week" Icon="calendar_view_week"
-                                         Click="@(() => ChangeView(1))" />
-                    <RadzenSplitButtonItem Text="Day" Icon="calendar_view_day"
-                                         Click="@(() => ChangeView(2))" />
-                    <RadzenSplitButtonItem Text="Year" Icon="calendar_today"
-                                         Click="@(() => ChangeView(3))" />
-                </ChildContent>
-            </RadzenSplitButton>
-
-            <!-- Navigate Menu -->
-            <RadzenSplitButton Icon="navigation" Text="Navigate" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                             Click="NavigateToday">
-                <ChildContent>
-                    <RadzenSplitButtonItem Text="Previous" Icon="chevron_left"
-                                         Click="NavigatePrevious" />
-                    <RadzenSplitButtonItem Text="Today" Icon="today"
-                                         Click="NavigateToday" />
-                    <RadzenSplitButtonItem Text="Next" Icon="chevron_right"
-                                         Click="NavigateNext" />
-                </ChildContent>
-            </RadzenSplitButton>
-        </RadzenStack>
+            <RadzenMenuItem Text="Actions" Icon="more_horiz">
+                <RadzenMenuItem Text="Manage Calendars" Icon="event_available" />
+                <RadzenMenuItem Text="Find Time" Icon="schedule" />
+                <RadzenMenuItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
+                              Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")" />
+                <RadzenMenuItem Text="Advanced Search" Icon="search" />
+                <RadzenMenuItem Text="Day Agenda PDF" Icon="picture_as_pdf" />
+                <RadzenMenuItem Text="Print/Export" Icon="print" />
+                @if (_isSearchActive)
+                {
+                    <RadzenMenuItem Text="Clear Search" Icon="clear" />
+                }
+            </RadzenMenuItem>
+        </RadzenMenu>
     </RadzenStack>
 </div>
 
@@ -1457,10 +1437,10 @@
             }
         }
 
-        ContextMenuService.Open(args, menuItems, OnMenuItemClick);
+        ContextMenuService.Open(args, menuItems, OnContextMenuItemClick);
     }
 
-    private async void OnMenuItemClick(MenuItemEventArgs item)
+    private async void OnContextMenuItemClick(MenuItemEventArgs item)
     {
         ContextMenuService.Close();
 
@@ -1597,6 +1577,87 @@
         }
 
         StateHasChanged();
+    }
+
+    // Menu Bar Click Handler
+    private async void OnMenuClick(MenuItemEventArgs args)
+    {
+        if (string.IsNullOrEmpty(args.Text)) return;
+
+        switch (args.Text)
+        {
+            // New menu items
+            case "New Event":
+                await OpenEventDialogAsync(null, DateTime.Now);
+                break;
+            case "Deep Work (2h)":
+                await CreateFromTemplate("Deep Work", 120);
+                break;
+            case "Meeting (30m)":
+                await CreateFromTemplate("Meeting", 30);
+                break;
+            case "Focus Block (1.5h)":
+                await CreateFromTemplate("Focus Block", 90);
+                break;
+            case "Break (15m)":
+                await CreateFromTemplate("Break", 15);
+                break;
+            case "Planning (1h)":
+                await CreateFromTemplate("Planning", 60);
+                break;
+            case "Review (45m)":
+                await CreateFromTemplate("Review", 45);
+                break;
+
+            // View menu items
+            case "Month":
+                await ChangeView(0);
+                break;
+            case "Week":
+                await ChangeView(1);
+                break;
+            case "Day":
+                await ChangeView(2);
+                break;
+            case "Year":
+                await ChangeView(3);
+                break;
+
+            // Navigate menu items
+            case "Previous":
+                await NavigatePrevious();
+                break;
+            case "Today":
+                await NavigateToday();
+                break;
+            case "Next":
+                await NavigateNext();
+                break;
+
+            // Actions menu items
+            case "Manage Calendars":
+                await OpenCalendarManagement();
+                break;
+            case "Find Time":
+                await OpenFindTimeDialog();
+                break;
+            case "Select Events":
+            case "Exit Selection":
+                ToggleSelectionMode();
+                break;
+            case "Advanced Search":
+                await OpenAdvancedSearch();
+                break;
+            case "Day Agenda PDF":
+                await DownloadDailyAgenda();
+                break;
+            case "Print/Export":
+                await OpenPrintOptionsDialog();
+                break;
+            case "Clear Search":
+                await ClearSearch();
+                break;
+        }
     }
 
     // Date Navigation
