@@ -42,12 +42,11 @@
         overflow: hidden;
     }
 
-    .calendar-header-section {
+    .calendar-toolbar {
         flex-shrink: 0;
-    }
-
-    .calendar-templates-section {
-        flex-shrink: 0;
+        background: white;
+        border-bottom: 1px solid var(--rz-border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .calendar-main-section {
@@ -108,54 +107,6 @@
         --transition-smooth: all 0.3s ease-in-out;
     }
 
-    /* Time Block Templates */
-    .template-buttons-container {
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out 0.15s backwards;
-    }
-
-    .template-buttons-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .template-btn {
-        background: var(--primary-gradient);
-        border: none;
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
-        border-radius: 10px;
-        font-weight: 600;
-        transition: var(--transition-smooth);
-        padding: 10px 16px;
-        font-size: 0.85rem;
-    }
-
-    .template-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
-    }
-
-    .template-btn.deep-work {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-    }
-
-    .template-btn.meeting {
-        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
-    }
-
-    .template-btn.break {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    }
-
-    .template-btn.focus {
-        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    }
 
     /* Calendar Sidebar */
     .calendar-item {
@@ -224,39 +175,84 @@
 
 <div class="calendar-page-container">
 
-<div class="calendar-header-section">
-    <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg); margin-bottom: 2rem;">
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
-            <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                <RadzenButton Icon="event_available"
-                            ButtonStyle="ButtonStyle.Secondary"
-                            Click="OpenCalendarManagement"
-                            Size="ButtonSize.Medium"
-                            Text="Manage Calendars"
-                            title="Manage your calendars" />
-                <RadzenButton Icon="schedule"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Click="OpenFindTimeDialog"
-                            Size="ButtonSize.Medium"
-                            Text="Find Time"
-                            title="Find optimal meeting times" />
-                <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
-                            ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
-                            Click="ToggleSelectionMode"
-                            Size="ButtonSize.Medium"
-                            Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
-                            title="Toggle event selection mode" />
-                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
-                <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
-                <RadzenButton Icon="print" ButtonStyle="ButtonStyle.Info" Click="OpenPrintOptionsDialog" Size="ButtonSize.Medium" Text="Print/Export" title="Print or export calendar with custom options" />
-                @if (_isSearchActive)
-                {
-                    <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Warning" Click="ClearSearch" Size="ButtonSize.Medium" Text="Clear Search" title="Show all events" />
-                }
-            </RadzenStack>
+<!-- Outlook-style Toolbar -->
+<div class="calendar-toolbar">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
+
+        <!-- Left side: Title + Actions -->
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
+
+            <!-- New Event Menu -->
+            <RadzenSplitButton Icon="add" Text="New" Click="@(() => OpenEventDialogAsync(null, DateTime.Now))"
+                             ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                             @onclick:stopPropagation="true">
+                <ChildContent>
+                    <RadzenSplitButtonItem Text="Deep Work (2h)" Value="deep-work" Icon="psychology"
+                                         Click="@(() => CreateFromTemplate("Deep Work", 120))" />
+                    <RadzenSplitButtonItem Text="Meeting (30m)" Value="meeting" Icon="groups"
+                                         Click="@(() => CreateFromTemplate("Meeting", 30))" />
+                    <RadzenSplitButtonItem Text="Focus Block (1.5h)" Value="focus" Icon="lightbulb"
+                                         Click="@(() => CreateFromTemplate("Focus Block", 90))" />
+                    <RadzenSplitButtonItem Text="Break (15m)" Value="break" Icon="local_cafe"
+                                         Click="@(() => CreateFromTemplate("Break", 15))" />
+                    <RadzenSplitButtonItem Text="Planning (1h)" Value="planning" Icon="task"
+                                         Click="@(() => CreateFromTemplate("Planning", 60))" />
+                    <RadzenSplitButtonItem Text="Review (45m)" Value="review" Icon="checklist"
+                                         Click="@(() => CreateFromTemplate("Review", 45))" />
+                </ChildContent>
+            </RadzenSplitButton>
+
+            <!-- Actions Menu -->
+            <RadzenSplitButton Icon="more_horiz" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Text="Actions" Click="OpenCalendarManagement"
+                             @onclick:stopPropagation="true">
+                <ChildContent>
+                    <RadzenSplitButtonItem Text="Manage Calendars" Value="manage-calendars" Icon="event_available"
+                                         Click="OpenCalendarManagement" />
+                    <RadzenSplitButtonItem Text="Find Time" Value="find-time" Icon="schedule"
+                                         Click="OpenFindTimeDialog" />
+                    <RadzenSplitButtonItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")" Value="select-events"
+                                         Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
+                                         Click="ToggleSelectionMode" />
+                    <RadzenSplitButtonItem Text="Advanced Search" Value="advanced-search" Icon="search"
+                                         Click="OpenAdvancedSearch" />
+                    <RadzenSplitButtonItem Text="Day Agenda PDF" Value="day-agenda" Icon="picture_as_pdf"
+                                         Click="DownloadDailyAgenda" />
+                    <RadzenSplitButtonItem Text="Print/Export" Value="print-export" Icon="print"
+                                         Click="OpenPrintOptionsDialog" />
+                    @if (_isSearchActive)
+                    {
+                        <RadzenSplitButtonItem Text="Clear Search" Value="clear-search" Icon="clear"
+                                             Click="ClearSearch" />
+                    }
+                </ChildContent>
+            </RadzenSplitButton>
         </RadzenStack>
-    </RadzenCard>
+
+        <!-- Right side: View Buttons + Navigation -->
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <!-- View Switcher -->
+            <RadzenButtonGroup>
+                <RadzenButton Text="Month" Click="@(() => ChangeView(0))" Variant="@(_selectedViewIndex == 0 ? Variant.Filled : Variant.Outlined)"
+                            ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
+                <RadzenButton Text="Week" Click="@(() => ChangeView(1))" Variant="@(_selectedViewIndex == 1 ? Variant.Filled : Variant.Outlined)"
+                            ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
+                <RadzenButton Text="Day" Click="@(() => ChangeView(2))" Variant="@(_selectedViewIndex == 2 ? Variant.Filled : Variant.Outlined)"
+                            ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
+                <RadzenButton Text="Year" Click="@(() => ChangeView(3))" Variant="@(_selectedViewIndex == 3 ? Variant.Filled : Variant.Outlined)"
+                            ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" />
+            </RadzenButtonGroup>
+
+            <!-- Date Navigation -->
+            <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        Click="@NavigatePrevious" title="Previous" />
+            <RadzenButton Text="Today" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        Click="@NavigateToday" title="Go to today" />
+            <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        Click="@NavigateNext" title="Next" />
+        </RadzenStack>
+    </RadzenStack>
 </div>
 
 @if (_selectedEventIds.Any())
@@ -269,34 +265,6 @@
                              OnBulkDelete="@ConfirmBulkDelete" />
     </div>
 }
-
-<div class="calendar-templates-section">
-    <RadzenCard Style="margin-bottom: 2rem;">
-        <RadzenStack Gap="1rem">
-            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">⚡ Quick Time Block Templates</RadzenText>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
-                    🧠 Deep Work (2h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
-                    👥 Meeting (30m)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
-                    🎯 Focus Block (1.5h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
-                    ☕ Break (15m)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
-                    📋 Planning (1h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
-                    ✅ Review (45m)
-                </RadzenButton>
-            </RadzenStack>
-        </RadzenStack>
-    </RadzenCard>
-</div>
 
 <div class="calendar-main-section">
     <!-- Calendar Sidebar -->
@@ -482,28 +450,6 @@
                     <RadzenYearPlannerView />
                     <RadzenYearTimelineView />
                 </ChildContent>
-                <NavigationTemplate>
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-bottom: 1rem;">
-                        <RadzenButton Text="Month" Click="@(() => ChangeView(0))"
-                                    ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Week" Click="@(() => ChangeView(1))"
-                                    ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Day" Click="@(() => ChangeView(2))"
-                                    ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Year" Click="@(() => ChangeView(3))"
-                                    ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Planner" Click="@(() => ChangeView(4))"
-                                    ButtonStyle="@(_selectedViewIndex == 4 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Timeline" Click="@(() => ChangeView(5))"
-                                    ButtonStyle="@(_selectedViewIndex == 5 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                    </RadzenStack>
-                </NavigationTemplate>
             </RadzenScheduler>
                 }
             </RadzenCard>
@@ -1635,6 +1581,44 @@
             }
         }
 
+        StateHasChanged();
+    }
+
+    // Date Navigation
+    private async Task NavigateToday()
+    {
+        _selectedDate = DateTime.Today;
+        await LoadEvents();
+        StateHasChanged();
+    }
+
+    private async Task NavigatePrevious()
+    {
+        // Navigate based on current view
+        _selectedDate = _selectedViewIndex switch
+        {
+            0 => _selectedDate.AddMonths(-1),  // Month view
+            1 => _selectedDate.AddDays(-7),    // Week view
+            2 => _selectedDate.AddDays(-1),    // Day view
+            3 => _selectedDate.AddYears(-1),   // Year view
+            _ => _selectedDate.AddDays(-7)     // Default to week
+        };
+        await LoadEvents();
+        StateHasChanged();
+    }
+
+    private async Task NavigateNext()
+    {
+        // Navigate based on current view
+        _selectedDate = _selectedViewIndex switch
+        {
+            0 => _selectedDate.AddMonths(1),   // Month view
+            1 => _selectedDate.AddDays(7),     // Week view
+            2 => _selectedDate.AddDays(1),     // Day view
+            3 => _selectedDate.AddYears(1),    // Year view
+            _ => _selectedDate.AddDays(7)      // Default to week
+        };
+        await LoadEvents();
         StateHasChanged();
     }
 
