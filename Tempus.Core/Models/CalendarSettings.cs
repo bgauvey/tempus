@@ -49,6 +49,12 @@ public class CalendarSettings
     public TimeSpan? LunchBreakEnd { get; set; }
     public int BufferTimeBetweenEvents { get; set; } = 0; // minutes
 
+    // Speedy Meetings - Auto-shorten meetings for buffer time
+    public bool EnableSpeedyMeetings { get; set; } = false;
+    public int SpeedyMeetingsMinutes { get; set; } = 5; // Minutes to shorten meetings (typically 5-10)
+    public bool ApplySpeedyMeetingsToShortEvents { get; set; } = false; // Apply to events under 30 mins
+    public int SpeedyMeetingsThresholdMinutes { get; set; } = 30; // Only apply to meetings longer than this
+
     // Event Defaults
     public int DefaultMeetingDuration { get; set; } = 30; // minutes
     public string? DefaultEventColor { get; set; }

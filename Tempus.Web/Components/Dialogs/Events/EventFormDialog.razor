@@ -12,6 +12,7 @@
 @inject IVideoConferenceService VideoConferenceService
 @inject ITimeZoneConversionService TimeZoneService
 @inject ISettingsService SettingsService
+@inject ISpeedyMeetingsService SpeedyMeetingsService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor IdentityUserAccessor
@@ -873,6 +874,24 @@
             if (_event.EventType == EventType.Meeting)
             {
                 _event.MeetingCost = CalculateMeetingCost();
+            }
+
+            // Apply speedy meetings if enabled
+            // This shortens meetings to build in buffer time
+            if (!IsAllDay && _event.EventType == EventType.Meeting)
+            {
+                var adjustedEndTime = await SpeedyMeetingsService.ApplySpeedyMeetingsAsync(
+                    _userId,
+                    _event.StartTime,
+                    _event.EndTime
+                );
+
+                if (adjustedEndTime != _event.EndTime)
+                {
+                    Logger.LogDebug("Speedy meetings enabled: Adjusted meeting end time from {OriginalEnd} to {AdjustedEnd}",
+                        _event.EndTime, adjustedEndTime);
+                    _event.EndTime = adjustedEndTime;
+                }
             }
 
             if (EditSingleOccurrence)
