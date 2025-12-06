@@ -73,22 +73,22 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: transparent;
-        border: 2px solid #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: var(--transition-smooth);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .user-avatar:hover {
-        border-color: #764ba2;
         transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .avatar-initials {
-        color: #667eea;
+        color: white;
         font-size: 0.875rem;
         font-weight: 700;
         text-transform: uppercase;
