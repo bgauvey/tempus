@@ -198,10 +198,15 @@
 <div class="calendar-toolbar">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 0.5rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
 
-        <!-- Title -->
+        <!-- Left Section: Title -->
         <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
 
-        <!-- Menu Bar -->
+        <!-- Center Section: Current Date Display -->
+        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 500; margin: 0; color: var(--rz-text-secondary-color);">
+            @GetFormattedDateRange()
+        </RadzenText>
+
+        <!-- Right Section: Menu Bar -->
         <RadzenMenu Click="@OnMenuClick">
             <RadzenMenuItem Text="New" Icon="add">
                 <RadzenMenuItem Text="New Event" Icon="event" />
@@ -2225,5 +2230,42 @@
             WorkingLocationType.Hybrid => "#8b5cf6",
             _ => "#6b7280"
         };
+    }
+
+    private string GetFormattedDateRange()
+    {
+        return _selectedViewIndex switch
+        {
+            0 => _selectedDate.ToString("MMMM yyyy"), // Month view: "November 2025"
+            1 => GetWeekRange(_selectedDate), // Week view: "Nov 9 - 15, 2025"
+            2 => _selectedDate.ToString("dddd, MMMM d, yyyy"), // Day view: "Monday, November 9, 2025"
+            3 => _selectedDate.ToString("yyyy"), // Year view: "2025"
+            4 => _selectedDate.ToString("yyyy"), // Year Planner: "2025"
+            5 => _selectedDate.ToString("yyyy"), // Year Timeline: "2025"
+            _ => _selectedDate.ToString("MMMM d, yyyy")
+        };
+    }
+
+    private string GetWeekRange(DateTime date)
+    {
+        // Get start of week (Sunday)
+        var startOfWeek = date.AddDays(-(int)date.DayOfWeek);
+        var endOfWeek = startOfWeek.AddDays(6);
+
+        // If same month
+        if (startOfWeek.Month == endOfWeek.Month)
+        {
+            return $"{startOfWeek:MMM d} - {endOfWeek:d, yyyy}";
+        }
+        // If different months but same year
+        else if (startOfWeek.Year == endOfWeek.Year)
+        {
+            return $"{startOfWeek:MMM d} - {endOfWeek:MMM d, yyyy}";
+        }
+        // If different years
+        else
+        {
+            return $"{startOfWeek:MMM d, yyyy} - {endOfWeek:MMM d, yyyy}";
+        }
     }
 }
