@@ -161,6 +161,19 @@
     .rz-profile-menu-toggle::after {
         display: none !important;
     }
+
+    /* Remove border from profile menu button */
+    ::ng-deep .rz-profile-menu-toggle,
+    .rz-profile-menu-toggle {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    ::ng-deep .rz-profile-menu-toggle:hover,
+    .rz-profile-menu-toggle:hover {
+        background: transparent !important;
+    }
 </style>
 
 @code {
