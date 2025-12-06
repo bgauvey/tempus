@@ -49,11 +49,6 @@
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    /* Hide scheduler default header with navigation */
-    .rz-scheduler .rz-scheduler-header {
-        display: none !important;
-    }
-
     /* RadzenMenu horizontal styling */
     .rz-menu {
         display: flex;
@@ -355,6 +350,7 @@
                             <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                                        StartProperty="Start" EndProperty="End" TextProperty="Text"
                                        SelectedIndex="@_selectedViewIndex"
+                                       ShowHeader="false"
                                        AppointmentSelect="@OnAppointmentSelect"
                                        SlotSelect="@OnSlotSelect"
                                        SlotRender="@OnSlotRender"
@@ -397,6 +393,7 @@
                                 <RadzenScheduler TItem="AppointmentData" Data="@memberAppointments"
                                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                                            SelectedIndex="@_selectedViewIndex"
+                                           ShowHeader="false"
                                            AppointmentSelect="@OnTeamMemberAppointmentSelect"
                                            LoadData="@((args) => OnTeamMemberLoadData(args, userId))"
                                            Style="height: 600px;">
@@ -430,6 +427,7 @@
                     <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                            SelectedIndex="@_selectedViewIndex"
+                           ShowHeader="false"
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
                            SlotRender="@OnSlotRender"
