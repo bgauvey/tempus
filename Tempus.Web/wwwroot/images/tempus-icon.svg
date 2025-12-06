@@ -1,25 +1,25 @@
 <svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Clock -->
-  <circle cx="95" cy="115" r="75" stroke="#1E90FF" stroke-width="8" fill="none"/>
+  <circle cx="95" cy="115" r="75" stroke="#1565C0" stroke-width="8" fill="none"/>
 
   <!-- Clock Hands (11:50) -->
-  <line x1="95" y1="115" x2="135" y2="105" stroke="#1E90FF" stroke-width="8" stroke-linecap="round"/> <!-- Minute -->
-  <line x1="95" y1="115" x2="75" y2="85" stroke="#1E90FF" stroke-width="8" stroke-linecap="round"/> <!-- Hour -->
+  <line x1="95" y1="115" x2="135" y2="105" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/> <!-- Minute -->
+  <line x1="95" y1="115" x2="75" y2="85" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/> <!-- Hour -->
 
   <!-- Calendar Outline -->
-  <rect x="145" y="140" width="80" height="70" stroke="#1E90FF" stroke-width="6" fill="none"/>
+  <rect x="145" y="140" width="80" height="70" stroke="#1565C0" stroke-width="6" fill="none"/>
 
   <!-- Calendar Rings -->
-  <line x1="165" y1="140" x2="165" y2="120" stroke="#1E90FF" stroke-width="8" stroke-linecap="round"/>
-  <line x1="205" y1="140" x2="205" y2="120" stroke="#1E90FF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="165" y1="140" x2="165" y2="120" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/>
+  <line x1="205" y1="140" x2="205" y2="120" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/>
 
   <!-- Grid (added spacing between squares) -->
   <!-- New spacing increases left/right padding and row gap -->
-  <rect x="160" y="158" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
-  <rect x="178" y="158" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
-  <rect x="196" y="158" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
+  <rect x="160" y="158" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
+  <rect x="178" y="158" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
+  <rect x="196" y="158" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
 
-  <rect x="160" y="178" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
-  <rect x="178" y="178" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
-  <rect x="196" y="178" width="12" height="12" stroke="#1E90FF" stroke-width="4" fill="none"/>
+  <rect x="160" y="178" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
+  <rect x="178" y="178" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
+  <rect x="196" y="178" width="12" height="12" stroke="#1565C0" stroke-width="4" fill="none"/>
 </svg>
