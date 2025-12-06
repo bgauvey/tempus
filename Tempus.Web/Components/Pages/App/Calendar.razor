@@ -34,7 +34,7 @@
 <PageTitle>Calendar - Tempus</PageTitle>
 
 <style>
-    /* Calendar Page Layout */
+    /* Scope all Calendar page styles to prevent affecting global header */
     .calendar-page-container {
         display: flex;
         flex-direction: column;
@@ -42,33 +42,33 @@
         overflow: hidden;
     }
 
-    .calendar-toolbar {
+    .calendar-page-container .calendar-toolbar {
         flex-shrink: 0;
         background: white;
         border-bottom: 1px solid var(--rz-border-color);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    /* RadzenMenu horizontal styling */
-    .rz-menu {
+    /* RadzenMenu horizontal styling - scoped to calendar toolbar */
+    .calendar-page-container .rz-menu {
         display: flex;
         flex-direction: row;
         align-items: center;
     }
 
-    .rz-menu > .rz-navigation-item {
+    .calendar-page-container .rz-menu > .rz-navigation-item {
         display: inline-block;
         position: relative;
     }
 
-    .rz-menu .rz-navigation-item-link {
+    .calendar-page-container .rz-menu .rz-navigation-item-link {
         padding: 0.5rem 1rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .calendar-main-section {
+    .calendar-page-container .calendar-main-section {
         flex: 1;
         display: flex;
         flex-direction: row;
@@ -77,13 +77,13 @@
         overflow: hidden;
     }
 
-    .calendar-sidebar {
+    .calendar-page-container .calendar-sidebar {
         flex-shrink: 0;
         width: 280px;
         overflow-y: auto;
     }
 
-    .calendar-content {
+    .calendar-page-container .calendar-content {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -91,44 +91,45 @@
         overflow: hidden;
     }
 
-    .calendar-scheduler-card {
+    .calendar-page-container .calendar-scheduler-card {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
 
-    .calendar-scheduler-card .rz-card-content {
+    .calendar-page-container .calendar-scheduler-card .rz-card-content {
         flex: 1;
         display: flex;
         flex-direction: column;
         overflow: hidden;
     }
 
-    /* Make RadzenScheduler fill available space */
-    .calendar-scheduler-card .rz-scheduler {
+    /* Make RadzenScheduler fill available space - scoped to calendar page */
+    .calendar-page-container .calendar-scheduler-card .rz-scheduler {
         height: 100% !important;
         min-height: 500px;
     }
 
-    .calendar-scheduler-card .rz-scheduler .rz-scheduler-content {
+    .calendar-page-container .calendar-scheduler-card .rz-scheduler .rz-scheduler-content {
         height: calc(100% - 60px) !important; /* Subtract scheduler header */
     }
 
     /* Calendar Styling */
-    .loading-container {
+    .calendar-page-container .loading-container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 400px;
     }
 
-    :root {
+    /* Calendar-specific transition variable - scoped */
+    .calendar-page-container {
         --transition-smooth: all 0.3s ease-in-out;
     }
 
 
     /* Calendar Sidebar */
-    .calendar-item {
+    .calendar-page-container .calendar-item {
         border-radius: 8px;
         cursor: pointer;
         transition: var(--transition-smooth);
@@ -137,18 +138,18 @@
         gap: 0.75rem;
     }
 
-    .calendar-item:hover {
+    .calendar-page-container .calendar-item:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
 
-    .calendar-color-indicator {
+    .calendar-page-container .calendar-color-indicator {
         width: 16px;
         height: 16px;
         border-radius: 50%;
         flex-shrink: 0;
     }
 
-    .calendar-item-name {
+    .calendar-page-container .calendar-item-name {
         flex: 1;
         font-weight: 500;
         min-width: 0;
@@ -157,12 +158,12 @@
         white-space: nowrap;
     }
 
-    .calendar-item-hidden {
+    .calendar-page-container .calendar-item-hidden {
         opacity: 0.5;
     }
 
-    /* Outlook-style All-Day Events */
-    .all-day-event {
+    /* Outlook-style All-Day Events - scoped to calendar page */
+    .calendar-page-container .all-day-event {
         transition: transform 0.15s ease, box-shadow 0.15s ease;
         cursor: pointer;
         overflow: hidden;
@@ -170,21 +171,21 @@
         white-space: nowrap;
     }
 
-    .all-day-event:hover {
+    .calendar-page-container .all-day-event:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
 
-    /* RadzenScheduler all-day event container styling */
-    .rz-scheduler .rz-scheduler-header .rz-event,
-    .rz-scheduler .rz-all-day .rz-event {
+    /* RadzenScheduler all-day event container styling - scoped to calendar page */
+    .calendar-page-container .rz-scheduler .rz-scheduler-header .rz-event,
+    .calendar-page-container .rz-scheduler .rz-all-day .rz-event {
         margin: 1px 2px;
         min-height: 22px;
         line-height: 18px;
     }
 
-    /* Ensure text doesn't overflow in all-day events */
-    .rz-scheduler .rz-event.all-day-event .rz-text {
+    /* Ensure text doesn't overflow in all-day events - scoped to calendar page */
+    .calendar-page-container .rz-scheduler .rz-event.all-day-event .rz-text {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
