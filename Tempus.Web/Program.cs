@@ -138,6 +138,7 @@ builder.Services.AddScoped<ITrendForecastService, TrendForecastService>();
 builder.Services.AddScoped<ITimeZoneConversionService, TimeZoneConversionService>();
 builder.Services.AddScoped<IBrowserNotificationService, BrowserNotificationService>();
 builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
+builder.Services.AddScoped<ITeamAnalyticsService, TeamAnalyticsService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<IAppleCalendarService, AppleCalendarService>();
 builder.Services.AddScoped<IOutlookCalendarService, OutlookCalendarService>();
