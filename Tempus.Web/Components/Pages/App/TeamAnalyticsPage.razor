@@ -141,8 +141,18 @@
                             </RadzenDataGridColumn>
 
                             <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="MeetingCount" Title="Meetings" />
-                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="TotalHours" Title="Hours" Format="{0:F1}" />
-                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="HealthScore" Title="Health" Format="{0:F0}" />
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="TotalHours" Title="Hours">
+                                <Template Context="member">
+                                    <RadzenText TextStyle="TextStyle.Body2">@member.TotalHours.ToString("F1")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="HealthScore" Title="Health">
+                                <Template Context="member">
+                                    <RadzenText TextStyle="TextStyle.Body2">@member.HealthScore.ToString("F0")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
 
                             <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="WorkloadStatus" Title="Status">
                                 <Template Context="member">
@@ -151,7 +161,11 @@
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="MeetingCost" Title="Cost" Format="{0:C0}" />
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="MeetingCost" Title="Cost">
+                                <Template Context="member">
+                                    <RadzenText TextStyle="TextStyle.Body2">@member.MeetingCost.ToString("C0")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
                 </RadzenCard>
