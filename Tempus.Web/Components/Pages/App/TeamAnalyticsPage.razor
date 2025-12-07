@@ -1,0 +1,342 @@
+@page "/team-analytics"
+@page "/team-analytics/{TeamId:guid}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Tempus.Core.Interfaces
+@using Tempus.Core.Models
+@using Tempus.Core.Enums
+@attribute [Authorize]
+@inject ITeamService TeamService
+@inject ITeamAnalyticsService TeamAnalyticsService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject ILogger<TeamAnalyticsPage> Logger
+
+<PageTitle>Team Analytics - Tempus</PageTitle>
+
+<div class="page-container">
+    @if (_isLoading)
+    {
+        <RadzenStack Gap="2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 400px;">
+            <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+                <Template>Loading...</Template>
+            </RadzenProgressBarCircular>
+        </RadzenStack>
+    }
+    else if (_teams.Count == 0)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                <RadzenIcon Icon="groups" Style="font-size: 4rem; opacity: 0.5;" />
+                <RadzenText TextStyle="TextStyle.H5">No Teams Found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1">You don't have access to any teams yet.</RadzenText>
+                <RadzenButton Text="Create a Team" Icon="add" Click="@(() => NavigationManager.NavigateTo("/teams"))" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenStack Gap="1.5rem">
+            <!-- Header -->
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenIcon Icon="analytics" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Team Analytics</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                        <RadzenDropDown @bind-Value="_selectedTeamId"
+                                        Data="@_teams"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        Change="@OnTeamChanged"
+                                        Style="min-width: 200px;"
+                                        Placeholder="Select a team..." />
+
+                        <RadzenSplitButton Text="@_selectedPeriodText" Icon="calendar_today" Click="@OnPeriodClick">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Last 7 Days" Value="7" />
+                                <RadzenSplitButtonItem Text="Last 30 Days" Value="30" />
+                                <RadzenSplitButtonItem Text="Last 90 Days" Value="90" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+
+                        <RadzenButton Icon="refresh" ButtonStyle="ButtonStyle.Light" Click="@LoadTeamAnalytics" title="Refresh" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+
+            @if (_analytics != null)
+            {
+                <!-- Quick Stats -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <RadzenCard>
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Style="color: var(--rz-text-secondary-color);">Team Health</RadzenText>
+                                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin: 0; font-weight: 700;">
+                                    @_analytics.Health.OverallHealthScore.ToString("F0")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption">@GetHealthStatus(_analytics.Health.OverallHealthScore)</RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <RadzenCard>
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Style="color: var(--rz-text-secondary-color);">Team Members</RadzenText>
+                                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin: 0; font-weight: 700;">@_analytics.MemberCount</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption">@_analytics.Health.OptimalMembers optimal</RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <RadzenCard>
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Style="color: var(--rz-text-secondary-color);">Total Meetings</RadzenText>
+                                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin: 0; font-weight: 700;">@_analytics.AggregatedMetrics.TotalMeetings</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption">@_analytics.AggregatedMetrics.TotalHours.ToString("F0") hours</RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <RadzenCard>
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Overline" Style="color: var(--rz-text-secondary-color);">Meeting Cost</RadzenText>
+                                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin: 0; font-weight: 700;">
+                                    @_analytics.CostAnalysis.TotalMeetingCost.ToString("C0")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption">@_analytics.CostAnalysis.CostPerMember.ToString("C0") per member</RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Team Members Table -->
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Team Member Performance</RadzenText>
+                    <RadzenDataGrid Data="@_analytics.MemberAnalytics"
+                                   TItem="MemberAnalyticsSummary"
+                                   AllowSorting="true"
+                                   AllowFiltering="true">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="UserName" Title="Member">
+                                <Template Context="member">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@member.UserName</RadzenText>
+                                        <RadzenBadge Text="@member.Role.ToString()" BadgeStyle="@GetRoleBadgeStyle(member.Role)" />
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="EventCount" Title="Events">
+                                <Template Context="member">
+                                    <RadzenText TextStyle="TextStyle.Body2">@member.EventCount</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="MeetingCount" Title="Meetings" />
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="TotalHours" Title="Hours" Format="{0:F1}" />
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="HealthScore" Title="Health" Format="{0:F0}" />
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="WorkloadStatus" Title="Status">
+                                <Template Context="member">
+                                    <RadzenBadge Text="@member.WorkloadStatus.ToString()"
+                                                BadgeStyle="@GetWorkloadBadgeStyle(member.WorkloadStatus)" />
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="MemberAnalyticsSummary" Property="MeetingCost" Title="Cost" Format="{0:C0}" />
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenCard>
+
+                <!-- Collaboration Metrics -->
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Meeting Distribution</RadzenText>
+                            <RadzenStack Gap="1rem">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">Internal Meetings</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@_analytics.Collaboration.InternalMeetings</RadzenText>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">External Meetings</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@_analytics.Collaboration.ExternalMeetings</RadzenText>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">Avg Meeting Size</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@_analytics.Collaboration.AverageMeetingSize.ToString("F1")</RadzenText>
+                                </div>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Cost Analysis</RadzenText>
+                            <RadzenStack Gap="1rem">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">Total Cost</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@_analytics.CostAnalysis.TotalMeetingCost.ToString("C0")</RadzenText>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">Cost Per Hour</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">@_analytics.CostAnalysis.CostPerHour.ToString("C0")</RadzenText>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <RadzenText TextStyle="TextStyle.Body2">Potential Savings</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-success);">
+                                        @_analytics.CostAnalysis.SavingOpportunities.Sum(o => o.PotentialSavings).ToString("C0")
+                                    </RadzenText>
+                                </div>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Health Issues and Recommendations -->
+                @if (_analytics.Health.HealthIssues.Any() || _analytics.Health.Recommendations.Any())
+                {
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Team Health Insights</RadzenText>
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var issue in _analytics.Health.HealthIssues)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">@issue</RadzenAlert>
+                            }
+                            @foreach (var rec in _analytics.Health.Recommendations)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">@rec</RadzenAlert>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+            }
+        </RadzenStack>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid? TeamId { get; set; }
+
+    private bool _isLoading = true;
+    private List<Team> _teams = new();
+    private Guid? _selectedTeamId;
+    private Tempus.Core.Models.TeamAnalytics? _analytics;
+    private int _selectedPeriodDays = 30;
+    private string _selectedPeriodText = "Last 30 Days";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserTeams();
+
+        if (TeamId.HasValue)
+        {
+            _selectedTeamId = TeamId;
+        }
+        else if (_teams.Any())
+        {
+            _selectedTeamId = _teams.First().Id;
+        }
+
+        if (_selectedTeamId.HasValue)
+        {
+            await LoadTeamAnalytics();
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task LoadUserTeams()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    _teams = await TeamService.GetUserTeamsAsync(userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading user teams");
+        }
+    }
+
+    private async Task LoadTeamAnalytics()
+    {
+        if (!_selectedTeamId.HasValue) return;
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var endDate = DateTime.Today;
+            var startDate = endDate.AddDays(-_selectedPeriodDays);
+
+            _analytics = await TeamAnalyticsService.GenerateTeamAnalyticsAsync(_selectedTeamId.Value, startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading team analytics for team {TeamId}", _selectedTeamId);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnTeamChanged()
+    {
+        await LoadTeamAnalytics();
+    }
+
+    private void OnPeriodClick(RadzenSplitButtonItem item)
+    {
+        _selectedPeriodDays = int.Parse(item.Value);
+        _selectedPeriodText = item.Text;
+        _ = LoadTeamAnalytics();
+    }
+
+    private string GetHealthStatus(double score)
+    {
+        return score >= 80 ? "Excellent" :
+               score >= 70 ? "Good" :
+               score >= 60 ? "Fair" : "Needs Attention";
+    }
+
+    private BadgeStyle GetRoleBadgeStyle(TeamRole role)
+    {
+        return role == TeamRole.Owner ? BadgeStyle.Primary :
+               role == TeamRole.Admin ? BadgeStyle.Info : BadgeStyle.Secondary;
+    }
+
+    private BadgeStyle GetWorkloadBadgeStyle(WorkloadStatus status)
+    {
+        return status switch
+        {
+            WorkloadStatus.Optimal => BadgeStyle.Success,
+            WorkloadStatus.Busy => BadgeStyle.Info,
+            WorkloadStatus.Overloaded => BadgeStyle.Warning,
+            WorkloadStatus.Critical => BadgeStyle.Danger,
+            WorkloadStatus.Underutilized => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+}
