@@ -52,6 +52,25 @@
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="analytics" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">Team Analytics</RadzenText>
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        View team performance metrics, workload analysis, collaboration patterns, and cost insights.
+                    </RadzenText>
+                    <RadzenButton Text="View Team Analytics"
+                                  Icon="arrow_forward"
+                                  Click="@(() => NavigationManager.NavigateTo("/team-analytics"))"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Style="margin-top: auto;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
     </RadzenRow>
 </div>
 
@@ -70,6 +89,7 @@
     private List<SecondaryNav.SecondaryNavItem> _navItems = new()
     {
         new() { Text = "Contacts", Path = "/addresses", Icon = "contact_mail" },
-        new() { Text = "Teams", Path = "/teams", Icon = "groups" }
+        new() { Text = "Teams", Path = "/teams", Icon = "groups" },
+        new() { Text = "Team Analytics", Path = "/team-analytics", Icon = "analytics" }
     };
 }
