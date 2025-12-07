@@ -58,37 +58,26 @@
 </AuthorizeView>
 
 <style>
-    /* Remove background from RadzenProfileMenu dropdown */
-    ::ng-deep .rz-profile-menu,
-    ::ng-deep ul.rz-profile-menu,
-    ::ng-deep .rz-dropdown-menu,
-    ::ng-deep .rz-menu,
-    ::ng-deep .rz-context-menu {
-        background-color: transparent !important;
-        background: none !important;
-        box-shadow: none !important;
-    }
-
     .user-avatar {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: transparent;
-        border: 2px solid #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: var(--transition-smooth);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .user-avatar:hover {
-        border-color: #764ba2;
         transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .avatar-initials {
-        color: #667eea;
+        color: white;
         font-size: 0.875rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -155,11 +144,47 @@
         display: inline-block;
         vertical-align: middle;
     }
+</style>
+
+<!-- Global styles for RadzenProfileMenu - must be outside scoped style block -->
+<style>
+    /* Remove background from RadzenProfileMenu dropdown */
+    .rz-profile-menu,
+    ul.rz-profile-menu,
+    .rz-dropdown-menu {
+        background-color: transparent !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
 
     /* Hide the dropdown arrow */
-    ::ng-deep .rz-profile-menu-toggle::after,
     .rz-profile-menu-toggle::after {
         display: none !important;
+    }
+
+    /* Remove border and styling from profile menu button */
+    .rz-profile-menu-toggle,
+    .rz-profile-menu button {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        min-width: unset !important;
+        min-height: unset !important;
+        width: auto !important;
+        height: auto !important;
+    }
+
+    .rz-profile-menu-toggle:hover,
+    .rz-profile-menu button:hover {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .rz-profile-menu-toggle:focus,
+    .rz-profile-menu button:focus {
+        box-shadow: none !important;
+        outline: none !important;
     }
 </style>
 

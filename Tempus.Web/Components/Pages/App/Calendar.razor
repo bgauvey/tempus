@@ -34,7 +34,7 @@
 <PageTitle>Calendar - Tempus</PageTitle>
 
 <style>
-    /* Calendar Page Layout */
+    /* Scope all Calendar page styles to prevent affecting global header */
     .calendar-page-container {
         display: flex;
         flex-direction: column;
@@ -42,15 +42,33 @@
         overflow: hidden;
     }
 
-    .calendar-header-section {
+    .calendar-page-container .calendar-toolbar {
         flex-shrink: 0;
+        background: white;
+        border-bottom: 1px solid var(--rz-border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    .calendar-templates-section {
-        flex-shrink: 0;
+    /* RadzenMenu horizontal styling - scoped to calendar toolbar */
+    .calendar-page-container .rz-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
     }
 
-    .calendar-main-section {
+    .calendar-page-container .rz-menu > .rz-navigation-item {
+        display: inline-block;
+        position: relative;
+    }
+
+    .calendar-page-container .rz-menu .rz-navigation-item-link {
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .calendar-page-container .calendar-main-section {
         flex: 1;
         display: flex;
         flex-direction: row;
@@ -59,13 +77,13 @@
         overflow: hidden;
     }
 
-    .calendar-sidebar {
+    .calendar-page-container .calendar-sidebar {
         flex-shrink: 0;
         width: 280px;
         overflow-y: auto;
     }
 
-    .calendar-content {
+    .calendar-page-container .calendar-content {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -73,92 +91,45 @@
         overflow: hidden;
     }
 
-    .calendar-scheduler-card {
+    .calendar-page-container .calendar-scheduler-card {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
 
-    .calendar-scheduler-card .rz-card-content {
+    .calendar-page-container .calendar-scheduler-card .rz-card-content {
         flex: 1;
         display: flex;
         flex-direction: column;
         overflow: hidden;
     }
 
-    /* Make RadzenScheduler fill available space */
-    .calendar-scheduler-card .rz-scheduler {
+    /* Make RadzenScheduler fill available space - scoped to calendar page */
+    .calendar-page-container .calendar-scheduler-card .rz-scheduler {
         height: 100% !important;
         min-height: 500px;
     }
 
-    .calendar-scheduler-card .rz-scheduler .rz-scheduler-content {
+    .calendar-page-container .calendar-scheduler-card .rz-scheduler .rz-scheduler-content {
         height: calc(100% - 60px) !important; /* Subtract scheduler header */
     }
 
     /* Calendar Styling */
-    .loading-container {
+    .calendar-page-container .loading-container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 400px;
     }
 
-    :root {
+    /* Calendar-specific transition variable - scoped */
+    .calendar-page-container {
         --transition-smooth: all 0.3s ease-in-out;
     }
 
-    /* Time Block Templates */
-    .template-buttons-container {
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out 0.15s backwards;
-    }
-
-    .template-buttons-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .template-btn {
-        background: var(--primary-gradient);
-        border: none;
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
-        border-radius: 10px;
-        font-weight: 600;
-        transition: var(--transition-smooth);
-        padding: 10px 16px;
-        font-size: 0.85rem;
-    }
-
-    .template-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
-    }
-
-    .template-btn.deep-work {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-    }
-
-    .template-btn.meeting {
-        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
-    }
-
-    .template-btn.break {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    }
-
-    .template-btn.focus {
-        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    }
 
     /* Calendar Sidebar */
-    .calendar-item {
+    .calendar-page-container .calendar-item {
         border-radius: 8px;
         cursor: pointer;
         transition: var(--transition-smooth);
@@ -167,18 +138,18 @@
         gap: 0.75rem;
     }
 
-    .calendar-item:hover {
+    .calendar-page-container .calendar-item:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
 
-    .calendar-color-indicator {
+    .calendar-page-container .calendar-color-indicator {
         width: 16px;
         height: 16px;
         border-radius: 50%;
         flex-shrink: 0;
     }
 
-    .calendar-item-name {
+    .calendar-page-container .calendar-item-name {
         flex: 1;
         font-weight: 500;
         min-width: 0;
@@ -187,12 +158,12 @@
         white-space: nowrap;
     }
 
-    .calendar-item-hidden {
+    .calendar-page-container .calendar-item-hidden {
         opacity: 0.5;
     }
 
-    /* Outlook-style All-Day Events */
-    .all-day-event {
+    /* Outlook-style All-Day Events - scoped to calendar page */
+    .calendar-page-container .all-day-event {
         transition: transform 0.15s ease, box-shadow 0.15s ease;
         cursor: pointer;
         overflow: hidden;
@@ -200,21 +171,21 @@
         white-space: nowrap;
     }
 
-    .all-day-event:hover {
+    .calendar-page-container .all-day-event:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
 
-    /* RadzenScheduler all-day event container styling */
-    .rz-scheduler .rz-scheduler-header .rz-event,
-    .rz-scheduler .rz-all-day .rz-event {
+    /* RadzenScheduler all-day event container styling - scoped to calendar page */
+    .calendar-page-container .rz-scheduler .rz-scheduler-header .rz-event,
+    .calendar-page-container .rz-scheduler .rz-all-day .rz-event {
         margin: 1px 2px;
         min-height: 22px;
         line-height: 18px;
     }
 
-    /* Ensure text doesn't overflow in all-day events */
-    .rz-scheduler .rz-event.all-day-event .rz-text {
+    /* Ensure text doesn't overflow in all-day events - scoped to calendar page */
+    .calendar-page-container .rz-scheduler .rz-event.all-day-event .rz-text {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -224,39 +195,60 @@
 
 <div class="calendar-page-container">
 
-<div class="calendar-header-section">
-    <RadzenCard Style="background: var(--hero-gradient); color: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg); margin-bottom: 2rem;">
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem">
-            <RadzenText TextStyle="TextStyle.DisplayH4" Style="font-weight: 800; margin: 0;">📅 Calendar</RadzenText>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                <RadzenButton Icon="event_available"
-                            ButtonStyle="ButtonStyle.Secondary"
-                            Click="OpenCalendarManagement"
-                            Size="ButtonSize.Medium"
-                            Text="Manage Calendars"
-                            title="Manage your calendars" />
-                <RadzenButton Icon="schedule"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Click="OpenFindTimeDialog"
-                            Size="ButtonSize.Medium"
-                            Text="Find Time"
-                            title="Find optimal meeting times" />
-                <RadzenButton Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")"
-                            ButtonStyle="@(_selectionMode ? ButtonStyle.Warning : ButtonStyle.Secondary)"
-                            Click="ToggleSelectionMode"
-                            Size="ButtonSize.Medium"
-                            Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
-                            title="Toggle event selection mode" />
-                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Info" Click="OpenAdvancedSearch" Size="ButtonSize.Medium" Text="Advanced Search" title="Advanced search and filtering" />
-                <RadzenButton Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DownloadDailyAgenda" Size="ButtonSize.Medium" Text="Day Agenda" title="Download daily agenda as PDF" />
-                <RadzenButton Icon="print" ButtonStyle="ButtonStyle.Info" Click="OpenPrintOptionsDialog" Size="ButtonSize.Medium" Text="Print/Export" title="Print or export calendar with custom options" />
+<!-- Outlook-style Menu Bar -->
+<div class="calendar-toolbar">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 0.5rem 1rem; background: white; border-bottom: 1px solid var(--rz-border-color);">
+
+        <!-- Left Section: Title -->
+        <RadzenText TextStyle="TextStyle.H5" Style="font-weight: 600; margin: 0; color: var(--rz-text-color);">Calendar</RadzenText>
+
+        <!-- Center Section: Current Date Display -->
+        <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 500; margin: 0; color: var(--rz-text-secondary-color);">
+            @GetFormattedDateRange()
+        </RadzenText>
+
+        <!-- Right Section: Menu Bar -->
+        <RadzenMenu Click="@OnMenuClick">
+            <RadzenMenuItem Text="New" Icon="add">
+                <RadzenMenuItem Text="New Event" Icon="event" />
+                <RadzenMenuItem Text="Quick Time Blocks" Icon="schedule">
+                    <RadzenMenuItem Text="Deep Work (2h)" Icon="psychology" />
+                    <RadzenMenuItem Text="Meeting (30m)" Icon="groups" />
+                    <RadzenMenuItem Text="Focus Block (1.5h)" Icon="lightbulb" />
+                    <RadzenMenuItem Text="Break (15m)" Icon="local_cafe" />
+                    <RadzenMenuItem Text="Planning (1h)" Icon="task" />
+                    <RadzenMenuItem Text="Review (45m)" Icon="checklist" />
+                </RadzenMenuItem>
+            </RadzenMenuItem>
+
+            <RadzenMenuItem Text="View" Icon="view_module">
+                <RadzenMenuItem Text="Month" Icon="calendar_view_month" />
+                <RadzenMenuItem Text="Week" Icon="calendar_view_week" />
+                <RadzenMenuItem Text="Day" Icon="calendar_view_day" />
+                <RadzenMenuItem Text="Year" Icon="calendar_today" />
+            </RadzenMenuItem>
+
+            <RadzenMenuItem Text="Navigate" Icon="navigation">
+                <RadzenMenuItem Text="Previous" Icon="chevron_left" />
+                <RadzenMenuItem Text="Today" Icon="today" />
+                <RadzenMenuItem Text="Next" Icon="chevron_right" />
+            </RadzenMenuItem>
+
+            <RadzenMenuItem Text="Actions" Icon="more_horiz">
+                <RadzenMenuItem Text="Manage Calendars" Icon="event_available" />
+                <RadzenMenuItem Text="Find Time" Icon="schedule" />
+                <RadzenMenuItem Text="@(_selectionMode ? "Exit Selection" : "Select Events")"
+                              Icon="@(_selectionMode ? "check_box" : "check_box_outline_blank")" />
+                <RadzenMenuItem Text="Advanced Search" Icon="search" />
+                <RadzenMenuItem Text="Day Agenda PDF" Icon="picture_as_pdf" />
+                <RadzenMenuItem Text="Print/Export" Icon="print" />
                 @if (_isSearchActive)
                 {
-                    <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Warning" Click="ClearSearch" Size="ButtonSize.Medium" Text="Clear Search" title="Show all events" />
+                    <RadzenMenuItem Text="Clear Search" Icon="clear" />
                 }
-            </RadzenStack>
-        </RadzenStack>
-    </RadzenCard>
+            </RadzenMenuItem>
+        </RadzenMenu>
+    </RadzenStack>
 </div>
 
 @if (_selectedEventIds.Any())
@@ -269,34 +261,6 @@
                              OnBulkDelete="@ConfirmBulkDelete" />
     </div>
 }
-
-<div class="calendar-templates-section">
-    <RadzenCard Style="margin-bottom: 2rem;">
-        <RadzenStack Gap="1rem">
-            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: 700;">⚡ Quick Time Block Templates</RadzenText>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                <RadzenButton Click="@(() => CreateFromTemplate("Deep Work", 120))" class="template-btn deep-work" Size="ButtonSize.Small">
-                    🧠 Deep Work (2h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Meeting", 30))" class="template-btn meeting" Size="ButtonSize.Small">
-                    👥 Meeting (30m)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Focus Block", 90))" class="template-btn focus" Size="ButtonSize.Small">
-                    🎯 Focus Block (1.5h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Break", 15))" class="template-btn break" Size="ButtonSize.Small">
-                    ☕ Break (15m)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Planning", 60))" class="template-btn" Size="ButtonSize.Small">
-                    📋 Planning (1h)
-                </RadzenButton>
-                <RadzenButton Click="@(() => CreateFromTemplate("Review", 45))" class="template-btn" Size="ButtonSize.Small">
-                    ✅ Review (45m)
-                </RadzenButton>
-            </RadzenStack>
-        </RadzenStack>
-    </RadzenCard>
-</div>
 
 <div class="calendar-main-section">
     <!-- Calendar Sidebar -->
@@ -392,6 +356,7 @@
                             <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                                        StartProperty="Start" EndProperty="End" TextProperty="Text"
                                        SelectedIndex="@_selectedViewIndex"
+                                       ShowHeader="false"
                                        AppointmentSelect="@OnAppointmentSelect"
                                        SlotSelect="@OnSlotSelect"
                                        SlotRender="@OnSlotRender"
@@ -434,6 +399,7 @@
                                 <RadzenScheduler TItem="AppointmentData" Data="@memberAppointments"
                                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                                            SelectedIndex="@_selectedViewIndex"
+                                           ShowHeader="false"
                                            AppointmentSelect="@OnTeamMemberAppointmentSelect"
                                            LoadData="@((args) => OnTeamMemberLoadData(args, userId))"
                                            Style="height: 600px;">
@@ -467,6 +433,7 @@
                     <RadzenScheduler @ref="_scheduler" TItem="AppointmentData" Data="@_appointments"
                            StartProperty="Start" EndProperty="End" TextProperty="Text"
                            SelectedIndex="@_selectedViewIndex"
+                           ShowHeader="false"
                            AppointmentSelect="@OnAppointmentSelect"
                            SlotSelect="@OnSlotSelect"
                            SlotRender="@OnSlotRender"
@@ -482,28 +449,6 @@
                     <RadzenYearPlannerView />
                     <RadzenYearTimelineView />
                 </ChildContent>
-                <NavigationTemplate>
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-bottom: 1rem;">
-                        <RadzenButton Text="Month" Click="@(() => ChangeView(0))"
-                                    ButtonStyle="@(_selectedViewIndex == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Week" Click="@(() => ChangeView(1))"
-                                    ButtonStyle="@(_selectedViewIndex == 1 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Day" Click="@(() => ChangeView(2))"
-                                    ButtonStyle="@(_selectedViewIndex == 2 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Year" Click="@(() => ChangeView(3))"
-                                    ButtonStyle="@(_selectedViewIndex == 3 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Planner" Click="@(() => ChangeView(4))"
-                                    ButtonStyle="@(_selectedViewIndex == 4 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                        <RadzenButton Text="Timeline" Click="@(() => ChangeView(5))"
-                                    ButtonStyle="@(_selectedViewIndex == 5 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                    Size="ButtonSize.Small" />
-                    </RadzenStack>
-                </NavigationTemplate>
             </RadzenScheduler>
                 }
             </RadzenCard>
@@ -1496,10 +1441,10 @@
             }
         }
 
-        ContextMenuService.Open(args, menuItems, OnMenuItemClick);
+        ContextMenuService.Open(args, menuItems, OnContextMenuItemClick);
     }
 
-    private async void OnMenuItemClick(MenuItemEventArgs item)
+    private async void OnContextMenuItemClick(MenuItemEventArgs item)
     {
         ContextMenuService.Close();
 
@@ -1635,6 +1580,125 @@
             }
         }
 
+        StateHasChanged();
+    }
+
+    // Menu Bar Click Handler
+    private async void OnMenuClick(MenuItemEventArgs args)
+    {
+        if (string.IsNullOrEmpty(args.Text)) return;
+
+        switch (args.Text)
+        {
+            // New menu items
+            case "New Event":
+                await OpenEventDialogAsync(null, DateTime.Now);
+                break;
+            case "Deep Work (2h)":
+                await CreateFromTemplate("Deep Work", 120);
+                break;
+            case "Meeting (30m)":
+                await CreateFromTemplate("Meeting", 30);
+                break;
+            case "Focus Block (1.5h)":
+                await CreateFromTemplate("Focus Block", 90);
+                break;
+            case "Break (15m)":
+                await CreateFromTemplate("Break", 15);
+                break;
+            case "Planning (1h)":
+                await CreateFromTemplate("Planning", 60);
+                break;
+            case "Review (45m)":
+                await CreateFromTemplate("Review", 45);
+                break;
+
+            // View menu items
+            case "Month":
+                await ChangeView(0);
+                break;
+            case "Week":
+                await ChangeView(1);
+                break;
+            case "Day":
+                await ChangeView(2);
+                break;
+            case "Year":
+                await ChangeView(3);
+                break;
+
+            // Navigate menu items
+            case "Previous":
+                await NavigatePrevious();
+                break;
+            case "Today":
+                await NavigateToday();
+                break;
+            case "Next":
+                await NavigateNext();
+                break;
+
+            // Actions menu items
+            case "Manage Calendars":
+                await OpenCalendarManagement();
+                break;
+            case "Find Time":
+                await OpenFindTimeDialog();
+                break;
+            case "Select Events":
+            case "Exit Selection":
+                ToggleSelectionMode();
+                break;
+            case "Advanced Search":
+                await OpenAdvancedSearch();
+                break;
+            case "Day Agenda PDF":
+                await DownloadDailyAgenda();
+                break;
+            case "Print/Export":
+                await OpenPrintOptionsDialog();
+                break;
+            case "Clear Search":
+                await ClearSearch();
+                break;
+        }
+    }
+
+    // Date Navigation
+    private async Task NavigateToday()
+    {
+        _selectedDate = DateTime.Today;
+        await LoadEvents();
+        StateHasChanged();
+    }
+
+    private async Task NavigatePrevious()
+    {
+        // Navigate based on current view
+        _selectedDate = _selectedViewIndex switch
+        {
+            0 => _selectedDate.AddMonths(-1),  // Month view
+            1 => _selectedDate.AddDays(-7),    // Week view
+            2 => _selectedDate.AddDays(-1),    // Day view
+            3 => _selectedDate.AddYears(-1),   // Year view
+            _ => _selectedDate.AddDays(-7)     // Default to week
+        };
+        await LoadEvents();
+        StateHasChanged();
+    }
+
+    private async Task NavigateNext()
+    {
+        // Navigate based on current view
+        _selectedDate = _selectedViewIndex switch
+        {
+            0 => _selectedDate.AddMonths(1),   // Month view
+            1 => _selectedDate.AddDays(7),     // Week view
+            2 => _selectedDate.AddDays(1),     // Day view
+            3 => _selectedDate.AddYears(1),    // Year view
+            _ => _selectedDate.AddDays(7)      // Default to week
+        };
+        await LoadEvents();
         StateHasChanged();
     }
 
@@ -2167,5 +2231,42 @@
             WorkingLocationType.Hybrid => "#8b5cf6",
             _ => "#6b7280"
         };
+    }
+
+    private string GetFormattedDateRange()
+    {
+        return _selectedViewIndex switch
+        {
+            0 => _selectedDate.ToString("MMMM yyyy"), // Month view: "November 2025"
+            1 => GetWeekRange(_selectedDate), // Week view: "Nov 9 - 15, 2025"
+            2 => _selectedDate.ToString("dddd, MMMM d, yyyy"), // Day view: "Monday, November 9, 2025"
+            3 => _selectedDate.ToString("yyyy"), // Year view: "2025"
+            4 => _selectedDate.ToString("yyyy"), // Year Planner: "2025"
+            5 => _selectedDate.ToString("yyyy"), // Year Timeline: "2025"
+            _ => _selectedDate.ToString("MMMM d, yyyy")
+        };
+    }
+
+    private string GetWeekRange(DateTime date)
+    {
+        // Get start of week (Sunday)
+        var startOfWeek = date.AddDays(-(int)date.DayOfWeek);
+        var endOfWeek = startOfWeek.AddDays(6);
+
+        // If same month
+        if (startOfWeek.Month == endOfWeek.Month)
+        {
+            return $"{startOfWeek:MMM d} - {endOfWeek:d, yyyy}";
+        }
+        // If different months but same year
+        else if (startOfWeek.Year == endOfWeek.Year)
+        {
+            return $"{startOfWeek:MMM d} - {endOfWeek:MMM d, yyyy}";
+        }
+        // If different years
+        else
+        {
+            return $"{startOfWeek:MMM d, yyyy} - {endOfWeek:MMM d, yyyy}";
+        }
     }
 }
