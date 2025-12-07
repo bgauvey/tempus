@@ -321,11 +321,14 @@
         await LoadTeamAnalytics();
     }
 
-    private void OnPeriodClick(RadzenSplitButtonItem item)
+    private async Task OnPeriodClick(RadzenSplitButtonItem item)
     {
-        _selectedPeriodDays = int.Parse(item.Value);
-        _selectedPeriodText = item.Text;
-        _ = LoadTeamAnalytics();
+        if (item?.Value != null)
+        {
+            _selectedPeriodDays = int.Parse(item.Value.ToString());
+            _selectedPeriodText = item.Text;
+            await LoadTeamAnalytics();
+        }
     }
 
     private string GetHealthStatus(double score)
