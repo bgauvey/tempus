@@ -58,17 +58,6 @@
 </AuthorizeView>
 
 <style>
-    /* Remove background from RadzenProfileMenu dropdown */
-    ::ng-deep .rz-profile-menu,
-    ::ng-deep ul.rz-profile-menu,
-    ::ng-deep .rz-dropdown-menu,
-    ::ng-deep .rz-menu,
-    ::ng-deep .rz-context-menu {
-        background-color: transparent !important;
-        background: none !important;
-        box-shadow: none !important;
-    }
-
     .user-avatar {
         width: 40px;
         height: 40px;
@@ -155,17 +144,26 @@
         display: inline-block;
         vertical-align: middle;
     }
+</style>
+
+<!-- Global styles for RadzenProfileMenu - must be outside scoped style block -->
+<style>
+    /* Remove background from RadzenProfileMenu dropdown */
+    .rz-profile-menu,
+    ul.rz-profile-menu,
+    .rz-dropdown-menu {
+        background-color: transparent !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
 
     /* Hide the dropdown arrow */
-    ::ng-deep .rz-profile-menu-toggle::after,
     .rz-profile-menu-toggle::after {
         display: none !important;
     }
 
     /* Remove border and styling from profile menu button */
-    ::ng-deep .rz-profile-menu-toggle,
     .rz-profile-menu-toggle,
-    ::ng-deep .rz-profile-menu button,
     .rz-profile-menu button {
         border: none !important;
         background: transparent !important;
@@ -177,17 +175,13 @@
         height: auto !important;
     }
 
-    ::ng-deep .rz-profile-menu-toggle:hover,
     .rz-profile-menu-toggle:hover,
-    ::ng-deep .rz-profile-menu button:hover,
     .rz-profile-menu button:hover {
         background: transparent !important;
         box-shadow: none !important;
     }
 
-    ::ng-deep .rz-profile-menu-toggle:focus,
     .rz-profile-menu-toggle:focus,
-    ::ng-deep .rz-profile-menu button:focus,
     .rz-profile-menu button:focus {
         box-shadow: none !important;
         outline: none !important;
